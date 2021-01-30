@@ -1,0 +1,197 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.checks.acct &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../checks.html" accesskey="U">pkgcheck.checks</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.acct</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcheck.checks.acct</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Various checks for acct-group and acct-user packages.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
+
+<span class="kn">from</span> <span class="nn">pkgcore.ebuild</span> <span class="kn">import</span> <span class="n">restricts</span>
+<span class="kn">from</span> <span class="nn">pkgcore.restrictions</span> <span class="kn">import</span> <span class="n">packages</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">base</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">sources</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">Check</span>
+
+
+<div class="viewcode-block" id="MissingAccountIdentifier"><a class="viewcode-back" href="../../../api/pkgcheck.checks.acct.html#pkgcheck.checks.acct.MissingAccountIdentifier">[docs]</a><span class="k">class</span> <span class="nc">MissingAccountIdentifier</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;UID/GID can not be found in account package.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">var</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">var</span> <span class="o">=</span> <span class="n">var</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;unable to determine the value of </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">var</span><span class="si">}</span><span class="s2"> variable&quot;</span></div>
+
+
+<div class="viewcode-block" id="ConflictingAccountIdentifiers"><a class="viewcode-back" href="../../../api/pkgcheck.checks.acct.html#pkgcheck.checks.acct.ConflictingAccountIdentifiers">[docs]</a><span class="k">class</span> <span class="nc">ConflictingAccountIdentifiers</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Same UID/GID is used by multiple packages.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="p">,</span> <span class="n">identifier</span><span class="p">,</span> <span class="n">pkgs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">=</span> <span class="n">kind</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">identifier</span> <span class="o">=</span> <span class="n">identifier</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pkgs</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">pkgs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;conflicting </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="si">}</span><span class="s2"> id </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">identifier</span><span class="si">}</span><span class="s2"> usage: &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;[ </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pkgs</span><span class="p">)</span><span class="si">}</span><span class="s2"> ]&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OutsideRangeAccountIdentifier"><a class="viewcode-back" href="../../../api/pkgcheck.checks.acct.html#pkgcheck.checks.acct.OutsideRangeAccountIdentifier">[docs]</a><span class="k">class</span> <span class="nc">OutsideRangeAccountIdentifier</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;UID/GID outside allowed allocation range.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="p">,</span> <span class="n">identifier</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kind</span> <span class="o">=</span> <span class="n">kind</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">identifier</span> <span class="o">=</span> <span class="n">identifier</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kind</span><span class="si">}</span><span class="s2"> id </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">identifier</span><span class="si">}</span><span class="s2"> outside permitted &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;static allocation range (0..499, 60001+)&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AcctCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.acct.html#pkgcheck.checks.acct.AcctCheck">[docs]</a><span class="k">class</span> <span class="nc">AcctCheck</span><span class="p">(</span><span class="n">Check</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Various checks for acct-* packages.</span>
+
+<span class="sd">    Verify that acct-* packages do not use conflicting, invalid or out-of-range</span>
+<span class="sd">    UIDs/GIDs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_restricted_source</span> <span class="o">=</span> <span class="p">(</span><span class="n">sources</span><span class="o">.</span><span class="n">RestrictionRepoSource</span><span class="p">,</span> <span class="p">(</span><span class="n">packages</span><span class="o">.</span><span class="n">OrRestriction</span><span class="p">(</span><span class="o">*</span><span class="p">(</span>
+        <span class="n">restricts</span><span class="o">.</span><span class="n">CategoryDep</span><span class="p">(</span><span class="s1">&#39;acct-user&#39;</span><span class="p">),</span> <span class="n">restricts</span><span class="o">.</span><span class="n">CategoryDep</span><span class="p">(</span><span class="s1">&#39;acct-group&#39;</span><span class="p">))),))</span>
+    <span class="n">_source</span> <span class="o">=</span> <span class="p">(</span><span class="n">sources</span><span class="o">.</span><span class="n">RepositoryRepoSource</span><span class="p">,</span> <span class="p">(),</span> <span class="p">((</span><span class="s1">&#39;source&#39;</span><span class="p">,</span> <span class="n">_restricted_source</span><span class="p">),))</span>
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span>
+        <span class="n">MissingAccountIdentifier</span><span class="p">,</span> <span class="n">ConflictingAccountIdentifiers</span><span class="p">,</span>
+        <span class="n">OutsideRangeAccountIdentifier</span><span class="p">,</span>
+    <span class="p">])</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+            <span class="sa">r</span><span class="s1">&#39;ACCT_(?P&lt;var&gt;USER|GROUP)_ID=(?P&lt;quot&gt;[</span><span class="se">\&#39;</span><span class="s1">&quot;]?)(?P&lt;id&gt;[0-9]+)(?P=quot)&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">seen_uids</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">defaultdict</span><span class="p">,</span> <span class="nb">list</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">seen_gids</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">defaultdict</span><span class="p">,</span> <span class="nb">list</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">category_map</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;acct-user&#39;</span><span class="p">:</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seen_uids</span><span class="p">,</span> <span class="s1">&#39;USER&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">65534</span><span class="p">,)),</span>
+            <span class="s1">&#39;acct-group&#39;</span><span class="p">:</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seen_gids</span><span class="p">,</span> <span class="s1">&#39;GROUP&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">65533</span><span class="p">,</span> <span class="mi">65534</span><span class="p">)),</span>
+        <span class="p">}</span>
+
+<div class="viewcode-block" id="AcctCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.acct.html#pkgcheck.checks.acct.AcctCheck.feed">[docs]</a>    <span class="k">def</span> <span class="nf">feed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">seen_id_map</span><span class="p">,</span> <span class="n">expected_var</span><span class="p">,</span> <span class="n">extra_allowed_ids</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">category_map</span><span class="p">[</span><span class="n">pkg</span><span class="o">.</span><span class="n">category</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">ebuild</span><span class="o">.</span><span class="n">text_fileobj</span><span class="p">():</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">id_re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">m</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;var&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="n">expected_var</span><span class="p">:</span>
+                <span class="n">found_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">))</span>
+                <span class="k">break</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">MissingAccountIdentifier</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ACCT_</span><span class="si">{</span><span class="n">expected_var</span><span class="si">}</span><span class="s2">_ID&quot;</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># all UIDs/GIDs must be in &lt;500, with special exception</span>
+        <span class="c1"># of nobody/nogroup which use 65534/65533</span>
+        <span class="k">if</span> <span class="n">found_id</span> <span class="o">&gt;=</span> <span class="mi">500</span> <span class="ow">and</span> <span class="n">found_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">extra_allowed_ids</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">OutsideRangeAccountIdentifier</span><span class="p">(</span><span class="n">expected_var</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">found_id</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">seen_id_map</span><span class="p">[</span><span class="n">found_id</span><span class="p">][</span><span class="n">pkg</span><span class="o">.</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="AcctCheck.finish"><a class="viewcode-back" href="../../../api/pkgcheck.checks.acct.html#pkgcheck.checks.acct.AcctCheck.finish">[docs]</a>    <span class="k">def</span> <span class="nf">finish</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># report overlapping ID usage</span>
+        <span class="k">for</span> <span class="n">seen</span><span class="p">,</span> <span class="n">expected_var</span><span class="p">,</span> <span class="n">_ids</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">category_map</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">found_id</span><span class="p">,</span> <span class="n">pkgs</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">seen</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pkgs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">pkgs</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">cpvstr</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="n">pkgs</span><span class="o">.</span><span class="n">values</span><span class="p">())))</span>
+                    <span class="k">yield</span> <span class="n">ConflictingAccountIdentifiers</span><span class="p">(</span><span class="n">expected_var</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="n">found_id</span><span class="p">,</span> <span class="n">pkgs</span><span class="p">)</span></div></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../checks.html" >pkgcheck.checks</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.acct</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

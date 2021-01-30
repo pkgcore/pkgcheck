@@ -1,0 +1,167 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Config file support &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Config file support</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="config-file-support">
+<h1>Config file support<a class="headerlink" href="#config-file-support" title="Permalink to this headline">¶</a></h1>
+<p>Config files are supported by <code class="docutils literal notranslate"><span class="pre">pkgcheck</span> <span class="pre">scan</span></code> from any of four locations.
+Listed in order of increasing precedence these include the following:</p>
+<ul class="simple">
+<li><p>system config -- /etc/pkgcheck/pkgcheck.conf</p></li>
+<li><p>user config -- ~/.config/pkgcheck/pkgcheck.conf</p></li>
+<li><p>repo config -- metadata/pkgcheck.conf inside an ebuild repo</p></li>
+<li><p>custom config -- specified via the --config option</p></li>
+</ul>
+<p>Any settings from a config file with higher precedence will override matching
+settings from a config file with a lower precedence, e.g. repo settings
+override both user and system settings. Note that command line options override
+any matching config file setting.</p>
+<p>In terms of file structure, basic INI formatting is required and allows
+creating a default section (DEFAULT) for system-wide settings or repo-specific
+sections. The INI key-value pairs directly relate to the available
+long-options supported by <code class="docutils literal notranslate"><span class="pre">pkgcheck</span> <span class="pre">scan</span></code> and their related values. See the
+following examples for how certain config settings affect scanning:</p>
+<ul>
+<li><p>Disable selected checks by default:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">DEFAULT</span><span class="p">]</span>
+<span class="n">checks</span> <span class="o">=</span> <span class="o">-</span><span class="n">UnstableOnlyCheck</span><span class="p">,</span><span class="o">-</span><span class="n">RedundantVersionCheck</span>
+</pre></div>
+</div>
+</li>
+<li><p>Disable showing info level results for the gentoo repo:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">gentoo</span><span class="p">]</span>
+<span class="n">keywords</span> <span class="o">=</span> <span class="o">-</span><span class="n">info</span>
+</pre></div>
+</div>
+</li>
+<li><p>Restrict scanning to the amd64 and x86 arches/profiles for the gentoo repo:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">gentoo</span><span class="p">]</span>
+<span class="n">arches</span> <span class="o">=</span> <span class="n">amd64</span><span class="p">,</span><span class="n">x86</span>
+</pre></div>
+</div>
+</li>
+<li><p>Enable network checks that require Internet access for the gentoo repo using
+a custom timeout of 15 seconds:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">gentoo</span><span class="p">]</span>
+<span class="n">net</span> <span class="o">=</span>
+<span class="n">timeout</span> <span class="o">=</span> <span class="mi">15</span>
+</pre></div>
+</div>
+</li>
+<li><p>Use the JSON reporter by default and disable all cache usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">DEFAULT</span><span class="p">]</span>
+<span class="n">reporter</span> <span class="o">=</span> <span class="n">JsonReporter</span>
+<span class="n">cache</span> <span class="o">=</span> <span class="n">no</span>
+</pre></div>
+</div>
+</li>
+<li><p>Set the default repo to target:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">DEFAULT</span><span class="p">]</span>
+<span class="n">repo</span> <span class="o">=</span> <span class="n">my_overlay</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>Custom checksets can also be configured via the CHECKSETS section. In essence,
+a checkset is an alias for a group of checks or keywords which can either be
+enabled or disabled. Configured checkset names can then be used with the
+<code class="docutils literal notranslate"><span class="pre">pkgcheck</span> <span class="pre">scan</span> <span class="pre">-C/--checkset</span></code> option enabling scanning for configured, custom
+sets of results. See the following examples for how to configure them:</p>
+<ul>
+<li><p>Assign all python-related checks to the <code class="docutils literal notranslate"><span class="pre">python</span></code> checkset:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">CHECKSETS</span><span class="p">]</span>
+<span class="n">python</span> <span class="o">=</span> <span class="n">PythonCheck</span><span class="p">,</span><span class="n">PythonCompatCheck</span>
+</pre></div>
+</div>
+</li>
+<li><p>Checksets also support disabling, e.g. assign all results related to
+ManifestCheck except DeprecatedChksum to the <code class="docutils literal notranslate"><span class="pre">manifests</span></code> checkset:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">CHECKSETS</span><span class="p">]</span>
+<span class="n">manifests</span> <span class="o">=</span> <span class="n">ManifestCheck</span><span class="p">,</span><span class="o">-</span><span class="n">DeprecatedChksum</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/config.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Config file support</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+pkgcheck.checks.dropped\_keywords module
+========================================
+
+.. automodule:: pkgcheck.checks.dropped_keywords
+   :members:
+   :undoc-members:
+   :show-inheritance:

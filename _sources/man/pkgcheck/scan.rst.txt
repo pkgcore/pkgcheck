@@ -1,0 +1,7 @@
+pkgcheck scan - scan targets for QA issues
+------------------------------------------
+
+.. include:: scan/_synopsis.rst
+.. include:: scan/_description.rst
+.. include:: scan/_options.rst
+.. include:: scan/_subcommands.rst

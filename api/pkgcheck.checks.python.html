@@ -1,0 +1,299 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.checks.python module &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.python module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcheck.checks.python">
+<span id="pkgcheck-checks-python-module"></span><h1>pkgcheck.checks.python module<a class="headerlink" href="#module-pkgcheck.checks.python" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="pkgcheck.checks.python.MissingPythonEclass">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.python.</code><code class="sig-name descname">MissingPythonEclass</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eclass</span></em>, <em class="sig-param"><span class="n">dep_type</span></em>, <em class="sig-param"><span class="n">dep</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/python.html#MissingPythonEclass"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.python.MissingPythonEclass" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Package depends on Python but does not use the eclasses.</p>
+<p>All packages depending on Python are required to use one of the following
+python eclasses: python-r1, python-single-r1, or python-any-r1. For
+documentation on choosing the correct eclass, please see the Python project
+wiki page on eclasses <a class="footnote-reference brackets" href="#id2" id="id1">1</a>.</p>
+<dl class="footnote brackets">
+<dt class="label" id="id2"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
+<dd><p><a class="reference external" href="https://wiki.gentoo.org/wiki/Project:Python/Eclasses">https://wiki.gentoo.org/wiki/Project:Python/Eclasses</a></p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="pkgcheck.checks.python.MissingPythonEclass.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.python.MissingPythonEclass.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.python.MissingPythonEclass.name">
+<code class="sig-name descname">name</code><em class="property"> = 'MissingPythonEclass'</em><a class="headerlink" href="#pkgcheck.checks.python.MissingPythonEclass.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.python.PythonCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.python.</code><code class="sig-name descname">PythonCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/python.html#PythonCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.python.PythonCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.Check" title="pkgcheck.checks.Check"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.Check</span></code></a></p>
+<p>Python eclass checks.</p>
+<p>Check whether Python eclasses are used for Python packages, and whether
+they don’t suffer from common mistakes.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.python.PythonCheck.check_depend">
+<code class="sig-name descname">check_depend</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">depend</span></em>, <em class="sig-param"><span class="n">flags</span></em>, <em class="sig-param"><span class="n">prefix</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/python.html#PythonCheck.check_depend"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.python.PythonCheck.check_depend" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.python.PythonCheck.check_required_use">
+<code class="sig-name descname">check_required_use</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">requse</span></em>, <em class="sig-param"><span class="n">flags</span></em>, <em class="sig-param"><span class="n">prefix</span></em>, <em class="sig-param"><span class="n">container_cls</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/python.html#PythonCheck.check_required_use"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.python.PythonCheck.check_required_use" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.python.PythonCheck.feed">
+<code class="sig-name descname">feed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/python.html#PythonCheck.feed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.python.PythonCheck.feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle functionality against the passed in item.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.python.PythonCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.python.PythonEclassError'&gt;, &lt;class 'pkgcheck.checks.python.PythonRuntimeDepInAnyR1'&gt;, &lt;class 'pkgcheck.checks.python.PythonMissingRequiredUse'&gt;, &lt;class 'pkgcheck.checks.python.PythonMissingDeps'&gt;, &lt;class 'pkgcheck.checks.python.MissingPythonEclass'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.python.PythonCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.python.PythonCheck.scan_tree_recursively">
+<code class="sig-name descname">scan_tree_recursively</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">deptree</span></em>, <em class="sig-param"><span class="n">expected_cls</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/python.html#PythonCheck.scan_tree_recursively"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.python.PythonCheck.scan_tree_recursively" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.python.PythonCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='version' &#64;0x7f81a648f5b0&gt;</em><a class="headerlink" href="#pkgcheck.checks.python.PythonCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.python.PythonCompatCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.python.</code><code class="sig-name descname">PythonCompatCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/python.html#PythonCompatCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.python.PythonCompatCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.Check" title="pkgcheck.checks.Check"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.Check</span></code></a></p>
+<p>Check python ebuilds for possible PYTHON_COMPAT updates.</p>
+<p>Supports ebuilds inheriting python-r1, python-single-r1, and python-any-r1.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.python.PythonCompatCheck.deps">
+<code class="sig-name descname">deps</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">attrs</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/python.html#PythonCompatCheck.deps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.python.PythonCompatCheck.deps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set of dependencies for a given package’s attributes.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.python.PythonCompatCheck.feed">
+<code class="sig-name descname">feed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/python.html#PythonCompatCheck.feed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.python.PythonCompatCheck.feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle functionality against the passed in item.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.python.PythonCompatCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.python.PythonCompatUpdate'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.python.PythonCompatCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.python.PythonCompatCheck.python_deps">
+<code class="sig-name descname">python_deps</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">deps</span></em>, <em class="sig-param"><span class="n">prefix</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/python.html#PythonCompatCheck.python_deps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.python.PythonCompatCheck.python_deps" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.python.PythonCompatCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='version' &#64;0x7f81a648f5b0&gt;</em><a class="headerlink" href="#pkgcheck.checks.python.PythonCompatCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.python.PythonCompatUpdate">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.python.</code><code class="sig-name descname">PythonCompatUpdate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">updates</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/python.html#PythonCompatUpdate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.python.PythonCompatUpdate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Info" title="pkgcheck.results.Info"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Info</span></code></a></p>
+<p>PYTHON_COMPAT can be updated to support newer python version(s).</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.python.PythonCompatUpdate.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.python.PythonCompatUpdate.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.python.PythonCompatUpdate.name">
+<code class="sig-name descname">name</code><em class="property"> = 'PythonCompatUpdate'</em><a class="headerlink" href="#pkgcheck.checks.python.PythonCompatUpdate.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.python.PythonEclassError">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.python.</code><code class="sig-name descname">PythonEclassError</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">msg</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/python.html#PythonEclassError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.python.PythonEclassError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Error" title="pkgcheck.results.Error"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Error</span></code></a></p>
+<p>Generic python eclass error.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.python.PythonEclassError.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.python.PythonEclassError.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.python.PythonEclassError.name">
+<code class="sig-name descname">name</code><em class="property"> = 'PythonEclassError'</em><a class="headerlink" href="#pkgcheck.checks.python.PythonEclassError.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.python.PythonMissingDeps">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.python.</code><code class="sig-name descname">PythonMissingDeps</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dep_type</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/python.html#PythonMissingDeps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.python.PythonMissingDeps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Package is missing PYTHON_DEPS.</p>
+<p>The python-r1 and python-single-r1 eclasses require the packages
+to explicitly reference <cite>${PYTHON_DEPS}</cite> in RDEPEND (and DEPEND,
+if necessary); python-any-r1 requires it in DEPEND.</p>
+<p>If Python is used conditionally, the dependency can be wrapped
+in appropriate USE conditionals.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.python.PythonMissingDeps.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.python.PythonMissingDeps.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.python.PythonMissingDeps.name">
+<code class="sig-name descname">name</code><em class="property"> = 'PythonMissingDeps'</em><a class="headerlink" href="#pkgcheck.checks.python.PythonMissingDeps.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.python.PythonMissingRequiredUse">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.python.</code><code class="sig-name descname">PythonMissingRequiredUse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/python.html#PythonMissingRequiredUse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.python.PythonMissingRequiredUse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Package is missing PYTHON_REQUIRED_USE.</p>
+<p>The python-r1 and python-single-r1 eclasses require the packages to
+explicitly specify <cite>REQUIRED_USE=${PYTHON_REQUIRED_USE}</cite>. If Python is used
+conditionally, it can be wrapped in appropriate USE conditionals.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.python.PythonMissingRequiredUse.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.python.PythonMissingRequiredUse.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.python.PythonMissingRequiredUse.name">
+<code class="sig-name descname">name</code><em class="property"> = 'PythonMissingRequiredUse'</em><a class="headerlink" href="#pkgcheck.checks.python.PythonMissingRequiredUse.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.python.PythonRuntimeDepInAnyR1">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.python.</code><code class="sig-name descname">PythonRuntimeDepInAnyR1</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dep_type</span></em>, <em class="sig-param"><span class="n">dep</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/python.html#PythonRuntimeDepInAnyR1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.python.PythonRuntimeDepInAnyR1" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Package depends on Python at runtime but uses any-r1 eclass.</p>
+<p>The python-any-r1 eclass is meant to be used purely for build-time
+dependencies on Python. However, this package lists Python as a runtime
+dependency. If this is intentional, the package needs to switch to
+python-r1 or python-single-r1 eclass, otherwise the runtime dependency
+should be removed.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.python.PythonRuntimeDepInAnyR1.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.python.PythonRuntimeDepInAnyR1.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.python.PythonRuntimeDepInAnyR1.name">
+<code class="sig-name descname">name</code><em class="property"> = 'PythonRuntimeDepInAnyR1'</em><a class="headerlink" href="#pkgcheck.checks.python.PythonRuntimeDepInAnyR1.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcheck.checks.python.get_python_eclass">
+<code class="sig-prename descclassname">pkgcheck.checks.python.</code><code class="sig-name descname">get_python_eclass</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/python.html#get_python_eclass"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.python.get_python_eclass" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/pkgcheck.checks.python.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.python module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

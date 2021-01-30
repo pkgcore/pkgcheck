@@ -1,0 +1,1050 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Release Notes &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Documentation" href="api.html" />
+    <link rel="prev" title="Welcome to pkgchecks’s documentation!" href="index.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="api.html" title="API Documentation"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to pkgchecks’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Release Notes</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="release-notes">
+<h1>Release Notes<a class="headerlink" href="#release-notes" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="pkgcheck-0-8-1-2021-01-28">
+<h2>pkgcheck 0.8.1 (2021-01-28)<a class="headerlink" href="#pkgcheck-0-8-1-2021-01-28" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Include tree-sitter-bash files in dist tarball.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcheck-0-8-0-2021-01-27">
+<h2>pkgcheck 0.8.0 (2021-01-27)<a class="headerlink" href="#pkgcheck-0-8-0-2021-01-27" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Add Style priority level for keywords that's between Warning and Info levels.</p></li>
+<li><p>EclassDocMissingVar: Ignore underscore-prefixed vars as it's assumed these are
+internal only.</p></li>
+<li><p>pkgcheck scan: Add support for profiles path target restrictions.  Now
+<code class="docutils literal notranslate"><span class="pre">pkgcheck</span> <span class="pre">scan</span></code> can be pointed at dir and file targets inside the profiles
+directory and relevant checks will be run against them. Note that dir targets
+will run checks against all path descendents.</p></li>
+<li><p>pkgcheck scan: Add support for incremental profile scanning. This means all
+profile changes will get run against relevant checks when using <code class="docutils literal notranslate"><span class="pre">pkgcheck</span>
+<span class="pre">scan</span> <span class="pre">--commits</span></code>.</p></li>
+<li><p>GentooRepoCheck: Allow specifically selected checks to override skip (#261).</p></li>
+<li><p>pkgcheck scan: Add support to forcibly disable all pkg filters via passing
+'false', 'no', or 'n'. This provides the ability to disable any filters that
+would otherwise be enabled by default.</p></li>
+<li><p>pkgcheck scan: Support checkset and check args for the --exit option.</p></li>
+<li><p>Use arches from profiles.desc instead of pulling them from make.defaults
+(#237).</p></li>
+<li><p>pkgcheck scan: Enable profile checks when using <code class="docutils literal notranslate"><span class="pre">pkgcheck</span> <span class="pre">scan</span> <span class="pre">--commits</span></code>
+if profile changes are detected.</p></li>
+<li><p>DependencyCheck: Split outdated blocker checks into OutdatedBlockersCheck
+since required addons are now strictly enforced for cache addons.</p></li>
+<li><p>pkgcheck scan: Staged changes are now ignored when using <code class="docutils literal notranslate"><span class="pre">pkgcheck</span> <span class="pre">scan</span>
+<span class="pre">--commits</span></code>. Note that due to how <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">stash</span></code> works, they'll be unstaged
+on scan completion.</p></li>
+<li><p>NonsolvableDepsInExp: Switch from warning level to error level to match other
+visibility results.</p></li>
+<li><p>VirtualKeywordsUpdate: Replace MissingVirtualKeywords with result that flags
+virtuals with keywords that could be added.</p></li>
+<li><p>Add basic API for running package scans (#52).</p></li>
+<li><p>pkgcheck scan: Drop 'repo' -f/--filter filter type since it's underused and
+doesn't mesh well with the new, granular filtering support.</p></li>
+<li><p>BadCommitSummary: Escape regex strings in package names (#256).</p></li>
+<li><p>pkgcheck scan: Add support for targeted --filter options that can be enabled
+per keyword, check, or checkset.</p></li>
+<li><p>pkgcheck scan: Re-add support for -C/--checksets option that must be defined
+in the CHECKSETS config section. Also, move 'all' and 'net' aliases from
+-c/--checks to virtual checksets.</p></li>
+<li><p>MisplacedEclassVar: Add support for flagging misplaced &#64;PRE_INHERIT eclass
+variables in ebuilds.</p></li>
+<li><p>Network requests now use streamed GET requests instead of HEAD with fallback
+to avoid various webservers not supporting HEAD requests.</p></li>
+<li><p>MissingMove: Properly ignore git ebuild file renames.</p></li>
+<li><p>pkgcheck cache: Add initial -r/--repo option support (#251).</p></li>
+<li><p>Force using the fork start method for multiprocessing (#254).</p></li>
+<li><p>pkgcheck scan: Prefer path restrictions during restriction generation if the
+targets are in the target repo.</p></li>
+<li><p>UnusedGlobalUseExpand: Check for unused global USE_EXPAND variables.</p></li>
+<li><p>Drop support for python-3.6 and python-3.7.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcheck-0-7-9-2020-12-05">
+<h2>pkgcheck 0.7.9 (2020-12-05)<a class="headerlink" href="#pkgcheck-0-7-9-2020-12-05" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>GitCommitsCheck: Fix package vs category level summary checks.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcheck-0-7-8-2020-12-04">
+<h2>pkgcheck 0.7.8 (2020-12-04)<a class="headerlink" href="#pkgcheck-0-7-8-2020-12-04" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>pkgcheck show: Add <code class="docutils literal notranslate"><span class="pre">-C/--caches</span></code> support.</p></li>
+<li><p>BadCommitSummary: Support flagging bad category level commit
+summaries (#250).</p></li>
+<li><p>FormatReporter: Raise exception for unhandled integer key args.</p></li>
+<li><p>Treat git rename operations as addition and removal for package
+changes (#249).</p></li>
+<li><p>PerlCheck is now an optional check that isn't run by default
+since most users won't have the required dependency installed.</p></li>
+<li><p>Allow additive -c/--checks args that add checks to the default
+set to run. For example, use <code class="docutils literal notranslate"><span class="pre">pkgcheck</span> <span class="pre">scan</span> <span class="pre">-c=+PerlCheck</span></code> to
+run PerlCheck in addition to the default checks.</p></li>
+<li><p>InvalidManifest: Flag ebuilds with invalid Manifest files.</p></li>
+<li><p>pkgcheck scan: Support eclass file target restrictions.</p></li>
+<li><p>MissingMove: Flag packages on local commits that are renamed with
+no corresponding move package update.</p></li>
+<li><p>MissingSlotmove: Flag packages on local commits with changed SLOT
+with no corresponding slotmove package update.</p></li>
+<li><p>MaintainerNeeded: Flag packages with invalid maintainer-needed
+comments (#239).</p></li>
+<li><p>pkgcheck scan: Display cache update progress by default.</p></li>
+<li><p>LiveOnlyPackage: Flag ebuilds that only have VCS-based versions.</p></li>
+<li><p>pkgcheck scan: Support a configurable exit status via <code class="docutils literal notranslate"><span class="pre">--exit</span></code>
+(#28).</p></li>
+<li><p>pkgcheck scan: Drop --sorted option that isn't useful enough to
+keep around due to check parallelization.</p></li>
+<li><p>MatchingChksums: Ignore go.mod related false positives (#228).</p></li>
+<li><p>EclassDocMissingFunc: Flag eclasses missing docs for an exported
+function.</p></li>
+<li><p>EclassDocMissingVar: Flag eclasses missing docs for an exported
+variable.</p></li>
+<li><p>InternalEclassFunc: Flag ebuilds using internal functions from an
+eclass.</p></li>
+<li><p>IndirectInherits: Flag ebuilds using functions from an indirectly
+inherited eclass.</p></li>
+<li><p>MissingInherits: Flag ebuilds with missing eclass inherits.</p></li>
+<li><p>UnusedInherits: Flag ebuilds with unused eclass inherits.</p></li>
+<li><p>PythonCompatUpdate: Flag ebuilds with PYTHON_COMPAT that can be
+updated to support newer python versions.</p></li>
+<li><p>Dump all pickled caches atomically (#244).</p></li>
+<li><p>UnsupportedEclassEapi: Flag ebuilds that inherit an eclass with
+outdated &#64;SUPPORTED_EAPIS.</p></li>
+<li><p>EclassDocError: Flag eclasses that fail eclass doc tag parsing.</p></li>
+<li><p>RedundantPackageUpdate: Flag package update entries that have the
+same source and destination.</p></li>
+<li><p>ProfileAddon: Only enable exp profiles for explicitly selected
+keywords and not when keywords are selected by default.</p></li>
+<li><p>pkgcheck scan: Don't load system/user configs when explicitly
+disabled via <code class="docutils literal notranslate"><span class="pre">--config</span> <span class="pre">no</span></code>.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcheck-0-7-7-2020-07-05">
+<h2>pkgcheck 0.7.7 (2020-07-05)<a class="headerlink" href="#pkgcheck-0-7-7-2020-07-05" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Avoid trying to match old packages against current repo for git support (#215).</p></li>
+<li><p>Rename DeprecatedPkg result keyword to DeprecatedDep and try to disambiguate its output
+message (#218).</p></li>
+<li><p>FormatReporter: Use an empty string for unmatched variables (#211) and add the result output
+name to the available attributes.</p></li>
+<li><p>DroppedKeywordsCheck: Disregard non-VCS pkgs without KEYWORDS (#224).</p></li>
+<li><p>Ignore license and keyword settings from system config for StableRequest results (#229).</p></li>
+<li><p>pkgcheck scan: Support output name arguments for -k/--keywords (#221).</p></li>
+<li><p>StableArchesAddon: Use known stable arches from arches.desc (GLEP 72) if available (#230).</p></li>
+<li><p>pkgcheck scan: Fully support custom user config files via --config.</p></li>
+<li><p>ProfilesAddon: Automatically enable experimental profiles for selected arches that only have
+experimental profiles (#222) and selected keywords that require them (#225).</p></li>
+<li><p>VisibilityCheck: Sort failed package atoms for NonsolvableDep results (#223).</p></li>
+<li><p>Filter package atoms from path list when scanning git commits (#217).</p></li>
+<li><p>Use a <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">stash</span></code> context manager when scanning commits so untracked files or uncommitted
+changes are ignored.</p></li>
+<li><p>Only add eclass directory when scanning git commits if it exists in the target repo (#231).</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcheck-0-7-6-2020-02-09">
+<h2>pkgcheck 0.7.6 (2020-02-09)<a class="headerlink" href="#pkgcheck-0-7-6-2020-02-09" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>VariableInHomepage: Include parameter expansion chars in flagged variable and
+drop flagging for unbracketed variables until bash parsing support exists.</p></li>
+<li><p>Drop PythonSingleUseMismatch result since python-single-r1.eclass will no
+longer generate PYTHON_TARGETS.</p></li>
+<li><p>FetchablesUrlCheck: Disable package feed filtering so all defined SRC_URI
+URLs are scanned by default.</p></li>
+<li><p>Output create/update git repo cache message to stderr by default to help tell
+the user what's happening during possibly long scan delays.</p></li>
+<li><p>Add config file support at /etc/pkgcheck/pkgcheck.conf,
+~/.config/pkgcheck/pkgcheck.conf, and metadata/pkgcheck.conf for system-wide,
+user, and repo-specific default settings respectively. Any settings found in
+those config files will be overridden by matching command line arguments.
+Almost all command line arguments can be set in config files, see the man
+page or online docs for config examples.</p></li>
+<li><p>For network checks, add fallback to GET requests if HEAD requests fail with
+501 or 405 HTTP errors (#208).</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcheck-0-7-5-2020-01-26">
+<h2>pkgcheck 0.7.5 (2020-01-26)<a class="headerlink" href="#pkgcheck-0-7-5-2020-01-26" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>RedundantLongDescription: Flag redundant longdescription metadata.xml
+elements (#205).</p></li>
+<li><p>RedundantDodir: Flag redundant dodir usage (#169).</p></li>
+<li><p>pkgcheck scan: Add special argument 'net' for -c/--checks option that enables
+all network checks. This allows for easily running all network checks using
+something similar to <code class="docutils literal notranslate"><span class="pre">pkgcheck</span> <span class="pre">scan</span> <span class="pre">--net</span> <span class="pre">-c</span> <span class="pre">net</span></code>.</p></li>
+<li><p>AbsoluteSymlink: Flag dosym calls using paths starting with ${EPREFIX}.</p></li>
+<li><p>DeprecatedInsinto: Flag deprecated insinto usage with unnecessary quote usage.</p></li>
+<li><p>pkgcheck scan: Show a traceback and forcibly exit on unexpected exceptions
+when running checks.</p></li>
+<li><p>EclassBashSyntaxError: Report bash syntax errors in eclasses.</p></li>
+<li><p>pkgcheck scan: Allow location specific scopes to override target path
+restrict scope. This makes scanning against a file path target like
+${REPO_PATH}/eclass only enable eclass checks instead of doing a full repo
+scan.</p></li>
+<li><p>pkgcheck scan: Allow path target args of '.' or '..' to work as expected.</p></li>
+<li><p>RdependChange: Flag non-live, locally committed packages with altered RDEPEND
+lacking revbumps.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pkgcheck</span> <span class="pre">scan</span> <span class="pre">--commits</span></code> now enables eclass checks if it notices any
+relevant eclass changes in the local repo.</p></li>
+<li><p>EclassHeaderCheck: Add initial eclass header checks similar to the ones done
+against ebuilds in the gentoo repo.</p></li>
+<li><p>pkgcheck scan: Drop the -C/--checkset option, it might return in some form
+once reworked config file support is done.</p></li>
+<li><p>MetadataUrlCheck: Add initial check for metadata.xml URL validity (#167).</p></li>
+<li><p>Ignore unstaged changes when generating targets for <code class="docutils literal notranslate"><span class="pre">pkgcheck</span> <span class="pre">scan</span>
+<span class="pre">--commits</span></code>.</p></li>
+<li><p>RedundantUriRename: Flag redundant SRC_URI renames (#196).</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcheck-0-7-4-2020-01-11">
+<h2>pkgcheck 0.7.4 (2020-01-11)<a class="headerlink" href="#pkgcheck-0-7-4-2020-01-11" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>BinaryFile: Ignore some classes of false positives that use multiple
+encodings.</p></li>
+<li><p>Output repo and commit related results after any package related results
+found during scanning if using a relevant scan scope level.</p></li>
+<li><p>Sort git commit-related results by name or description for multiple results
+against a single commit.</p></li>
+<li><p>BadCommitSummary: Convert to commit result instead of package result since it
+directly relates to the commit made more than the package itself.</p></li>
+<li><p>Add optional ref argument support for --commits option. This allows passing a
+commit or reference to diff the current tree against in order to determine
+scanning targets.</p></li>
+<li><p>GitPkgCommitsCheck: Flag all incorrect copyright dates instead of just
+outdated ones.</p></li>
+<li><p>GitCommitsCheck: Use a single <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">cat-file</span></code> process for verifying all
+Fixes/Reverts tags instead of one per commit.</p></li>
+<li><p>InvalidCommitMessage: Check for empty lines between summary, body, and tags.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcheck-0-7-3-2019-12-29">
+<h2>pkgcheck 0.7.3 (2019-12-29)<a class="headerlink" href="#pkgcheck-0-7-3-2019-12-29" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Flag git tags and commit messages that don't follow specifications described
+in GLEP 66 (#186) via InvalidCommitTag and InvalidCommitMessage results.</p></li>
+<li><p>Skip reporting blocker dependencies marked as deprecated.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcheck-0-7-2-2019-12-20">
+<h2>pkgcheck 0.7.2 (2019-12-20)<a class="headerlink" href="#pkgcheck-0-7-2-2019-12-20" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>pkgcheck scan: Change --filtered option to -f/--filter which supports both
+'repo' and 'latest' arguments to filter scanned packages (#184).</p></li>
+<li><p>Fix <code class="docutils literal notranslate"><span class="pre">pkgcheck</span> <span class="pre">scan</span> <span class="pre">--commits</span></code> usage with overlays (#188).</p></li>
+<li><p>MissingUseDepDefault: Check unconditional use deps for missing defaults,
+previously only conditional flags were being checked.</p></li>
+<li><p>DuplicateEclassInherits: Add initial result for flagging duplicate eclass
+inherits.</p></li>
+<li><p>BadWhitespaceCharacter: Add initial result for flagging unicode whitespace in
+ebuilds that bash doesn't treat as regular whitespace.</p></li>
+<li><p>ProfilesCheck: Add support for validating package.deprecated entries.</p></li>
+<li><p>Use .git/info/exclude from repos in addition to .gitignore to ignore files
+for relevant checks.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcheck-0-7-1-2019-11-30">
+<h2>pkgcheck 0.7.1 (2019-11-30)<a class="headerlink" href="#pkgcheck-0-7-1-2019-11-30" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>DeprecatedPkg: Add initial result for flagging package dependencies
+deprecated via package.deprecated.</p></li>
+<li><p>DeprecatedEclassCheck: Add support for conditionally deprecating eclasses
+with epatch and versionator being the first eclasses to be flagged for
+conditional deprecation.</p></li>
+<li><p>SourcingCheck: Add separate check to validate ebuild sourcing and flag
+invalid SLOTs via a new InvalidSlot result.</p></li>
+<li><p>pkgcheck scan: Add --sorted option to forcibly perform a global sort -- only
+useful for limited cases such as generating expected test output.</p></li>
+<li><p>pkgcheck cache: Add support for listing and removing cache types for
+non-registered repos.</p></li>
+<li><p>pkgcheck scan: Replace --git-disable/--profile-cache options with --cache. By
+default all caches are enabled. To disable all of them, use something similar
+to '--cache false'.</p>
+<p>Cache types can also be enabled or disabled individually using a
+comma-separated cache type list, e.g. '--cache profiles' will only enable
+profiles caches and '--cache=-git' will only disable git caches leaving
+all other caches enabled.</p>
+</li>
+<li><p>Prioritize checks that scan for metadata errors so they get run before checks
+that use the related metadata attrs.</p></li>
+<li><p>Fix memory leak when generating caches for certain git repos (#178).</p></li>
+<li><p>pkgcheck scan: Drop --profiles-base option.</p></li>
+<li><p>Avoid caching a repo's base package.mask for profile filters in order to
+avoid more cases of profile cache invalidation.</p></li>
+<li><p>Split InvalidDependency into individual attr results, e.g. InvalidRdepend.</p></li>
+<li><p>Split RestrictsCheck into separate checks for RESTRICT and PROPERTIES.</p></li>
+<li><p>AbsoluteSymlinkCheck: Report dosym usage with path variables, e.g. ${ED}.</p></li>
+<li><p>BadHomepage: Flag packages using a generic Gentoo HOMEPAGE (#177).</p></li>
+<li><p>Add initial support for using a repo's .gitignore file to avoid reporting
+matching files for certain results (#140).</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcheck-0-7-0-2019-11-08">
+<h2>pkgcheck 0.7.0 (2019-11-08)<a class="headerlink" href="#pkgcheck-0-7-0-2019-11-08" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>BadInsIntoCheck: Skip reporting insinto calls using subdirs since the related
+commands don't support installing files into subdirs.</p></li>
+<li><p>PerlCheck: Run by default if perl and deps are installed otherwise skip unless
+explicitly enabled.</p></li>
+<li><p>SourcingError: Add specific result for ebuilds that fail sourcing due to
+metadata issues.</p></li>
+<li><p>Fix git --commits option restriction.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcheck-0-6-9-2019-11-04">
+<h2>pkgcheck 0.6.9 (2019-11-04)<a class="headerlink" href="#pkgcheck-0-6-9-2019-11-04" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>MissingSlash: Avoid some types of false positives where the path variable is
+used to create a simple string, but not as a path directly.</p></li>
+<li><p>BadPerlModuleVersion: Add support for verifying Gentoo's perl module
+versioning scheme -- not run by default since it requires various perl
+dependencies.</p></li>
+<li><p>BadCommitSummary: Also allow &quot;${CATEGORY}/${P}:&quot; prefixes.</p></li>
+<li><p>MetadataError: Fix suppressing duplicate results due to multiprocess usage.</p></li>
+<li><p>VisibleVcsPkg: Collapse profile reports for non-verbose mode.</p></li>
+<li><p>Use replacement character for non-UTF8 characters while decoding author,
+committer, and message fields from git logs.</p></li>
+<li><p>pkgcheck scan: Try parsing target arguments as restrictions before falling
+back to using path restrictions.</p></li>
+<li><p>EmptyProject: Check for projects with no members in projects.xml.</p></li>
+<li><p>StaticSrcUri: Check if SRC_URI uses static values for P or PV instead of the
+dynamic, variable equivalents.</p></li>
+<li><p>MatchingChksums: Check for distfiles that share the same checksums but have
+different names.</p></li>
+<li><p>pkgcheck scan: Parallelize checks for targets passed in via cli args.</p></li>
+<li><p>Sort versioned package results under package scanning scope so outputted
+results are deterministic when scanning against single packages similar to
+what the output is per package when running scans at a category or repo
+level.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcheck-0-6-8-2019-10-06">
+<h2>pkgcheck 0.6.8 (2019-10-06)<a class="headerlink" href="#pkgcheck-0-6-8-2019-10-06" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>pkgcheck scan: Add -t/--tasks option to limit the number of async tasks that
+can run concurrently. Currently used to limit the number of concurrent
+network requests made.</p></li>
+<li><p>Repository level checks are now run in parallel by default.</p></li>
+<li><p>Fix iterating over git commits to fix git-related checks.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcheck-0-6-7-2019-10-05">
+<h2>pkgcheck 0.6.7 (2019-10-05)<a class="headerlink" href="#pkgcheck-0-6-7-2019-10-05" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>pkgcheck scan: All scanning scopes now run checks in parallel by default for
+multi-core systems. For repo/category scope levels parallelism is done per
+package while for package/version scope levels parallelism is done per
+version. The -j/--jobs option was also added to allow controlling the amount
+of processes used when scanning, by default it's set to the number of CPUs
+the target system has.</p></li>
+<li><p>pkgcheck cache: Add initial cache subcommand to support updating/removing
+caches used by pkgcheck. This allows users to forcibly update/remove caches
+when they want instead of pkgcheck only handling the process internally
+during the scanning process.</p></li>
+<li><p>Add specific result keywords for metadata issues relating to various package
+attributes instead of using the generic MetadataError for all of them.</p></li>
+<li><p>Drop check for PortageInternals as the last usage was dropped from the tree.</p></li>
+<li><p>Add EmptyCategoryDir and EmptyPackageDir results to warn when the gentoo repo
+has empty category or package directories that people removing packages
+forgot to handle.</p></li>
+<li><p>Drop HttpsAvailableCheck and its related HttpsAvailable result. The network
+checks should now support dynamically pinging sites to test for viability.</p></li>
+<li><p>Port network checks to use the requests module for http/https requests so
+urllib is only used for ftp URLs.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcheck-0-6-6-2019-09-24">
+<h2>pkgcheck 0.6.6 (2019-09-24)<a class="headerlink" href="#pkgcheck-0-6-6-2019-09-24" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>HttpsUrlAvailable: Check http URLs for https availability (not run by
+default).</p></li>
+<li><p>MissingLicenseRestricts: Skip RESTRICT=&quot;mirror&quot; for packages lacking SRC_URI.</p></li>
+<li><p>DeprecatedEapiCommand: Check for deprecated EAPI commands (e.g. dohtml usage in EAPI 6).</p></li>
+<li><p>BannedEapiCommand: Check for banned EAPI commands (e.g. dohtml usage in EAPI 7).</p></li>
+<li><p>StableRequestCheck: Use ebuild modification events instead of added events to
+check for stabilization.</p></li>
+<li><p>Add support for filtering versioned results to only check the latest VCS and
+non-VCS packages per slot.</p></li>
+<li><p>MissingSlotDep: Fix dep slot determination by using use flag stripped dep
+atoms instead of unversioned atoms.</p></li>
+<li><p>Add HomepageUrlCheck and FetchablesUrlCheck network-based checks that check
+HOMEPAGE and SRC_URI urls for various issues and require network access so
+they aren't run by default. The <code class="docutils literal notranslate"><span class="pre">--net</span></code> option must be specified in order
+to run them.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcheck-0-6-5-2019-09-18">
+<h2>pkgcheck 0.6.5 (2019-09-18)<a class="headerlink" href="#pkgcheck-0-6-5-2019-09-18" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>InvalidUseFlags: Flag invalid USE flags in IUSE.</p></li>
+<li><p>UnknownUseFlags: Use specific keyword result for unknown USE flags in IUSE
+instead of MetadataError.</p></li>
+<li><p>pkgcheck scan: Add <code class="docutils literal notranslate"><span class="pre">info</span></code> alias for -k/--keywords option and rename
+errors/warnings aliases to <code class="docutils literal notranslate"><span class="pre">error</span></code> and <code class="docutils literal notranslate"><span class="pre">warning</span></code>.</p></li>
+<li><p>Add Info result type and mark a several non-warning results as info level
+(e.g. RedundantVersion and PotentialStable).</p></li>
+<li><p>MissingLicenseRestricts: Flag restrictive license usage missing required
+RESTRICT settings.</p></li>
+<li><p>MissingSlotDepCheck: Properly report missing slotdeps for atom with use deps.</p></li>
+<li><p>pkgcheck scan: Add <code class="docutils literal notranslate"><span class="pre">all</span></code> alias for -c/--checks option.</p></li>
+<li><p>MissingSignOff: Add initial check for missing commit message sign offs.</p></li>
+<li><p>InvalidLicenseHeader: Add initial license header check for the gentoo repo.</p></li>
+<li><p>BadCommitSummary: Add initial commit message summary formatting check.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcheck-0-6-4-2019-09-13">
+<h2>pkgcheck 0.6.4 (2019-09-13)<a class="headerlink" href="#pkgcheck-0-6-4-2019-09-13" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Add FormatReporter supporting custom format string output.</p></li>
+<li><p>pkgcheck scan: Drop --metadata-xsd-required option since the related file is
+now bundled with pkgcore.</p></li>
+<li><p>Add CsvReporter for outputting results in CSV format.</p></li>
+<li><p>pkgcheck scan: Add --commits option that use local git repo changes to
+determine scan targets.</p></li>
+<li><p>DroppedUnstableKeywords: Disregard when stable target keywords exist.</p></li>
+<li><p>LocalUSECheck: Add test for USE flags with reserved underscore character.</p></li>
+<li><p>PathVariablesCheck: Drop 'into' from prefixed dir functions list to avoid
+false positives in comments.</p></li>
+<li><p>MissingUnpackerDepCheck: Drop checks for jar files since most are being
+directly installed and not unpacked.</p></li>
+<li><p>Make gentoo repo checks work for external gentoo repos on systems with a
+configured gentoo system repo.</p></li>
+<li><p>UnknownFile: Flag unknown files in package directories for the gentoo repo.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcheck-0-6-3-2019-08-30">
+<h2>pkgcheck 0.6.3 (2019-08-30)<a class="headerlink" href="#pkgcheck-0-6-3-2019-08-30" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>PathVariablesCheck: Flag double path prefix usage on uncommented lines only
+to avoid some types of false positives.</p></li>
+<li><p>BadInsIntoCheck: flag <code class="docutils literal notranslate"><span class="pre">insinto</span> <span class="pre">/usr/share/doc/${PF}</span></code> usage for recent EAPIs
+as it should be replaced by docinto and dodoc [-r] calls.</p></li>
+<li><p>BadInsIntoCheck: Drop old cron support.</p></li>
+<li><p>Skip global checks when running at cat/pkg/version restriction levels for
+<code class="docutils literal notranslate"><span class="pre">pkgcheck</span> <span class="pre">scan</span></code>. Also, skip package level checks that require package set
+context when running at a single version restriction level.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcheck-0-6-2-2019-08-26">
+<h2>pkgcheck 0.6.2 (2019-08-26)<a class="headerlink" href="#pkgcheck-0-6-2-2019-08-26" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>TreeVulnerabilitiesCheck: Restrict to checking against the gentoo repo only.</p></li>
+<li><p>Allow explicitly selected keywords to properly enable their related checks if
+they must be explicitly enabled.</p></li>
+<li><p>UnusedMirrorsCheck: Ignore missing checksums for fetchables that will be
+caught by other checks.</p></li>
+<li><p>pkgcheck replay: Add support for replaying JsonStream reporter files.</p></li>
+<li><p>Add initial JsonStream reporter as an alternative to the pickle reporters for
+serializing and deserializing result objects.</p></li>
+<li><p>Add support for comparing and hashing result objects.</p></li>
+<li><p>Fix triggering metadata.xml maintainer checks only for packages.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcheck-0-6-1-2019-08-25">
+<h2>pkgcheck 0.6.1 (2019-08-25)<a class="headerlink" href="#pkgcheck-0-6-1-2019-08-25" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>NonexistentProfilePath: Change from warning to an error.</p></li>
+<li><p>Fix various XML result initialization due to missing attributes.</p></li>
+<li><p>MissingUnpackerDepCheck: Fix matching against versioned unpacker deps.</p></li>
+<li><p>Rename BadProto keyword to BadProtocol.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcheck-0-6-0-2019-08-23">
+<h2>pkgcheck 0.6.0 (2019-08-23)<a class="headerlink" href="#pkgcheck-0-6-0-2019-08-23" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>Profile data is now cached on a per repo basis in ~/.cache/pkgcore/pkgcheck
+(or wherever the related XDG cache environment variables point) to speed up
+singular package scans. These caches are checked and verified for staleness
+on each run and are enabled by default.</p>
+<p>To forcibly disable profile caches include <code class="docutils literal notranslate"><span class="pre">--profile-cache</span> <span class="pre">n</span></code> or similar
+as arguments to <code class="docutils literal notranslate"><span class="pre">pkgcheck</span> <span class="pre">scan</span></code>.</p>
+</li>
+<li><p>When running against a git repo, the historical package removals and
+additions are scanned from <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">log</span></code> and used to populate virtual repos
+that enable proper stable request checks and nonexistent/outdated blocker
+checks. Note that initial runs where these repos are being built from scratch
+can take a minute or more depending on the system; however, subsequent runs
+shouldn't take much time to update the cached repos.</p>
+<p>To disable git support entirely include <code class="docutils literal notranslate"><span class="pre">--git-disable</span> <span class="pre">y</span></code> or similar as
+arguments to <code class="docutils literal notranslate"><span class="pre">pkgcheck</span> <span class="pre">scan</span></code>.</p>
+</li>
+<li><p>zshcomp: Add initial support for keyword, check, and reporter completion.</p></li>
+<li><p>Enhance support for running against unconfigured, external repos. Now
+<code class="docutils literal notranslate"><span class="pre">pkgcheck</span> <span class="pre">scan</span></code> should be able to handle scanning against relevant paths to
+unknown repos passed to it or against a repo with no arguments passed that
+the current working directory is currently within.</p></li>
+<li><p>BadFilename: Flag SRC_URI targets that use unspecific ${PN}.ext filenames.</p></li>
+<li><p>HomepageInSrcUri: Flag ${HOMEPAGE} usage in SRC_URI.</p></li>
+<li><p>MissingConditionalTestRestrict: Flag missing <code class="docutils literal notranslate"><span class="pre">RESTRICT=&quot;!test?</span> <span class="pre">(</span> <span class="pre">test</span> <span class="pre">)&quot;</span></code>.</p></li>
+<li><p>InvalidProjectMaintainer: Flag packages specifying non-existing project as
+maintainer.</p></li>
+<li><p>PersonMaintainerMatchesProject: Flag person-type maintainer matching existing
+projects.</p></li>
+<li><p>NonGentooAuthorsCopyright: Flag ebuilds with copyright stating owner other
+than &quot;Gentoo Authors&quot; in the main gentoo repo.</p></li>
+<li><p>AcctCheck: Add various checks for acct-* packages.</p></li>
+<li><p>MaintainerWithoutProxy: Flag packages with a proxyless proxy maintainer.</p></li>
+<li><p>StaleProxyMaintProject: Flag packages using proxy-maint maintainer without
+any proxied maintainers.</p></li>
+<li><p>BinaryFile: Flag binary files found in the repository.</p></li>
+<li><p>DoublePrefixInPath: Flag ebuilds using two consecutive paths including
+EPREFIX.</p></li>
+<li><p>PythonReport: Add various python eclasses related checks.</p></li>
+<li><p>ObsoleteUri: Flag obsolete URIs (github/gitlab) that should be updated.</p></li>
+<li><p>VisibilityReport: Split NonsolvableDeps into stable, dev, and exp results
+according to the status of the profile that triggered them.</p></li>
+<li><p>GitCommitsCheck: Add initial check support for unpushed git commits. This
+currently includes the following keywords: DirectNoMaintainer,
+DroppedStableKeywords, DroppedUnstableKeywords, DirectStableKeywords, and
+OutdatedCopyright.</p></li>
+<li><p>MissingMaintainer: Flag packages missing a maintainer (or maintainer-needed
+comment) in metadata.xml.</p></li>
+<li><p>EqualVersions: Flag ebuilds that have semantically equal versions.</p></li>
+<li><p>UnnecessarySlashStrip: Flag ebuilds using a path variable that strips a
+nonexistent slash (usually due to porting to EAPI 7).</p></li>
+<li><p>MissingSlash: Flag ebuilds using a path variable missing a trailing slash
+(usually due to porting to EAPI 7).</p></li>
+<li><p>DeprecatedChksum: Flag distfiles using outdated checksum hashes.</p></li>
+<li><p>MissingRevision: Flag packages lacking a revision in =cat/pkg dependencies.</p></li>
+<li><p>MissingVirtualKeywords: Flag virtual packages with keywords missing from
+their dependencies.</p></li>
+<li><p>UnsortedKeywords: Flag packages with unsorted KEYWORDS.</p></li>
+<li><p>OverlappingKeywords: Flag packages with overlapping arch and ~arch KEYWORDS.</p></li>
+<li><p>DuplicateKeywords: Flag packages with duplicate KEYWORD entries.</p></li>
+<li><p>InvalidKeywords: Flag packages using invalid KEYWORDS.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcheck-0-5-4-2017-09-22">
+<h2>pkgcheck 0.5.4 (2017-09-22)<a class="headerlink" href="#pkgcheck-0-5-4-2017-09-22" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Add MetadataXmlEmptyElement check for empty elements in metadata.xml files.</p></li>
+<li><p>Add BadProfileEntry, UnknownProfilePackages, UnknownProfilePackageUse, and
+UnknownProfileUse checks that scan various files in a repo's profiles
+directory looking for old packages and/or USE flags.</p></li>
+<li><p>Merge replay functionality into pkgcheck and split the commands into 'scan',
+'replay', and 'show' subcommands with 'scan' still being the default
+subcommand so previous commandline usage for running pkgcheck remains the
+same for now.</p></li>
+<li><p>Add 'errors' and 'warnings' aliases for the -k/--keywords option, e.g. if you
+only want to scan for errors use the following: pkgcheck -k errors</p></li>
+<li><p>Fallback to the default repo if not running with a configured repo and one
+wasn't specified.</p></li>
+<li><p>Add PortageInternals check for ebuilds using a function or variable internal
+to portage similar to repoman.</p></li>
+<li><p>Add HttpsAvailable check for http links that should use https similar
+to repoman.</p></li>
+<li><p>Add DuplicateFiles check for duplicate files in FILESDIR.</p></li>
+<li><p>Add EmptyFile check for empty files in FILESDIR.</p></li>
+<li><p>Add AbsoluteSymlink check similar to repoman's.</p></li>
+<li><p>Add UnusedInMasterLicenses, UnusedInMasterEclasses,
+UnusedInMasterGlobalFlags, and UnusedInMasterMirrors reports that check if an
+overlay is using the related items from the master repo that are unused there
+(meaning they could be removed from the master soon).</p></li>
+<li><p>Add initial json reporter that outputs newline-delimited json for report
+objects.</p></li>
+<li><p>Add BadFilename check for unspecific filenames such as ${PV}.tar.gz or
+v${PV}.zip that can be found on raw github tag archive downloads.</p></li>
+<li><p>GPL2/BSD dual licensing was dropped to BSD as agreed by all contributors.</p></li>
+<li><p>Add check for REQUIRED_USE against default profile USE which flags packages
+with default USE settings that don't satisfy their REQUIRED_USE for each
+profile scanned.</p></li>
+<li><p>Add -k/--keywords option to only check for certain keywords.</p></li>
+<li><p>Add UnusedEclasses check.</p></li>
+<li><p>Drop --profiles-disable-deprecated option, deprecated profiles are skipped by
+default now and can be enabled or disabled using the 'deprecated' argument to
+-p/--profiles similar to the stable, dev, and exp keywords for profile
+scanning.</p></li>
+<li><p>Add UnusedProfileDirs check that will output all profile dirs that aren't
+specified as a profile in profiles.desc or aren't sourced by any as a parent.</p></li>
+<li><p>Add python3.6 support and drop python3.3 support.</p></li>
+<li><p>Add UnnecessaryManifest report for showing unnecessary manifest entries for
+non-DIST targets on a repo with thin manifests enabled.</p></li>
+<li><p>Collapse -c/--check and -d/--disable-check into -c/--checks option using the
+same extended comma toggling method used for --arches and --profiles options.</p></li>
+<li><p>Add support for checking REQUIRED_USE for validity.</p></li>
+<li><p>Drop -o/--overlayed-repo support and rely on properly configured masters.</p></li>
+<li><p>Add UnknownLicenses report for unknown licenses listed in license groups.</p></li>
+<li><p>Add support for running checks of a certain scope using -S/--scopes, e.g. to
+run all repo scope checks on the gentoo repo use the following command:
+pkgcheck -r gentoo -S repo</p></li>
+<li><p>Add UnusedMirrorsCheck to scan for unused third party mirrors.</p></li>
+<li><p>Add UnknownCategories report that shows categories that aren't listed in a
+repo's (or its masters) categories.</p></li>
+<li><p>Update deprecated eclasses list.</p></li>
+<li><p>Drop restriction on current working directory for full repo scans. Previously
+pkgcheck had to be run within a repo, now it should be able to run from
+anywhere against a specified repo.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcheck-0-5-3-2016-05-29">
+<h2>pkgcheck 0.5.3 (2016-05-29)<a class="headerlink" href="#pkgcheck-0-5-3-2016-05-29" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Fix new installs using pip.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcheck-0-5-2-2016-05-28">
+<h2>pkgcheck 0.5.2 (2016-05-28)<a class="headerlink" href="#pkgcheck-0-5-2-2016-05-28" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p>Replace libxml2 with lxml-based validator for glep68 schema validation.</p></li>
+<li><p>UseAddon: Use profile-derived implicit USE flag lists instead of pre-EAPI 5
+hacks. This also improves the unused global USE flag check to look for unused
+USE_EXPAND flags.</p></li>
+<li><p>Add various repo-level sanity checks for profile and arch lists.</p></li>
+<li><p>Output reports for ~arch VCS ebuilds as well, previously only vcs ebuilds
+with stable keywords would display warnings.</p></li>
+<li><p>Large reworking of profile and arch addon options. In summary, the majority
+of the previous options have been replaced with -a/--arches and -p/--profiles
+that accept comma separated lists of targets to enable or disable. The
+keywords stable, dev, and exp that related to the sets of stable,
+development, and experimental profiles from the targetted repo can also be
+used as --profiles arguments.</p>
+<p>For example, to scan all stable profiles use the following:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pkgcheck</span> <span class="o">-</span><span class="n">p</span> <span class="n">stable</span>
+</pre></div>
+</div>
+<p>To scan all profiles except experimental profiles (note the required use of
+an equals sign when starting the argument list with a disabled target):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pkgcheck</span> <span class="o">-</span><span class="n">p</span><span class="o">=-</span><span class="n">exp</span>
+</pre></div>
+</div>
+<p>See the related man page sections for more details.</p>
+</li>
+<li><p>Officially support python3 (3.3 and up).</p></li>
+<li><p>Add initial man page generated from argparse info.</p></li>
+<li><p>Migrate from optparse to argparse, usability-wise there shouldn't be any
+changes.</p></li>
+<li><p>Drop ChangeLog file checks, the gentoo repo moved to git so ChangeLogs are
+not in the repo anymore.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcheck-0-5-1-2015-08-10">
+<h2>pkgcheck 0.5.1 (2015-08-10)<a class="headerlink" href="#pkgcheck-0-5-1-2015-08-10" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Remove portdir references, if you use a custom config file you may need to
+update 'portdir' references to use 'gentoo' instead or whatever your main
+repo is.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcheck-0-5-0-2015-04-01">
+<h2>pkgcheck 0.5.0 (2015-04-01)<a class="headerlink" href="#pkgcheck-0-5-0-2015-04-01" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Suppress possible memory exhaustion cases for visibility checks due to
+transitive use flag dependencies.</p></li>
+<li><p>Project, python module, and related scripts renamed from pkgcore-checks (or
+in the case of the python module pkgcore_checks) to pkgcheck.</p></li>
+<li><p>Add --profile-disable-exp option to skip experimental profiles.</p></li>
+<li><p>Make the SizeViolation check test individual files in $FILESDIR, not the
+entire $FILESDIR itself.</p></li>
+<li><p>Make UnusedLocalFlags scan metadata.xml for local use flags instead of the
+deprecated repo-wide use.local.desc file.</p></li>
+<li><p>Stable arch related checks (e.g. UnstableOnly) now default to using only the
+set of stable arches defined by profiles.desc.</p></li>
+<li><p>Add check for deprecated EAPIs.</p></li>
+<li><p>Conflicting manifests chksums scanning was added.</p></li>
+<li><p>Removed hardcoded manifest hashes list, use layout.conf defined list of
+required hashes (didn't exist till ~5 years after the check was written).</p></li>
+<li><p>Update pkgcore API usage to move away from deprecated functionality.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcore-checks-0-4-15-2011-10-27">
+<h2>pkgcore-checks 0.4.15 (2011-10-27)<a class="headerlink" href="#pkgcore-checks-0-4-15-2011-10-27" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>pkgcore-checks issue #2; if metadata.dtd is required but can't be fetched,
+suppress metadata_xml check.  If the check must be ran (thus unfetchable
+metadata.dtd should be a failure), pass --metadata-dtd-required.</p></li>
+<li><p>pkgcore-checks now requires pkgcore 0.7.3.</p></li>
+<li><p>fix racey test failure in test_addons due to ProfileNode instance caching.</p></li>
+<li><p>fix exception in pkg directory checks for when files directory
+doesn't exist.</p></li>
+<li><p>cleanup of deprecated api usage.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcore-checks-0-4-14-2011-04-24">
+<h2>pkgcore-checks 0.4.14 (2011-04-24)<a class="headerlink" href="#pkgcore-checks-0-4-14-2011-04-24" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Updated compatibility w/ recent snakeoil/pkgcore changes.</p></li>
+<li><p>deprecated eclasses list was updated.</p></li>
+<li><p>LICENSE checks for virtual/* are now suppressed.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcore-checks-0-4-13-2010-01-08">
+<h2>pkgcore-checks 0.4.13 (2010-01-08)<a class="headerlink" href="#pkgcore-checks-0-4-13-2010-01-08" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>fix to use dep scanning in visibility where it was missing use deps that
+can never be satisfied for a specific profile due to use masking/forcing.</p></li>
+<li><p>more visibility optimizations; Grand total in combination w/ optimziations
+leveled in snakeoil/pkgcore since pkgcore-checks 0.4.12 released, 58%
+faster now.</p></li>
+<li><p>ignore unstated 'prefix' flag in conditionals- much like bootstrap, its'
+the latest unstated.</p></li>
+<li><p>added a null reporter for performance testing.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcore-checks-0-4-12-2009-12-27">
+<h2>pkgcore-checks 0.4.12 (2009-12-27)<a class="headerlink" href="#pkgcore-checks-0-4-12-2009-12-27" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>corner case import error in metadata_xml scan for py3k is now fixed; if
+you saw urllib.urlopen complaints, this is fixed.</p></li>
+<li><p>&gt;snakeoil-0.3.4 is now required for sdist generation.</p></li>
+<li><p>visibility scans now use 22% less memory (around 130MB on python2.6 x86_64)
+and is about 3% faster.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcore-checks-0-4-11-2009-12-20">
+<h2>pkgcore-checks 0.4.11 (2009-12-20)<a class="headerlink" href="#pkgcore-checks-0-4-11-2009-12-20" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>minor speedup in visibility scans- about 3% faster now.</p></li>
+<li><p>fix a traceback in deprecated from when portage writes the ebuild cache out
+w/out any _eclasses_ entry.</p></li>
+<li><p>fix a rare traceback in visibility scans where a virtual metapkg has zero
+matches.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcore-checks-0-4-10-2009-12-14">
+<h2>pkgcore-checks 0.4.10 (2009-12-14)<a class="headerlink" href="#pkgcore-checks-0-4-10-2009-12-14" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>fix a bug where use deps on metapkgs was invalidly being flagged.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcore-checks-0-4-9-2009-11-26">
+<h2>pkgcore-checks 0.4.9 (2009-11-26)<a class="headerlink" href="#pkgcore-checks-0-4-9-2009-11-26" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>fix a bug in test running- bzr_verinfo isn't generated for pkgcore-checks
+in sdist (no need), yet build_py was trying to regenerate it.  Basically
+broke installation on machines that lacked bzr.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcore-checks-0-4-8-2009-11-26">
+<h2>pkgcore-checks 0.4.8 (2009-11-26)<a class="headerlink" href="#pkgcore-checks-0-4-8-2009-11-26" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>experimental py3k support.</p></li>
+<li><p>test runner improvements via depending on snakeoil.distutils_extensions.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcore-checks-0-4-7-2009-10-26">
+<h2>pkgcore-checks 0.4.7 (2009-10-26)<a class="headerlink" href="#pkgcore-checks-0-4-7-2009-10-26" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>fix invalid flagging of use deps on PyQt4 for ia64; basically PyQt4[webkit]
+is valid due to a pkg level masked use reversal... the checking code however
+wasn't doing incremental expansion itself..  Same could occur for forced use.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcore-checks-0-4-6-2009-10-22">
+<h2>pkgcore-checks 0.4.6 (2009-10-22)<a class="headerlink" href="#pkgcore-checks-0-4-6-2009-10-22" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>fix a bug in tristate use evaluation of potential USE combinations.
+Roughly, if a flag is masked <em>and</em> forced, the result is it's masked.</p></li>
+<li><p>compatibility fixes for pkgcore 0.5; 0.5 isn't required, but advised.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcore-checks-0-4-5-2008-11-07">
+<h2>pkgcore-checks 0.4.5 (2008-11-07)<a class="headerlink" href="#pkgcore-checks-0-4-5-2008-11-07" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>verify whether or not a requested use state is actually viable when profile
+masking/forcing is taken into account.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcore-checks-0-4-4-2008-10-21">
+<h2>pkgcore-checks 0.4.4 (2008-10-21)<a class="headerlink" href="#pkgcore-checks-0-4-4-2008-10-21" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>EAPI2 support for checking use/transitive use deps.</p></li>
+<li><p>ticket 216; basically portage doesn't always write out _eclasses_ entries
+in the cache- if they're empty, it won't.  pkgcore-checks visibility vcs
+eclass tests assumed otherwise- this is now fixed.</p></li>
+<li><p>pcheck now only outputs the number of tests it's running if --debug is
+enabled.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcore-checks-0-4-3-2008-03-18">
+<h2>pkgcore-checks 0.4.3 (2008-03-18)<a class="headerlink" href="#pkgcore-checks-0-4-3-2008-03-18" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>ticket 8; false positive unused global USE flags due to not stripping '+-'
+from iuse defaults.</p></li>
+<li><p>ticket 7: tune down metadata xml checks verbosity.</p></li>
+<li><p>dropped ModularXPortingReport; no longer needed.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcore-checks-0-4-2-2007-12-15">
+<h2>pkgcore-checks 0.4.2 (2007-12-15)<a class="headerlink" href="#pkgcore-checks-0-4-2-2007-12-15" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>minor release to be EAPI=1 compatible wrt IUSE defaults</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcore-checks-0-4-1-2007-07-16">
+<h2>pkgcore-checks 0.4.1 (2007-07-16)<a class="headerlink" href="#pkgcore-checks-0-4-1-2007-07-16" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>fixed ticket 90; NonExistantDeps occasionally wouldn't report later versions
+of an offender.</p></li>
+<li><p>--disable-arches option; way to specifically disable an arch (blacklisting)
+instead of having to specify all arches.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcore-checks-0-4-2007-06-06">
+<h2>pkgcore-checks 0.4 (2007-06-06)<a class="headerlink" href="#pkgcore-checks-0-4-2007-06-06" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>update to use snakeoil api.</p></li>
+<li><p>Add check to metadata_check.DependencyReport for self-blocking atoms; for
+example, if dev-util/diffball RDEPEND has !dev-util/diffball.</p></li>
+<li><p>ticket 82; Fix BadProto result object so it has proper threshold.</p></li>
+<li><p>Fix class serialization bug in RestrictsReport.</p></li>
+<li><p>profile loadup optimization; pkgcore weakly caches the intermediate nodes,
+pcheck's profile loadup however specifically released the profiles every
+looping; now it temporarily holds onto it, thus allowing the caching to kick
+in.  Among other things, cuts file reads down from 1800 to around around 146.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcore-checks-0-3-5">
+<h2>pkgcore-checks 0.3.5<a class="headerlink" href="#pkgcore-checks-0-3-5" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>addition of __attrs__ to base.Result classes; use this if __slots__ doesn't
+suffice for listing the attrs to pickle.</p></li>
+<li><p>Thanks to Michael Sterret for pointing it out; tweak cleanup scan so that it
+notes 1.12 overshadows 1.11 (stable keywords overshadow earlier unstable
+versions): for example-
+1.11: ~x86 ~amd64
+1.12: x86 ~amd64</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcore-checks-0-3-4">
+<h2>pkgcore-checks 0.3.4<a class="headerlink" href="#pkgcore-checks-0-3-4" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>treat pkg.restrict as a depset.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcore-checks-0-3-3">
+<h2>pkgcore-checks 0.3.3<a class="headerlink" href="#pkgcore-checks-0-3-3" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>drop digest specific checks; portage now prunes digests on sync regardless
+of whether or not the repo is m2 pure; thus, no way to detect if a missing
+digest is actually a screwup in the repo, or if it's portage being 'special'.
+May re-add the checks down the line, currently however removing them for
+the common case.</p></li>
+<li><p>back down check for files directory if manifest2; manifest2 glep didn't
+specify that files directory could be dropped, but portage has deviated there.
+Since been backed down, but getting ahead so we don't need an intermediate
+release when they try it again.</p></li>
+<li><p>added check for missing metadata.xml; refactored common error class selection
+logic into base class.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcore-checks-0-3-2">
+<h2>pkgcore-checks 0.3.2<a class="headerlink" href="#pkgcore-checks-0-3-2" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>correct tracebacks when dealing with a few result objects from repo_metadata</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcore-checks-0-3-1">
+<h2>pkgcore-checks 0.3.1<a class="headerlink" href="#pkgcore-checks-0-3-1" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>makes StaleUnstable abide by --arches; ticket 59 (thanks leio).</p></li>
+<li><p>stop complaining about empty keywords, since they're now allowed instead of
+using -*.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcore-checks-0-3">
+<h2>pkgcore-checks 0.3<a class="headerlink" href="#pkgcore-checks-0-3" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>heavy refactoring of reporter subsystem, and clean up of check results.
+Better messages, better output for normal usage.  to_xml() methods were
+dropped (XmlReporter handles it on it's own), same for to_str() in favor
+of short_desc and long_desc attributes.</p></li>
+<li><p>whitespace checks now output one result for each classification for an
+ebuild, instead of emitting reports for each line.</p></li>
+<li><p>all remaining 'info' statements are pushed to stderr now.</p></li>
+<li><p>new PickleStream reporter; used to serialize check results, and flush the
+stream out stdout.  If you need to get at the data generated, this is the
+sanest way to do it (alternatives require trying to deserialize what a
+reporter does, thus losing data).</p></li>
+<li><p>added new tool replay-pcheck-stream; used to replay a pickle stream through
+alternative reporters.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcore-checks-0-2">
+<h2>pkgcore-checks 0.2<a class="headerlink" href="#pkgcore-checks-0-2" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>invocation args have changed- please see readme for details of how to
+use pcheck.</p></li>
+<li><p>test suite added; not yet complete coverage, but 90% of the way there.</p></li>
+<li><p>--list-checks output format is fair bit more human-readable now.</p></li>
+<li><p>better support for overlays (should work fine with appropriate commandline
+options supplied)</p></li>
+<li><p>optimizations, and performance regression fixes; fair bit faster then .1.</p></li>
+<li><p>new checks can be added via pkgcore 0.2 plugins cache.</p></li>
+<li><p>UI improvements; color, and human readable output.</p></li>
+<li><p>--xml option was dropped, use --reporter to specify the desired reporter,
+and --list-reporters to see what reporters are available</p></li>
+<li><p>added --enable, --disable options to prune add/remove specific checks from
+the run.</p></li>
+<li><p>add config based 'suites' that can be ran; basically, sets of tests/targets
+to run via pcheck.  See README for details.</p></li>
+<li><p>whitespace checks.</p></li>
+</ul>
+</div>
+<div class="section" id="pkgcore-checks-0-1">
+<h2>pkgcore-checks 0.1<a class="headerlink" href="#pkgcore-checks-0-1" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>inital release</p></li>
+</ul>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Release Notes</a><ul>
+<li><a class="reference internal" href="#pkgcheck-0-8-1-2021-01-28">pkgcheck 0.8.1 (2021-01-28)</a></li>
+<li><a class="reference internal" href="#pkgcheck-0-8-0-2021-01-27">pkgcheck 0.8.0 (2021-01-27)</a></li>
+<li><a class="reference internal" href="#pkgcheck-0-7-9-2020-12-05">pkgcheck 0.7.9 (2020-12-05)</a></li>
+<li><a class="reference internal" href="#pkgcheck-0-7-8-2020-12-04">pkgcheck 0.7.8 (2020-12-04)</a></li>
+<li><a class="reference internal" href="#pkgcheck-0-7-7-2020-07-05">pkgcheck 0.7.7 (2020-07-05)</a></li>
+<li><a class="reference internal" href="#pkgcheck-0-7-6-2020-02-09">pkgcheck 0.7.6 (2020-02-09)</a></li>
+<li><a class="reference internal" href="#pkgcheck-0-7-5-2020-01-26">pkgcheck 0.7.5 (2020-01-26)</a></li>
+<li><a class="reference internal" href="#pkgcheck-0-7-4-2020-01-11">pkgcheck 0.7.4 (2020-01-11)</a></li>
+<li><a class="reference internal" href="#pkgcheck-0-7-3-2019-12-29">pkgcheck 0.7.3 (2019-12-29)</a></li>
+<li><a class="reference internal" href="#pkgcheck-0-7-2-2019-12-20">pkgcheck 0.7.2 (2019-12-20)</a></li>
+<li><a class="reference internal" href="#pkgcheck-0-7-1-2019-11-30">pkgcheck 0.7.1 (2019-11-30)</a></li>
+<li><a class="reference internal" href="#pkgcheck-0-7-0-2019-11-08">pkgcheck 0.7.0 (2019-11-08)</a></li>
+<li><a class="reference internal" href="#pkgcheck-0-6-9-2019-11-04">pkgcheck 0.6.9 (2019-11-04)</a></li>
+<li><a class="reference internal" href="#pkgcheck-0-6-8-2019-10-06">pkgcheck 0.6.8 (2019-10-06)</a></li>
+<li><a class="reference internal" href="#pkgcheck-0-6-7-2019-10-05">pkgcheck 0.6.7 (2019-10-05)</a></li>
+<li><a class="reference internal" href="#pkgcheck-0-6-6-2019-09-24">pkgcheck 0.6.6 (2019-09-24)</a></li>
+<li><a class="reference internal" href="#pkgcheck-0-6-5-2019-09-18">pkgcheck 0.6.5 (2019-09-18)</a></li>
+<li><a class="reference internal" href="#pkgcheck-0-6-4-2019-09-13">pkgcheck 0.6.4 (2019-09-13)</a></li>
+<li><a class="reference internal" href="#pkgcheck-0-6-3-2019-08-30">pkgcheck 0.6.3 (2019-08-30)</a></li>
+<li><a class="reference internal" href="#pkgcheck-0-6-2-2019-08-26">pkgcheck 0.6.2 (2019-08-26)</a></li>
+<li><a class="reference internal" href="#pkgcheck-0-6-1-2019-08-25">pkgcheck 0.6.1 (2019-08-25)</a></li>
+<li><a class="reference internal" href="#pkgcheck-0-6-0-2019-08-23">pkgcheck 0.6.0 (2019-08-23)</a></li>
+<li><a class="reference internal" href="#pkgcheck-0-5-4-2017-09-22">pkgcheck 0.5.4 (2017-09-22)</a></li>
+<li><a class="reference internal" href="#pkgcheck-0-5-3-2016-05-29">pkgcheck 0.5.3 (2016-05-29)</a></li>
+<li><a class="reference internal" href="#pkgcheck-0-5-2-2016-05-28">pkgcheck 0.5.2 (2016-05-28)</a></li>
+<li><a class="reference internal" href="#pkgcheck-0-5-1-2015-08-10">pkgcheck 0.5.1 (2015-08-10)</a></li>
+<li><a class="reference internal" href="#pkgcheck-0-5-0-2015-04-01">pkgcheck 0.5.0 (2015-04-01)</a></li>
+<li><a class="reference internal" href="#pkgcore-checks-0-4-15-2011-10-27">pkgcore-checks 0.4.15 (2011-10-27)</a></li>
+<li><a class="reference internal" href="#pkgcore-checks-0-4-14-2011-04-24">pkgcore-checks 0.4.14 (2011-04-24)</a></li>
+<li><a class="reference internal" href="#pkgcore-checks-0-4-13-2010-01-08">pkgcore-checks 0.4.13 (2010-01-08)</a></li>
+<li><a class="reference internal" href="#pkgcore-checks-0-4-12-2009-12-27">pkgcore-checks 0.4.12 (2009-12-27)</a></li>
+<li><a class="reference internal" href="#pkgcore-checks-0-4-11-2009-12-20">pkgcore-checks 0.4.11 (2009-12-20)</a></li>
+<li><a class="reference internal" href="#pkgcore-checks-0-4-10-2009-12-14">pkgcore-checks 0.4.10 (2009-12-14)</a></li>
+<li><a class="reference internal" href="#pkgcore-checks-0-4-9-2009-11-26">pkgcore-checks 0.4.9 (2009-11-26)</a></li>
+<li><a class="reference internal" href="#pkgcore-checks-0-4-8-2009-11-26">pkgcore-checks 0.4.8 (2009-11-26)</a></li>
+<li><a class="reference internal" href="#pkgcore-checks-0-4-7-2009-10-26">pkgcore-checks 0.4.7 (2009-10-26)</a></li>
+<li><a class="reference internal" href="#pkgcore-checks-0-4-6-2009-10-22">pkgcore-checks 0.4.6 (2009-10-22)</a></li>
+<li><a class="reference internal" href="#pkgcore-checks-0-4-5-2008-11-07">pkgcore-checks 0.4.5 (2008-11-07)</a></li>
+<li><a class="reference internal" href="#pkgcore-checks-0-4-4-2008-10-21">pkgcore-checks 0.4.4 (2008-10-21)</a></li>
+<li><a class="reference internal" href="#pkgcore-checks-0-4-3-2008-03-18">pkgcore-checks 0.4.3 (2008-03-18)</a></li>
+<li><a class="reference internal" href="#pkgcore-checks-0-4-2-2007-12-15">pkgcore-checks 0.4.2 (2007-12-15)</a></li>
+<li><a class="reference internal" href="#pkgcore-checks-0-4-1-2007-07-16">pkgcore-checks 0.4.1 (2007-07-16)</a></li>
+<li><a class="reference internal" href="#pkgcore-checks-0-4-2007-06-06">pkgcore-checks 0.4 (2007-06-06)</a></li>
+<li><a class="reference internal" href="#pkgcore-checks-0-3-5">pkgcore-checks 0.3.5</a></li>
+<li><a class="reference internal" href="#pkgcore-checks-0-3-4">pkgcore-checks 0.3.4</a></li>
+<li><a class="reference internal" href="#pkgcore-checks-0-3-3">pkgcore-checks 0.3.3</a></li>
+<li><a class="reference internal" href="#pkgcore-checks-0-3-2">pkgcore-checks 0.3.2</a></li>
+<li><a class="reference internal" href="#pkgcore-checks-0-3-1">pkgcore-checks 0.3.1</a></li>
+<li><a class="reference internal" href="#pkgcore-checks-0-3">pkgcore-checks 0.3</a></li>
+<li><a class="reference internal" href="#pkgcore-checks-0-2">pkgcore-checks 0.2</a></li>
+<li><a class="reference internal" href="#pkgcore-checks-0-1">pkgcore-checks 0.1</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Welcome to pkgchecks’s documentation!</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="api.html"
+                        title="next chapter">API Documentation</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/news.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="api.html" title="API Documentation"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to pkgchecks’s documentation!"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Release Notes</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

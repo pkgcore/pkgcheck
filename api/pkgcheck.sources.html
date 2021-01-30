@@ -1,0 +1,386 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.sources module &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.sources module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcheck.sources">
+<span id="pkgcheck-sources-module"></span><h1>pkgcheck.sources module<a class="headerlink" href="#module-pkgcheck.sources" title="Permalink to this headline">¶</a></h1>
+<p>Custom package sources used for feeding checks.</p>
+<dl class="py class">
+<dt id="pkgcheck.sources.CategoryRepoSource">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.sources.</code><code class="sig-name descname">CategoryRepoSource</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="n">source</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#CategoryRepoSource"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.CategoryRepoSource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.sources._CombinedSource</span></code></p>
+<p>Ebuild repository source yielding lists of versioned packages per category.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.sources.CategoryRepoSource.keyfunc">
+<code class="sig-name descname">keyfunc</code><em class="property"> = operator.attrgetter('category')</em><a class="headerlink" href="#pkgcheck.sources.CategoryRepoSource.keyfunc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.sources.CategoryRepoSource.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='category' &#64;0x7f81a67f4f40&gt;</em><a class="headerlink" href="#pkgcheck.sources.CategoryRepoSource.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.sources.EbuildFileRepoSource">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.sources.</code><code class="sig-name descname">EbuildFileRepoSource</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="n">source</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#EbuildFileRepoSource"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.EbuildFileRepoSource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.sources.RepoSource" title="pkgcheck.sources.RepoSource"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.sources.RepoSource</span></code></a></p>
+<p>Ebuild repository source yielding package objects and their file contents.</p>
+<dl class="py method">
+<dt id="pkgcheck.sources.EbuildFileRepoSource.itermatch">
+<code class="sig-name descname">itermatch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">restrict</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#EbuildFileRepoSource.itermatch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.EbuildFileRepoSource.itermatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yield packages matching the given restriction from the selected source.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.sources.EbuildParseRepoSource">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.sources.</code><code class="sig-name descname">EbuildParseRepoSource</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bash_addon</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#EbuildParseRepoSource"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.EbuildParseRepoSource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.sources.RepoSource" title="pkgcheck.sources.RepoSource"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.sources.RepoSource</span></code></a></p>
+<p>Ebuild repository source yielding package objects and their file contents.</p>
+<dl class="py method">
+<dt id="pkgcheck.sources.EbuildParseRepoSource.itermatch">
+<code class="sig-name descname">itermatch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">restrict</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#EbuildParseRepoSource.itermatch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.EbuildParseRepoSource.itermatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yield packages matching the given restriction from the selected source.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.sources.EbuildParseRepoSource.required_addons">
+<code class="sig-name descname">required_addons</code><em class="property"> = (&lt;class 'pkgcheck.addons.BashAddon'&gt;,)</em><a class="headerlink" href="#pkgcheck.sources.EbuildParseRepoSource.required_addons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.sources.EclassRepoSource">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.sources.</code><code class="sig-name descname">EclassRepoSource</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">eclass_addon</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#EclassRepoSource"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.EclassRepoSource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.sources.RepoSource" title="pkgcheck.sources.RepoSource"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.sources.RepoSource</span></code></a></p>
+<p>Repository eclass source.</p>
+<dl class="py method">
+<dt id="pkgcheck.sources.EclassRepoSource.itermatch">
+<code class="sig-name descname">itermatch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">restrict</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#EclassRepoSource.itermatch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.EclassRepoSource.itermatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yield packages matching the given restriction from the selected source.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.sources.EclassRepoSource.required_addons">
+<code class="sig-name descname">required_addons</code><em class="property"> = (&lt;class 'pkgcheck.eclass.EclassAddon'&gt;,)</em><a class="headerlink" href="#pkgcheck.sources.EclassRepoSource.required_addons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.sources.EclassRepoSource.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;LocationScope desc='eclass' &#64;0x7f81a648fd90&gt;</em><a class="headerlink" href="#pkgcheck.sources.EclassRepoSource.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.sources.EmptySource">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.sources.</code><code class="sig-name descname">EmptySource</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">scope</span></em>, <em class="sig-param"><span class="n">options</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#EmptySource"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.EmptySource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.sources.Source" title="pkgcheck.sources.Source"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.sources.Source</span></code></a></p>
+<p>Empty source meant for skipping item feed.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.sources.FilteredPackageRepoSource">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.sources.</code><code class="sig-name descname">FilteredPackageRepoSource</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg_filter</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#FilteredPackageRepoSource"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.FilteredPackageRepoSource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.sources.FilteredRepoSource" title="pkgcheck.sources.FilteredRepoSource"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.sources.FilteredRepoSource</span></code></a></p>
+<p>Ebuild repository source supporting custom package filtering.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.sources.FilteredPackageRepoSource.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='package' &#64;0x7f81a68053a0&gt;</em><a class="headerlink" href="#pkgcheck.sources.FilteredPackageRepoSource.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.sources.FilteredRepoSource">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.sources.</code><code class="sig-name descname">FilteredRepoSource</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg_filter</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#FilteredRepoSource"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.FilteredRepoSource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.sources.RepoSource" title="pkgcheck.sources.RepoSource"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.sources.RepoSource</span></code></a></p>
+<p>Ebuild repository source supporting custom package filtering.</p>
+<dl class="py method">
+<dt id="pkgcheck.sources.FilteredRepoSource.itermatch">
+<code class="sig-name descname">itermatch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">restrict</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#FilteredRepoSource.itermatch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.FilteredRepoSource.itermatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yield packages matching the given restriction from the selected source.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.sources.LatestPkgsFilter">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.sources.</code><code class="sig-name descname">LatestPkgsFilter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">source_iter</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#LatestPkgsFilter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.LatestPkgsFilter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Flag the latest non-VCS and VCS slots for filtering package sets.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.sources.LatestVersionsFilter">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.sources.</code><code class="sig-name descname">LatestVersionsFilter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">source_iter</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#LatestVersionsFilter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.LatestVersionsFilter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Filter source packages, yielding those from the latest non-VCS and VCS slots.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.sources.PackageRepoSource">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.sources.</code><code class="sig-name descname">PackageRepoSource</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="n">source</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#PackageRepoSource"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.PackageRepoSource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.sources._CombinedSource</span></code></p>
+<p>Ebuild repository source yielding lists of versioned packages per package.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.sources.PackageRepoSource.keyfunc">
+<code class="sig-name descname">keyfunc</code><em class="property"> = operator.attrgetter('key')</em><a class="headerlink" href="#pkgcheck.sources.PackageRepoSource.keyfunc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.sources.PackageRepoSource.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='package' &#64;0x7f81a68053a0&gt;</em><a class="headerlink" href="#pkgcheck.sources.PackageRepoSource.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.sources.Profile">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.sources.</code><code class="sig-name descname">Profile</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">node</span><span class="p">:</span> <span class="n"><a class="reference internal" href="pkgcheck.profiles.html#pkgcheck.profiles.ProfileNode" title="pkgcheck.profiles.ProfileNode">pkgcheck.profiles.ProfileNode</a></span></em>, <em class="sig-param"><span class="n">files</span><span class="p">:</span> <span class="n">set</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#Profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.Profile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Generic profile object.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.sources.Profile.files">
+<code class="sig-name descname">files</code><em class="property">: set</em><a class="headerlink" href="#pkgcheck.sources.Profile.files" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.sources.Profile.node">
+<code class="sig-name descname">node</code><em class="property">: <a class="reference internal" href="pkgcheck.profiles.html#pkgcheck.profiles.ProfileNode" title="pkgcheck.profiles.ProfileNode">pkgcheck.profiles.ProfileNode</a></em><a class="headerlink" href="#pkgcheck.sources.Profile.node" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.sources.ProfilesRepoSource">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.sources.</code><code class="sig-name descname">ProfilesRepoSource</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#ProfilesRepoSource"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.ProfilesRepoSource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.sources.RepoSource" title="pkgcheck.sources.RepoSource"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.sources.RepoSource</span></code></a></p>
+<p>Repository profiles file source.</p>
+<dl class="py method">
+<dt id="pkgcheck.sources.ProfilesRepoSource.itermatch">
+<code class="sig-name descname">itermatch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">restrict</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#ProfilesRepoSource.itermatch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.ProfilesRepoSource.itermatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yield packages matching the given restriction from the selected source.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.sources.ProfilesRepoSource.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;LocationScope desc='profile_node' &#64;0x7f81a648f6a0&gt;</em><a class="headerlink" href="#pkgcheck.sources.ProfilesRepoSource.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.sources.RawRepoSource">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.sources.</code><code class="sig-name descname">RawRepoSource</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="n">source</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#RawRepoSource"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.RawRepoSource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.sources.RepoSource" title="pkgcheck.sources.RepoSource"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.sources.RepoSource</span></code></a></p>
+<p>Ebuild repository source returning raw CPV objects.</p>
+<dl class="py method">
+<dt id="pkgcheck.sources.RawRepoSource.itermatch">
+<code class="sig-name descname">itermatch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">restrict</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#RawRepoSource.itermatch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.RawRepoSource.itermatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yield packages matching the given restriction from the selected source.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.sources.RepoSource">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.sources.</code><code class="sig-name descname">RepoSource</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="n">source</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#RepoSource"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.RepoSource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.sources.Source" title="pkgcheck.sources.Source"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.sources.Source</span></code></a></p>
+<p>Base template for a repository source.</p>
+<dl class="py method">
+<dt id="pkgcheck.sources.RepoSource.itermatch">
+<code class="sig-name descname">itermatch</code><span class="sig-paren">(</span><em class="sig-param">restrict</em>, <em class="sig-param">sorter=&lt;built-in function sorted&gt;</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#RepoSource.itermatch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.RepoSource.itermatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yield packages matching the given restriction from the selected source.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.sources.RepoSource.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='version' &#64;0x7f81a648f5b0&gt;</em><a class="headerlink" href="#pkgcheck.sources.RepoSource.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.sources.RepoSource.source">
+<em class="property">property </em><code class="sig-name descname">source</code><a class="headerlink" href="#pkgcheck.sources.RepoSource.source" title="Permalink to this definition">¶</a></dt>
+<dd><p>Source that packages are pulled from.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.sources.RepositoryRepoSource">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.sources.</code><code class="sig-name descname">RepositoryRepoSource</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="n">source</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#RepositoryRepoSource"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.RepositoryRepoSource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.sources.RepoSource" title="pkgcheck.sources.RepoSource"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.sources.RepoSource</span></code></a></p>
+<p>Ebuild repository source yielding lists of versioned packages per package.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.sources.RepositoryRepoSource.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='repo' &#64;0x7f81a6a420a0&gt;</em><a class="headerlink" href="#pkgcheck.sources.RepositoryRepoSource.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.sources.RestrictionRepoSource">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.sources.</code><code class="sig-name descname">RestrictionRepoSource</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">restriction</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#RestrictionRepoSource"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.RestrictionRepoSource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.sources.RepoSource" title="pkgcheck.sources.RepoSource"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.sources.RepoSource</span></code></a></p>
+<p>Ebuild repository source supporting custom restrictions.</p>
+<dl class="py method">
+<dt id="pkgcheck.sources.RestrictionRepoSource.itermatch">
+<code class="sig-name descname">itermatch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">restrict</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#RestrictionRepoSource.itermatch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.RestrictionRepoSource.itermatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yield packages matching the given restriction from the selected source.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.sources.Source">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.sources.</code><code class="sig-name descname">Source</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="n">source</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#Source"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.Source" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base template for a source.</p>
+<dl class="py method">
+<dt id="pkgcheck.sources.Source.itermatch">
+<code class="sig-name descname">itermatch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">restrict</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#Source.itermatch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.Source.itermatch" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.sources.Source.required_addons">
+<code class="sig-name descname">required_addons</code><em class="property"> = ()</em><a class="headerlink" href="#pkgcheck.sources.Source.required_addons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.sources.Source.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='repo' &#64;0x7f81a6a420a0&gt;</em><a class="headerlink" href="#pkgcheck.sources.Source.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.sources.UnmaskedRepoSource">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.sources.</code><code class="sig-name descname">UnmaskedRepoSource</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#UnmaskedRepoSource"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.UnmaskedRepoSource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.sources.RepoSource" title="pkgcheck.sources.RepoSource"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.sources.RepoSource</span></code></a></p>
+<p>Repository source that uses profiles/package.mask to filter packages.</p>
+<dl class="py method">
+<dt id="pkgcheck.sources.UnmaskedRepoSource.itermatch">
+<code class="sig-name descname">itermatch</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">restrict</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#UnmaskedRepoSource.itermatch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.UnmaskedRepoSource.itermatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yield packages matching the given restriction from the selected source.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.sources.UnversionedSource">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.sources.</code><code class="sig-name descname">UnversionedSource</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="n">source</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#UnversionedSource"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.UnversionedSource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.sources._FilteredSource</span></code></p>
+<p>Source yielding unversioned atoms from matching packages.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.sources.UnversionedSource.keyfunc">
+<code class="sig-name descname">keyfunc</code><em class="property"> = operator.attrgetter('unversioned_atom')</em><a class="headerlink" href="#pkgcheck.sources.UnversionedSource.keyfunc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.sources.VersionedSource">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.sources.</code><code class="sig-name descname">VersionedSource</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="n">source</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#VersionedSource"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.VersionedSource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.sources._FilteredSource</span></code></p>
+<p>Source yielding versioned atoms from matching packages.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.sources.VersionedSource.keyfunc">
+<code class="sig-name descname">keyfunc</code><em class="property"> = operator.attrgetter('versioned_atom')</em><a class="headerlink" href="#pkgcheck.sources.VersionedSource.keyfunc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcheck.sources.init_source">
+<code class="sig-prename descclassname">pkgcheck.sources.</code><code class="sig-name descname">init_source</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">source</span></em>, <em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="n">addons_map</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/sources.html#init_source"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.sources.init_source" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize a given source.</p>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/pkgcheck.sources.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.sources module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

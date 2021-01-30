@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pkgcheck replay [-R REPORTER] [--format FORMAT_STR] [-h] [--debug] [-q] [-v] [--color BOOLEAN] FILE

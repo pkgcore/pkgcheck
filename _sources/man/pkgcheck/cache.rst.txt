@@ -1,0 +1,7 @@
+pkgcheck cache - perform cache operations
+-----------------------------------------
+
+.. include:: cache/_synopsis.rst
+.. include:: cache/_description.rst
+.. include:: cache/_options.rst
+.. include:: cache/_subcommands.rst

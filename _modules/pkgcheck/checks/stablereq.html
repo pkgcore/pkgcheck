@@ -1,0 +1,165 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.checks.stablereq &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../checks.html" accesskey="U">pkgcheck.checks</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.stablereq</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcheck.checks.stablereq</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil.strings</span> <span class="kn">import</span> <span class="n">pluralism</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">base</span><span class="p">,</span> <span class="n">git</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">sources</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">GentooRepoCheck</span>
+
+
+<div class="viewcode-block" id="StableRequest"><a class="viewcode-back" href="../../../api/pkgcheck.checks.stablereq.html#pkgcheck.checks.stablereq.StableRequest">[docs]</a><span class="k">class</span> <span class="nc">StableRequest</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Info</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Unstable ebuild with no changes for over 30 days.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">slot</span><span class="p">,</span> <span class="n">keywords</span><span class="p">,</span> <span class="n">age</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">slot</span> <span class="o">=</span> <span class="n">slot</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keywords</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">keywords</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">age</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">age</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keywords</span><span class="p">)</span>
+        <span class="n">keywords</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keywords</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;slot(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">slot</span><span class="si">}</span><span class="s2">) no change in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">age</span><span class="si">}</span><span class="s2"> days &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;for unstable keyword</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s2">: [ </span><span class="si">{</span><span class="n">keywords</span><span class="si">}</span><span class="s2"> ]&quot;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="StableRequestCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.stablereq.html#pkgcheck.checks.stablereq.StableRequestCheck">[docs]</a><span class="k">class</span> <span class="nc">StableRequestCheck</span><span class="p">(</span><span class="n">GentooRepoCheck</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Scan for unstable ebuilds with no changes for over 30 days.</span>
+
+<span class="sd">    By default, only triggered for arches with stable profiles. To check</span>
+<span class="sd">    additional arches outside the stable set specify them manually using the</span>
+<span class="sd">    -a/--arches option.</span>
+
+<span class="sd">    Note that packages with no stable keywords won&#39;t trigger this at all.</span>
+<span class="sd">    Instead they&#39;ll be caught by the UnstableOnly check.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_source</span> <span class="o">=</span> <span class="p">(</span><span class="n">sources</span><span class="o">.</span><span class="n">PackageRepoSource</span><span class="p">,</span> <span class="p">(),</span> <span class="p">((</span><span class="s1">&#39;source&#39;</span><span class="p">,</span> <span class="n">sources</span><span class="o">.</span><span class="n">UnmaskedRepoSource</span><span class="p">),))</span>
+    <span class="n">required_addons</span> <span class="o">=</span> <span class="p">(</span><span class="n">git</span><span class="o">.</span><span class="n">GitAddon</span><span class="p">,)</span>
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="n">StableRequest</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">git_addon</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">today</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">today</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">modified_repo</span> <span class="o">=</span> <span class="n">git_addon</span><span class="o">.</span><span class="n">cached_repo</span><span class="p">(</span><span class="n">git</span><span class="o">.</span><span class="n">GitModifiedRepo</span><span class="p">)</span>
+
+<div class="viewcode-block" id="StableRequestCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.stablereq.html#pkgcheck.checks.stablereq.StableRequestCheck.feed">[docs]</a>    <span class="k">def</span> <span class="nf">feed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkgset</span><span class="p">):</span>
+        <span class="n">pkg_slotted</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="n">pkg_keywords</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="c1"># ebuilds without keywords are ignored</span>
+        <span class="k">for</span> <span class="n">pkg</span> <span class="ow">in</span> <span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pkgset</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">keywords</span><span class="p">):</span>
+            <span class="n">pkg_slotted</span><span class="p">[</span><span class="n">pkg</span><span class="o">.</span><span class="n">slot</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span>
+            <span class="n">pkg_keywords</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">keywords</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">stable_pkg_keywords</span> <span class="o">:=</span> <span class="p">{</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pkg_keywords</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;~&#39;</span><span class="p">}}:</span>
+            <span class="k">for</span> <span class="n">slot</span><span class="p">,</span> <span class="n">pkgs</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">pkg_slotted</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+                <span class="n">slot_keywords</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">keywords</span> <span class="k">for</span> <span class="n">pkg</span> <span class="ow">in</span> <span class="n">pkgs</span><span class="p">))</span>
+                <span class="n">stable_slot_keywords</span> <span class="o">=</span> <span class="n">slot_keywords</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">stable_pkg_keywords</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">pkg</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">pkgs</span><span class="p">):</span>
+                    <span class="c1"># stop if stable keywords are found</span>
+                    <span class="k">if</span> <span class="n">stable_pkg_keywords</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">keywords</span><span class="p">):</span>
+                        <span class="k">break</span>
+
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">match</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modified_repo</span><span class="o">.</span><span class="n">itermatch</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">versioned_atom</span><span class="p">))</span>
+                    <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+                        <span class="c1"># probably an uncommitted, local ebuild... skipping</span>
+                        <span class="k">continue</span>
+
+                    <span class="n">added</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">date</span><span class="p">,</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="n">days_old</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">today</span> <span class="o">-</span> <span class="n">added</span><span class="p">)</span><span class="o">.</span><span class="n">days</span>
+                    <span class="k">if</span> <span class="n">days_old</span> <span class="o">&gt;=</span> <span class="mi">30</span><span class="p">:</span>
+                        <span class="n">pkg_stable_keywords</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s1">&#39;~&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">keywords</span><span class="p">}</span>
+                        <span class="k">if</span> <span class="n">stable_slot_keywords</span><span class="p">:</span>
+                            <span class="n">keywords</span> <span class="o">=</span> <span class="n">stable_slot_keywords</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">pkg_stable_keywords</span><span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">keywords</span> <span class="o">=</span> <span class="n">stable_pkg_keywords</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">pkg_stable_keywords</span><span class="p">)</span>
+                        <span class="n">keywords</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="s1">&#39;~&#39;</span> <span class="o">+</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">keywords</span><span class="p">)</span>
+                        <span class="k">yield</span> <span class="n">StableRequest</span><span class="p">(</span><span class="n">slot</span><span class="p">,</span> <span class="n">keywords</span><span class="p">,</span> <span class="n">days_old</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+                        <span class="k">break</span></div></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../checks.html" >pkgcheck.checks</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.stablereq</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

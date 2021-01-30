@@ -1,0 +1,7 @@
+pkgcheck.checks.network module
+==============================
+
+.. automodule:: pkgcheck.checks.network
+   :members:
+   :undoc-members:
+   :show-inheritance:

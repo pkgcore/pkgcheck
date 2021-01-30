@@ -1,0 +1,756 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.checks.repo_metadata module &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.repo_metadata module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcheck.checks.repo_metadata">
+<span id="pkgcheck-checks-repo-metadata-module"></span><h1>pkgcheck.checks.repo_metadata module<a class="headerlink" href="#module-pkgcheck.checks.repo_metadata" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.BadPackageUpdate">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">BadPackageUpdate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">msg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#BadPackageUpdate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.BadPackageUpdate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.ProfilesResult" title="pkgcheck.results.ProfilesResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.ProfilesResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.LogError" title="pkgcheck.results.LogError"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.LogError</span></code></a></p>
+<p>Badly formatted package update in profiles/updates files.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.BadPackageUpdate.name">
+<code class="sig-name descname">name</code><em class="property"> = 'BadPackageUpdate'</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.BadPackageUpdate.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.ConflictingChksums">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">ConflictingChksums</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">chksums</span></em>, <em class="sig-param"><span class="n">pkgs</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#ConflictingChksums"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.ConflictingChksums" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Error" title="pkgcheck.results.Error"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Error</span></code></a></p>
+<p>Checksum conflict detected between two files.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.ConflictingChksums.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.repo_metadata.ConflictingChksums.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.ConflictingChksums.name">
+<code class="sig-name descname">name</code><em class="property"> = 'ConflictingChksums'</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.ConflictingChksums.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.DeprecatedChksum">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">DeprecatedChksum</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">deprecated</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#DeprecatedChksum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.DeprecatedChksum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>A file in the chksum data does not use modern checksum set.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.DeprecatedChksum.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.repo_metadata.DeprecatedChksum.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.DeprecatedChksum.name">
+<code class="sig-name descname">name</code><em class="property"> = 'DeprecatedChksum'</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.DeprecatedChksum.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.EmptyProject">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">EmptyProject</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">project</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#EmptyProject"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.EmptyProject" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>A project has no developers.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.EmptyProject.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.repo_metadata.EmptyProject.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.EmptyProject.name">
+<code class="sig-name descname">name</code><em class="property"> = 'EmptyProject'</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.EmptyProject.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.GlobalUseCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">GlobalUseCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">use_addon</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#GlobalUseCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.GlobalUseCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.Check" title="pkgcheck.checks.Check"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.Check</span></code></a></p>
+<p>Check global USE and USE_EXPAND flags for various issues.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.GlobalUseCheck.feed">
+<code class="sig-name descname">feed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkgs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#GlobalUseCheck.feed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.GlobalUseCheck.feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle functionality against the passed in item.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.GlobalUseCheck.finish">
+<code class="sig-name descname">finish</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#GlobalUseCheck.finish"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.GlobalUseCheck.finish" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do cleanup and yield final results here.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.GlobalUseCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.repo_metadata.PotentialLocalUse'&gt;, &lt;class 'pkgcheck.checks.repo_metadata.PotentialGlobalUse'&gt;, &lt;class 'pkgcheck.checks.repo_metadata.UnusedGlobalUse'&gt;, &lt;class 'pkgcheck.checks.repo_metadata.UnusedGlobalUseExpand'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.GlobalUseCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.GlobalUseCheck.required_addons">
+<code class="sig-name descname">required_addons</code><em class="property"> = (&lt;class 'pkgcheck.addons.UseAddon'&gt;,)</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.GlobalUseCheck.required_addons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.GlobalUseCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='repo' &#64;0x7f81a6a420a0&gt;</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.GlobalUseCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.InvalidManifest">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">InvalidManifest</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">attr</span></em>, <em class="sig-param"><span class="n">msg</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#InvalidManifest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.InvalidManifest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.MetadataError" title="pkgcheck.results.MetadataError"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.MetadataError</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a></p>
+<p>Package’s Manifest file is invalid.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.InvalidManifest.attr">
+<code class="sig-name descname">attr</code><em class="property"> = 'manifest'</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.InvalidManifest.attr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.InvalidManifest.name">
+<code class="sig-name descname">name</code><em class="property"> = 'InvalidManifest'</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.InvalidManifest.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.LicenseGroupsCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">LicenseGroupsCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#LicenseGroupsCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.LicenseGroupsCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.Check" title="pkgcheck.checks.Check"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.Check</span></code></a></p>
+<p>Scan license groups for unknown licenses.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.LicenseGroupsCheck.finish">
+<code class="sig-name descname">finish</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#LicenseGroupsCheck.finish"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.LicenseGroupsCheck.finish" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do cleanup and yield final results here.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.LicenseGroupsCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.repo_metadata.UnknownLicenses'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.LicenseGroupsCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.LicenseGroupsCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='repo' &#64;0x7f81a6a420a0&gt;</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.LicenseGroupsCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.ManifestCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">ManifestCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">use_addon</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#ManifestCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.ManifestCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.Check" title="pkgcheck.checks.Check"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.Check</span></code></a></p>
+<p>Manifest related checks.</p>
+<p>Verify that the Manifest file exists, doesn’t have missing or
+extraneous entries, and that the required hashes are in use.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.ManifestCheck.feed">
+<code class="sig-name descname">feed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkgset</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#ManifestCheck.feed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.ManifestCheck.feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle functionality against the passed in item.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.ManifestCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.repo_metadata.InvalidManifest'&gt;, &lt;class 'pkgcheck.checks.repo_metadata.DeprecatedChksum'&gt;, &lt;class 'pkgcheck.checks.repo_metadata.UnnecessaryManifest'&gt;, &lt;class 'pkgcheck.checks.repo_metadata.MissingChksum'&gt;, &lt;class 'pkgcheck.checks.repo_metadata.UnknownManifest'&gt;, &lt;class 'pkgcheck.checks.repo_metadata.MissingManifest'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.ManifestCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.ManifestCheck.required_addons">
+<code class="sig-name descname">required_addons</code><em class="property"> = (&lt;class 'pkgcheck.addons.UseAddon'&gt;,)</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.ManifestCheck.required_addons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.ManifestCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='package' &#64;0x7f81a68053a0&gt;</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.ManifestCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.ManifestCollisionCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">ManifestCollisionCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#ManifestCollisionCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.ManifestCollisionCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.Check" title="pkgcheck.checks.Check"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.Check</span></code></a></p>
+<p>Search Manifest entries for different types of distfile collisions.</p>
+<p>In particular, search for matching filenames with different checksums and
+different filenames with matching checksums.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.ManifestCollisionCheck.feed">
+<code class="sig-name descname">feed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkgs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#ManifestCollisionCheck.feed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.ManifestCollisionCheck.feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle functionality against the passed in item.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.ManifestCollisionCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.repo_metadata.ConflictingChksums'&gt;, &lt;class 'pkgcheck.checks.repo_metadata.MatchingChksums'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.ManifestCollisionCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.ManifestCollisionCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='repo' &#64;0x7f81a6a420a0&gt;</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.ManifestCollisionCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.MatchingChksums">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">MatchingChksums</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">orig_file</span></em>, <em class="sig-param"><span class="n">orig_pkg</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#MatchingChksums"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.MatchingChksums" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Two distfiles share the same checksums but use different names.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.MatchingChksums.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.repo_metadata.MatchingChksums.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.MatchingChksums.name">
+<code class="sig-name descname">name</code><em class="property"> = 'MatchingChksums'</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.MatchingChksums.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.MissingChksum">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">MissingChksum</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">missing</span></em>, <em class="sig-param"><span class="n">existing</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#MissingChksum"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.MissingChksum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>A file in the chksum data lacks required checksums.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.MissingChksum.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.repo_metadata.MissingChksum.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.MissingChksum.name">
+<code class="sig-name descname">name</code><em class="property"> = 'MissingChksum'</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.MissingChksum.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.MissingManifest">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">MissingManifest</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">files</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#MissingManifest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.MissingManifest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Error" title="pkgcheck.results.Error"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Error</span></code></a></p>
+<p>SRC_URI targets missing from Manifest file.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.MissingManifest.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.repo_metadata.MissingManifest.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.MissingManifest.name">
+<code class="sig-name descname">name</code><em class="property"> = 'MissingManifest'</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.MissingManifest.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.MovedPackageUpdate">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">MovedPackageUpdate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">msg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#MovedPackageUpdate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.MovedPackageUpdate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.ProfilesResult" title="pkgcheck.results.ProfilesResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.ProfilesResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.LogWarning" title="pkgcheck.results.LogWarning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.LogWarning</span></code></a></p>
+<p>Entry for package already moved in profiles/updates files.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.MovedPackageUpdate.name">
+<code class="sig-name descname">name</code><em class="property"> = 'MovedPackageUpdate'</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.MovedPackageUpdate.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.MultiMovePackageUpdate">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">MultiMovePackageUpdate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">moves</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#MultiMovePackageUpdate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.MultiMovePackageUpdate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.ProfilesResult" title="pkgcheck.results.ProfilesResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.ProfilesResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Entry for package moved multiple times in profiles/updates files.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.MultiMovePackageUpdate.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.repo_metadata.MultiMovePackageUpdate.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.MultiMovePackageUpdate.name">
+<code class="sig-name descname">name</code><em class="property"> = 'MultiMovePackageUpdate'</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.MultiMovePackageUpdate.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.OldMultiMovePackageUpdate">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">OldMultiMovePackageUpdate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">moves</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#OldMultiMovePackageUpdate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.OldMultiMovePackageUpdate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.ProfilesResult" title="pkgcheck.results.ProfilesResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.ProfilesResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Old entry for removed package moved multiple times in profiles/updates files.</p>
+<p>This means that the reported pkg has been moved at least three times and
+finally removed from the tree. All the related lines should be removed from
+the update files.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.OldMultiMovePackageUpdate.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.repo_metadata.OldMultiMovePackageUpdate.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.OldMultiMovePackageUpdate.name">
+<code class="sig-name descname">name</code><em class="property"> = 'OldMultiMovePackageUpdate'</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.OldMultiMovePackageUpdate.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.OldPackageUpdate">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">OldPackageUpdate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">updates</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#OldPackageUpdate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.OldPackageUpdate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.ProfilesResult" title="pkgcheck.results.ProfilesResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.ProfilesResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Old entry for removed package in profiles/updates files.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.OldPackageUpdate.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.repo_metadata.OldPackageUpdate.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.OldPackageUpdate.name">
+<code class="sig-name descname">name</code><em class="property"> = 'OldPackageUpdate'</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.OldPackageUpdate.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.PackageUpdatesCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">PackageUpdatesCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#PackageUpdatesCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.PackageUpdatesCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.Check" title="pkgcheck.checks.Check"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.Check</span></code></a></p>
+<p>Scan profiles/updates/* for outdated entries and other issues.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.PackageUpdatesCheck.finish">
+<code class="sig-name descname">finish</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#PackageUpdatesCheck.finish"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.PackageUpdatesCheck.finish" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do cleanup and yield final results here.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.PackageUpdatesCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.repo_metadata.OldPackageUpdate'&gt;, &lt;class 'pkgcheck.checks.repo_metadata.RedundantPackageUpdate'&gt;, &lt;class 'pkgcheck.checks.repo_metadata.MovedPackageUpdate'&gt;, &lt;class 'pkgcheck.checks.repo_metadata.BadPackageUpdate'&gt;, &lt;class 'pkgcheck.checks.repo_metadata.MultiMovePackageUpdate'&gt;, &lt;class 'pkgcheck.checks.repo_metadata.OldMultiMovePackageUpdate'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.PackageUpdatesCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.PackageUpdatesCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;LocationScope desc='profiles' &#64;0x7f81a648f4f0&gt;</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.PackageUpdatesCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.PotentialGlobalUse">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">PotentialGlobalUse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">flag</span></em>, <em class="sig-param"><span class="n">pkgs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#PotentialGlobalUse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.PotentialGlobalUse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Info" title="pkgcheck.results.Info"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Info</span></code></a></p>
+<p>Local USE flag is a potential global USE flag.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.PotentialGlobalUse.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.repo_metadata.PotentialGlobalUse.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.PotentialGlobalUse.name">
+<code class="sig-name descname">name</code><em class="property"> = 'PotentialGlobalUse'</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.PotentialGlobalUse.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.PotentialLocalUse">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">PotentialLocalUse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">flag</span></em>, <em class="sig-param"><span class="n">pkgs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#PotentialLocalUse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.PotentialLocalUse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Info" title="pkgcheck.results.Info"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Info</span></code></a></p>
+<p>Global USE flag is a potential local USE flag.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.PotentialLocalUse.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.repo_metadata.PotentialLocalUse.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.PotentialLocalUse.name">
+<code class="sig-name descname">name</code><em class="property"> = 'PotentialLocalUse'</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.PotentialLocalUse.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.ProjectMetadataCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">ProjectMetadataCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#ProjectMetadataCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.ProjectMetadataCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.Check" title="pkgcheck.checks.Check"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.Check</span></code></a></p>
+<p>Check projects.xml for issues.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.ProjectMetadataCheck.finish">
+<code class="sig-name descname">finish</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#ProjectMetadataCheck.finish"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.ProjectMetadataCheck.finish" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do cleanup and yield final results here.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.ProjectMetadataCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.repo_metadata.EmptyProject'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.ProjectMetadataCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.ProjectMetadataCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='repo' &#64;0x7f81a6a420a0&gt;</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.ProjectMetadataCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.RedundantPackageUpdate">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">RedundantPackageUpdate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">updates</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#RedundantPackageUpdate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.RedundantPackageUpdate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.ProfilesResult" title="pkgcheck.results.ProfilesResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.ProfilesResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Move entry to the same package/slot (source == target).</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.RedundantPackageUpdate.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.repo_metadata.RedundantPackageUpdate.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.RedundantPackageUpdate.name">
+<code class="sig-name descname">name</code><em class="property"> = 'RedundantPackageUpdate'</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.RedundantPackageUpdate.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.UnknownLicenses">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">UnknownLicenses</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">group</span></em>, <em class="sig-param"><span class="n">licenses</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#UnknownLicenses"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnknownLicenses" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>License(s) listed in license group(s) that don’t exist.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.UnknownLicenses.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnknownLicenses.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.UnknownLicenses.name">
+<code class="sig-name descname">name</code><em class="property"> = 'UnknownLicenses'</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnknownLicenses.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.UnknownManifest">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">UnknownManifest</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">files</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#UnknownManifest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnknownManifest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Manifest entries not matching any SRC_URI targets.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.UnknownManifest.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnknownManifest.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.UnknownManifest.name">
+<code class="sig-name descname">name</code><em class="property"> = 'UnknownManifest'</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnknownManifest.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.UnnecessaryManifest">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">UnnecessaryManifest</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">files</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#UnnecessaryManifest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnnecessaryManifest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Manifest entries for non-DIST targets on a repo with thin manifests enabled.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.UnnecessaryManifest.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnnecessaryManifest.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.UnnecessaryManifest.name">
+<code class="sig-name descname">name</code><em class="property"> = 'UnnecessaryManifest'</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnnecessaryManifest.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.UnusedEclasses">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">UnusedEclasses</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eclasses</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#UnusedEclasses"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedEclasses" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Unused eclasses detected.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.UnusedEclasses.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedEclasses.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.UnusedEclasses.name">
+<code class="sig-name descname">name</code><em class="property"> = 'UnusedEclasses'</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedEclasses.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.UnusedEclassesCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">UnusedEclassesCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#UnusedEclassesCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedEclassesCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.Check" title="pkgcheck.checks.Check"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.Check</span></code></a></p>
+<p>Check for unused eclasses.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.UnusedEclassesCheck.feed">
+<code class="sig-name descname">feed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#UnusedEclassesCheck.feed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedEclassesCheck.feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle functionality against the passed in item.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.UnusedEclassesCheck.finish">
+<code class="sig-name descname">finish</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#UnusedEclassesCheck.finish"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedEclassesCheck.finish" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do cleanup and yield final results here.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.UnusedEclassesCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.repo_metadata.UnusedEclasses'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedEclassesCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.UnusedEclassesCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='repo' &#64;0x7f81a6a420a0&gt;</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedEclassesCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.UnusedEclassesCheck.start">
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#UnusedEclassesCheck.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedEclassesCheck.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do startup here.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.UnusedGlobalUse">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">UnusedGlobalUse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">flags</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#UnusedGlobalUse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedGlobalUse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Unused use.desc flag(s).</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.UnusedGlobalUse.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedGlobalUse.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.UnusedGlobalUse.name">
+<code class="sig-name descname">name</code><em class="property"> = 'UnusedGlobalUse'</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedGlobalUse.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.UnusedGlobalUseExpand">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">UnusedGlobalUseExpand</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">flags</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#UnusedGlobalUseExpand"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedGlobalUseExpand" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Unused global USE_EXPAND flag(s).</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.UnusedGlobalUseExpand.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedGlobalUseExpand.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.UnusedGlobalUseExpand.name">
+<code class="sig-name descname">name</code><em class="property"> = 'UnusedGlobalUseExpand'</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedGlobalUseExpand.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.UnusedLicenses">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">UnusedLicenses</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">licenses</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#UnusedLicenses"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedLicenses" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Unused license(s) detected.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.UnusedLicenses.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedLicenses.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.UnusedLicenses.name">
+<code class="sig-name descname">name</code><em class="property"> = 'UnusedLicenses'</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedLicenses.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.UnusedLicensesCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">UnusedLicensesCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#UnusedLicensesCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedLicensesCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.Check" title="pkgcheck.checks.Check"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.Check</span></code></a></p>
+<p>Check for unused license files.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.UnusedLicensesCheck.feed">
+<code class="sig-name descname">feed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#UnusedLicensesCheck.feed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedLicensesCheck.feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle functionality against the passed in item.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.UnusedLicensesCheck.finish">
+<code class="sig-name descname">finish</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#UnusedLicensesCheck.finish"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedLicensesCheck.finish" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do cleanup and yield final results here.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.UnusedLicensesCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.repo_metadata.UnusedLicenses'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedLicensesCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.UnusedLicensesCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='repo' &#64;0x7f81a6a420a0&gt;</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedLicensesCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.UnusedLicensesCheck.start">
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#UnusedLicensesCheck.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedLicensesCheck.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do startup here.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.UnusedMirrors">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">UnusedMirrors</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mirrors</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#UnusedMirrors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedMirrors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Unused mirrors detected.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.UnusedMirrors.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedMirrors.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.UnusedMirrors.name">
+<code class="sig-name descname">name</code><em class="property"> = 'UnusedMirrors'</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedMirrors.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo_metadata.UnusedMirrorsCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo_metadata.</code><code class="sig-name descname">UnusedMirrorsCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">use_addon</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#UnusedMirrorsCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedMirrorsCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.MirrorsCheck" title="pkgcheck.checks.MirrorsCheck"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.MirrorsCheck</span></code></a></p>
+<p>Check for unused mirrors.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.UnusedMirrorsCheck.feed">
+<code class="sig-name descname">feed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#UnusedMirrorsCheck.feed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedMirrorsCheck.feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle functionality against the passed in item.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.UnusedMirrorsCheck.finish">
+<code class="sig-name descname">finish</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#UnusedMirrorsCheck.finish"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedMirrorsCheck.finish" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do cleanup and yield final results here.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.UnusedMirrorsCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.repo_metadata.UnusedMirrors'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedMirrorsCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo_metadata.UnusedMirrorsCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='repo' &#64;0x7f81a6a420a0&gt;</em><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedMirrorsCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.repo_metadata.UnusedMirrorsCheck.start">
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo_metadata.html#UnusedMirrorsCheck.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo_metadata.UnusedMirrorsCheck.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do startup here.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/pkgcheck.checks.repo_metadata.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.repo_metadata module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

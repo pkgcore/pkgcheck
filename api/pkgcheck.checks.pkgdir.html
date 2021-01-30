@@ -1,0 +1,387 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.checks.pkgdir module &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.pkgdir module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcheck.checks.pkgdir">
+<span id="pkgcheck-checks-pkgdir-module"></span><h1>pkgcheck.checks.pkgdir module<a class="headerlink" href="#module-pkgcheck.checks.pkgdir" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="pkgcheck.checks.pkgdir.BannedCharacter">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.pkgdir.</code><code class="sig-name descname">BannedCharacter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">chars</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/pkgdir.html#BannedCharacter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.pkgdir.BannedCharacter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Error" title="pkgcheck.results.Error"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Error</span></code></a></p>
+<p>File or directory name doesn’t abide by GLEP 31 requirements.</p>
+<p>See the official GLEP 31 documentation <a class="footnote-reference brackets" href="#id2" id="id1">1</a> for details.</p>
+<dl class="footnote brackets">
+<dt class="label" id="id2"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
+<dd><p><a class="reference external" href="https://www.gentoo.org/glep/glep-0031.html">https://www.gentoo.org/glep/glep-0031.html</a></p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="pkgcheck.checks.pkgdir.BannedCharacter.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.pkgdir.BannedCharacter.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.pkgdir.BannedCharacter.name">
+<code class="sig-name descname">name</code><em class="property"> = 'BannedCharacter'</em><a class="headerlink" href="#pkgcheck.checks.pkgdir.BannedCharacter.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.pkgdir.DuplicateFiles">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.pkgdir.</code><code class="sig-name descname">DuplicateFiles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">files</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/pkgdir.html#DuplicateFiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.pkgdir.DuplicateFiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Two or more identical files in FILESDIR.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.pkgdir.DuplicateFiles.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.pkgdir.DuplicateFiles.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.pkgdir.DuplicateFiles.name">
+<code class="sig-name descname">name</code><em class="property"> = 'DuplicateFiles'</em><a class="headerlink" href="#pkgcheck.checks.pkgdir.DuplicateFiles.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.pkgdir.EmptyFile">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.pkgdir.</code><code class="sig-name descname">EmptyFile</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/pkgdir.html#EmptyFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.pkgdir.EmptyFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>File in FILESDIR is empty.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.pkgdir.EmptyFile.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.pkgdir.EmptyFile.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.pkgdir.EmptyFile.name">
+<code class="sig-name descname">name</code><em class="property"> = 'EmptyFile'</em><a class="headerlink" href="#pkgcheck.checks.pkgdir.EmptyFile.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.pkgdir.EqualVersions">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.pkgdir.</code><code class="sig-name descname">EqualVersions</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">versions</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/pkgdir.html#EqualVersions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.pkgdir.EqualVersions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Error" title="pkgcheck.results.Error"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Error</span></code></a></p>
+<p>Ebuilds that have equal versions.</p>
+<p>For example, cat/pn-1.0.2, cat/pn-1.0.2-r0, cat/pn-1.0.2-r00 and
+cat/pn-1.000.2 all have equal versions according to PMS and therefore
+shouldn’t exist in the same repository.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.pkgdir.EqualVersions.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.pkgdir.EqualVersions.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.pkgdir.EqualVersions.name">
+<code class="sig-name descname">name</code><em class="property"> = 'EqualVersions'</em><a class="headerlink" href="#pkgcheck.checks.pkgdir.EqualVersions.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.pkgdir.EqualVersionsCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.pkgdir.</code><code class="sig-name descname">EqualVersionsCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/pkgdir.html#EqualVersionsCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.pkgdir.EqualVersionsCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.Check" title="pkgcheck.checks.Check"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.Check</span></code></a></p>
+<p>Scan package ebuilds for semantically equal versions.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.pkgdir.EqualVersionsCheck.feed">
+<code class="sig-name descname">feed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkgset</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/pkgdir.html#EqualVersionsCheck.feed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.pkgdir.EqualVersionsCheck.feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle functionality against the passed in item.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.pkgdir.EqualVersionsCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.pkgdir.EqualVersions'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.pkgdir.EqualVersionsCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.pkgdir.EqualVersionsCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='package' &#64;0x7f81a68053a0&gt;</em><a class="headerlink" href="#pkgcheck.checks.pkgdir.EqualVersionsCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.pkgdir.ExecutableFile">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.pkgdir.</code><code class="sig-name descname">ExecutableFile</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/pkgdir.html#ExecutableFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.pkgdir.ExecutableFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>File has executable bit, but doesn’t need it.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.pkgdir.ExecutableFile.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.pkgdir.ExecutableFile.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.pkgdir.ExecutableFile.name">
+<code class="sig-name descname">name</code><em class="property"> = 'ExecutableFile'</em><a class="headerlink" href="#pkgcheck.checks.pkgdir.ExecutableFile.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.pkgdir.InvalidPN">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.pkgdir.</code><code class="sig-name descname">InvalidPN</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ebuilds</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/pkgdir.html#InvalidPN"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.pkgdir.InvalidPN" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Error" title="pkgcheck.results.Error"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Error</span></code></a></p>
+<p>Ebuilds that have invalid package names.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.pkgdir.InvalidPN.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.pkgdir.InvalidPN.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.pkgdir.InvalidPN.name">
+<code class="sig-name descname">name</code><em class="property"> = 'InvalidPN'</em><a class="headerlink" href="#pkgcheck.checks.pkgdir.InvalidPN.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.pkgdir.InvalidUTF8">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.pkgdir.</code><code class="sig-name descname">InvalidUTF8</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">err</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/pkgdir.html#InvalidUTF8"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.pkgdir.InvalidUTF8" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Error" title="pkgcheck.results.Error"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Error</span></code></a></p>
+<p>File isn’t UTF-8 compliant.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.pkgdir.InvalidUTF8.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.pkgdir.InvalidUTF8.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.pkgdir.InvalidUTF8.name">
+<code class="sig-name descname">name</code><em class="property"> = 'InvalidUTF8'</em><a class="headerlink" href="#pkgcheck.checks.pkgdir.InvalidUTF8.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.pkgdir.LiveOnlyCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.pkgdir.</code><code class="sig-name descname">LiveOnlyCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">git_addon</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/pkgdir.html#LiveOnlyCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.pkgdir.LiveOnlyCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.GentooRepoCheck" title="pkgcheck.checks.GentooRepoCheck"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.GentooRepoCheck</span></code></a></p>
+<p>Scan for packages with only live versions.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.pkgdir.LiveOnlyCheck.feed">
+<code class="sig-name descname">feed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkgset</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/pkgdir.html#LiveOnlyCheck.feed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.pkgdir.LiveOnlyCheck.feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle functionality against the passed in item.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.pkgdir.LiveOnlyCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.pkgdir.LiveOnlyPackage'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.pkgdir.LiveOnlyCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.pkgdir.LiveOnlyCheck.required_addons">
+<code class="sig-name descname">required_addons</code><em class="property"> = (&lt;class 'pkgcheck.git.GitAddon'&gt;,)</em><a class="headerlink" href="#pkgcheck.checks.pkgdir.LiveOnlyCheck.required_addons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.pkgdir.LiveOnlyCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='package' &#64;0x7f81a68053a0&gt;</em><a class="headerlink" href="#pkgcheck.checks.pkgdir.LiveOnlyCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.pkgdir.LiveOnlyPackage">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.pkgdir.</code><code class="sig-name descname">LiveOnlyPackage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">age</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/pkgdir.html#LiveOnlyPackage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.pkgdir.LiveOnlyPackage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Package has only had VCS-based ebuilds.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.pkgdir.LiveOnlyPackage.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.pkgdir.LiveOnlyPackage.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.pkgdir.LiveOnlyPackage.name">
+<code class="sig-name descname">name</code><em class="property"> = 'LiveOnlyPackage'</em><a class="headerlink" href="#pkgcheck.checks.pkgdir.LiveOnlyPackage.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.pkgdir.MismatchedPN">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.pkgdir.</code><code class="sig-name descname">MismatchedPN</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">ebuilds</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/pkgdir.html#MismatchedPN"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.pkgdir.MismatchedPN" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Error" title="pkgcheck.results.Error"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Error</span></code></a></p>
+<p>Ebuilds that have different names than their parent directory.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.pkgdir.MismatchedPN.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.pkgdir.MismatchedPN.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.pkgdir.MismatchedPN.name">
+<code class="sig-name descname">name</code><em class="property"> = 'MismatchedPN'</em><a class="headerlink" href="#pkgcheck.checks.pkgdir.MismatchedPN.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.pkgdir.PkgDirCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.pkgdir.</code><code class="sig-name descname">PkgDirCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">git_addon</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/pkgdir.html#PkgDirCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.pkgdir.PkgDirCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.Check" title="pkgcheck.checks.Check"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.Check</span></code></a></p>
+<p>Scan ebuild directory for various file-related issues.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.pkgdir.PkgDirCheck.digest_algo">
+<code class="sig-name descname">digest_algo</code><em class="property"> = 'sha256'</em><a class="headerlink" href="#pkgcheck.checks.pkgdir.PkgDirCheck.digest_algo" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.pkgdir.PkgDirCheck.feed">
+<code class="sig-name descname">feed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkgset</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/pkgdir.html#PkgDirCheck.feed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.pkgdir.PkgDirCheck.feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle functionality against the passed in item.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.pkgdir.PkgDirCheck.ignore_dirs">
+<code class="sig-name descname">ignore_dirs</code><em class="property"> = frozenset({'.bzr', '.svn', 'cvs'})</em><a class="headerlink" href="#pkgcheck.checks.pkgdir.PkgDirCheck.ignore_dirs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.pkgdir.PkgDirCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.pkgdir.MismatchedPN'&gt;, &lt;class 'pkgcheck.checks.pkgdir.BannedCharacter'&gt;, &lt;class 'pkgcheck.checks.pkgdir.SizeViolation'&gt;, &lt;class 'pkgcheck.checks.pkgdir.UnknownPkgDirEntry'&gt;, &lt;class 'pkgcheck.checks.pkgdir.ExecutableFile'&gt;, &lt;class 'pkgcheck.checks.pkgdir.EmptyFile'&gt;, &lt;class 'pkgcheck.checks.pkgdir.InvalidPN'&gt;, &lt;class 'pkgcheck.checks.pkgdir.DuplicateFiles'&gt;, &lt;class 'pkgcheck.checks.pkgdir.InvalidUTF8'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.pkgdir.PkgDirCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.pkgdir.PkgDirCheck.required_addons">
+<code class="sig-name descname">required_addons</code><em class="property"> = (&lt;class 'pkgcheck.git.GitAddon'&gt;,)</em><a class="headerlink" href="#pkgcheck.checks.pkgdir.PkgDirCheck.required_addons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.pkgdir.PkgDirCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='package' &#64;0x7f81a68053a0&gt;</em><a class="headerlink" href="#pkgcheck.checks.pkgdir.PkgDirCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.pkgdir.SizeViolation">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.pkgdir.</code><code class="sig-name descname">SizeViolation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">size</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/pkgdir.html#SizeViolation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.pkgdir.SizeViolation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>File in $FILESDIR is too large (current limit is 20KiB).</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.pkgdir.SizeViolation.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.pkgdir.SizeViolation.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.pkgdir.SizeViolation.name">
+<code class="sig-name descname">name</code><em class="property"> = 'SizeViolation'</em><a class="headerlink" href="#pkgcheck.checks.pkgdir.SizeViolation.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.pkgdir.UnknownPkgDirEntry">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.pkgdir.</code><code class="sig-name descname">UnknownPkgDirEntry</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filenames</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/pkgdir.html#UnknownPkgDirEntry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.pkgdir.UnknownPkgDirEntry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Unknown files or directories in package directory.</p>
+<p>Relevant for the gentoo repo only since the spec states that a package
+directory may contain other files or directories.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.pkgdir.UnknownPkgDirEntry.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.pkgdir.UnknownPkgDirEntry.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.pkgdir.UnknownPkgDirEntry.name">
+<code class="sig-name descname">name</code><em class="property"> = 'UnknownPkgDirEntry'</em><a class="headerlink" href="#pkgcheck.checks.pkgdir.UnknownPkgDirEntry.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/pkgcheck.checks.pkgdir.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.pkgdir module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

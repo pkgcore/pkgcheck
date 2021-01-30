@@ -1,0 +1,51 @@
+Base Options
+------------
+
+-h, --help       
+                 Show this help message and exit. To get more
+                 information see the related man page.
+
+--debug          
+                 Enable debug checks and show verbose debug output.
+
+-q, --quiet      
+                 Suppress non-error, informational messages.
+
+-v, --verbose    
+                 Increase the verbosity of various output.
+
+--color BOOLEAN  
+                 Toggle colored output support. This can be used to forcibly
+                 enable color support when piping output or other sitations
+                 where stdout is not a tty.
+
+List Options
+------------
+
+-k, --keywords   
+                 List all available keywords.
+                 
+                 Use -v/--verbose to show keywords sorted into the scope they run at
+                 (repository, category, package, or version) along with their
+                 descriptions.
+
+-c, --checks     
+                 List all available checks.
+                 
+                 Use -v/--verbose to show descriptions and possible keyword results for
+                 each check.
+
+-s, --scopes     
+                 List all available keyword and check scopes.
+                 
+                 Use -v/--verbose to show scope descriptions.
+
+-r, --reporters  
+                 List all available reporters.
+                 
+                 Use -v/--verbose to show reporter descriptions.
+
+-C, --caches     
+                 List all available cache types.
+                 
+                 Use -v/--verbose to show more cache information.

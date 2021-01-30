@@ -1,0 +1,7 @@
+pkgcheck.const module
+=====================
+
+.. automodule:: pkgcheck.const
+   :members:
+   :undoc-members:
+   :show-inheritance:

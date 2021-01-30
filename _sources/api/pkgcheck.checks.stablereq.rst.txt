@@ -1,0 +1,7 @@
+pkgcheck.checks.stablereq module
+================================
+
+.. automodule:: pkgcheck.checks.stablereq
+   :members:
+   :undoc-members:
+   :show-inheritance:

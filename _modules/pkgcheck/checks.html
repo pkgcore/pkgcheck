@@ -1,0 +1,279 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.checks &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcheck.checks</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Core check classes.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">total_ordering</span>
+
+<span class="kn">from</span> <span class="nn">pkgcore</span> <span class="kn">import</span> <span class="n">fetch</span>
+<span class="kn">from</span> <span class="nn">snakeoil</span> <span class="kn">import</span> <span class="n">klass</span>
+<span class="kn">from</span> <span class="nn">snakeoil.strings</span> <span class="kn">import</span> <span class="n">pluralism</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">addons</span><span class="p">,</span> <span class="n">base</span><span class="p">,</span> <span class="n">feeds</span><span class="p">,</span> <span class="n">sources</span>
+<span class="kn">from</span> <span class="nn">..caches</span> <span class="kn">import</span> <span class="n">CachedAddon</span><span class="p">,</span> <span class="n">CacheDisabled</span>
+<span class="kn">from</span> <span class="nn">..results</span> <span class="kn">import</span> <span class="n">MetadataError</span>
+<span class="kn">from</span> <span class="nn">..log</span> <span class="kn">import</span> <span class="n">logger</span>
+
+
+<div class="viewcode-block" id="Check"><a class="viewcode-back" href="../../api/pkgcheck.checks.html#pkgcheck.checks.Check">[docs]</a><span class="nd">@total_ordering</span>
+<span class="k">class</span> <span class="nc">Check</span><span class="p">(</span><span class="n">feeds</span><span class="o">.</span><span class="n">Feed</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base template for a check.</span>
+
+<span class="sd">    :cvar scope: scope relative to the package repository the check runs under</span>
+<span class="sd">    :cvar source: source of feed items</span>
+<span class="sd">    :cvar known_results: result keywords the check can possibly yield</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">()</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">priority</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Priority that affects order in which checks are run.&quot;&quot;&quot;</span>
+        <span class="c1"># raise priority for checks that scan for metadata errors</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">known_results</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">MetadataError</span><span class="o">.</span><span class="n">results</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">return</span> <span class="mi">0</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">source</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># filter pkg feeds as required</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">known_results</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">filter</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">scope</span> <span class="o">&gt;=</span> <span class="n">base</span><span class="o">.</span><span class="n">version_scope</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">(</span>
+                    <span class="n">sources</span><span class="o">.</span><span class="n">FilteredRepoSource</span><span class="p">,</span>
+                    <span class="p">(</span><span class="n">sources</span><span class="o">.</span><span class="n">LatestVersionsFilter</span><span class="p">,),</span>
+                    <span class="p">((</span><span class="s1">&#39;source&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_source</span><span class="p">),)</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">max</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">scope</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">known_results</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">base</span><span class="o">.</span><span class="n">version_scope</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">(</span>
+                    <span class="n">sources</span><span class="o">.</span><span class="n">FilteredPackageRepoSource</span><span class="p">,</span>
+                    <span class="p">(</span><span class="n">sources</span><span class="o">.</span><span class="n">LatestPkgsFilter</span><span class="p">,),</span>
+                    <span class="p">((</span><span class="s1">&#39;source&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_source</span><span class="p">),)</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_source</span>
+
+<div class="viewcode-block" id="Check.start"><a class="viewcode-back" href="../../api/pkgcheck.checks.html#pkgcheck.checks.Check.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Do startup here.&quot;&quot;&quot;</span></div>
+
+<div class="viewcode-block" id="Check.finish"><a class="viewcode-back" href="../../api/pkgcheck.checks.html#pkgcheck.checks.Check.finish">[docs]</a>    <span class="k">def</span> <span class="nf">finish</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Do cleanup and yield final results here.&quot;&quot;&quot;</span>
+        <span class="k">yield from</span> <span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="fm">__lt__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">priority</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">priority</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">&lt;</span> <span class="n">other</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">priority</span> <span class="o">&lt;</span> <span class="n">other</span><span class="o">.</span><span class="n">priority</span></div>
+
+
+<div class="viewcode-block" id="GentooRepoCheck"><a class="viewcode-back" href="../../api/pkgcheck.checks.html#pkgcheck.checks.GentooRepoCheck">[docs]</a><span class="k">class</span> <span class="nc">GentooRepoCheck</span><span class="p">(</span><span class="n">Check</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check that is only run against the gentoo repo by default.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">gentoo_repo</span><span class="p">:</span>
+            <span class="n">check</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+            <span class="k">if</span> <span class="n">check</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">selected_checks</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">override_skip</span><span class="p">[</span><span class="s1">&#39;gentoo&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">check</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">SkipCheck</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;not running against gentoo repo&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OverlayRepoCheck"><a class="viewcode-back" href="../../api/pkgcheck.checks.html#pkgcheck.checks.OverlayRepoCheck">[docs]</a><span class="k">class</span> <span class="nc">OverlayRepoCheck</span><span class="p">(</span><span class="n">Check</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check that is only run against overlay repos.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">target_repo</span><span class="o">.</span><span class="n">masters</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SkipCheck</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;not running against overlay&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="OptionalCheck"><a class="viewcode-back" href="../../api/pkgcheck.checks.html#pkgcheck.checks.OptionalCheck">[docs]</a><span class="k">class</span> <span class="nc">OptionalCheck</span><span class="p">(</span><span class="n">Check</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check that is only run when explicitly enabled.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="GitCheck"><a class="viewcode-back" href="../../api/pkgcheck.checks.html#pkgcheck.checks.GitCheck">[docs]</a><span class="k">class</span> <span class="nc">GitCheck</span><span class="p">(</span><span class="n">OptionalCheck</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check that is only run when explicitly enabled via the --commits git option.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">commits</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SkipCheck</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;not scanning against git commits&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AsyncCheck"><a class="viewcode-back" href="../../api/pkgcheck.checks.html#pkgcheck.checks.AsyncCheck">[docs]</a><span class="k">class</span> <span class="nc">AsyncCheck</span><span class="p">(</span><span class="n">Check</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check that schedules tasks to be run asynchronously.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">results_q</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">results_q</span> <span class="o">=</span> <span class="n">results_q</span></div>
+
+
+<div class="viewcode-block" id="NetworkCheck"><a class="viewcode-back" href="../../api/pkgcheck.checks.html#pkgcheck.checks.NetworkCheck">[docs]</a><span class="k">class</span> <span class="nc">NetworkCheck</span><span class="p">(</span><span class="n">AsyncCheck</span><span class="p">,</span> <span class="n">OptionalCheck</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check that is only run when network support is enabled.&quot;&quot;&quot;</span>
+
+    <span class="n">required_addons</span> <span class="o">=</span> <span class="p">(</span><span class="n">addons</span><span class="o">.</span><span class="n">NetAddon</span><span class="p">,)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">net_addon</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">net</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">SkipCheck</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;network checks not enabled&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">timeout</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">net_addon</span><span class="o">.</span><span class="n">session</span></div>
+
+
+<div class="viewcode-block" id="MirrorsCheck"><a class="viewcode-back" href="../../api/pkgcheck.checks.html#pkgcheck.checks.MirrorsCheck">[docs]</a><span class="k">class</span> <span class="nc">MirrorsCheck</span><span class="p">(</span><span class="n">Check</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check that requires determining mirrors used by a given package.&quot;&quot;&quot;</span>
+
+    <span class="n">required_addons</span> <span class="o">=</span> <span class="p">(</span><span class="n">addons</span><span class="o">.</span><span class="n">UseAddon</span><span class="p">,)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">use_addon</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iuse_filter</span> <span class="o">=</span> <span class="n">use_addon</span><span class="o">.</span><span class="n">get_filter</span><span class="p">(</span><span class="s1">&#39;fetchables&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MirrorsCheck.get_mirrors"><a class="viewcode-back" href="../../api/pkgcheck.checks.html#pkgcheck.checks.MirrorsCheck.get_mirrors">[docs]</a>    <span class="k">def</span> <span class="nf">get_mirrors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="n">mirrors</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">fetchables</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">iuse_filter</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">fetch</span><span class="o">.</span><span class="n">fetchable</span><span class="p">,),</span> <span class="n">pkg</span><span class="p">,</span>
+            <span class="n">pkg</span><span class="o">.</span><span class="n">generate_fetchables</span><span class="p">(</span><span class="n">allow_missing_checksums</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ignore_unknown_mirrors</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fetchables</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">uri</span><span class="o">.</span><span class="n">visit_mirrors</span><span class="p">(</span><span class="n">treat_default_as_mirror</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+                <span class="n">mirrors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">mirror_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="n">mirrors</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="SkipCheck"><a class="viewcode-back" href="../../api/pkgcheck.checks.html#pkgcheck.checks.SkipCheck">[docs]</a><span class="k">class</span> <span class="nc">SkipCheck</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">PkgcheckUserException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check failed to initialize due to missing dependencies or other situation.</span>
+
+<span class="sd">    Checks not explicitly selected will be skipped if they raise this during</span>
+<span class="sd">    initialization.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">check</span><span class="p">,</span> <span class="n">msg</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">check</span><span class="p">,</span> <span class="n">Check</span><span class="p">):</span>
+            <span class="n">check_name</span> <span class="o">=</span> <span class="n">check</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># assume the check param is a raw class object</span>
+            <span class="n">check_name</span> <span class="o">=</span> <span class="n">check</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">check_name</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">msg</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="init_checks"><a class="viewcode-back" href="../../api/pkgcheck.checks.html#pkgcheck.checks.init_checks">[docs]</a><span class="k">def</span> <span class="nf">init_checks</span><span class="p">(</span><span class="n">enabled_addons</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">results_q</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initialize selected checks.&quot;&quot;&quot;</span>
+    <span class="n">enabled</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+    <span class="c1"># mapping of check skip overrides</span>
+    <span class="n">options</span><span class="o">.</span><span class="n">override_skip</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">addons_map</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">source_map</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="c1"># initialize required caches before other addons</span>
+    <span class="n">enabled_addons</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">enabled_addons</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="ow">not</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">CachedAddon</span><span class="p">))</span>
+
+    <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">enabled_addons</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">AsyncCheck</span><span class="p">):</span>
+                <span class="n">addon</span> <span class="o">=</span> <span class="n">addons</span><span class="o">.</span><span class="n">init_addon</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">addons_map</span><span class="p">,</span> <span class="n">results_q</span><span class="o">=</span><span class="n">results_q</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">addon</span> <span class="o">=</span> <span class="n">addons</span><span class="o">.</span><span class="n">init_addon</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">addons_map</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">addon</span><span class="p">,</span> <span class="n">Check</span><span class="p">):</span>
+                <span class="n">source</span> <span class="o">=</span> <span class="n">source_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">addon</span><span class="o">.</span><span class="n">source</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">source</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">source</span> <span class="o">=</span> <span class="n">sources</span><span class="o">.</span><span class="n">init_source</span><span class="p">(</span><span class="n">addon</span><span class="o">.</span><span class="n">source</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">addons_map</span><span class="p">)</span>
+                    <span class="n">source_map</span><span class="p">[</span><span class="n">addon</span><span class="o">.</span><span class="n">source</span><span class="p">]</span> <span class="o">=</span> <span class="n">source</span>
+                <span class="n">exec_type</span> <span class="o">=</span> <span class="s1">&#39;async&#39;</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">addon</span><span class="p">,</span> <span class="n">AsyncCheck</span><span class="p">)</span> <span class="k">else</span> <span class="s1">&#39;sync&#39;</span>
+                <span class="n">enabled</span><span class="p">[(</span><span class="n">source</span><span class="p">,</span> <span class="n">exec_type</span><span class="p">)]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">addon</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">CacheDisabled</span><span class="p">,</span> <span class="n">SkipCheck</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="c1"># Raise exception if the related check was explicitly selected,</span>
+            <span class="c1"># otherwise it gets transparently skipped.</span>
+            <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">in</span> <span class="n">options</span><span class="o">.</span><span class="n">selected_checks</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">SkipCheck</span><span class="p">):</span>
+                    <span class="k">raise</span>
+                <span class="k">raise</span> <span class="n">SkipCheck</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+
+    <span class="c1"># report which check skips were overridden</span>
+    <span class="k">for</span> <span class="n">skip_type</span><span class="p">,</span> <span class="n">checks</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">options</span><span class="o">.</span><span class="n">override_skip</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="n">checks</span><span class="p">)</span>
+        <span class="n">checks_str</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">checks</span><span class="p">))</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;running </span><span class="si">{</span><span class="n">skip_type</span><span class="si">}</span><span class="s2"> specific check</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">checks_str</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">enabled</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

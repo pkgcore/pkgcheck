@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pkgcheck cache [-r REPO] [-h] [--debug] [-q] [-v] [--color BOOLEAN] [--cache-dir CACHE_DIR] [-l | -u | -R] [-f] [-n] [-t CACHE] [-a ARCH] [-p PROFILE] [--commits [COMMIT]]

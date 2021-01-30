@@ -1,0 +1,632 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.checks.codingstyle module &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.codingstyle module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcheck.checks.codingstyle">
+<span id="pkgcheck-checks-codingstyle-module"></span><h1>pkgcheck.checks.codingstyle module<a class="headerlink" href="#module-pkgcheck.checks.codingstyle" title="Permalink to this headline">¶</a></h1>
+<p>Various line-based checks.</p>
+<dl class="py class">
+<dt id="pkgcheck.checks.codingstyle.AbsoluteSymlink">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.codingstyle.</code><code class="sig-name descname">AbsoluteSymlink</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cmd</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#AbsoluteSymlink"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.AbsoluteSymlink" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.LineResult" title="pkgcheck.results.LineResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.LineResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Ebuild uses dosym with absolute paths instead of relative.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.codingstyle.AbsoluteSymlink.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.codingstyle.AbsoluteSymlink.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.AbsoluteSymlink.name">
+<code class="sig-name descname">name</code><em class="property"> = 'AbsoluteSymlink'</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.AbsoluteSymlink.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.codingstyle.AbsoluteSymlinkCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.codingstyle.</code><code class="sig-name descname">AbsoluteSymlinkCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#AbsoluteSymlinkCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.AbsoluteSymlinkCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.Check" title="pkgcheck.checks.Check"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.Check</span></code></a></p>
+<p>Scan ebuild for dosym absolute path usage instead of relative.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.AbsoluteSymlinkCheck.DIRS">
+<code class="sig-name descname">DIRS</code><em class="property"> = ('bin', 'etc', 'lib', 'opt', 'sbin', 'srv', 'usr', 'var')</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.AbsoluteSymlinkCheck.DIRS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.codingstyle.AbsoluteSymlinkCheck.feed">
+<code class="sig-name descname">feed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#AbsoluteSymlinkCheck.feed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.AbsoluteSymlinkCheck.feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle functionality against the passed in item.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.AbsoluteSymlinkCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.codingstyle.AbsoluteSymlink'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.AbsoluteSymlinkCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.AbsoluteSymlinkCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='version' &#64;0x7f81a648f5b0&gt;</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.AbsoluteSymlinkCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.codingstyle.BadCommandsCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.codingstyle.</code><code class="sig-name descname">BadCommandsCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bash_addon</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#BadCommandsCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.BadCommandsCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.Check" title="pkgcheck.checks.Check"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.Check</span></code></a></p>
+<p>Scan ebuild for various deprecated and banned command usage.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.codingstyle.BadCommandsCheck.feed">
+<code class="sig-name descname">feed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#BadCommandsCheck.feed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.BadCommandsCheck.feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle functionality against the passed in item.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.BadCommandsCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.codingstyle.DeprecatedEapiCommand'&gt;, &lt;class 'pkgcheck.checks.codingstyle.BannedEapiCommand'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.BadCommandsCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.BadCommandsCheck.required_addons">
+<code class="sig-name descname">required_addons</code><em class="property"> = (&lt;class 'pkgcheck.addons.BashAddon'&gt;,)</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.BadCommandsCheck.required_addons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.BadCommandsCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='version' &#64;0x7f81a648f5b0&gt;</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.BadCommandsCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.codingstyle.BannedEapiCommand">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.codingstyle.</code><code class="sig-name descname">BannedEapiCommand</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">eapi</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#BannedEapiCommand"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.BannedEapiCommand" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.codingstyle._EapiCommandResult</span></code>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Error" title="pkgcheck.results.Error"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Error</span></code></a></p>
+<p>Ebuild uses a banned EAPI command.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.BannedEapiCommand.name">
+<code class="sig-name descname">name</code><em class="property"> = 'BannedEapiCommand'</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.BannedEapiCommand.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.codingstyle.DeprecatedEapiCommand">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.codingstyle.</code><code class="sig-name descname">DeprecatedEapiCommand</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">eapi</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#DeprecatedEapiCommand"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.DeprecatedEapiCommand" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.codingstyle._EapiCommandResult</span></code>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Ebuild uses a deprecated EAPI command.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.DeprecatedEapiCommand.name">
+<code class="sig-name descname">name</code><em class="property"> = 'DeprecatedEapiCommand'</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.DeprecatedEapiCommand.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.codingstyle.DeprecatedInsinto">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.codingstyle.</code><code class="sig-name descname">DeprecatedInsinto</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cmd</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#DeprecatedInsinto"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.DeprecatedInsinto" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.LineResult" title="pkgcheck.results.LineResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.LineResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Ebuild uses insinto where more compact commands exist.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.codingstyle.DeprecatedInsinto.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.codingstyle.DeprecatedInsinto.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.DeprecatedInsinto.name">
+<code class="sig-name descname">name</code><em class="property"> = 'DeprecatedInsinto'</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.DeprecatedInsinto.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.codingstyle.DoublePrefixInPath">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.codingstyle.</code><code class="sig-name descname">DoublePrefixInPath</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">match</span></em>, <em class="sig-param"><span class="n">lines</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#DoublePrefixInPath"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.DoublePrefixInPath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Error" title="pkgcheck.results.Error"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Error</span></code></a></p>
+<p>Ebuild uses two consecutive paths including EPREFIX.</p>
+<p>Ebuild combines two path variables (or a variable and a getter), both
+of which include EPREFIX, resulting in double prefixing. This is the case
+when combining many pkg-config-based or alike getters with ED or EROOT.</p>
+<p>For example, <code class="docutils literal notranslate"><span class="pre">${ED}$(python_get_sitedir)</span></code> should be replaced
+with <code class="docutils literal notranslate"><span class="pre">${D}$(python_get_sitedir)</span></code>.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.codingstyle.DoublePrefixInPath.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.codingstyle.DoublePrefixInPath.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.DoublePrefixInPath.name">
+<code class="sig-name descname">name</code><em class="property"> = 'DoublePrefixInPath'</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.DoublePrefixInPath.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.codingstyle.HomepageInSrcUri">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.codingstyle.</code><code class="sig-name descname">HomepageInSrcUri</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#HomepageInSrcUri"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.HomepageInSrcUri" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Style" title="pkgcheck.results.Style"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Style</span></code></a></p>
+<p>${HOMEPAGE} is referenced in SRC_URI.</p>
+<p>SRC_URI is built on top of ${HOMEPAGE}. This is discouraged since HOMEPAGE
+is multi-valued by design, and is subject to potential changes that should
+not accidentally affect SRC_URI.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.codingstyle.HomepageInSrcUri.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.codingstyle.HomepageInSrcUri.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.HomepageInSrcUri.name">
+<code class="sig-name descname">name</code><em class="property"> = 'HomepageInSrcUri'</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.HomepageInSrcUri.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.codingstyle.IndirectInherits">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.codingstyle.</code><code class="sig-name descname">IndirectInherits</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eclass</span></em>, <em class="sig-param"><span class="n">lineno</span></em>, <em class="sig-param"><span class="n">usage</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#IndirectInherits"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.IndirectInherits" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Ebuild uses function from indirectly inherited eclass.</p>
+<p>That doesn’t allow indirect inherit usage via the &#64;INDIRECT_INHERITS eclass
+doc tag in a parent eclass.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.codingstyle.IndirectInherits.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.codingstyle.IndirectInherits.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.IndirectInherits.name">
+<code class="sig-name descname">name</code><em class="property"> = 'IndirectInherits'</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.IndirectInherits.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.codingstyle.InheritsCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.codingstyle.</code><code class="sig-name descname">InheritsCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">bash_addon</span></em>, <em class="sig-param"><span class="n">eclass_addon</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#InheritsCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.InheritsCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.OptionalCheck" title="pkgcheck.checks.OptionalCheck"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.OptionalCheck</span></code></a></p>
+<p>Scan for ebuilds with missing or unused eclass inherits.</p>
+<p>Note that this requires using <code class="docutils literal notranslate"><span class="pre">pmaint</span> <span class="pre">regen</span></code> to generate repo metadata in
+order for direct inherits to be correct.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.codingstyle.InheritsCheck.feed">
+<code class="sig-name descname">feed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#InheritsCheck.feed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.InheritsCheck.feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle functionality against the passed in item.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.codingstyle.InheritsCheck.get_eclass">
+<code class="sig-name descname">get_eclass</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">export</span></em>, <em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#InheritsCheck.get_eclass"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.InheritsCheck.get_eclass" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the eclass related to a given exported variable or function name.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.InheritsCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.codingstyle.IndirectInherits'&gt;, &lt;class 'pkgcheck.checks.codingstyle.InternalEclassUsage'&gt;, &lt;class 'pkgcheck.checks.codingstyle.MissingInherits'&gt;, &lt;class 'pkgcheck.checks.codingstyle.UnusedInherits'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.InheritsCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.InheritsCheck.required_addons">
+<code class="sig-name descname">required_addons</code><em class="property"> = (&lt;class 'pkgcheck.addons.BashAddon'&gt;, &lt;class 'pkgcheck.eclass.EclassAddon'&gt;)</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.InheritsCheck.required_addons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.InheritsCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='version' &#64;0x7f81a648f5b0&gt;</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.InheritsCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.codingstyle.InsintoCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.codingstyle.</code><code class="sig-name descname">InsintoCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#InsintoCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.InsintoCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.Check" title="pkgcheck.checks.Check"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.Check</span></code></a></p>
+<p>Scan ebuild for deprecated insinto usage.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.codingstyle.InsintoCheck.feed">
+<code class="sig-name descname">feed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#InsintoCheck.feed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.InsintoCheck.feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle functionality against the passed in item.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.InsintoCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.codingstyle.DeprecatedInsinto'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.InsintoCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.InsintoCheck.path_mapping">
+<code class="sig-name descname">path_mapping</code><em class="property"> = {'/etc/conf.d': 'doconfd or newconfd', '/etc/env.d': 'doenvd or newenvd', '/etc/init.d': 'doinitd or newinitd', '/etc/pam.d': 'dopamd or newpamd from pam.eclass', '/usr/share/applications': 'domenu or newmenu from desktop.eclass'}</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.InsintoCheck.path_mapping" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.InsintoCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='version' &#64;0x7f81a648f5b0&gt;</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.InsintoCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.codingstyle.InternalEclassUsage">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.codingstyle.</code><code class="sig-name descname">InternalEclassUsage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eclass</span></em>, <em class="sig-param"><span class="n">lineno</span></em>, <em class="sig-param"><span class="n">usage</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#InternalEclassUsage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.InternalEclassUsage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Ebuild uses internal functions or variables from eclass.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.codingstyle.InternalEclassUsage.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.codingstyle.InternalEclassUsage.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.InternalEclassUsage.name">
+<code class="sig-name descname">name</code><em class="property"> = 'InternalEclassUsage'</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.InternalEclassUsage.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.codingstyle.MissingInherits">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.codingstyle.</code><code class="sig-name descname">MissingInherits</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eclass</span></em>, <em class="sig-param"><span class="n">lineno</span></em>, <em class="sig-param"><span class="n">usage</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#MissingInherits"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.MissingInherits" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Ebuild uses function from eclass that isn’t inherited.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.codingstyle.MissingInherits.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.codingstyle.MissingInherits.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.MissingInherits.name">
+<code class="sig-name descname">name</code><em class="property"> = 'MissingInherits'</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.MissingInherits.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.codingstyle.MissingSlash">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.codingstyle.</code><code class="sig-name descname">MissingSlash</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">match</span></em>, <em class="sig-param"><span class="n">lines</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#MissingSlash"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.MissingSlash" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Error" title="pkgcheck.results.Error"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Error</span></code></a></p>
+<p>Ebuild uses a path variable missing a trailing slash.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.codingstyle.MissingSlash.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.codingstyle.MissingSlash.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.MissingSlash.name">
+<code class="sig-name descname">name</code><em class="property"> = 'MissingSlash'</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.MissingSlash.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.codingstyle.ObsoleteUri">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.codingstyle.</code><code class="sig-name descname">ObsoleteUri</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">line</span></em>, <em class="sig-param"><span class="n">uri</span></em>, <em class="sig-param"><span class="n">replacement</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#ObsoleteUri"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.ObsoleteUri" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Style" title="pkgcheck.results.Style"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Style</span></code></a></p>
+<p>URI used is obsolete.</p>
+<p>The URI used to fetch distfile is obsolete and can be replaced
+by something more modern. Note that the modern replacement usually
+results in different file contents, so you need to rename it (to
+avoid mirror collisions with the old file) and update the ebuild
+(for example, by removing no longer necessary vcs-snapshot.eclass).</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.codingstyle.ObsoleteUri.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.codingstyle.ObsoleteUri.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.ObsoleteUri.name">
+<code class="sig-name descname">name</code><em class="property"> = 'ObsoleteUri'</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.ObsoleteUri.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.codingstyle.ObsoleteUriCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.codingstyle.</code><code class="sig-name descname">ObsoleteUriCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#ObsoleteUriCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.ObsoleteUriCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.Check" title="pkgcheck.checks.Check"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.Check</span></code></a></p>
+<p>Scan ebuild for obsolete URIs.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.ObsoleteUriCheck.REGEXPS">
+<code class="sig-name descname">REGEXPS</code><em class="property"> = (('.*\\b(?P&lt;uri&gt;(?P&lt;prefix&gt;https?://github\\.com/.*?/.*?/)(?:tar|zip)ball(?P&lt;ref&gt;\\S*))', '\\g&lt;prefix&gt;archive\\g&lt;ref&gt;.tar.gz'), ('.*\\b(?P&lt;uri&gt;(?P&lt;prefix&gt;https?://gitlab\\.com/.*?/(?P&lt;pkg&gt;.*?)/)repository/archive\\.(?P&lt;format&gt;tar|tar\\.gz|tar\\.bz2|zip)\\?ref=(?P&lt;ref&gt;\\S*))', '\\g&lt;prefix&gt;-/archive/\\g&lt;ref&gt;/\\g&lt;pkg&gt;-\\g&lt;ref&gt;.\\g&lt;format&gt;'))</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.ObsoleteUriCheck.REGEXPS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.codingstyle.ObsoleteUriCheck.feed">
+<code class="sig-name descname">feed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#ObsoleteUriCheck.feed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.ObsoleteUriCheck.feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle functionality against the passed in item.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.ObsoleteUriCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.codingstyle.ObsoleteUri'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.ObsoleteUriCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.ObsoleteUriCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='version' &#64;0x7f81a648f5b0&gt;</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.ObsoleteUriCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.codingstyle.PathVariablesCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.codingstyle.</code><code class="sig-name descname">PathVariablesCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#PathVariablesCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.PathVariablesCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.Check" title="pkgcheck.checks.Check"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.Check</span></code></a></p>
+<p>Scan ebuild for path variables with various issues.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.codingstyle.PathVariablesCheck.feed">
+<code class="sig-name descname">feed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#PathVariablesCheck.feed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.PathVariablesCheck.feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle functionality against the passed in item.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.PathVariablesCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.codingstyle.UnnecessarySlashStrip'&gt;, &lt;class 'pkgcheck.checks.codingstyle.DoublePrefixInPath'&gt;, &lt;class 'pkgcheck.checks.codingstyle.MissingSlash'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.PathVariablesCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.PathVariablesCheck.prefixed_dir_functions">
+<code class="sig-name descname">prefixed_dir_functions</code><em class="property"> = ('insinto', 'exeinto', 'dodir', 'keepdir', 'fowners', 'fperms', 'java-pkg_jarinto', 'java-pkg_sointo', 'python_scriptinto', 'python_moduleinto')</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.PathVariablesCheck.prefixed_dir_functions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.PathVariablesCheck.prefixed_getters">
+<code class="sig-name descname">prefixed_getters</code><em class="property"> = ('get_bashcompdir', 'get_bashhelpersdir', 'db_includedir', 'get_golibdir_gopath', 'get_llvm_prefix', 'python_get_sitedir', 'python_get_includedir', 'python_get_library_path', 'python_get_scriptdir', 'qt4_get_bindir', 'qt5_get_bindir', 's6_get_servicedir', 'systemd_get_systemunitdir', 'systemd_get_userunitdir', 'systemd_get_utildir', 'systemd_get_systemgeneratordir')</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.PathVariablesCheck.prefixed_getters" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.PathVariablesCheck.prefixed_rhs_variables">
+<code class="sig-name descname">prefixed_rhs_variables</code><em class="property"> = ('EPREFIX', 'PYTHON', 'PYTHON_SITEDIR', 'PYTHON_INCLUDEDIR', 'PYTHON_LIBPATH', 'PYTHON_CONFIG', 'PYTHON_SCRIPTDIR')</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.PathVariablesCheck.prefixed_rhs_variables" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.PathVariablesCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='version' &#64;0x7f81a648f5b0&gt;</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.PathVariablesCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.codingstyle.RawEbuildCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.codingstyle.</code><code class="sig-name descname">RawEbuildCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#RawEbuildCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.RawEbuildCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.Check" title="pkgcheck.checks.Check"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.Check</span></code></a></p>
+<p>Scan raw ebuild content for various issues.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.codingstyle.RawEbuildCheck.check_homepage">
+<code class="sig-name descname">check_homepage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">s</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#RawEbuildCheck.check_homepage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.RawEbuildCheck.check_homepage" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.codingstyle.RawEbuildCheck.check_src_uri">
+<code class="sig-name descname">check_src_uri</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">s</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#RawEbuildCheck.check_src_uri"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.RawEbuildCheck.check_src_uri" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.codingstyle.RawEbuildCheck.feed">
+<code class="sig-name descname">feed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#RawEbuildCheck.feed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.RawEbuildCheck.feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle functionality against the passed in item.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.RawEbuildCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.codingstyle.VariableInHomepage'&gt;, &lt;class 'pkgcheck.checks.codingstyle.HomepageInSrcUri'&gt;, &lt;class 'pkgcheck.checks.codingstyle.StaticSrcUri'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.RawEbuildCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.RawEbuildCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='version' &#64;0x7f81a648f5b0&gt;</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.RawEbuildCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.codingstyle.RedundantDodir">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.codingstyle.</code><code class="sig-name descname">RedundantDodir</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cmd</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#RedundantDodir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.RedundantDodir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.LineResult" title="pkgcheck.results.LineResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.LineResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Style" title="pkgcheck.results.Style"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Style</span></code></a></p>
+<p>Ebuild using a redundant dodir call.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.codingstyle.RedundantDodir.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.codingstyle.RedundantDodir.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.RedundantDodir.name">
+<code class="sig-name descname">name</code><em class="property"> = 'RedundantDodir'</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.RedundantDodir.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.codingstyle.RedundantDodirCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.codingstyle.</code><code class="sig-name descname">RedundantDodirCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#RedundantDodirCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.RedundantDodirCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.Check" title="pkgcheck.checks.Check"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.Check</span></code></a></p>
+<p>Scan ebuild for redundant dodir usage.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.codingstyle.RedundantDodirCheck.feed">
+<code class="sig-name descname">feed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#RedundantDodirCheck.feed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.RedundantDodirCheck.feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle functionality against the passed in item.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.RedundantDodirCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.codingstyle.RedundantDodir'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.RedundantDodirCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.RedundantDodirCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='version' &#64;0x7f81a648f5b0&gt;</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.RedundantDodirCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.codingstyle.StaticSrcUri">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.codingstyle.</code><code class="sig-name descname">StaticSrcUri</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">static_str</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#StaticSrcUri"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.StaticSrcUri" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Style" title="pkgcheck.results.Style"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Style</span></code></a></p>
+<p>SRC_URI contains static value instead of the dynamic equivalent.</p>
+<p>For example, using static text to relate to the package version in SRC_URI
+instead of ${P} or ${PV} where relevant.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.codingstyle.StaticSrcUri.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.codingstyle.StaticSrcUri.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.StaticSrcUri.name">
+<code class="sig-name descname">name</code><em class="property"> = 'StaticSrcUri'</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.StaticSrcUri.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.codingstyle.UnnecessarySlashStrip">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.codingstyle.</code><code class="sig-name descname">UnnecessarySlashStrip</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">match</span></em>, <em class="sig-param"><span class="n">lines</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#UnnecessarySlashStrip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.UnnecessarySlashStrip" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Style" title="pkgcheck.results.Style"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Style</span></code></a></p>
+<p>Ebuild uses a path variable that strips a nonexistent slash.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.codingstyle.UnnecessarySlashStrip.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.codingstyle.UnnecessarySlashStrip.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.UnnecessarySlashStrip.name">
+<code class="sig-name descname">name</code><em class="property"> = 'UnnecessarySlashStrip'</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.UnnecessarySlashStrip.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.codingstyle.UnusedInherits">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.codingstyle.</code><code class="sig-name descname">UnusedInherits</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eclasses</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#UnusedInherits"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.UnusedInherits" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Ebuild inherits eclasses that are unused.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.codingstyle.UnusedInherits.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.codingstyle.UnusedInherits.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.UnusedInherits.name">
+<code class="sig-name descname">name</code><em class="property"> = 'UnusedInherits'</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.UnusedInherits.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.codingstyle.VariableInHomepage">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.codingstyle.</code><code class="sig-name descname">VariableInHomepage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">variables</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/codingstyle.html#VariableInHomepage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.codingstyle.VariableInHomepage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Style" title="pkgcheck.results.Style"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Style</span></code></a></p>
+<p>HOMEPAGE includes a variable.</p>
+<p>The HOMEPAGE ebuild variable entry in the devmanual <a class="footnote-reference brackets" href="#id2" id="id1">1</a> states only raw
+text should be used.</p>
+<dl class="footnote brackets">
+<dt class="label" id="id2"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
+<dd><p><a class="reference external" href="https://devmanual.gentoo.org/ebuild-writing/variables/#ebuild-defined-variables">https://devmanual.gentoo.org/ebuild-writing/variables/#ebuild-defined-variables</a></p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="pkgcheck.checks.codingstyle.VariableInHomepage.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.codingstyle.VariableInHomepage.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.codingstyle.VariableInHomepage.name">
+<code class="sig-name descname">name</code><em class="property"> = 'VariableInHomepage'</em><a class="headerlink" href="#pkgcheck.checks.codingstyle.VariableInHomepage.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/pkgcheck.checks.codingstyle.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.codingstyle module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

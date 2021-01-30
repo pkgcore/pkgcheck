@@ -1,0 +1,818 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.checks.repo_metadata &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../checks.html" accesskey="U">pkgcheck.checks</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.repo_metadata</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcheck.checks.repo_metadata</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">difflib</span> <span class="kn">import</span> <span class="n">SequenceMatcher</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
+
+<span class="kn">from</span> <span class="nn">pkgcore</span> <span class="kn">import</span> <span class="n">fetch</span>
+<span class="kn">from</span> <span class="nn">snakeoil.sequences</span> <span class="kn">import</span> <span class="n">iflatten_instance</span>
+<span class="kn">from</span> <span class="nn">snakeoil.strings</span> <span class="kn">import</span> <span class="n">pluralism</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">addons</span><span class="p">,</span> <span class="n">base</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">sources</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">Check</span><span class="p">,</span> <span class="n">MirrorsCheck</span>
+
+
+<div class="viewcode-block" id="MultiMovePackageUpdate"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.MultiMovePackageUpdate">[docs]</a><span class="k">class</span> <span class="nc">MultiMovePackageUpdate</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">ProfilesResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Entry for package moved multiple times in profiles/updates files.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">moves</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span> <span class="o">=</span> <span class="n">pkg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">moves</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">moves</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="si">!r}</span><span class="s2">: multi-move update: </span><span class="si">{</span><span class="s1">&#39; -&gt; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">moves</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+<div class="viewcode-block" id="OldMultiMovePackageUpdate"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.OldMultiMovePackageUpdate">[docs]</a><span class="k">class</span> <span class="nc">OldMultiMovePackageUpdate</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">ProfilesResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Old entry for removed package moved multiple times in profiles/updates files.</span>
+
+<span class="sd">    This means that the reported pkg has been moved at least three times and</span>
+<span class="sd">    finally removed from the tree. All the related lines should be removed from</span>
+<span class="sd">    the update files.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">moves</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span> <span class="o">=</span> <span class="n">pkg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">moves</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">moves</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="si">!r}</span><span class="s2"> unavailable: old multi-move update: </span><span class="si">{</span><span class="s1">&#39; -&gt; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">moves</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+<div class="viewcode-block" id="OldPackageUpdate"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.OldPackageUpdate">[docs]</a><span class="k">class</span> <span class="nc">OldPackageUpdate</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">ProfilesResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Old entry for removed package in profiles/updates files.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">updates</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pkg</span> <span class="o">=</span> <span class="n">pkg</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">updates</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">updates</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pkg</span><span class="si">!r}</span><span class="s2"> unavailable: old update line: </span><span class="si">{</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">updates</span><span class="p">)</span><span class="si">!r}</span><span class="s2">&quot;</span></div>
+
+
+<div class="viewcode-block" id="RedundantPackageUpdate"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.RedundantPackageUpdate">[docs]</a><span class="k">class</span> <span class="nc">RedundantPackageUpdate</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">ProfilesResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Move entry to the same package/slot (source == target).&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">updates</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">updates</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">updates</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;update line moves to the same package/slot: </span><span class="si">{</span><span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">updates</span><span class="p">)</span><span class="si">!r}</span><span class="s2">&quot;</span></div>
+
+
+<div class="viewcode-block" id="MovedPackageUpdate"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.MovedPackageUpdate">[docs]</a><span class="k">class</span> <span class="nc">MovedPackageUpdate</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">ProfilesResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">LogWarning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Entry for package already moved in profiles/updates files.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="BadPackageUpdate"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.BadPackageUpdate">[docs]</a><span class="k">class</span> <span class="nc">BadPackageUpdate</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">ProfilesResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">LogError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Badly formatted package update in profiles/updates files.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="PackageUpdatesCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.PackageUpdatesCheck">[docs]</a><span class="k">class</span> <span class="nc">PackageUpdatesCheck</span><span class="p">(</span><span class="n">Check</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Scan profiles/updates/* for outdated entries and other issues.&quot;&quot;&quot;</span>
+
+    <span class="n">_source</span> <span class="o">=</span> <span class="p">(</span><span class="n">sources</span><span class="o">.</span><span class="n">EmptySource</span><span class="p">,</span> <span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">profiles_scope</span><span class="p">,))</span>
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span>
+        <span class="n">MultiMovePackageUpdate</span><span class="p">,</span> <span class="n">OldMultiMovePackageUpdate</span><span class="p">,</span>
+        <span class="n">OldPackageUpdate</span><span class="p">,</span> <span class="n">MovedPackageUpdate</span><span class="p">,</span> <span class="n">BadPackageUpdate</span><span class="p">,</span>
+        <span class="n">RedundantPackageUpdate</span><span class="p">,</span>
+    <span class="p">])</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">repo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">target_repo</span>
+
+<div class="viewcode-block" id="PackageUpdatesCheck.finish"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.PackageUpdatesCheck.finish">[docs]</a>    <span class="k">def</span> <span class="nf">finish</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">logmap</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">base</span><span class="o">.</span><span class="n">LogMap</span><span class="p">(</span><span class="s1">&#39;pkgcore.log.logger.warning&#39;</span><span class="p">,</span> <span class="n">MovedPackageUpdate</span><span class="p">),</span>
+            <span class="n">base</span><span class="o">.</span><span class="n">LogMap</span><span class="p">(</span><span class="s1">&#39;pkgcore.log.logger.error&#39;</span><span class="p">,</span> <span class="n">BadPackageUpdate</span><span class="p">),</span>
+        <span class="p">)</span>
+
+        <span class="c1"># convert log warnings/errors into reports</span>
+        <span class="k">with</span> <span class="n">base</span><span class="o">.</span><span class="n">LogReports</span><span class="p">(</span><span class="o">*</span><span class="n">logmap</span><span class="p">)</span> <span class="k">as</span> <span class="n">log_reports</span><span class="p">:</span>
+            <span class="n">repo_updates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">updates</span>
+        <span class="k">yield from</span> <span class="n">log_reports</span>
+
+        <span class="n">multi_move_updates</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">old_move_updates</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">old_slotmove_updates</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">updates</span> <span class="ow">in</span> <span class="n">repo_updates</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">move_updates</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">updates</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;move&#39;</span><span class="p">]</span>
+            <span class="n">slotmove_updates</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">updates</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;slotmove&#39;</span><span class="p">]</span>
+
+            <span class="c1"># check for multi-updates, a -&gt; b, b -&gt; c, ...</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">move_updates</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="c1"># the most recent move should override all the older entries,</span>
+                <span class="c1"># meaning only a single report for the entire chain should created</span>
+                <span class="n">multi_move_updates</span><span class="p">[</span><span class="n">move_updates</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">2</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">move_updates</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># scan updates for old entries with removed packages</span>
+                <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">move_updates</span><span class="p">:</span>
+                    <span class="n">_</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span> <span class="o">=</span> <span class="n">x</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">new</span><span class="p">):</span>
+                        <span class="n">old_move_updates</span><span class="p">[</span><span class="n">new</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span>
+                    <span class="k">if</span> <span class="n">old</span> <span class="o">==</span> <span class="n">new</span><span class="p">:</span>
+                        <span class="k">yield</span> <span class="n">RedundantPackageUpdate</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">x</span><span class="p">))</span>
+
+            <span class="c1"># scan updates for old entries with removed packages</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">slotmove_updates</span><span class="p">:</span>
+                <span class="n">_</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">newslot</span> <span class="o">=</span> <span class="n">x</span>
+                <span class="n">orig_line</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;slotmove&#39;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">pkg</span><span class="p">)[:</span><span class="o">-</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">slot</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)],</span> <span class="n">pkg</span><span class="o">.</span><span class="n">slot</span><span class="p">,</span> <span class="n">newslot</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">unversioned_atom</span><span class="p">):</span>
+                    <span class="c1"># reproduce updates file line data for result output</span>
+                    <span class="n">old_slotmove_updates</span><span class="p">[</span><span class="n">pkg</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">orig_line</span>
+                <span class="k">if</span> <span class="n">pkg</span><span class="o">.</span><span class="n">slot</span> <span class="o">==</span> <span class="n">newslot</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">RedundantPackageUpdate</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">orig_line</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">multi_move_updates</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">orig_pkg</span><span class="p">,</span> <span class="n">moves</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="c1"># check for multi-move chains ending in removed packages</span>
+            <span class="n">moves</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">orig_pkg</span><span class="p">)]</span> <span class="o">+</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">moves</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pkg</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">OldMultiMovePackageUpdate</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">moves</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]),</span> <span class="n">moves</span><span class="p">)</span>
+                <span class="c1"># don&#39;t generate duplicate old report</span>
+                <span class="n">old_move_updates</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">MultiMovePackageUpdate</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">orig_pkg</span><span class="p">),</span> <span class="n">moves</span><span class="p">)</span>
+
+        <span class="c1"># report remaining old updates</span>
+        <span class="k">for</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">move</span> <span class="ow">in</span> <span class="n">chain</span><span class="p">(</span><span class="n">old_move_updates</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">old_slotmove_updates</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="n">updates</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">move</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">OldPackageUpdate</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">pkg</span><span class="p">),</span> <span class="n">updates</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="UnusedLicenses"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.UnusedLicenses">[docs]</a><span class="k">class</span> <span class="nc">UnusedLicenses</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Unused license(s) detected.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">licenses</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">licenses</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">licenses</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">licenses</span><span class="p">)</span>
+        <span class="n">licenses</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">licenses</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;unused license</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">licenses</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="UnusedLicensesCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.UnusedLicensesCheck">[docs]</a><span class="k">class</span> <span class="nc">UnusedLicensesCheck</span><span class="p">(</span><span class="n">Check</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check for unused license files.&quot;&quot;&quot;</span>
+
+    <span class="n">_source</span> <span class="o">=</span> <span class="n">sources</span><span class="o">.</span><span class="n">RepositoryRepoSource</span>
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="n">UnusedLicenses</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unused_licenses</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="UnusedLicensesCheck.start"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.UnusedLicensesCheck.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">master_licenses</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">repo</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">target_repo</span><span class="o">.</span><span class="n">masters</span><span class="p">:</span>
+            <span class="n">master_licenses</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">licenses</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unused_licenses</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">target_repo</span><span class="o">.</span><span class="n">licenses</span><span class="p">)</span> <span class="o">-</span> <span class="n">master_licenses</span></div>
+
+<div class="viewcode-block" id="UnusedLicensesCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.UnusedLicensesCheck.feed">[docs]</a>    <span class="k">def</span> <span class="nf">feed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unused_licenses</span><span class="o">.</span><span class="n">difference_update</span><span class="p">(</span><span class="n">iflatten_instance</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">license</span><span class="p">))</span>
+        <span class="k">yield from</span> <span class="p">()</span></div>
+
+<div class="viewcode-block" id="UnusedLicensesCheck.finish"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.UnusedLicensesCheck.finish">[docs]</a>    <span class="k">def</span> <span class="nf">finish</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">unused_licenses</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">UnusedLicenses</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">unused_licenses</span><span class="p">))</span></div></div>
+
+
+<div class="viewcode-block" id="UnusedMirrors"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.UnusedMirrors">[docs]</a><span class="k">class</span> <span class="nc">UnusedMirrors</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Unused mirrors detected.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mirrors</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mirrors</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">mirrors</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mirrors</span><span class="p">)</span>
+        <span class="n">mirrors</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mirrors</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;unused mirror</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">mirrors</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="UnusedMirrorsCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.UnusedMirrorsCheck">[docs]</a><span class="k">class</span> <span class="nc">UnusedMirrorsCheck</span><span class="p">(</span><span class="n">MirrorsCheck</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check for unused mirrors.&quot;&quot;&quot;</span>
+
+    <span class="n">_source</span> <span class="o">=</span> <span class="n">sources</span><span class="o">.</span><span class="n">RepositoryRepoSource</span>
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="n">UnusedMirrors</span><span class="p">])</span>
+
+<div class="viewcode-block" id="UnusedMirrorsCheck.start"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.UnusedMirrorsCheck.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">master_mirrors</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">repo</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">target_repo</span><span class="o">.</span><span class="n">masters</span><span class="p">:</span>
+            <span class="n">master_mirrors</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">mirrors</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unused_mirrors</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">target_repo</span><span class="o">.</span><span class="n">mirrors</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">-</span> <span class="n">master_mirrors</span></div>
+
+<div class="viewcode-block" id="UnusedMirrorsCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.UnusedMirrorsCheck.feed">[docs]</a>    <span class="k">def</span> <span class="nf">feed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">unused_mirrors</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">unused_mirrors</span><span class="o">.</span><span class="n">difference_update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_mirrors</span><span class="p">(</span><span class="n">pkg</span><span class="p">))</span>
+        <span class="k">yield from</span> <span class="p">()</span></div>
+
+<div class="viewcode-block" id="UnusedMirrorsCheck.finish"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.UnusedMirrorsCheck.finish">[docs]</a>    <span class="k">def</span> <span class="nf">finish</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">unused_mirrors</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">UnusedMirrors</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">unused_mirrors</span><span class="p">))</span></div></div>
+
+
+<div class="viewcode-block" id="UnusedEclasses"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.UnusedEclasses">[docs]</a><span class="k">class</span> <span class="nc">UnusedEclasses</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Unused eclasses detected.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eclasses</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eclasses</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">eclasses</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">es</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eclasses</span><span class="p">,</span> <span class="n">plural</span><span class="o">=</span><span class="s1">&#39;es&#39;</span><span class="p">)</span>
+        <span class="n">eclasses</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eclasses</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;unused eclass</span><span class="si">{</span><span class="n">es</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">eclasses</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="UnusedEclassesCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.UnusedEclassesCheck">[docs]</a><span class="k">class</span> <span class="nc">UnusedEclassesCheck</span><span class="p">(</span><span class="n">Check</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check for unused eclasses.&quot;&quot;&quot;</span>
+
+    <span class="n">_source</span> <span class="o">=</span> <span class="n">sources</span><span class="o">.</span><span class="n">RepositoryRepoSource</span>
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="n">UnusedEclasses</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unused_eclasses</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="UnusedEclassesCheck.start"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.UnusedEclassesCheck.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">master_eclasses</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">repo</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">target_repo</span><span class="o">.</span><span class="n">masters</span><span class="p">:</span>
+            <span class="n">master_eclasses</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">eclass_cache</span><span class="o">.</span><span class="n">eclasses</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unused_eclasses</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">target_repo</span><span class="o">.</span><span class="n">eclass_cache</span><span class="o">.</span><span class="n">eclasses</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">-</span> <span class="n">master_eclasses</span></div>
+
+<div class="viewcode-block" id="UnusedEclassesCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.UnusedEclassesCheck.feed">[docs]</a>    <span class="k">def</span> <span class="nf">feed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unused_eclasses</span><span class="o">.</span><span class="n">difference_update</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">inherited</span><span class="p">)</span>
+        <span class="k">yield from</span> <span class="p">()</span></div>
+
+<div class="viewcode-block" id="UnusedEclassesCheck.finish"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.UnusedEclassesCheck.finish">[docs]</a>    <span class="k">def</span> <span class="nf">finish</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">unused_eclasses</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">UnusedEclasses</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">unused_eclasses</span><span class="p">))</span></div></div>
+
+
+<div class="viewcode-block" id="UnknownLicenses"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.UnknownLicenses">[docs]</a><span class="k">class</span> <span class="nc">UnknownLicenses</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;License(s) listed in license group(s) that don&#39;t exist.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group</span><span class="p">,</span> <span class="n">licenses</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">group</span> <span class="o">=</span> <span class="n">group</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">licenses</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">licenses</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">licenses</span><span class="p">)</span>
+        <span class="n">licenses</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">licenses</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;license group </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">group</span><span class="si">!r}</span><span class="s1"> has unknown license</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">: [ </span><span class="si">{</span><span class="n">licenses</span><span class="si">}</span><span class="s1"> ]&#39;</span></div>
+
+
+<div class="viewcode-block" id="LicenseGroupsCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.LicenseGroupsCheck">[docs]</a><span class="k">class</span> <span class="nc">LicenseGroupsCheck</span><span class="p">(</span><span class="n">Check</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Scan license groups for unknown licenses.&quot;&quot;&quot;</span>
+
+    <span class="n">_source</span> <span class="o">=</span> <span class="p">(</span><span class="n">sources</span><span class="o">.</span><span class="n">EmptySource</span><span class="p">,</span> <span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">repo_scope</span><span class="p">,))</span>
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="n">UnknownLicenses</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">repo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">target_repo</span>
+
+<div class="viewcode-block" id="LicenseGroupsCheck.finish"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.LicenseGroupsCheck.finish">[docs]</a>    <span class="k">def</span> <span class="nf">finish</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">group</span><span class="p">,</span> <span class="n">licenses</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">licenses</span><span class="o">.</span><span class="n">groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">unknown_licenses</span> <span class="o">:=</span> <span class="nb">set</span><span class="p">(</span><span class="n">licenses</span><span class="p">)</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">licenses</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">UnknownLicenses</span><span class="p">(</span><span class="n">group</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">unknown_licenses</span><span class="p">))</span></div></div>
+
+
+<div class="viewcode-block" id="PotentialLocalUse"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.PotentialLocalUse">[docs]</a><span class="k">class</span> <span class="nc">PotentialLocalUse</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">Info</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Global USE flag is a potential local USE flag.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flag</span><span class="p">,</span> <span class="n">pkgs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flag</span> <span class="o">=</span> <span class="n">flag</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pkgs</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">pkgs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pkgs</span><span class="p">)</span>
+        <span class="n">pkgs</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pkgs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;global USE flag </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">flag</span><span class="si">!r}</span><span class="s1"> is a potential local, &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;used by </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pkgs</span><span class="p">)</span><span class="si">}</span><span class="s1"> package</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">pkgs</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="UnusedGlobalUse"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.UnusedGlobalUse">[docs]</a><span class="k">class</span> <span class="nc">UnusedGlobalUse</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Unused use.desc flag(s).&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flags</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flags</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">flags</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flags</span><span class="p">)</span>
+        <span class="n">flags</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flags</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;use.desc unused flag</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">flags</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="UnusedGlobalUseExpand"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.UnusedGlobalUseExpand">[docs]</a><span class="k">class</span> <span class="nc">UnusedGlobalUseExpand</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Unused global USE_EXPAND flag(s).&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flags</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flags</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">flags</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flags</span><span class="p">)</span>
+        <span class="n">flags</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flags</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;unused flag</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">flags</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="PotentialGlobalUse"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.PotentialGlobalUse">[docs]</a><span class="k">class</span> <span class="nc">PotentialGlobalUse</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">Info</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Local USE flag is a potential global USE flag.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flag</span><span class="p">,</span> <span class="n">pkgs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flag</span> <span class="o">=</span> <span class="n">flag</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pkgs</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">pkgs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;local USE flag </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">flag</span><span class="si">!r}</span><span class="s2"> is a potential global &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;used by </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pkgs</span><span class="p">)</span><span class="si">}</span><span class="s2"> packages: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pkgs</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_dfs</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">visited</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">visited</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">visited</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">visited</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">start</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">graph</span><span class="p">[</span><span class="n">start</span><span class="p">]</span> <span class="o">-</span> <span class="n">visited</span><span class="p">:</span>
+        <span class="n">_dfs</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">visited</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">visited</span>
+
+
+<div class="viewcode-block" id="GlobalUseCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.GlobalUseCheck">[docs]</a><span class="k">class</span> <span class="nc">GlobalUseCheck</span><span class="p">(</span><span class="n">Check</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check global USE and USE_EXPAND flags for various issues.&quot;&quot;&quot;</span>
+
+    <span class="n">_source</span> <span class="o">=</span> <span class="p">(</span><span class="n">sources</span><span class="o">.</span><span class="n">RepositoryRepoSource</span><span class="p">,</span> <span class="p">(),</span> <span class="p">((</span><span class="s1">&#39;source&#39;</span><span class="p">,</span> <span class="n">sources</span><span class="o">.</span><span class="n">PackageRepoSource</span><span class="p">),))</span>
+    <span class="n">required_addons</span> <span class="o">=</span> <span class="p">(</span><span class="n">addons</span><span class="o">.</span><span class="n">UseAddon</span><span class="p">,)</span>
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span>
+        <span class="n">PotentialLocalUse</span><span class="p">,</span> <span class="n">PotentialGlobalUse</span><span class="p">,</span> <span class="n">UnusedGlobalUse</span><span class="p">,</span> <span class="n">UnusedGlobalUseExpand</span><span class="p">,</span>
+    <span class="p">])</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">use_addon</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">global_flag_usage</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">repo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">target_repo</span>
+
+<div class="viewcode-block" id="GlobalUseCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.GlobalUseCheck.feed">[docs]</a>    <span class="k">def</span> <span class="nf">feed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkgs</span><span class="p">):</span>
+        <span class="c1"># ignore bad XML, it will be caught by metadata.xml checks</span>
+        <span class="n">local_use</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">pkgs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">local_use</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">pkg</span> <span class="ow">in</span> <span class="n">pkgs</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">flag</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">iuse_stripped</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">local_use</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">global_flag_usage</span><span class="p">[</span><span class="n">flag</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">unversioned_atom</span><span class="p">)</span>
+        <span class="k">yield from</span> <span class="p">()</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_similar_flags</span><span class="p">(</span><span class="n">pkgs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Yield groups of packages with similar local USE flag descriptions.&quot;&quot;&quot;</span>
+        <span class="c1"># calculate USE flag description difference ratios</span>
+        <span class="n">diffs</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">i_pkg</span><span class="p">,</span> <span class="n">i_desc</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pkgs</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="p">(</span><span class="n">j_pkg</span><span class="p">,</span> <span class="n">j_desc</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">pkgs</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]):</span>
+                <span class="n">diffs</span><span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="n">j</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">SequenceMatcher</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">i_desc</span><span class="p">,</span> <span class="n">j_desc</span><span class="p">)</span><span class="o">.</span><span class="n">ratio</span><span class="p">()</span>
+
+        <span class="c1"># create an adjacency list using all closely matching flags pairs</span>
+        <span class="n">similar</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">),</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">diffs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">r</span> <span class="o">&gt;=</span> <span class="mf">0.75</span><span class="p">:</span>
+                <span class="n">similar</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">j</span><span class="p">)</span>
+                <span class="n">similar</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+        <span class="c1"># not enough close matches found</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">similar</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c1"># determine groups of connected components</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">similar</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">components</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">while</span> <span class="n">nodes</span><span class="p">:</span>
+            <span class="n">visited</span> <span class="o">=</span> <span class="n">_dfs</span><span class="p">(</span><span class="n">similar</span><span class="p">,</span> <span class="n">nodes</span><span class="o">.</span><span class="n">pop</span><span class="p">())</span>
+            <span class="n">components</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">visited</span><span class="p">)</span>
+            <span class="n">nodes</span> <span class="o">-=</span> <span class="n">visited</span>
+
+        <span class="c1"># Flag groups of five or more pkgs with similar local USE flags as a</span>
+        <span class="c1"># potential globals -- note that this can yield the same flag for</span>
+        <span class="c1"># multiple, distinct descriptions.</span>
+        <span class="k">for</span> <span class="n">component</span> <span class="ow">in</span> <span class="n">components</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">component</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">5</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="p">[</span><span class="n">pkgs</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">component</span><span class="p">]</span>
+
+<div class="viewcode-block" id="GlobalUseCheck.finish"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.GlobalUseCheck.finish">[docs]</a>    <span class="k">def</span> <span class="nf">finish</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">repo_global_use</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">flag</span> <span class="k">for</span> <span class="n">matcher</span><span class="p">,</span> <span class="p">(</span><span class="n">flag</span><span class="p">,</span> <span class="n">desc</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">use_desc</span><span class="p">}</span>
+        <span class="n">repo_global_use_expand</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">flag</span> <span class="k">for</span> <span class="n">use_expand</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">use_expand_desc</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">flag</span><span class="p">,</span> <span class="n">desc</span> <span class="ow">in</span> <span class="n">use_expand</span><span class="p">}</span>
+        <span class="n">repo_local_use</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">use_local_desc</span>
+        <span class="n">unused_global_use</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">unused_global_use_expand</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">potential_locals</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">flag</span> <span class="ow">in</span> <span class="n">repo_global_use</span><span class="p">:</span>
+            <span class="n">pkgs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_flag_usage</span><span class="p">[</span><span class="n">flag</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">pkgs</span><span class="p">:</span>
+                <span class="n">unused_global_use</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">flag</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">pkgs</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>
+                <span class="n">potential_locals</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">flag</span><span class="p">,</span> <span class="n">pkgs</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">flag</span> <span class="ow">in</span> <span class="n">repo_global_use_expand</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_flag_usage</span><span class="p">[</span><span class="n">flag</span><span class="p">]:</span>
+                <span class="n">unused_global_use_expand</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">flag</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">unused_global_use</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">UnusedGlobalUse</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">unused_global_use</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">unused_global_use_expand</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">UnusedGlobalUseExpand</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">unused_global_use_expand</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">flag</span><span class="p">,</span> <span class="n">pkgs</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">potential_locals</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])):</span>
+            <span class="n">pkgs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">pkgs</span><span class="p">))</span>
+            <span class="k">yield</span> <span class="n">PotentialLocalUse</span><span class="p">(</span><span class="n">flag</span><span class="p">,</span> <span class="n">pkgs</span><span class="p">)</span>
+
+        <span class="n">local_use</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">pkg</span><span class="p">,</span> <span class="p">(</span><span class="n">flag</span><span class="p">,</span> <span class="n">desc</span><span class="p">)</span> <span class="ow">in</span> <span class="n">repo_local_use</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">flag</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">repo_global_use</span><span class="p">:</span>
+                <span class="n">local_use</span><span class="p">[</span><span class="n">flag</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">pkg</span><span class="p">,</span> <span class="n">desc</span><span class="p">))</span>
+
+        <span class="n">potential_globals</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">flag</span><span class="p">,</span> <span class="n">pkgs</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">local_use</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">5</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">matching_pkgs</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_similar_flags</span><span class="p">(</span><span class="n">pkgs</span><span class="p">):</span>
+                <span class="n">potential_globals</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">flag</span><span class="p">,</span> <span class="n">matching_pkgs</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">flag</span><span class="p">,</span> <span class="n">pkgs</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">potential_globals</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="n">pkgs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">pkgs</span><span class="p">))</span>
+            <span class="k">yield</span> <span class="n">PotentialGlobalUse</span><span class="p">(</span><span class="n">flag</span><span class="p">,</span> <span class="n">pkgs</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="MissingChksum"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.MissingChksum">[docs]</a><span class="k">class</span> <span class="nc">MissingChksum</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A file in the chksum data lacks required checksums.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">missing</span><span class="p">,</span> <span class="n">existing</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">missing</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">missing</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">existing</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">existing</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="si">!r}</span><span class="s2"> missing required chksums: &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">missing</span><span class="p">)</span><span class="si">}</span><span class="s2">; has chksums: </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">existing</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DeprecatedChksum"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.DeprecatedChksum">[docs]</a><span class="k">class</span> <span class="nc">DeprecatedChksum</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A file in the chksum data does not use modern checksum set.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">deprecated</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">deprecated</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">deprecated</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">deprecated</span><span class="p">)</span>
+        <span class="n">deprecated</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">deprecated</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="si">!r}</span><span class="s1"> has deprecated checksum</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">deprecated</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="MissingManifest"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.MissingManifest">[docs]</a><span class="k">class</span> <span class="nc">MissingManifest</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;SRC_URI targets missing from Manifest file.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">files</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">files</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">files</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">)</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;distfile</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1"> missing from Manifest: [ </span><span class="si">{</span><span class="n">files</span><span class="si">}</span><span class="s1"> ]&#39;</span></div>
+
+
+<div class="viewcode-block" id="UnknownManifest"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.UnknownManifest">[docs]</a><span class="k">class</span> <span class="nc">UnknownManifest</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Manifest entries not matching any SRC_URI targets.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">files</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">files</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">files</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">)</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;unknown distfile</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1"> in Manifest: [ </span><span class="si">{</span><span class="n">files</span><span class="si">}</span><span class="s1"> ]&#39;</span></div>
+
+
+<div class="viewcode-block" id="UnnecessaryManifest"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.UnnecessaryManifest">[docs]</a><span class="k">class</span> <span class="nc">UnnecessaryManifest</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Manifest entries for non-DIST targets on a repo with thin manifests enabled.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">files</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">files</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">files</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">)</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;unnecessary file</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1"> in Manifest: [ </span><span class="si">{</span><span class="n">files</span><span class="si">}</span><span class="s1"> ]&#39;</span></div>
+
+
+<div class="viewcode-block" id="InvalidManifest"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.InvalidManifest">[docs]</a><span class="k">class</span> <span class="nc">InvalidManifest</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">MetadataError</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Package&#39;s Manifest file is invalid.&quot;&quot;&quot;</span>
+
+    <span class="n">attr</span> <span class="o">=</span> <span class="s1">&#39;manifest&#39;</span></div>
+
+
+<div class="viewcode-block" id="ManifestCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.ManifestCheck">[docs]</a><span class="k">class</span> <span class="nc">ManifestCheck</span><span class="p">(</span><span class="n">Check</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Manifest related checks.</span>
+
+<span class="sd">    Verify that the Manifest file exists, doesn&#39;t have missing or</span>
+<span class="sd">    extraneous entries, and that the required hashes are in use.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">required_addons</span> <span class="o">=</span> <span class="p">(</span><span class="n">addons</span><span class="o">.</span><span class="n">UseAddon</span><span class="p">,)</span>
+    <span class="n">_source</span> <span class="o">=</span> <span class="n">sources</span><span class="o">.</span><span class="n">PackageRepoSource</span>
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span>
+        <span class="n">MissingChksum</span><span class="p">,</span> <span class="n">MissingManifest</span><span class="p">,</span> <span class="n">UnknownManifest</span><span class="p">,</span> <span class="n">UnnecessaryManifest</span><span class="p">,</span>
+        <span class="n">DeprecatedChksum</span><span class="p">,</span> <span class="n">InvalidManifest</span><span class="p">,</span>
+    <span class="p">])</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">use_addon</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">repo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">target_repo</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">preferred_checksums</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+            <span class="n">repo</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">manifests</span><span class="o">.</span><span class="n">hashes</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">repo</span><span class="p">,</span> <span class="s1">&#39;config&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">required_checksums</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+            <span class="n">repo</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">manifests</span><span class="o">.</span><span class="n">required_hashes</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">repo</span><span class="p">,</span> <span class="s1">&#39;config&#39;</span><span class="p">)</span> <span class="k">else</span> <span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">iuse_filter</span> <span class="o">=</span> <span class="n">use_addon</span><span class="o">.</span><span class="n">get_filter</span><span class="p">(</span><span class="s1">&#39;fetchables&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ManifestCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.ManifestCheck.feed">[docs]</a>    <span class="k">def</span> <span class="nf">feed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkgset</span><span class="p">):</span>
+        <span class="n">pkg_manifest</span> <span class="o">=</span> <span class="n">pkgset</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">manifest</span>
+        <span class="n">manifest_distfiles</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">pkg_manifest</span><span class="o">.</span><span class="n">distfiles</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">seen</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">pkg</span> <span class="ow">in</span> <span class="n">pkgset</span><span class="p">:</span>
+            <span class="n">pkg</span><span class="o">.</span><span class="n">release_cached_data</span><span class="p">()</span>
+            <span class="n">fetchables</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">iuse_filter</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">fetch</span><span class="o">.</span><span class="n">fetchable</span><span class="p">,),</span> <span class="n">pkg</span><span class="p">,</span>
+                <span class="n">pkg</span><span class="o">.</span><span class="n">generate_fetchables</span><span class="p">(</span><span class="n">allow_missing_checksums</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ignore_unknown_mirrors</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+            <span class="n">fetchables</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">fetchables</span><span class="p">)</span>
+            <span class="n">pkg</span><span class="o">.</span><span class="n">release_cached_data</span><span class="p">()</span>
+
+            <span class="n">fetchable_files</span> <span class="o">=</span> <span class="p">{</span><span class="n">f</span><span class="o">.</span><span class="n">filename</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fetchables</span><span class="p">}</span>
+            <span class="n">missing_manifests</span> <span class="o">=</span> <span class="n">fetchable_files</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">manifest_distfiles</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">missing_manifests</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">MissingManifest</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">missing_manifests</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">f_inst</span> <span class="ow">in</span> <span class="n">fetchables</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">f_inst</span><span class="o">.</span><span class="n">filename</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">missing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">required_checksums</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">f_inst</span><span class="o">.</span><span class="n">chksums</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">f_inst</span><span class="o">.</span><span class="n">filename</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">missing_manifests</span> <span class="ow">and</span> <span class="n">missing</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">MissingChksum</span><span class="p">(</span>
+                        <span class="n">f_inst</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">missing</span><span class="p">),</span>
+                        <span class="nb">sorted</span><span class="p">(</span><span class="n">f_inst</span><span class="o">.</span><span class="n">chksums</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">f_inst</span><span class="o">.</span><span class="n">chksums</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">preferred_checksums</span> <span class="o">!=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">f_inst</span><span class="o">.</span><span class="n">chksums</span><span class="p">):</span>
+                    <span class="n">deprecated</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">f_inst</span><span class="o">.</span><span class="n">chksums</span><span class="p">)</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preferred_checksums</span><span class="p">)</span>
+                    <span class="k">yield</span> <span class="n">DeprecatedChksum</span><span class="p">(</span><span class="n">f_inst</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">deprecated</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+                <span class="n">seen</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">f_inst</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">pkg_manifest</span><span class="o">.</span><span class="n">thin</span><span class="p">:</span>
+            <span class="n">unnecessary_manifests</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;aux_files&#39;</span><span class="p">,</span> <span class="s1">&#39;ebuilds&#39;</span><span class="p">,</span> <span class="s1">&#39;misc&#39;</span><span class="p">):</span>
+                <span class="n">unnecessary_manifests</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">pkg_manifest</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="p">[]))</span>
+            <span class="k">if</span> <span class="n">unnecessary_manifests</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">UnnecessaryManifest</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">unnecessary_manifests</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkgset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">unknown_manifests</span> <span class="o">=</span> <span class="n">manifest_distfiles</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">seen</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">unknown_manifests</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">UnknownManifest</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">unknown_manifests</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkgset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></div></div>
+
+
+<div class="viewcode-block" id="ConflictingChksums"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.ConflictingChksums">[docs]</a><span class="k">class</span> <span class="nc">ConflictingChksums</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Checksum conflict detected between two files.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">chksums</span><span class="p">,</span> <span class="n">pkgs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chksums</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">chksums</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pkgs</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">pkgs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chksums</span><span class="p">)</span>
+        <span class="n">chksums</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chksums</span><span class="p">)</span>
+        <span class="n">pkgs_s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pkgs</span><span class="p">)</span>
+        <span class="n">pkgs</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pkgs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;distfile </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="si">!r}</span><span class="s1"> has different checksum</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1"> &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;(</span><span class="si">{</span><span class="n">chksums</span><span class="si">}</span><span class="s1">) for package</span><span class="si">{</span><span class="n">pkgs_s</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">pkgs</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MatchingChksums"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.MatchingChksums">[docs]</a><span class="k">class</span> <span class="nc">MatchingChksums</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Two distfiles share the same checksums but use different names.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">orig_file</span><span class="p">,</span> <span class="n">orig_pkg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">orig_file</span> <span class="o">=</span> <span class="n">orig_file</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">orig_pkg</span> <span class="o">=</span> <span class="n">orig_pkg</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;distfile </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="si">!r}</span><span class="s1"> matches checksums for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">orig_file</span><span class="si">!r}</span><span class="s1">&#39;</span>
+        <span class="k">if</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">category</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">package</span><span class="si">}</span><span class="s1">&#39;</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">orig_pkg</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">+=</span> <span class="sa">f</span><span class="s1">&#39; from </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">orig_pkg</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">return</span> <span class="n">msg</span></div>
+
+
+<div class="viewcode-block" id="ManifestCollisionCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.ManifestCollisionCheck">[docs]</a><span class="k">class</span> <span class="nc">ManifestCollisionCheck</span><span class="p">(</span><span class="n">Check</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Search Manifest entries for different types of distfile collisions.</span>
+
+<span class="sd">    In particular, search for matching filenames with different checksums and</span>
+<span class="sd">    different filenames with matching checksums.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_source</span> <span class="o">=</span> <span class="p">(</span><span class="n">sources</span><span class="o">.</span><span class="n">RepositoryRepoSource</span><span class="p">,</span> <span class="p">(),</span> <span class="p">((</span><span class="s1">&#39;source&#39;</span><span class="p">,</span> <span class="n">sources</span><span class="o">.</span><span class="n">PackageRepoSource</span><span class="p">),))</span>
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="n">ConflictingChksums</span><span class="p">,</span> <span class="n">MatchingChksums</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">seen_files</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">seen_chksums</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># ignore go.mod false positives (issue #228)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ignored_files_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^.*</span><span class="si">%2F</span><span class="s1">@v.*\.mod$&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_conflicts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Check for similarly named distfiles with different checksums.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">filename</span><span class="p">,</span> <span class="n">chksums</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">manifest</span><span class="o">.</span><span class="n">distfiles</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">existing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">seen_files</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">existing</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">seen_files</span><span class="p">[</span><span class="n">filename</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="p">[</span><span class="n">pkg</span><span class="o">.</span><span class="n">key</span><span class="p">],</span> <span class="nb">dict</span><span class="p">(</span><span class="n">chksums</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
+                <span class="k">continue</span>
+            <span class="n">seen_pkgs</span><span class="p">,</span> <span class="n">seen_chksums</span> <span class="o">=</span> <span class="n">existing</span>
+            <span class="n">conflicting_chksums</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">chf_type</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">seen_chksums</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">our_value</span> <span class="o">=</span> <span class="n">chksums</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">chf_type</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">our_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">our_value</span> <span class="o">!=</span> <span class="n">value</span><span class="p">:</span>
+                    <span class="n">conflicting_chksums</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chf_type</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">conflicting_chksums</span><span class="p">:</span>
+                <span class="n">pkgs</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">seen_pkgs</span><span class="p">))</span>
+                <span class="k">yield</span> <span class="n">ConflictingChksums</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">conflicting_chksums</span><span class="p">),</span> <span class="n">pkgs</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">seen_chksums</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">chksums</span><span class="p">)</span>
+                <span class="n">seen_pkgs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">key</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_matching</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Check for distfiles with matching checksums and different names.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">filename</span><span class="p">,</span> <span class="n">chksums</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">manifest</span><span class="o">.</span><span class="n">distfiles</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">chksums</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+            <span class="n">existing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">seen_chksums</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">existing</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">seen_chksums</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="n">seen_pkg</span><span class="p">,</span> <span class="n">seen_file</span> <span class="o">=</span> <span class="n">existing</span>
+            <span class="k">if</span> <span class="n">seen_file</span> <span class="o">==</span> <span class="n">filename</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ignored_files_re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="k">yield</span> <span class="n">MatchingChksums</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">seen_file</span><span class="p">,</span> <span class="n">seen_pkg</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ManifestCollisionCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.ManifestCollisionCheck.feed">[docs]</a>    <span class="k">def</span> <span class="nf">feed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkgs</span><span class="p">):</span>
+        <span class="n">pkg</span> <span class="o">=</span> <span class="n">pkgs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conflicts</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span>
+        <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_matching</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="EmptyProject"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.EmptyProject">[docs]</a><span class="k">class</span> <span class="nc">EmptyProject</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A project has no developers.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">project</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">project</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">project</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Project has no members: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">project</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+<div class="viewcode-block" id="ProjectMetadataCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.ProjectMetadataCheck">[docs]</a><span class="k">class</span> <span class="nc">ProjectMetadataCheck</span><span class="p">(</span><span class="n">Check</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check projects.xml for issues.&quot;&quot;&quot;</span>
+
+    <span class="n">_source</span> <span class="o">=</span> <span class="p">(</span><span class="n">sources</span><span class="o">.</span><span class="n">EmptySource</span><span class="p">,</span> <span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">repo_scope</span><span class="p">,))</span>
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="n">EmptyProject</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">repo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">target_repo</span>
+
+<div class="viewcode-block" id="ProjectMetadataCheck.finish"><a class="viewcode-back" href="../../../api/pkgcheck.checks.repo_metadata.html#pkgcheck.checks.repo_metadata.ProjectMetadataCheck.finish">[docs]</a>    <span class="k">def</span> <span class="nf">finish</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">project</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">projects_xml</span><span class="o">.</span><span class="n">projects</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">project</span><span class="o">.</span><span class="n">recursive_members</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">EmptyProject</span><span class="p">(</span><span class="n">project</span><span class="p">)</span></div></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../checks.html" >pkgcheck.checks</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.repo_metadata</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+pkgcheck.checks.pkgdir module
+=============================
+
+.. automodule:: pkgcheck.checks.pkgdir
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,7 @@
+pkgcheck.checks.eclass module
+=============================
+
+.. automodule:: pkgcheck.checks.eclass
+   :members:
+   :undoc-members:
+   :show-inheritance:

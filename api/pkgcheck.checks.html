@@ -1,0 +1,295 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.checks package &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks package</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pkgcheck-checks-package">
+<h1>pkgcheck.checks package<a class="headerlink" href="#pkgcheck-checks-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="pkgcheck.checks.acct.html">pkgcheck.checks.acct module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pkgcheck.checks.cleanup.html">pkgcheck.checks.cleanup module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pkgcheck.checks.codingstyle.html">pkgcheck.checks.codingstyle module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pkgcheck.checks.dropped_keywords.html">pkgcheck.checks.dropped_keywords module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pkgcheck.checks.eclass.html">pkgcheck.checks.eclass module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pkgcheck.checks.git.html">pkgcheck.checks.git module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pkgcheck.checks.glsa.html">pkgcheck.checks.glsa module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pkgcheck.checks.header.html">pkgcheck.checks.header module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pkgcheck.checks.imlate.html">pkgcheck.checks.imlate module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pkgcheck.checks.metadata.html">pkgcheck.checks.metadata module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pkgcheck.checks.metadata_xml.html">pkgcheck.checks.metadata_xml module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pkgcheck.checks.network.html">pkgcheck.checks.network module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pkgcheck.checks.overlays.html">pkgcheck.checks.overlays module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pkgcheck.checks.perl.html">pkgcheck.checks.perl module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pkgcheck.checks.pkgdir.html">pkgcheck.checks.pkgdir module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pkgcheck.checks.profiles.html">pkgcheck.checks.profiles module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pkgcheck.checks.python.html">pkgcheck.checks.python module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pkgcheck.checks.repo.html">pkgcheck.checks.repo module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pkgcheck.checks.repo_metadata.html">pkgcheck.checks.repo_metadata module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pkgcheck.checks.stablereq.html">pkgcheck.checks.stablereq module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pkgcheck.checks.unstable_only.html">pkgcheck.checks.unstable_only module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pkgcheck.checks.visibility.html">pkgcheck.checks.visibility module</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pkgcheck.checks.whitespace.html">pkgcheck.checks.whitespace module</a></li>
+</ul>
+</div>
+</div>
+<div class="section" id="module-pkgcheck.checks">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-pkgcheck.checks" title="Permalink to this headline">¶</a></h2>
+<p>Core check classes.</p>
+<dl class="py class">
+<dt id="pkgcheck.checks.AsyncCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.</code><code class="sig-name descname">AsyncCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">results_q</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks.html#AsyncCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.AsyncCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.checks.Check" title="pkgcheck.checks.Check"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.Check</span></code></a></p>
+<p>Check that schedules tasks to be run asynchronously.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.AsyncCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='version' &#64;0x7f81a648f5b0&gt;</em><a class="headerlink" href="#pkgcheck.checks.AsyncCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.Check">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.</code><code class="sig-name descname">Check</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks.html#Check"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.Check" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.feeds.html#pkgcheck.feeds.Feed" title="pkgcheck.feeds.Feed"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.feeds.Feed</span></code></a></p>
+<p>Base template for a check.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><a class="reference internal" href="#pkgcheck.checks.Check.scope" title="pkgcheck.checks.Check.scope"><strong>scope</strong></a> – scope relative to the package repository the check runs under</p></li>
+<li><p><a class="reference internal" href="#pkgcheck.checks.Check.source" title="pkgcheck.checks.Check.source"><strong>source</strong></a> – source of feed items</p></li>
+<li><p><a class="reference internal" href="#pkgcheck.checks.Check.known_results" title="pkgcheck.checks.Check.known_results"><strong>known_results</strong></a> – result keywords the check can possibly yield</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="pkgcheck.checks.Check.finish">
+<code class="sig-name descname">finish</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks.html#Check.finish"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.Check.finish" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do cleanup and yield final results here.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.Check.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({})</em><a class="headerlink" href="#pkgcheck.checks.Check.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.Check.priority">
+<code class="sig-name descname">priority</code><a class="headerlink" href="#pkgcheck.checks.Check.priority" title="Permalink to this definition">¶</a></dt>
+<dd><p>Priority that affects order in which checks are run.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.Check.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='version' &#64;0x7f81a648f5b0&gt;</em><a class="headerlink" href="#pkgcheck.checks.Check.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.Check.source">
+<em class="property">property </em><code class="sig-name descname">source</code><a class="headerlink" href="#pkgcheck.checks.Check.source" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.Check.start">
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks.html#Check.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.Check.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do startup here.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.GentooRepoCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.</code><code class="sig-name descname">GentooRepoCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks.html#GentooRepoCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.GentooRepoCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.checks.Check" title="pkgcheck.checks.Check"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.Check</span></code></a></p>
+<p>Check that is only run against the gentoo repo by default.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.GentooRepoCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='version' &#64;0x7f81a648f5b0&gt;</em><a class="headerlink" href="#pkgcheck.checks.GentooRepoCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.GitCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.</code><code class="sig-name descname">GitCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks.html#GitCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.GitCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.checks.OptionalCheck" title="pkgcheck.checks.OptionalCheck"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.OptionalCheck</span></code></a></p>
+<p>Check that is only run when explicitly enabled via the –commits git option.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.GitCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='version' &#64;0x7f81a648f5b0&gt;</em><a class="headerlink" href="#pkgcheck.checks.GitCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.MirrorsCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.</code><code class="sig-name descname">MirrorsCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">use_addon</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks.html#MirrorsCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.MirrorsCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.checks.Check" title="pkgcheck.checks.Check"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.Check</span></code></a></p>
+<p>Check that requires determining mirrors used by a given package.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.MirrorsCheck.get_mirrors">
+<code class="sig-name descname">get_mirrors</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks.html#MirrorsCheck.get_mirrors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.MirrorsCheck.get_mirrors" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.MirrorsCheck.required_addons">
+<code class="sig-name descname">required_addons</code><em class="property"> = (&lt;class 'pkgcheck.addons.UseAddon'&gt;,)</em><a class="headerlink" href="#pkgcheck.checks.MirrorsCheck.required_addons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.MirrorsCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='version' &#64;0x7f81a648f5b0&gt;</em><a class="headerlink" href="#pkgcheck.checks.MirrorsCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.NetworkCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.</code><code class="sig-name descname">NetworkCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">net_addon</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks.html#NetworkCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.NetworkCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.checks.AsyncCheck" title="pkgcheck.checks.AsyncCheck"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.AsyncCheck</span></code></a>, <a class="reference internal" href="#pkgcheck.checks.OptionalCheck" title="pkgcheck.checks.OptionalCheck"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.OptionalCheck</span></code></a></p>
+<p>Check that is only run when network support is enabled.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.NetworkCheck.required_addons">
+<code class="sig-name descname">required_addons</code><em class="property"> = (&lt;class 'pkgcheck.addons.NetAddon'&gt;,)</em><a class="headerlink" href="#pkgcheck.checks.NetworkCheck.required_addons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.NetworkCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='version' &#64;0x7f81a648f5b0&gt;</em><a class="headerlink" href="#pkgcheck.checks.NetworkCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.OptionalCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.</code><code class="sig-name descname">OptionalCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks.html#OptionalCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.OptionalCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.checks.Check" title="pkgcheck.checks.Check"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.Check</span></code></a></p>
+<p>Check that is only run when explicitly enabled.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.OptionalCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='version' &#64;0x7f81a648f5b0&gt;</em><a class="headerlink" href="#pkgcheck.checks.OptionalCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.OverlayRepoCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.</code><code class="sig-name descname">OverlayRepoCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks.html#OverlayRepoCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.OverlayRepoCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.checks.Check" title="pkgcheck.checks.Check"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.Check</span></code></a></p>
+<p>Check that is only run against overlay repos.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.OverlayRepoCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='version' &#64;0x7f81a648f5b0&gt;</em><a class="headerlink" href="#pkgcheck.checks.OverlayRepoCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pkgcheck.checks.SkipCheck">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcheck.checks.</code><code class="sig-name descname">SkipCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">check</span></em>, <em class="sig-param"><span class="n">msg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks.html#SkipCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.SkipCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.base.html#pkgcheck.base.PkgcheckUserException" title="pkgcheck.base.PkgcheckUserException"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.base.PkgcheckUserException</span></code></a></p>
+<p>Check failed to initialize due to missing dependencies or other situation.</p>
+<p>Checks not explicitly selected will be skipped if they raise this during
+initialization.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcheck.checks.init_checks">
+<code class="sig-prename descclassname">pkgcheck.checks.</code><code class="sig-name descname">init_checks</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">enabled_addons</span></em>, <em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="n">results_q</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks.html#init_checks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.init_checks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize selected checks.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">pkgcheck.checks package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-pkgcheck.checks">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/pkgcheck.checks.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks package</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

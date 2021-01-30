@@ -1,0 +1,155 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.checks.cleanup &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../checks.html" accesskey="U">pkgcheck.checks</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.cleanup</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcheck.checks.cleanup</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">snakeoil.strings</span> <span class="kn">import</span> <span class="n">pluralism</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">base</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">sources</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">Check</span>
+
+
+<div class="viewcode-block" id="RedundantVersion"><a class="viewcode-back" href="../../../api/pkgcheck.checks.cleanup.html#pkgcheck.checks.cleanup.RedundantVersion">[docs]</a><span class="k">class</span> <span class="nc">RedundantVersion</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Info</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Redundant version(s) of a package in a specific slot.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">slot</span><span class="p">,</span> <span class="n">later_versions</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">slot</span> <span class="o">=</span> <span class="n">slot</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">later_versions</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">later_versions</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">later_versions</span><span class="p">)</span>
+        <span class="n">versions</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">later_versions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;slot(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">slot</span><span class="si">}</span><span class="s1">) keywords are overshadowed by version</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">versions</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="RedundantVersionCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.cleanup.html#pkgcheck.checks.cleanup.RedundantVersionCheck">[docs]</a><span class="k">class</span> <span class="nc">RedundantVersionCheck</span><span class="p">(</span><span class="n">Check</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Scan for overshadowed package versions.</span>
+
+<span class="sd">    Scan for versions that are likely shadowed by later versions from a</span>
+<span class="sd">    keywords standpoint (ignoring live packages that erroneously have</span>
+<span class="sd">    keywords).</span>
+
+<span class="sd">    Example: pkga-1 is keyworded amd64, pkga-2 is amd64.</span>
+<span class="sd">    pkga-1 can potentially be removed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_source</span> <span class="o">=</span> <span class="n">sources</span><span class="o">.</span><span class="n">PackageRepoSource</span>
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="n">RedundantVersion</span><span class="p">])</span>
+
+<div class="viewcode-block" id="RedundantVersionCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.cleanup.html#pkgcheck.checks.cleanup.RedundantVersionCheck.feed">[docs]</a>    <span class="k">def</span> <span class="nf">feed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkgset</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pkgset</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c1"># algo is roughly thus; spot stable versions, hunt for subset</span>
+        <span class="c1"># keyworded pkgs that are less then the max version;</span>
+        <span class="c1"># repeats this for every overshadowing detected</span>
+        <span class="c1"># finally, does version comparison down slot lines</span>
+        <span class="n">stack</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">bad</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">pkg</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">pkgset</span><span class="p">):</span>
+            <span class="c1"># reduce false positives for idiot keywords/ebuilds</span>
+            <span class="k">if</span> <span class="n">pkg</span><span class="o">.</span><span class="n">live</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">curr_set</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">keywords</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)}</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">curr_set</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">matches</span> <span class="o">=</span> <span class="p">[</span><span class="n">ver</span> <span class="k">for</span> <span class="n">ver</span><span class="p">,</span> <span class="n">keys</span> <span class="ow">in</span> <span class="n">stack</span> <span class="k">if</span> <span class="n">ver</span><span class="o">.</span><span class="n">slot</span> <span class="o">==</span> <span class="n">pkg</span><span class="o">.</span><span class="n">slot</span> <span class="ow">and</span>
+                       <span class="ow">not</span> <span class="n">curr_set</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">keys</span><span class="p">)]</span>
+
+            <span class="c1"># we&#39;ve done our checks; now we inject unstable for any stable</span>
+            <span class="c1"># via this, earlier versions that are unstable only get flagged</span>
+            <span class="c1"># as &quot;not needed&quot; since their unstable flag is a subset of the</span>
+            <span class="c1"># stable.</span>
+
+            <span class="c1"># also, yes, have to use list comp here- we&#39;re adding as we go</span>
+            <span class="n">curr_set</span><span class="o">.</span><span class="n">update</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;~</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">curr_set</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;~&#39;</span><span class="p">)])</span>
+
+            <span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">pkg</span><span class="p">,</span> <span class="n">curr_set</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">matches</span><span class="p">:</span>
+                <span class="n">bad</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">pkg</span><span class="p">,</span> <span class="n">matches</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">matches</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">bad</span><span class="p">):</span>
+            <span class="n">later_versions</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">fullver</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">matches</span><span class="p">))</span>
+            <span class="k">yield</span> <span class="n">RedundantVersion</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">slot</span><span class="p">,</span> <span class="n">later_versions</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span></div></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../checks.html" >pkgcheck.checks</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.cleanup</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

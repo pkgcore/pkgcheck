@@ -1,0 +1,7 @@
+pkgcheck show - show various pkgcheck info
+------------------------------------------
+
+.. include:: show/_synopsis.rst
+.. include:: show/_description.rst
+.. include:: show/_options.rst
+.. include:: show/_subcommands.rst

@@ -1,0 +1,7 @@
+pkgcheck.feeds module
+=====================
+
+.. automodule:: pkgcheck.feeds
+   :members:
+   :undoc-members:
+   :show-inheritance:

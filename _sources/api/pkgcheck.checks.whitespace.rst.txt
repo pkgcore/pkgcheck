@@ -1,0 +1,7 @@
+pkgcheck.checks.whitespace module
+=================================
+
+.. automodule:: pkgcheck.checks.whitespace
+   :members:
+   :undoc-members:
+   :show-inheritance:

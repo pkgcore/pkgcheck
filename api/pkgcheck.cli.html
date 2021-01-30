@@ -1,0 +1,137 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.cli module &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.cli module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcheck.cli">
+<span id="pkgcheck-cli-module"></span><h1>pkgcheck.cli module<a class="headerlink" href="#module-pkgcheck.cli" title="Permalink to this headline">¶</a></h1>
+<p>Various command-line specific support.</p>
+<dl class="py class">
+<dt id="pkgcheck.cli.ConfigFileParser">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.cli.</code><code class="sig-name descname">ConfigFileParser</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parser</span></em>, <em class="sig-param"><span class="n">configs</span><span class="o">=</span><span class="default_value">()</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/cli.html#ConfigFileParser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.cli.ConfigFileParser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Argument parser that supports loading settings from specified config files.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.cli.ConfigFileParser.config">
+<code class="sig-name descname">config</code><a class="headerlink" href="#pkgcheck.cli.ConfigFileParser.config" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.cli.ConfigFileParser.default_configs">
+<code class="sig-name descname">default_configs</code><em class="property"> = ('/etc/pkgcheck/pkgcheck.conf', '/home/runner/.config/pkgcheck/pkgcheck.conf')</em><a class="headerlink" href="#pkgcheck.cli.ConfigFileParser.default_configs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.cli.ConfigFileParser.parse_config">
+<code class="sig-name descname">parse_config</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">configs</span><span class="o">=</span><span class="default_value">()</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/cli.html#ConfigFileParser.parse_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.cli.ConfigFileParser.parse_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse given config files.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.cli.ConfigFileParser.parse_config_options">
+<code class="sig-name descname">parse_config_options</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">namespace</span></em>, <em class="sig-param"><span class="n">configs</span><span class="o">=</span><span class="default_value">()</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/cli.html#ConfigFileParser.parse_config_options"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.cli.ConfigFileParser.parse_config_options" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse options from config if they exist.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.cli.ConfigFileParser.parse_config_sections">
+<code class="sig-name descname">parse_config_sections</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">namespace</span></em>, <em class="sig-param"><span class="n">sections</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/cli.html#ConfigFileParser.parse_config_sections"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.cli.ConfigFileParser.parse_config_sections" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse options from a given iterable of config section names.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.cli.Tool">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.cli.</code><code class="sig-name descname">Tool</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parser</span></em>, <em class="sig-param"><span class="n">outfile</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">errfile</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/cli.html#Tool"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.cli.Tool" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.util.commandline.Tool</span></code></p>
+<dl class="py method">
+<dt id="pkgcheck.cli.Tool.main">
+<code class="sig-name descname">main</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/cli.html#Tool.main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.cli.Tool.main" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute the main script function.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/pkgcheck.cli.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.cli module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+pkgcheck.cli module
+===================
+
+.. automodule:: pkgcheck.cli
+   :members:
+   :undoc-members:
+   :show-inheritance:

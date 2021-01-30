@@ -1,0 +1,7 @@
+pkgcheck.checks.overlays module
+===============================
+
+.. automodule:: pkgcheck.checks.overlays
+   :members:
+   :undoc-members:
+   :show-inheritance:

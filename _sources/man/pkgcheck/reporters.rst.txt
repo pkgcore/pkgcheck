@@ -1,0 +1,65 @@
+Reporters
+=========
+
+CsvReporter
+-----------
+
+Comma-separated value reporter, convenient for shell processing.
+
+Example::
+
+    ,,,"global USE flag 'big-endian' is a potential local, used by 1 package: dev-java/icedtea-bin"
+    sys-apps,portage,2.1-r2,sys-apps/portage-2.1-r2.ebuild has whitespace in indentation on line 169
+    sys-apps,portage,2.1-r2,"rdepend  ppc-macos: unsolvable default-darwin/macos/10.4, solutions: [ >=app-misc/pax-utils-0.1.13 ]"
+    sys-apps,portage,2.1-r2,"no change in 75 days, keywords [ ~x86-fbsd ]"
+
+FancyReporter
+-------------
+
+Colored output grouped by result scope.
+
+Example::
+
+    sys-apps/portage
+      WrongIndentFound: sys-apps/portage-2.1-r2.ebuild has whitespace in indentation on line 169
+      NonsolvableDeps: sys-apps/portage-2.1-r2: rdepend  ppc-macos: unsolvable default-darwin/macos/10.4, solutions: [ >=app-misc/pax-utils-0.1.13 ]
+      StableRequest: sys-apps/portage-2.1-r2: no change in 75 days, keywords [ ~x86 ]
+
+FormatReporter
+--------------
+
+Custom format string reporter.
+
+JsonReporter
+------------
+
+Feed of newline-delimited JSON records.
+
+Note that the format is newline-delimited JSON with each line being related
+to a separate report. To merge the objects together a tool such as jq can
+be leveraged similar to the following:
+
+.. code::
+
+    jq -c -s 'reduce.[]as$x({};.*$x)' orig.json > new.json
+
+JsonStream
+----------
+
+Generate a stream of result objects serialized in JSON.
+
+StrReporter
+-----------
+
+Simple string reporter, pkgcheck-0.1 behaviour.
+
+Example::
+
+    sys-apps/portage-2.1-r2: sys-apps/portage-2.1-r2.ebuild has whitespace in indentation on line 169
+    sys-apps/portage-2.1-r2: rdepend  ppc-macos: unsolvable default-darwin/macos/10.4, solutions: [ >=app-misc/pax-utils-0.1.13 ]
+    sys-apps/portage-2.1-r2: no change in 75 days, keywords [ ~x86-fbsd ]
+
+XmlReporter
+-----------
+
+Feed of newline-delimited XML reports.

@@ -1,0 +1,7 @@
+pkgcheck replay - replay result streams
+---------------------------------------
+
+.. include:: replay/_synopsis.rst
+.. include:: replay/_description.rst
+.. include:: replay/_options.rst
+.. include:: replay/_subcommands.rst

@@ -1,0 +1,7 @@
+pkgcheck.checks.header module
+=============================
+
+.. automodule:: pkgcheck.checks.header
+   :members:
+   :undoc-members:
+   :show-inheritance:

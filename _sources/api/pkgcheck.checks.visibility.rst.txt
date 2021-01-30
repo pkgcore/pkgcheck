@@ -1,0 +1,7 @@
+pkgcheck.checks.visibility module
+=================================
+
+.. automodule:: pkgcheck.checks.visibility
+   :members:
+   :undoc-members:
+   :show-inheritance:

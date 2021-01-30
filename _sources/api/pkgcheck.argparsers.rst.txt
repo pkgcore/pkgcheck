@@ -1,0 +1,7 @@
+pkgcheck.argparsers module
+==========================
+
+.. automodule:: pkgcheck.argparsers
+   :members:
+   :undoc-members:
+   :show-inheritance:

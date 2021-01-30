@@ -1,0 +1,192 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.argparsers module &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.argparsers module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcheck.argparsers">
+<span id="pkgcheck-argparsers-module"></span><h1>pkgcheck.argparsers module<a class="headerlink" href="#module-pkgcheck.argparsers" title="Permalink to this headline">¶</a></h1>
+<p>Various argparse-related support.</p>
+<dl class="py class">
+<dt id="pkgcheck.argparsers.CacheNegations">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.argparsers.</code><code class="sig-name descname">CacheNegations</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/argparsers.html#CacheNegations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.argparsers.CacheNegations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">snakeoil.cli.arghparse.CommaSeparatedNegations</span></code></p>
+<p>Split comma-separated enabled and disabled cache types.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.argparsers.CacheNegations.caches">
+<code class="sig-name descname">caches</code><em class="property"> = {'eclass': True, 'profiles': True, 'git': True}</em><a class="headerlink" href="#pkgcheck.argparsers.CacheNegations.caches" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.argparsers.CacheNegations.parse_values">
+<code class="sig-name descname">parse_values</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">values</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/argparsers.html#CacheNegations.parse_values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.argparsers.CacheNegations.parse_values" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.argparsers.CheckArgs">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.argparsers.</code><code class="sig-name descname">CheckArgs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">option_strings</span></em>, <em class="sig-param"><span class="n">dest</span></em>, <em class="sig-param"><span class="n">nargs</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">const</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">default</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">type</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">choices</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">required</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">help</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">metavar</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/argparsers.html#CheckArgs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.argparsers.CheckArgs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">snakeoil.cli.arghparse.CommaSeparatedElements</span></code></p>
+<p>Determine checks to run on selection.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.argparsers.ChecksetArgs">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.argparsers.</code><code class="sig-name descname">ChecksetArgs</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/argparsers.html#ChecksetArgs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.argparsers.ChecksetArgs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">snakeoil.cli.arghparse.CommaSeparatedNegations</span></code></p>
+<p>Filter enabled checks/keywords by selected checksets.</p>
+<dl class="py method">
+<dt id="pkgcheck.argparsers.ChecksetArgs.checksets_to_keywords">
+<em class="property">static </em><code class="sig-name descname">checksets_to_keywords</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">namespace</span></em>, <em class="sig-param"><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/argparsers.html#ChecksetArgs.checksets_to_keywords"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.argparsers.ChecksetArgs.checksets_to_keywords" title="Permalink to this definition">¶</a></dt>
+<dd><p>Expand checksets into lists of disabled and enabled keywords.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.argparsers.ChecksetArgs.expand_aliases">
+<code class="sig-name descname">expand_aliases</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/argparsers.html#ChecksetArgs.expand_aliases"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.argparsers.ChecksetArgs.expand_aliases" title="Permalink to this definition">¶</a></dt>
+<dd><p>Expand internal checkset aliases into keyword generators.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.argparsers.ConfigArg">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.argparsers.</code><code class="sig-name descname">ConfigArg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">option_strings</span></em>, <em class="sig-param"><span class="n">dest</span></em>, <em class="sig-param"><span class="n">nargs</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">const</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">default</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">type</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">choices</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">required</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">help</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">metavar</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/argparsers.html#ConfigArg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.argparsers.ConfigArg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">argparse._StoreAction</span></code></p>
+<p>Store config path string or False when explicitly disabled.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.argparsers.EnableNet">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.argparsers.</code><code class="sig-name descname">EnableNet</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">option_strings</span></em>, <em class="sig-param"><span class="n">dest</span></em>, <em class="sig-param"><span class="n">nargs</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">const</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">default</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">type</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">choices</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">required</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">help</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">metavar</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/argparsers.html#EnableNet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.argparsers.EnableNet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">argparse.Action</span></code></p>
+<p>Enable checks that require network access.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.argparsers.ExitArgs">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.argparsers.</code><code class="sig-name descname">ExitArgs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">option_strings</span></em>, <em class="sig-param"><span class="n">dest</span></em>, <em class="sig-param"><span class="n">nargs</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">const</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">default</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">type</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">choices</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">required</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">help</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">metavar</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/argparsers.html#ExitArgs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.argparsers.ExitArgs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">snakeoil.cli.arghparse.CommaSeparatedNegations</span></code></p>
+<p>Filter enabled keywords by selected keywords.</p>
+<dl class="py method">
+<dt id="pkgcheck.argparsers.ExitArgs.args_to_keywords">
+<code class="sig-name descname">args_to_keywords</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">namespace</span></em>, <em class="sig-param"><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/argparsers.html#ExitArgs.args_to_keywords"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.argparsers.ExitArgs.args_to_keywords" title="Permalink to this definition">¶</a></dt>
+<dd><p>Expand arguments to keyword names.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.argparsers.FilterArgs">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.argparsers.</code><code class="sig-name descname">FilterArgs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">option_strings</span></em>, <em class="sig-param"><span class="n">dest</span></em>, <em class="sig-param"><span class="n">nargs</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">const</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">default</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">type</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">choices</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">required</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">help</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">metavar</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/argparsers.html#FilterArgs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.argparsers.FilterArgs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">snakeoil.cli.arghparse.CommaSeparatedValues</span></code></p>
+<p>Apply filters to an entire scan or specific checks/keywords.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.argparsers.FilterArgs.known_filters">
+<code class="sig-name descname">known_filters</code><em class="property"> = frozenset({'latest'})</em><a class="headerlink" href="#pkgcheck.argparsers.FilterArgs.known_filters" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.argparsers.KeywordArgs">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.argparsers.</code><code class="sig-name descname">KeywordArgs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">option_strings</span></em>, <em class="sig-param"><span class="n">dest</span></em>, <em class="sig-param"><span class="n">nargs</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">const</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">default</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">type</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">choices</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">required</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">help</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">metavar</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/argparsers.html#KeywordArgs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.argparsers.KeywordArgs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">snakeoil.cli.arghparse.CommaSeparatedNegations</span></code></p>
+<p>Filter enabled keywords by selected keywords.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.argparsers.ScopeArgs">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.argparsers.</code><code class="sig-name descname">ScopeArgs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">option_strings</span></em>, <em class="sig-param"><span class="n">dest</span></em>, <em class="sig-param"><span class="n">nargs</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">const</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">default</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">type</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">choices</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">required</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">help</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">metavar</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/argparsers.html#ScopeArgs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.argparsers.ScopeArgs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">snakeoil.cli.arghparse.CommaSeparatedNegations</span></code></p>
+<p>Filter enabled checks by selected scopes.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcheck.argparsers.object_to_keywords">
+<code class="sig-prename descclassname">pkgcheck.argparsers.</code><code class="sig-name descname">object_to_keywords</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">namespace</span></em>, <em class="sig-param"><span class="n">obj</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/argparsers.html#object_to_keywords"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.argparsers.object_to_keywords" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a given object into a generator of its respective keyword names.</p>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/pkgcheck.argparsers.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.argparsers module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

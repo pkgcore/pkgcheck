@@ -1,0 +1,7 @@
+pkgcheck.caches module
+======================
+
+.. automodule:: pkgcheck.caches
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,7 @@
+pkgcheck.sources module
+=======================
+
+.. automodule:: pkgcheck.sources
+   :members:
+   :undoc-members:
+   :show-inheritance:

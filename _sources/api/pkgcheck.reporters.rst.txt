@@ -1,0 +1,7 @@
+pkgcheck.reporters module
+=========================
+
+.. automodule:: pkgcheck.reporters
+   :members:
+   :undoc-members:
+   :show-inheritance:

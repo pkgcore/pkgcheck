@@ -1,0 +1,378 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Positional Arguments &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Positional Arguments</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="positional-arguments">
+<h1>Positional Arguments<a class="headerlink" href="#positional-arguments" title="Permalink to this headline">¶</a></h1>
+<dl class="field-list simple">
+<dt class="field-odd">TARGET</dt>
+<dd class="field-odd"><p>optional targets</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="config-options">
+<h1>Config Options<a class="headerlink" href="#config-options" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">--config <var>CONFIG_FILE</var></span></kbd></dt>
+<dd><p>Load custom pkgcheck scan settings from a given file.</p>
+<p>Note that custom user settings override all other system and repo-level
+settings.</p>
+<p>It's also possible to disable all types of settings loading by
+specifying an argument of 'false' or 'no'.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="repo-options">
+<h1>Repo Options<a class="headerlink" href="#repo-options" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">-r <var>REPO</var></span>, <span class="option">--repo <var>REPO</var></span></kbd></dt>
+<dd><p>target repo</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="reporter-options">
+<h1>Reporter Options<a class="headerlink" href="#reporter-options" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">-R <var>REPORTER</var></span>, <span class="option">--reporter <var>REPORTER</var></span></kbd></dt>
+<dd><p>Select a reporter to use for output.</p>
+<p>Use <code class="docutils literal notranslate"><span class="pre">pkgcheck</span> <span class="pre">show</span> <span class="pre">--reporters</span></code> to see available options.</p>
+</dd>
+<dt><kbd><span class="option">--format <var>FORMAT_STR</var></span></kbd></dt>
+<dd><p>Custom format string used to format output by FormatReporter.</p>
+<p>Supports python format string syntax where result object attribute names
+surrounded by curly braces are replaced with their values (if they exist).</p>
+<p>For example, <code class="docutils literal notranslate"><span class="pre">--format</span> <span class="pre">'{category}/{package}/{package}-{version}.ebuild</span></code>
+will output ebuild paths in the target repo for results relating to
+specific ebuild versions. If a result is for the generic package (or a
+higher scope), no output will be produced for that result.</p>
+<p>Furthermore, no output will be produced if a result object is missing any
+requested attribute expansion in the format string. In other words,
+<code class="docutils literal notranslate"><span class="pre">--format</span> <span class="pre">{foo}</span></code> will never produce any output because no result has the
+<code class="docutils literal notranslate"><span class="pre">foo</span></code> attribute.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="base-options">
+<h1>Base Options<a class="headerlink" href="#base-options" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">-h</span>, <span class="option">--help</span></kbd></dt>
+<dd><p>Show this help message and exit. To get more
+information see the related man page.</p>
+</dd>
+<dt><kbd><span class="option">--debug</span></kbd></dt>
+<dd><p>Enable debug checks and show verbose debug output.</p>
+</dd>
+<dt><kbd><span class="option">-q</span>, <span class="option">--quiet</span></kbd></dt>
+<dd><p>Suppress non-error, informational messages.</p>
+</dd>
+<dt><kbd><span class="option">-v</span>, <span class="option">--verbose</span></kbd></dt>
+<dd><p>Increase the verbosity of various output.</p>
+</dd>
+<dt><kbd><span class="option">--color <var>BOOLEAN</var></span></kbd></dt>
+<dd><p>Toggle colored output support. This can be used to forcibly
+enable color support when piping output or other sitations
+where stdout is not a tty.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="main-options">
+<h1>Main Options<a class="headerlink" href="#main-options" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">-f <var>FILTER</var></span>, <span class="option">--filter <var>FILTER</var></span></kbd></dt>
+<dd><p>Support limiting targeted packages for scanning using a chosen filter.</p>
+<p>If the 'latest' argument is used, only the latest package per slot of
+both VCS and non-VCS types will be scanned. This can either be
+specified individually in which case the filter will be applied
+globally to all checks or it can be applied to specific checksets,
+checks, or keywords using the syntax 'latest:ObjName' which would apply
+the filter to the keyword, check, or checkset named ObjName (in that
+order of precedence).</p>
+<p>By default, some checks have filtering enabled, e.g. various
+network-related checks are filtered to avoid redundant or unnecessary
+server requests. In order to forcibly disable all filtering use the
+'no' argument.</p>
+</dd>
+<dt><kbd><span class="option">-j <var>JOBS</var></span>, <span class="option">--jobs <var>JOBS</var></span></kbd></dt>
+<dd><p>Number of checks to run in parallel, defaults to using all available
+processors.</p>
+</dd>
+<dt><kbd><span class="option">-t <var>TASKS</var></span>, <span class="option">--tasks <var>TASKS</var></span></kbd></dt>
+<dd><p>Number of asynchronous tasks to run concurrently (defaults to 5 * CPU count).</p>
+</dd>
+<dt><kbd><span class="option">--cache <var>CACHE</var></span></kbd></dt>
+<dd><p>All cache types are enabled by default, this option explicitly sets
+which caches will be generated and used during scanning.</p>
+<p>To enable only certain cache types, specify them in a comma-separated
+list, e.g. <code class="docutils literal notranslate"><span class="pre">--cache</span> <span class="pre">git,profiles</span></code> will enable both the git and
+profiles caches.</p>
+<p>To disable specific cache types prefix them with <code class="docutils literal notranslate"><span class="pre">-</span></code>. Note
+that when starting the argument list with a disabled value an equals
+sign must be used, e.g. <code class="docutils literal notranslate"><span class="pre">--cache=-git</span></code>, otherwise the disabled
+argument is treated as an option.</p>
+<p>In order to disable all cache usage, it's easiest to use <code class="docutils literal notranslate"><span class="pre">--cache</span> <span class="pre">no</span></code>
+instead of explicitly listing all disabled cache types.</p>
+<p>When disabled, no caches will be saved to disk and results requiring
+caches (e.g. git-related checks) will be skipped.</p>
+</dd>
+<dt><kbd><span class="option">--cache-dir <var>CACHE_DIR</var></span></kbd></dt>
+<dd><p>directory to use for storing cache files</p>
+</dd>
+</dl>
+<dl>
+<dt>--exit [ITEM]</dt><dd><p>Comma separated list of checksets, checks, or keywords to enable and
+disable that trigger an exit status failure. Checkset and check
+arguments expand into their respective keyword sets.</p>
+<p>If no arguments or only disabled arguments are passed, enabled
+arguments are the set of error level keywords.</p>
+<p>To specify disabled keywords prefix them with <code class="docutils literal notranslate"><span class="pre">-</span></code>. Also, the special
+arguments of <code class="docutils literal notranslate"><span class="pre">error</span></code>, <code class="docutils literal notranslate"><span class="pre">warning</span></code>, and <code class="docutils literal notranslate"><span class="pre">info</span></code> correspond to all
+error, warning, and info keywords, respectively.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="check-selection">
+<h1>Check Selection<a class="headerlink" href="#check-selection" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">--net</span></kbd></dt>
+<dd><p>enable checks that require network access</p>
+</dd>
+<dt><kbd><span class="option">-C <var>CHECKSET</var></span>, <span class="option">--checksets <var>CHECKSET</var></span></kbd></dt>
+<dd><p>Comma separated list of checksets to enable and disable for
+scanning.</p>
+<p>The special argument of <code class="docutils literal notranslate"><span class="pre">all</span></code> corresponds to the list of all checks.
+Therefore, to forcibly enable all checks use <code class="docutils literal notranslate"><span class="pre">-C</span> <span class="pre">all</span></code>.</p>
+<p>All network-related checks (which are disabled by default)
+can be enabled using <code class="docutils literal notranslate"><span class="pre">-C</span> <span class="pre">net</span></code>. This allows for easily running only
+network checks without having to explicitly list them.</p>
+</dd>
+<dt><kbd><span class="option">-s <var>SCOPE</var></span>, <span class="option">--scopes <var>SCOPE</var></span></kbd></dt>
+<dd><p>Comma separated list of scopes to enable and disable for scanning. Any
+scopes specified in this fashion will affect the checks that get
+run. For example, running pkgcheck with only the repo scope
+enabled will cause only repo-level checks to run.</p>
+<p>Available scopes: git, profiles, eclass, repo, cat, pkg, ver</p>
+</dd>
+<dt><kbd><span class="option">-c <var>CHECK</var></span>, <span class="option">--checks <var>CHECK</var></span></kbd></dt>
+<dd><p>Comma separated list of checks to enable and disable for
+scanning. Any checks specified in this fashion will be the
+only checks that get run, skipping any disabled checks.</p>
+<p>To disable checks prefix them with <code class="docutils literal notranslate"><span class="pre">-</span></code>. Note that when starting the
+argument list with a disabled check an equals sign must be used, e.g.
+<code class="docutils literal notranslate"><span class="pre">-c=-check</span></code>, otherwise the disabled check argument is treated as an
+option.</p>
+<p>Additive arguments are also supported using the prefix <code class="docutils literal notranslate"><span class="pre">+</span></code> that adds
+to the default set of enabled checks. This is useful in order to enable
+optional checks in addition to the default set.</p>
+<p>Use <code class="docutils literal notranslate"><span class="pre">pkgcheck</span> <span class="pre">show</span> <span class="pre">--checks</span></code> see all available checks.</p>
+</dd>
+<dt><kbd><span class="option">-k <var>KEYWORD</var></span>, <span class="option">--keywords <var>KEYWORD</var></span></kbd></dt>
+<dd><p>Comma separated list of keywords to enable and disable for
+scanning. Any keywords specified in this fashion will be the
+only keywords that get reported, skipping any disabled keywords.</p>
+<p>To specify disabled keywords prefix them with <code class="docutils literal notranslate"><span class="pre">-</span></code>. Note that when
+starting the argument list with a disabled keyword an equals sign must
+be used, e.g. <code class="docutils literal notranslate"><span class="pre">-k=-keyword</span></code>, otherwise the disabled keyword argument is
+treated as an option.</p>
+<p>The special arguments of <code class="docutils literal notranslate"><span class="pre">error</span></code>, <code class="docutils literal notranslate"><span class="pre">warning</span></code>, and <code class="docutils literal notranslate"><span class="pre">info</span></code>
+correspond to the lists of error, warning, and info keywords,
+respectively. For example, to only scan for errors use <code class="docutils literal notranslate"><span class="pre">-k</span> <span class="pre">error</span></code>.</p>
+<p>Use <code class="docutils literal notranslate"><span class="pre">pkgcheck</span> <span class="pre">show</span> <span class="pre">--keywords</span></code> to see available options.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="plugin-options">
+<h1>Plugin Options<a class="headerlink" href="#plugin-options" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">--glsa-dir <var>GLSA_DIR</var></span></kbd></dt>
+<dd><p>custom glsa directory</p>
+</dd>
+<dt><kbd><span class="option">--source-arches <var>ARCH</var></span></kbd></dt>
+<dd><p>Comma separated list of arches to compare against for
+lagging stabilization.</p>
+<p>The default arches are all stable arches (unless --arches is specified).</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="arches">
+<h1>Arches<a class="headerlink" href="#arches" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">-a <var>ARCH</var></span>, <span class="option">--arches <var>ARCH</var></span></kbd></dt>
+<dd><p>Comma separated list of arches to enable and disable.</p>
+<p>To specify disabled arches prefix them with '-'. Note that when
+starting the argument list with a disabled arch an equals sign
+must be used, e.g. -a=-arch, otherwise the disabled arch
+argument is treated as an option.</p>
+<p>By default all repo defined arches are used; however,
+stable-related checks (e.g. UnstableOnly) default to the set of
+arches having stable profiles in the target repo.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="git">
+<h1>Git<a class="headerlink" href="#git" title="Permalink to this headline">¶</a></h1>
+<p>Git repo support for various checks.</p>
+<p>Pkgcheck can create virtual package repos from a given git repo's history
+in order to provide more info for checks relating to stable requests,
+outdated blockers, or local commits. These virtual repos are cached and
+updated every run if new commits are detected.</p>
+<p>Git repos must have a supported config in order to work properly.
+Specifically, pkgcheck assumes that both origin and master branches exist
+and relate to the upstream and local development states, respectively.</p>
+<p>Additionally, the origin/HEAD ref must exist. If it doesn't, running <code class="docutils literal notranslate"><span class="pre">git</span>
+<span class="pre">fetch</span> <span class="pre">origin</span></code> should create it. Otherwise, using <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">remote</span> <span class="pre">set-head</span>
+<span class="pre">origin</span> <span class="pre">master</span></code> or similar will also create the reference.</p>
+<dl>
+<dt>--commits [COMMIT]</dt><dd><p>For a local git repo, pkgcheck will determine targets to scan
+from the committed changes compared to a given reference that
+defaults to the repo's origin.</p>
+<p>For example, to scan all the packages that have been changed in
+the current branch compared to the branch named 'old' use
+<code class="docutils literal notranslate"><span class="pre">pkgcheck</span> <span class="pre">scan</span> <span class="pre">--commits</span> <span class="pre">old</span></code>. For two separate branches
+named 'old' and 'new' use <code class="docutils literal notranslate"><span class="pre">pkgcheck</span> <span class="pre">scan</span> <span class="pre">--commits</span> <span class="pre">old..new</span></code>.</p>
+<p>Note that will also enable eclass-specific checks if it
+determines any commits have been made to eclasses.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="profiles">
+<h1>Profiles<a class="headerlink" href="#profiles" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">-p <var>PROFILE</var></span>, <span class="option">--profiles <var>PROFILE</var></span></kbd></dt>
+<dd><p>Comma separated list of profiles to enable and disable for
+scanning. Any profiles specified in this fashion will be the
+only profiles that get scanned, skipping any disabled profiles.
+In addition, if no profiles are explicitly enabled, all
+profiles defined in the target repo's profiles.desc file will be
+scanned except those marked as experimental (exp).</p>
+<p>To specify disabled profiles prefix them with <code class="docutils literal notranslate"><span class="pre">-</span></code> which
+removes the from the list of profiles to be considered. Note
+that when starting the argument list with a disabled profile an
+equals sign must be used, e.g.  <code class="docutils literal notranslate"><span class="pre">-p=-path/to/profile</span></code>,
+otherwise the disabled profile argument is treated as an
+option.</p>
+<p>The special keywords of <code class="docutils literal notranslate"><span class="pre">stable</span></code>, <code class="docutils literal notranslate"><span class="pre">dev</span></code>, <code class="docutils literal notranslate"><span class="pre">exp</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">deprecated</span></code> correspond to the lists of stable, development,
+experimental, and deprecated profiles, respectively. Therefore,
+to only scan all stable profiles pass the <code class="docutils literal notranslate"><span class="pre">stable</span></code> argument
+to --profiles. Additionally the keyword <code class="docutils literal notranslate"><span class="pre">all</span></code> can be used to
+scan all defined profiles in the target repo.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="network">
+<h1>Network<a class="headerlink" href="#network" title="Permalink to this headline">¶</a></h1>
+<dl class="option-list">
+<dt><kbd><span class="option">--timeout <var>TIMEOUT</var></span></kbd></dt>
+<dd><p>timeout used for network checks</p>
+</dd>
+<dt><kbd><span class="option">--user-agent <var>USER_AGENT</var></span></kbd></dt>
+<dd><p>custom user agent spoofing</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="query-caching">
+<h1>Query Caching<a class="headerlink" href="#query-caching" title="Permalink to this headline">¶</a></h1>
+<dl class="simple">
+<dt>--reset-caching-per {version,package,category}</dt><dd><p>control how often the cache is cleared (version, package or category)</p>
+</dd>
+</dl>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Positional Arguments</a></li>
+<li><a class="reference internal" href="#config-options">Config Options</a></li>
+<li><a class="reference internal" href="#repo-options">Repo Options</a></li>
+<li><a class="reference internal" href="#reporter-options">Reporter Options</a></li>
+<li><a class="reference internal" href="#base-options">Base Options</a></li>
+<li><a class="reference internal" href="#main-options">Main Options</a></li>
+<li><a class="reference internal" href="#check-selection">Check Selection</a></li>
+<li><a class="reference internal" href="#plugin-options">Plugin Options</a></li>
+<li><a class="reference internal" href="#arches">Arches</a></li>
+<li><a class="reference internal" href="#git">Git</a></li>
+<li><a class="reference internal" href="#profiles">Profiles</a></li>
+<li><a class="reference internal" href="#network">Network</a></li>
+<li><a class="reference internal" href="#query-caching">Query Caching</a></li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../../_sources/man/pkgcheck/scan/_options.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Positional Arguments</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

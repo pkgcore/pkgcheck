@@ -1,0 +1,7 @@
+pkgcheck.profiles module
+========================
+
+.. automodule:: pkgcheck.profiles
+   :members:
+   :undoc-members:
+   :show-inheritance:

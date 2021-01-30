@@ -1,0 +1,278 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Architecture overview &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Architecture overview</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="architecture-overview">
+<h1>Architecture overview<a class="headerlink" href="#architecture-overview" title="Permalink to this headline">¶</a></h1>
+<p>If you want to add a check or frontend to pkgcheck you should
+probably read this thing first. If you only want to add a check you
+should only read the first section (&quot;For everyone&quot;). After that is
+extra documentation on adding feed types and some of the internals.</p>
+<div class="section" id="for-everyone">
+<h2>For everyone<a class="headerlink" href="#for-everyone" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="addons">
+<h3>Addons<a class="headerlink" href="#addons" title="Permalink to this headline">¶</a></h3>
+<p>Most interesting objects are addons. The interface is defined in
+base.py. They can have &quot;dependencies&quot; on other addons (by class): all
+addons referenced by the required_addons class attribute of an active
+addon are also active (and this applies recursively, of course).</p>
+<p>Before they are instantiated the class (or static) methods
+mangle_argparser and check_args are used to modify the argparse
+process. At this point all available checks (and their dependencies)
+are active addons. After the commandline is parsed all checks that end
+up being active after parsing the commandline are active addons, and
+those are instantiated. They receive the argparse instance
+followed by the (instantiated) addons they depend on as positional
+arguments to __init__.</p>
+<p>(The reason for the two &quot;phases&quot; here (argparse mangling before
+instantiation) is we want the addons to influence the way options are
+parsed while we cannot instantiate them before options are parsed
+(since we want to pass the values object and since we only want to
+instantiate the ones that end up &quot;selected&quot; according to commandline
+settings). The reason for the dependency system used here is to
+provide a place to put options and state shared between multiple
+checkers (without putting everything on a single global object).)</p>
+</div>
+<div class="section" id="checkers-feeds">
+<h3>Checkers, feeds<a class="headerlink" href="#checkers-feeds" title="Permalink to this headline">¶</a></h3>
+<p>What a checker actually <em>is</em> is not well defined at the moment, but
+everything subclassing base.Template and setting a feed_type attribute
+is definitely a checker. Template subclasses Addon, so they are all
+also addons. Their feed_type attribute should be set to one of the
+feed types defined in base.py. Their feed method will be called with
+an iterator producing values of a type depending on their feed_type.
+Currently available are versioned_feed which feeds single package
+objects and package_feed, category_feed and repository_feed which
+produce sequences of packages.</p>
+<p>Whatever your feed type is, the first thing you should do with
+everything you get out of the feed is &quot;yield&quot; it. The &quot;feeder&quot; and all
+the checks are chained together, each yielding objects to the next. So
+none of them should modify the data passed to them, and all of them
+should yield <em>everything</em> to the next checker.</p>
+<p>The second argument to their feed method is a Reporter instance (again
+defined in base.py) to pass Report instances on to.</p>
+</div>
+<div class="section" id="scope">
+<h3>Scope<a class="headerlink" href="#scope" title="Permalink to this headline">¶</a></h3>
+<p>An extra feature available to the feeders is their &quot;scope&quot; attribute.
+This is somewhat similar to their feed_type. The difference is roughly
+that feed_type must match <em>exactly</em> and scope indicates a <em>minimum</em>
+requirement. This is mainly used by the transforms, but for certain
+checks it is also useful to get &quot;fed&quot; single versions per iteration
+but only if the check is run on the entire repository. Using a
+repository feed would have the same effect of only running your check
+if the entire repository is being checked, but requires building a
+huge sequence containing all packages in memory before your check
+runs. So if you can operate on fewer packages at a time, use a
+&quot;smaller&quot; feed and scope.</p>
+</div>
+<div class="section" id="checker-discovery">
+<h3>Checker discovery<a class="headerlink" href="#checker-discovery" title="Permalink to this headline">¶</a></h3>
+<p>Checkers are picked up by using pkgcore's plugin mechanism. For
+writing a simple custom checker the easiest thing to do is putting the
+entire thing in a single file including the pkgcore_plugins
+registration dictionary. See core_checks.py for what such a dictionary
+looks like. Then put it in a directory called pkgcheck/plugins/
+on your PYTHONPATH. So if you have a system-wide pkgcheck
+installation you can put your own plugin in
+~/lib/python/pkgcheck/plugins/mycheck.py and run
+PYTHONPATH=$HOME/lib/python pkgcheck ... to use the check (without
+having to install a local copy of pkgcheck and putting the check
+inside it).</p>
+</div>
+</div>
+<div class="section" id="for-those-who-need-more-feed-types">
+<h2>For those who need more feed types<a class="headerlink" href="#for-those-who-need-more-feed-types" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="transforms">
+<h3>Transforms<a class="headerlink" href="#transforms" title="Permalink to this headline">¶</a></h3>
+<p>Usually the checks should run in a single &quot;pipeline&quot;: looping over the
+packages once uses various caches (not just inside pkgcheck but
+also the os disk cache) more efficiently. This is accomplished by
+applying &quot;transforms&quot; to the package iterator which change the feed
+type. They are very similar to checks, but they do not yield the same
+thing they receive. Most (currently all) of them are defined in
+feeds.py.</p>
+<p>As you can see the way they set their input is a bit different from a
+check. Because some simple operations like &quot;Yield the first thing of
+every value handed in&quot; can be used for more than one &quot;transformation&quot;
+they have more than one source and target feed type. For each of these
+they can set their required scope and an integer indicating the &quot;cost&quot;
+of this operation. These are currently set to mostly random values,
+but the idea is they will allow the plugger to do a better job once
+the number of feed types, sources and transforms grows.</p>
+<p>There is no way to change the scope. The scope is assumed to be
+constant for the entire pipeline.</p>
+</div>
+<div class="section" id="performance-pitfalls">
+<h3>Performance pitfalls<a class="headerlink" href="#performance-pitfalls" title="Permalink to this headline">¶</a></h3>
+<p>As indicated earlier the checks should run in a single pipeline. This
+pipeline is really a <em>line</em>: it is not possible to &quot;fork&quot; the iterator
+without using potentially unlimited temporary storage. This is a
+deficiency of the way iterators are used here. This makes it very
+important that there are transforms available from all possible feeds
+<em>and</em> back.</p>
+<p>An example: if the only available source is one generating a
+versioned_feed (single package objects), there are transforms from
+that to an ebuild_feed producing ebuild source lines and a
+package_feed producing sequences of package objects for all versions
+in a package, and checks of all those feed types are active, then the
+entire repository will be looped over twice: once for the
+versioned_feed checkers and either the package_feed or ebuild_feed
+checkers, once for the remaining feed type. To avoid the second loop
+register a transform back from package_feed and ebuild_feed to
+versioned_feed.</p>
+</div>
+<div class="section" id="sources">
+<h3>Sources<a class="headerlink" href="#sources" title="Permalink to this headline">¶</a></h3>
+<p>Currently there is only one source, defined in feeds.py.</p>
+</div>
+<div class="section" id="registration">
+<h3>Registration<a class="headerlink" href="#registration" title="Permalink to this headline">¶</a></h3>
+<p>Transforms are discovered the same way as checks are: the pkgcore
+plugin system. See core_checks.py. The single available feed is
+currently hardcoded. This will probably change in the future, but
+exactly how remains to be seen.</p>
+</div>
+</div>
+<div class="section" id="for-pkgcheck-internals-hackers">
+<h2>For pkgcheck internals hackers<a class="headerlink" href="#for-pkgcheck-internals-hackers" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="commandline-frontend">
+<h3>Commandline frontend<a class="headerlink" href="#commandline-frontend" title="Permalink to this headline">¶</a></h3>
+<p>The frontend code uses pkgcore's commandline utilities module and lives in the
+pkgcheck.scripts.pkgcheck module. It is pretty straightforward, although how
+control flows through this module is not obvious without knowing how pkgcore's
+commandline utils are used:</p>
+<ul class="simple">
+<li><p>pkgcore's commandline glue instantiates the argument parser</p></li>
+<li><p>it pulls up all available checks and transforms through the plugin system</p></li>
+<li><p>grab all addon dependencies too</p></li>
+<li><p>give them a chance to mangle the parser</p></li>
+<li><p>the commandline glue parses options, triggering various argparse actions,
+which calls check_args on all addon classes).</p></li>
+<li><p>if option parsing succeeded the commandline glue calls main</p></li>
+<li><p>main instantiates all active addons and sources</p></li>
+<li><p>the autoplugger builds one or more pipelines</p></li>
+<li><p>main runs the pipelines</p></li>
+</ul>
+</div>
+<div class="section" id="autoplugger">
+<h3>Autoplugger<a class="headerlink" href="#autoplugger" title="Permalink to this headline">¶</a></h3>
+<p>The autoplugger gets handed a bunch of &quot;sink&quot;, transform and source
+instances and builds pipelines from them. It is a hack that relies on
+a fair amount of brute force to do its job, but so far it has been
+sufficient. It is still a moving target, so its design (if it has one)
+is not documented here. Use the source and do not forget about the
+tests (it does not have as many as it should but there are a bunch,
+and running the tests with debug mode forced (hacked) on should give
+some idea of what's what).</p>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Architecture overview</a><ul>
+<li><a class="reference internal" href="#for-everyone">For everyone</a><ul>
+<li><a class="reference internal" href="#addons">Addons</a></li>
+<li><a class="reference internal" href="#checkers-feeds">Checkers, feeds</a></li>
+<li><a class="reference internal" href="#scope">Scope</a></li>
+<li><a class="reference internal" href="#checker-discovery">Checker discovery</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#for-those-who-need-more-feed-types">For those who need more feed types</a><ul>
+<li><a class="reference internal" href="#transforms">Transforms</a></li>
+<li><a class="reference internal" href="#performance-pitfalls">Performance pitfalls</a></li>
+<li><a class="reference internal" href="#sources">Sources</a></li>
+<li><a class="reference internal" href="#registration">Registration</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#for-pkgcheck-internals-hackers">For pkgcheck internals hackers</a><ul>
+<li><a class="reference internal" href="#commandline-frontend">Commandline frontend</a></li>
+<li><a class="reference internal" href="#autoplugger">Autoplugger</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/dev/hacking.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Architecture overview</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

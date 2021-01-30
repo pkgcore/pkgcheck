@@ -1,0 +1,214 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.checks.overlays &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../checks.html" accesskey="U">pkgcheck.checks</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.overlays</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcheck.checks.overlays</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">snakeoil.sequences</span> <span class="kn">import</span> <span class="n">iflatten_instance</span>
+<span class="kn">from</span> <span class="nn">snakeoil.strings</span> <span class="kn">import</span> <span class="n">pluralism</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">base</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">sources</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">MirrorsCheck</span><span class="p">,</span> <span class="n">OptionalCheck</span><span class="p">,</span> <span class="n">OverlayRepoCheck</span>
+
+
+<div class="viewcode-block" id="UnusedInMastersLicenses"><a class="viewcode-back" href="../../../api/pkgcheck.checks.overlays.html#pkgcheck.checks.overlays.UnusedInMastersLicenses">[docs]</a><span class="k">class</span> <span class="nc">UnusedInMastersLicenses</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Licenses detected that are unused in the master repo(s).</span>
+
+<span class="sd">    In other words, they&#39;re likely to be removed so should be copied to the overlay.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">licenses</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">licenses</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">licenses</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">licenses</span><span class="p">)</span>
+        <span class="n">licenses</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">licenses</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;unused license</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1"> in master repo(s): </span><span class="si">{</span><span class="n">licenses</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="UnusedInMastersMirrors"><a class="viewcode-back" href="../../../api/pkgcheck.checks.overlays.html#pkgcheck.checks.overlays.UnusedInMastersMirrors">[docs]</a><span class="k">class</span> <span class="nc">UnusedInMastersMirrors</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Mirrors detected that are unused in the master repo(s).</span>
+
+<span class="sd">    In other words, they&#39;re likely to be removed so should be copied to the overlay.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mirrors</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mirrors</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">mirrors</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mirrors</span><span class="p">)</span>
+        <span class="n">mirrors</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mirrors</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;unused mirror</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1"> in master repo(s): </span><span class="si">{</span><span class="n">mirrors</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="UnusedInMastersEclasses"><a class="viewcode-back" href="../../../api/pkgcheck.checks.overlays.html#pkgcheck.checks.overlays.UnusedInMastersEclasses">[docs]</a><span class="k">class</span> <span class="nc">UnusedInMastersEclasses</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Eclasses detected that are unused in the master repo(s).</span>
+
+<span class="sd">    In other words, they&#39;re likely to be removed so should be copied to the overlay.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eclasses</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eclasses</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">eclasses</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">es</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eclasses</span><span class="p">,</span> <span class="n">plural</span><span class="o">=</span><span class="s1">&#39;es&#39;</span><span class="p">)</span>
+        <span class="n">eclasses</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">eclasses</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;unused eclass</span><span class="si">{</span><span class="n">es</span><span class="si">}</span><span class="s1"> in master repo(s): </span><span class="si">{</span><span class="n">eclasses</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="UnusedInMastersGlobalUse"><a class="viewcode-back" href="../../../api/pkgcheck.checks.overlays.html#pkgcheck.checks.overlays.UnusedInMastersGlobalUse">[docs]</a><span class="k">class</span> <span class="nc">UnusedInMastersGlobalUse</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Global USE flags detected that are unused in the master repo(s).</span>
+
+<span class="sd">    In other words, they&#39;re likely to be removed so should be copied to the overlay.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">flags</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flags</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">flags</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flags</span><span class="p">)</span>
+        <span class="n">flags</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flags</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;use.desc unused flag</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1"> in master repo(s): </span><span class="si">{</span><span class="n">flags</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="UnusedInMastersCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.overlays.html#pkgcheck.checks.overlays.UnusedInMastersCheck">[docs]</a><span class="k">class</span> <span class="nc">UnusedInMastersCheck</span><span class="p">(</span><span class="n">MirrorsCheck</span><span class="p">,</span> <span class="n">OverlayRepoCheck</span><span class="p">,</span> <span class="n">OptionalCheck</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check for various metadata that may be removed from master repos.&quot;&quot;&quot;</span>
+
+    <span class="n">_source</span> <span class="o">=</span> <span class="n">sources</span><span class="o">.</span><span class="n">RepositoryRepoSource</span>
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span>
+        <span class="n">UnusedInMastersLicenses</span><span class="p">,</span> <span class="n">UnusedInMastersMirrors</span><span class="p">,</span> <span class="n">UnusedInMastersEclasses</span><span class="p">,</span>
+        <span class="n">UnusedInMastersGlobalUse</span><span class="p">,</span>
+    <span class="p">])</span>
+
+<div class="viewcode-block" id="UnusedInMastersCheck.start"><a class="viewcode-back" href="../../../api/pkgcheck.checks.overlays.html#pkgcheck.checks.overlays.UnusedInMastersCheck.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unused_master_licenses</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unused_master_mirrors</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unused_master_eclasses</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">unused_master_flags</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="c1"># combine licenses/mirrors/eclasses/flags from all master repos</span>
+        <span class="k">for</span> <span class="n">repo</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">target_repo</span><span class="o">.</span><span class="n">masters</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">unused_master_licenses</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">licenses</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">unused_master_mirrors</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">mirrors</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">unused_master_eclasses</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">eclass_cache</span><span class="o">.</span><span class="n">eclasses</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">unused_master_flags</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="n">flag</span> <span class="k">for</span> <span class="n">matcher</span><span class="p">,</span> <span class="p">(</span><span class="n">flag</span><span class="p">,</span> <span class="n">desc</span><span class="p">)</span> <span class="ow">in</span> <span class="n">repo</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">use_desc</span><span class="p">)</span>
+
+        <span class="c1"># determine unused licenses/mirrors/eclasses/flags across all master repos</span>
+        <span class="k">for</span> <span class="n">repo</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">target_repo</span><span class="o">.</span><span class="n">masters</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">pkg</span> <span class="ow">in</span> <span class="n">repo</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">unused_master_licenses</span><span class="o">.</span><span class="n">difference_update</span><span class="p">(</span><span class="n">iflatten_instance</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">license</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">unused_master_mirrors</span><span class="o">.</span><span class="n">difference_update</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_mirrors</span><span class="p">(</span><span class="n">pkg</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">unused_master_eclasses</span><span class="o">.</span><span class="n">difference_update</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">inherited</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">unused_master_flags</span><span class="o">.</span><span class="n">difference_update</span><span class="p">(</span>
+                    <span class="n">pkg</span><span class="o">.</span><span class="n">iuse_stripped</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">local_use</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span></div>
+
+<div class="viewcode-block" id="UnusedInMastersCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.overlays.html#pkgcheck.checks.overlays.UnusedInMastersCheck.feed">[docs]</a>    <span class="k">def</span> <span class="nf">feed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="c1"># report licenses used in the pkg but not in any pkg from the master repo(s)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">unused_master_licenses</span><span class="p">:</span>
+            <span class="n">pkg_licenses</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">iflatten_instance</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">license</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">licenses</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unused_master_licenses</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">pkg_licenses</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">UnusedInMastersLicenses</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">licenses</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+
+        <span class="c1"># report mirrors used in the pkg but not in any pkg from the master repo(s)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">unused_master_mirrors</span><span class="p">:</span>
+            <span class="n">pkg_mirrors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_mirrors</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">mirrors</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unused_master_mirrors</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">pkg_mirrors</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">UnusedInMastersMirrors</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">mirrors</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+
+        <span class="c1"># report eclasses used in the pkg but not in any pkg from the master repo(s)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">unused_master_eclasses</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">eclasses</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unused_master_eclasses</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">inherited</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">UnusedInMastersEclasses</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">eclasses</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+
+        <span class="c1"># report global USE flags used in the pkg but not in any pkg from the master repo(s)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">unused_master_flags</span><span class="p">:</span>
+            <span class="n">non_local_use</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">iuse_stripped</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">local_use</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="k">if</span> <span class="n">flags</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">unused_master_flags</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">non_local_use</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">UnusedInMastersGlobalUse</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">flags</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span></div></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../checks.html" >pkgcheck.checks</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.overlays</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

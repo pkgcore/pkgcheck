@@ -1,0 +1,7 @@
+pkgcheck.checks.perl module
+===========================
+
+.. automodule:: pkgcheck.checks.perl
+   :members:
+   :undoc-members:
+   :show-inheritance:

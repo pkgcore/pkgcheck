@@ -1,0 +1,50 @@
+Positional Arguments
+--------------------
+
+:FILE:  
+      path to serialized results file
+
+Reporter Options
+----------------
+
+-R REPORTER, --reporter REPORTER  
+                                  Select a reporter to use for output.
+                                  
+                                  Use ``pkgcheck show --reporters`` to see available options.
+
+--format FORMAT_STR               
+                                  Custom format string used to format output by FormatReporter.
+                                  
+                                  Supports python format string syntax where result object attribute names
+                                  surrounded by curly braces are replaced with their values (if they exist).
+                                  
+                                  For example, ``--format '{category}/{package}/{package}-{version}.ebuild``
+                                  will output ebuild paths in the target repo for results relating to
+                                  specific ebuild versions. If a result is for the generic package (or a
+                                  higher scope), no output will be produced for that result.
+                                  
+                                  Furthermore, no output will be produced if a result object is missing any
+                                  requested attribute expansion in the format string. In other words,
+                                  ``--format {foo}`` will never produce any output because no result has the
+                                  ``foo`` attribute.
+
+Base Options
+------------
+
+-h, --help       
+                 Show this help message and exit. To get more
+                 information see the related man page.
+
+--debug          
+                 Enable debug checks and show verbose debug output.
+
+-q, --quiet      
+                 Suppress non-error, informational messages.
+
+-v, --verbose    
+                 Increase the verbosity of various output.
+
+--color BOOLEAN  
+                 Toggle colored output support. This can be used to forcibly
+                 enable color support when piping output or other sitations
+                 where stdout is not a tty.

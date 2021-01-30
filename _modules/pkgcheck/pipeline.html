@@ -1,0 +1,428 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.pipeline &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.pipeline</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcheck.pipeline</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Pipeline building support for connecting sources and checks.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">multiprocessing</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">signal</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span><span class="p">,</span> <span class="n">deque</span>
+<span class="kn">from</span> <span class="nn">concurrent.futures</span> <span class="kn">import</span> <span class="n">ThreadPoolExecutor</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span><span class="p">,</span> <span class="n">tee</span>
+
+<span class="kn">from</span> <span class="nn">pkgcore.package.errors</span> <span class="kn">import</span> <span class="n">MetadataException</span>
+<span class="kn">from</span> <span class="nn">pkgcore.restrictions</span> <span class="kn">import</span> <span class="n">boolean</span><span class="p">,</span> <span class="n">packages</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">base</span>
+<span class="kn">from</span> <span class="nn">.checks</span> <span class="kn">import</span> <span class="n">init_checks</span>
+<span class="kn">from</span> <span class="nn">.results</span> <span class="kn">import</span> <span class="n">MetadataError</span>
+<span class="kn">from</span> <span class="nn">.sources</span> <span class="kn">import</span> <span class="n">UnversionedSource</span><span class="p">,</span> <span class="n">VersionedSource</span>
+
+
+<div class="viewcode-block" id="Pipeline"><a class="viewcode-back" href="../../api/pkgcheck.pipeline.html#pkgcheck.pipeline.Pipeline">[docs]</a><span class="k">class</span> <span class="nc">Pipeline</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Check-running pipeline leveraging scope-based parallelism.</span>
+
+<span class="sd">    All results are pushed into the results queue as lists of result objects or</span>
+<span class="sd">    exception traceback strings. This iterator forces exceptions to be handled</span>
+<span class="sd">    explicitly by outputting the serialized traceback and signaling the process</span>
+<span class="sd">    group to end when an exception is raised.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">restrictions</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="n">options</span>
+        <span class="c1"># number of error results encountered (used with --exit option)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">errors</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># pull scan scope from the given restriction targets</span>
+        <span class="n">restrictions</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">restrictions</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">scan_scope</span><span class="p">,</span> <span class="n">restriction</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">restrictions</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">base</span><span class="o">.</span><span class="n">PkgcheckUserException</span><span class="p">(</span><span class="s1">&#39;no targets piped in&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_restrictions</span> <span class="o">=</span> <span class="n">chain</span><span class="p">([</span><span class="n">restriction</span><span class="p">],</span> <span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">_scope</span><span class="p">,</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">restrictions</span><span class="p">))</span>
+
+        <span class="c1"># determine if scan is being run at a package level</span>
+        <span class="n">pkg_scan</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">scan_scope</span> <span class="ow">in</span> <span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">version_scope</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">package_scope</span><span class="p">)</span> <span class="ow">and</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">restriction</span><span class="p">,</span> <span class="n">boolean</span><span class="o">.</span><span class="n">AndRestriction</span><span class="p">))</span>
+
+        <span class="c1"># pkgcheck currently requires the fork start method (#254)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mp_ctx</span> <span class="o">=</span> <span class="n">multiprocessing</span><span class="o">.</span><span class="n">get_context</span><span class="p">(</span><span class="s1">&#39;fork&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results_q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mp_ctx</span><span class="o">.</span><span class="n">SimpleQueue</span><span class="p">()</span>
+
+        <span class="c1"># create checkrunners</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pipes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_runners</span><span class="p">(</span><span class="n">scan_scope</span><span class="p">,</span> <span class="n">pkg_scan</span><span class="p">)</span>
+
+        <span class="c1"># initialize settings used by iterator support</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pid</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGINT</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_kill_pipe</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results_iter</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_results_q</span><span class="o">.</span><span class="n">get</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span> <span class="o">=</span> <span class="n">deque</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">pkg_scan</span><span class="p">:</span>
+            <span class="c1"># package level scans sort all returned results</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ordered_results</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">scope</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">scope</span> <span class="ow">in</span> <span class="n">base</span><span class="o">.</span><span class="n">scopes</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">scope</span> <span class="o">&gt;=</span> <span class="n">base</span><span class="o">.</span><span class="n">package_scope</span>
+            <span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># scoped mapping for caching repo and location specific results</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ordered_results</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">scope</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">scope</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">scopes</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+                <span class="k">if</span> <span class="n">scope</span> <span class="o">&lt;=</span> <span class="n">base</span><span class="o">.</span><span class="n">repo_scope</span>
+            <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">_filter_checks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scan_scope</span><span class="p">,</span> <span class="n">checks</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Verify check scope against current scan scope to determine check activation.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">check</span> <span class="ow">in</span> <span class="n">checks</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">check</span><span class="o">.</span><span class="n">scope</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">ConditionalScope</span><span class="p">):</span>
+                <span class="c1"># conditionally enabled check</span>
+                <span class="k">yield</span> <span class="n">check</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">check</span><span class="o">.</span><span class="n">scope</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">LocationScope</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">selected_scopes</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">scan_scope</span> <span class="o">==</span> <span class="n">base</span><span class="o">.</span><span class="n">repo_scope</span> <span class="ow">or</span> <span class="n">check</span><span class="o">.</span><span class="n">scope</span> <span class="ow">in</span> <span class="n">scan_scope</span><span class="p">:</span>
+                        <span class="c1"># allow repo scans or cwd scope to trigger location specific checks</span>
+                        <span class="k">yield</span> <span class="n">check</span>
+                <span class="k">elif</span> <span class="n">check</span><span class="o">.</span><span class="n">scope</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">selected_scopes</span><span class="p">:</span>
+                    <span class="c1"># Allow checks with special scopes to be run when specifically</span>
+                    <span class="c1"># requested, e.g. eclass-only scanning.</span>
+                    <span class="k">yield</span> <span class="n">check</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">scan_scope</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">PackageScope</span><span class="p">)</span> <span class="ow">and</span> <span class="n">check</span><span class="o">.</span><span class="n">scope</span> <span class="o">&gt;=</span> <span class="n">scan_scope</span><span class="p">:</span>
+                <span class="c1"># Only run pkg-related checks at or below the current scan scope level, if</span>
+                <span class="c1"># pkg scanning is requested, e.g. skip repo level checks when scanning at</span>
+                <span class="c1"># package level.</span>
+                <span class="k">yield</span> <span class="n">check</span>
+
+    <span class="k">def</span> <span class="nf">_create_runners</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">scan_scope</span><span class="p">,</span> <span class="n">pkg_scan</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialize and categorize checkrunners for results pipeline.&quot;&quot;&quot;</span>
+        <span class="c1"># filter enabled checks based on the scanning scope</span>
+        <span class="n">enabled_checks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filter_checks</span><span class="p">(</span><span class="n">scan_scope</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">enabled_checks</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">enabled_checks</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">base</span><span class="o">.</span><span class="n">PkgcheckUserException</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s1">&#39;no matching checks available for </span><span class="si">{</span><span class="n">scan_scope</span><span class="o">.</span><span class="n">desc</span><span class="si">}</span><span class="s1"> scope&#39;</span><span class="p">)</span>
+
+        <span class="c1"># initialize enabled checks</span>
+        <span class="n">addons</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">get_addons</span><span class="p">(</span><span class="n">enabled_checks</span><span class="p">)</span>
+        <span class="n">enabled_checks</span> <span class="o">=</span> <span class="n">init_checks</span><span class="p">(</span><span class="n">addons</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results_q</span><span class="p">)</span>
+
+        <span class="c1"># Initialize checkrunners per source type using separate runner for</span>
+        <span class="c1"># async checks and categorize them for parallelization based on the</span>
+        <span class="c1"># scan and source scope.</span>
+        <span class="n">runner_cls</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;async&#39;</span><span class="p">:</span> <span class="n">AsyncCheckRunner</span><span class="p">,</span> <span class="s1">&#39;sync&#39;</span><span class="p">:</span> <span class="n">SyncCheckRunner</span><span class="p">}</span>
+        <span class="n">pipes</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;sync&#39;</span><span class="p">:</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">),</span> <span class="s1">&#39;async&#39;</span><span class="p">:</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)}</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">exec_type</span><span class="p">),</span> <span class="n">checks</span> <span class="ow">in</span> <span class="n">enabled_checks</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">runner</span> <span class="o">=</span> <span class="n">runner_cls</span><span class="p">[</span><span class="n">exec_type</span><span class="p">](</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">checks</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">pkg_scan</span> <span class="ow">and</span> <span class="n">source</span><span class="o">.</span><span class="n">scope</span> <span class="o">&gt;=</span> <span class="n">base</span><span class="o">.</span><span class="n">package_scope</span><span class="p">:</span>
+                <span class="n">pipes</span><span class="p">[</span><span class="n">exec_type</span><span class="p">][</span><span class="n">base</span><span class="o">.</span><span class="n">package_scope</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">runner</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">pipes</span><span class="p">[</span><span class="n">exec_type</span><span class="p">][</span><span class="n">source</span><span class="o">.</span><span class="n">scope</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">runner</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">pipes</span>
+
+    <span class="k">def</span> <span class="nf">_kill_pipe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Handle terminating the pipeline process group.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">killpg</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pid</span><span class="p">,</span> <span class="n">signal</span><span class="o">.</span><span class="n">SIGKILL</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">error</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># propagate exception raised during parallel scan</span>
+            <span class="k">raise</span> <span class="n">base</span><span class="o">.</span><span class="n">PkgcheckUserException</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">KeyboardInterrupt</span>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># start running the check pipeline</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mp_ctx</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_run</span><span class="p">)</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pid</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">pid</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="fm">__next__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="o">.</span><span class="n">popleft</span><span class="p">()</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="o">.</span><span class="n">filtered</span> <span class="ow">and</span> <span class="n">result</span><span class="o">.</span><span class="vm">__class__</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">filtered_keywords</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="vm">__class__</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">exit_keywords</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">errors</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="k">return</span> <span class="n">result</span>
+            <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">results</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_results_iter</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ordered_results</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="k">raise</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_pid</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="c1"># output cached results in registered order</span>
+                    <span class="n">results</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">sorted</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ordered_results</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_ordered_results</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="k">continue</span>
+
+                <span class="c1"># Catch propagated, serialized exceptions, output their</span>
+                <span class="c1"># traceback, and signal the scanning process to end.</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_kill_pipe</span><span class="p">(</span><span class="n">error</span><span class="o">=</span><span class="n">results</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+
+                <span class="c1"># cache registered result scopes to forcibly order output</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_ordered_results</span><span class="p">[</span><span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scope</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_results</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_queue_work</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sync_pipes</span><span class="p">,</span> <span class="n">work_q</span><span class="p">,</span> <span class="n">restrictions</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Producer that queues scanning tasks against granular scope restrictions.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">restriction</span> <span class="ow">in</span> <span class="n">restrictions</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">scope</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">sync_pipes</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                <span class="n">pipes</span> <span class="o">=</span> <span class="n">sync_pipes</span><span class="p">[</span><span class="n">scope</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">scope</span> <span class="o">==</span> <span class="n">base</span><span class="o">.</span><span class="n">version_scope</span><span class="p">:</span>
+                    <span class="n">versioned_source</span> <span class="o">=</span> <span class="n">VersionedSource</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">restrict</span> <span class="ow">in</span> <span class="n">versioned_source</span><span class="o">.</span><span class="n">itermatch</span><span class="p">(</span><span class="n">restriction</span><span class="p">):</span>
+                        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pipes</span><span class="p">)):</span>
+                            <span class="n">work_q</span><span class="o">.</span><span class="n">put</span><span class="p">((</span><span class="n">scope</span><span class="p">,</span> <span class="n">restrict</span><span class="p">,</span> <span class="n">i</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">scope</span> <span class="o">==</span> <span class="n">base</span><span class="o">.</span><span class="n">package_scope</span><span class="p">:</span>
+                    <span class="n">unversioned_source</span> <span class="o">=</span> <span class="n">UnversionedSource</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">restrict</span> <span class="ow">in</span> <span class="n">unversioned_source</span><span class="o">.</span><span class="n">itermatch</span><span class="p">(</span><span class="n">restriction</span><span class="p">):</span>
+                        <span class="n">work_q</span><span class="o">.</span><span class="n">put</span><span class="p">((</span><span class="n">scope</span><span class="p">,</span> <span class="n">restrict</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pipes</span><span class="p">)):</span>
+                        <span class="n">work_q</span><span class="o">.</span><span class="n">put</span><span class="p">((</span><span class="n">scope</span><span class="p">,</span> <span class="n">restriction</span><span class="p">,</span> <span class="n">i</span><span class="p">))</span>
+
+        <span class="c1"># notify consumers that no more work exists</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">jobs</span><span class="p">):</span>
+            <span class="n">work_q</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_run_checks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pipes</span><span class="p">,</span> <span class="n">work_q</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Consumer that runs scanning tasks, queuing results for output.&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">scope</span><span class="p">,</span> <span class="n">restrict</span><span class="p">,</span> <span class="n">pipe_idx</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">work_q</span><span class="o">.</span><span class="n">get</span><span class="p">,</span> <span class="kc">None</span><span class="p">):</span>
+                <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+
+                <span class="k">if</span> <span class="n">scope</span> <span class="o">==</span> <span class="n">base</span><span class="o">.</span><span class="n">version_scope</span><span class="p">:</span>
+                    <span class="n">results</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">pipes</span><span class="p">[</span><span class="n">scope</span><span class="p">][</span><span class="n">pipe_idx</span><span class="p">]</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">restrict</span><span class="p">))</span>
+                <span class="k">elif</span> <span class="n">scope</span> <span class="ow">in</span> <span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">package_scope</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">category_scope</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">pipe</span> <span class="ow">in</span> <span class="n">pipes</span><span class="p">[</span><span class="n">scope</span><span class="p">]:</span>
+                        <span class="n">results</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">pipe</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">restrict</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">pipe</span> <span class="o">=</span> <span class="n">pipes</span><span class="p">[</span><span class="n">scope</span><span class="p">][</span><span class="n">pipe_idx</span><span class="p">]</span>
+                    <span class="n">pipe</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+                    <span class="n">results</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">pipe</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">restrict</span><span class="p">))</span>
+                    <span class="n">results</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">pipe</span><span class="o">.</span><span class="n">finish</span><span class="p">())</span>
+
+                <span class="k">if</span> <span class="n">results</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_results_q</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">results</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+            <span class="c1"># traceback can&#39;t be pickled so serialize it</span>
+            <span class="n">tb</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_results_q</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">tb</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_schedule_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pipes</span><span class="p">,</span> <span class="n">restrictions</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Schedule asynchronous checks.&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">tasks</span><span class="p">)</span> <span class="k">as</span> <span class="n">executor</span><span class="p">:</span>
+                <span class="c1"># schedule any existing async checks</span>
+                <span class="n">futures</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">for</span> <span class="n">restrict</span> <span class="ow">in</span> <span class="n">restrictions</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">runner</span> <span class="ow">in</span> <span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span><span class="n">pipes</span><span class="p">):</span>
+                        <span class="n">runner</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span><span class="n">executor</span><span class="p">,</span> <span class="n">futures</span><span class="p">,</span> <span class="n">restrict</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+            <span class="c1"># traceback can&#39;t be pickled so serialize it</span>
+            <span class="n">tb</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_results_q</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">tb</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Run the scanning pipeline in parallel by check and scanning scope.&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGINT</span><span class="p">,</span> <span class="n">signal</span><span class="o">.</span><span class="n">SIG_DFL</span><span class="p">)</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">setpgrp</span><span class="p">()</span>
+            <span class="n">async_restricts</span><span class="p">,</span> <span class="n">sync_restricts</span> <span class="o">=</span> <span class="n">tee</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_restrictions</span><span class="p">)</span>
+
+            <span class="c1"># schedule asynchronous checks in a separate process</span>
+            <span class="n">async_proc</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">async_pipes</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pipes</span><span class="p">[</span><span class="s1">&#39;async&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="n">async_proc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mp_ctx</span><span class="o">.</span><span class="n">Process</span><span class="p">(</span>
+                    <span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_schedule_async</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">async_pipes</span><span class="p">,</span> <span class="n">async_restricts</span><span class="p">))</span>
+                <span class="n">async_proc</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+            <span class="c1"># run synchronous checks using a process pool</span>
+            <span class="k">if</span> <span class="n">sync_pipes</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pipes</span><span class="p">[</span><span class="s1">&#39;sync&#39;</span><span class="p">]:</span>
+                <span class="n">work_q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mp_ctx</span><span class="o">.</span><span class="n">SimpleQueue</span><span class="p">()</span>
+                <span class="n">pool</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mp_ctx</span><span class="o">.</span><span class="n">Pool</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">jobs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_checks</span><span class="p">,</span> <span class="p">(</span><span class="n">sync_pipes</span><span class="p">,</span> <span class="n">work_q</span><span class="p">))</span>
+                <span class="n">pool</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_queue_work</span><span class="p">(</span><span class="n">sync_pipes</span><span class="p">,</span> <span class="n">work_q</span><span class="p">,</span> <span class="n">sync_restricts</span><span class="p">)</span>
+                <span class="n">pool</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="n">async_proc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">async_proc</span><span class="o">.</span><span class="n">join</span><span class="p">()</span>
+            <span class="c1"># notify iterator that no more results exist</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_results_q</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>  <span class="c1"># pragma: no cover</span>
+            <span class="c1"># traceback can&#39;t be pickled so serialize it</span>
+            <span class="n">tb</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_results_q</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">tb</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CheckRunner"><a class="viewcode-back" href="../../api/pkgcheck.pipeline.html#pkgcheck.pipeline.CheckRunner">[docs]</a><span class="k">class</span> <span class="nc">CheckRunner</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Generic runner for checks.</span>
+
+<span class="sd">    Checks are run in order of priority. Some checks need to be run before</span>
+<span class="sd">    others if both are enabled due to package attribute caching in pkgcore,</span>
+<span class="sd">    e.g. checks that test depset parsing need to come before other checks that</span>
+<span class="sd">    use the parsed deps otherwise results from parsing errors could be missed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">checks</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">options</span> <span class="o">=</span> <span class="n">options</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">source</span> <span class="o">=</span> <span class="n">source</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">checks</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">checks</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SyncCheckRunner"><a class="viewcode-back" href="../../api/pkgcheck.pipeline.html#pkgcheck.pipeline.SyncCheckRunner">[docs]</a><span class="k">class</span> <span class="nc">SyncCheckRunner</span><span class="p">(</span><span class="n">CheckRunner</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generic runner for synchronous checks.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="c1"># set of known results for all checks run by the checkrunner</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_known_results</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">known_results</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">checks</span><span class="p">))</span>
+        <span class="c1"># used to store MetadataError results for processing</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_errors</span> <span class="o">=</span> <span class="n">deque</span><span class="p">()</span>
+
+        <span class="c1"># only report metadata errors for version-scoped sources</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">scope</span> <span class="o">==</span> <span class="n">base</span><span class="o">.</span><span class="n">version_scope</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">itermatch</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">itermatch</span><span class="p">,</span> <span class="n">error_callback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata_error_cb</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_metadata_error_cb</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">e</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Callback handling MetadataError results.&quot;&quot;&quot;</span>
+        <span class="c1"># Errors thrown by pkgcore during itermatch() aren&#39;t in check running</span>
+        <span class="c1"># context so use all known results for the checkrunner in that case.</span>
+        <span class="k">if</span> <span class="n">check</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">known_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_known_results</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">known_results</span> <span class="o">=</span> <span class="n">check</span><span class="o">.</span><span class="n">known_results</span>
+
+        <span class="c1"># Unregistered metadata attrs will raise KeyError here which is wanted</span>
+        <span class="c1"># so they can be noticed and fixed.</span>
+        <span class="n">result_cls</span> <span class="o">=</span> <span class="n">MetadataError</span><span class="o">.</span><span class="n">results</span><span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">attr</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">result_cls</span> <span class="ow">in</span> <span class="n">known_results</span><span class="p">:</span>
+            <span class="n">error_str</span> <span class="o">=</span> <span class="s1">&#39;: &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">msg</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">))</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">result_cls</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">attr</span><span class="p">,</span> <span class="n">error_str</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">e</span><span class="o">.</span><span class="n">pkg</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_errors</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">e</span><span class="o">.</span><span class="n">pkg</span><span class="p">,</span> <span class="n">result</span><span class="p">))</span>
+
+<div class="viewcode-block" id="SyncCheckRunner.start"><a class="viewcode-back" href="../../api/pkgcheck.pipeline.html#pkgcheck.pipeline.SyncCheckRunner.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Run all check start methods.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">check</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">checks</span><span class="p">:</span>
+            <span class="n">check</span><span class="o">.</span><span class="n">start</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="SyncCheckRunner.run"><a class="viewcode-back" href="../../api/pkgcheck.pipeline.html#pkgcheck.pipeline.SyncCheckRunner.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">restrict</span><span class="o">=</span><span class="n">packages</span><span class="o">.</span><span class="n">AlwaysTrue</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Run registered checks against all matching source items.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">itermatch</span><span class="p">(</span><span class="n">restrict</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">check</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">checks</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">yield from</span> <span class="n">check</span><span class="o">.</span><span class="n">feed</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">MetadataException</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_error_cb</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="n">check</span><span class="p">)</span>
+
+        <span class="c1"># yield all relevant MetadataError results that occurred</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_errors</span><span class="p">:</span>
+            <span class="n">pkg</span><span class="p">,</span> <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_errors</span><span class="o">.</span><span class="n">popleft</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">restrict</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pkg</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">result</span></div>
+
+<div class="viewcode-block" id="SyncCheckRunner.finish"><a class="viewcode-back" href="../../api/pkgcheck.pipeline.html#pkgcheck.pipeline.SyncCheckRunner.finish">[docs]</a>    <span class="k">def</span> <span class="nf">finish</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Run all check finish methods while yielding any results.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">check</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">checks</span><span class="p">:</span>
+            <span class="k">yield from</span> <span class="n">check</span><span class="o">.</span><span class="n">finish</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="AsyncCheckRunner"><a class="viewcode-back" href="../../api/pkgcheck.pipeline.html#pkgcheck.pipeline.AsyncCheckRunner">[docs]</a><span class="k">class</span> <span class="nc">AsyncCheckRunner</span><span class="p">(</span><span class="n">CheckRunner</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generic runner for asynchronous checks.</span>
+
+<span class="sd">    Checks that would otherwise block for uncertain amounts of time due to I/O</span>
+<span class="sd">    or network access are run in separate threads, queuing any relevant results</span>
+<span class="sd">    on completion.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+<div class="viewcode-block" id="AsyncCheckRunner.schedule"><a class="viewcode-back" href="../../api/pkgcheck.pipeline.html#pkgcheck.pipeline.AsyncCheckRunner.schedule">[docs]</a>    <span class="k">def</span> <span class="nf">schedule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">executor</span><span class="p">,</span> <span class="n">futures</span><span class="p">,</span> <span class="n">restrict</span><span class="o">=</span><span class="n">packages</span><span class="o">.</span><span class="n">AlwaysTrue</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Schedule all checks to run via the given executor.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">source</span><span class="o">.</span><span class="n">itermatch</span><span class="p">(</span><span class="n">restrict</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">check</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">checks</span><span class="p">:</span>
+                <span class="n">check</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">executor</span><span class="p">,</span> <span class="n">futures</span><span class="p">)</span></div></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.pipeline</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

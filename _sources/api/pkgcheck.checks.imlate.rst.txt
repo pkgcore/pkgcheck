@@ -1,0 +1,7 @@
+pkgcheck.checks.imlate module
+=============================
+
+.. automodule:: pkgcheck.checks.imlate
+   :members:
+   :undoc-members:
+   :show-inheritance:

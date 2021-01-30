@@ -1,0 +1,7 @@
+pkgcheck.api module
+===================
+
+.. automodule:: pkgcheck.api
+   :members:
+   :undoc-members:
+   :show-inheritance:

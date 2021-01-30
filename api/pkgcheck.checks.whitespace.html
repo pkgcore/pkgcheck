@@ -1,0 +1,242 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.checks.whitespace module &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.whitespace module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcheck.checks.whitespace">
+<span id="pkgcheck-checks-whitespace-module"></span><h1>pkgcheck.checks.whitespace module<a class="headerlink" href="#module-pkgcheck.checks.whitespace" title="Permalink to this headline">¶</a></h1>
+<p>Various whitespace-related checks.</p>
+<dl class="py class">
+<dt id="pkgcheck.checks.whitespace.BadWhitespaceCharacter">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.whitespace.</code><code class="sig-name descname">BadWhitespaceCharacter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">char</span></em>, <em class="sig-param"><span class="n">position</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/whitespace.html#BadWhitespaceCharacter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.whitespace.BadWhitespaceCharacter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.LineResult" title="pkgcheck.results.LineResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.LineResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Ebuild uses whitespace that isn’t a tab, newline, or single space.</p>
+<p>Bash does not treat unicode whitespace characters as regular whitespace so
+commands or operators separated by such characters will be treated as one
+string. This usually causes execution errors if the characters are used for
+separation purposes outside of comments or regular strings.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.whitespace.BadWhitespaceCharacter.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.whitespace.BadWhitespaceCharacter.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.whitespace.BadWhitespaceCharacter.name">
+<code class="sig-name descname">name</code><em class="property"> = 'BadWhitespaceCharacter'</em><a class="headerlink" href="#pkgcheck.checks.whitespace.BadWhitespaceCharacter.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.whitespace.DoubleEmptyLine">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.whitespace.</code><code class="sig-name descname">DoubleEmptyLine</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">lines</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/whitespace.html#DoubleEmptyLine"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.whitespace.DoubleEmptyLine" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.whitespace._Whitespace</span></code></p>
+<p>Unneeded blank lines found.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.whitespace.DoubleEmptyLine.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.whitespace.DoubleEmptyLine.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.whitespace.DoubleEmptyLine.name">
+<code class="sig-name descname">name</code><em class="property"> = 'DoubleEmptyLine'</em><a class="headerlink" href="#pkgcheck.checks.whitespace.DoubleEmptyLine.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.whitespace.NoFinalNewline">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.whitespace.</code><code class="sig-name descname">NoFinalNewline</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/whitespace.html#NoFinalNewline"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.whitespace.NoFinalNewline" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Style" title="pkgcheck.results.Style"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Style</span></code></a></p>
+<p>Ebuild’s last line does not have a final newline.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.whitespace.NoFinalNewline.desc">
+<code class="sig-name descname">desc</code><em class="property"> = 'ebuild lacks an ending newline'</em><a class="headerlink" href="#pkgcheck.checks.whitespace.NoFinalNewline.desc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.whitespace.NoFinalNewline.name">
+<code class="sig-name descname">name</code><em class="property"> = 'NoFinalNewline'</em><a class="headerlink" href="#pkgcheck.checks.whitespace.NoFinalNewline.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.whitespace.TrailingEmptyLine">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.whitespace.</code><code class="sig-name descname">TrailingEmptyLine</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/whitespace.html#TrailingEmptyLine"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.whitespace.TrailingEmptyLine" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Style" title="pkgcheck.results.Style"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Style</span></code></a></p>
+<p>Unneeded trailing blank lines found.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.whitespace.TrailingEmptyLine.desc">
+<code class="sig-name descname">desc</code><em class="property"> = 'ebuild has trailing blank line(s)'</em><a class="headerlink" href="#pkgcheck.checks.whitespace.TrailingEmptyLine.desc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.whitespace.TrailingEmptyLine.name">
+<code class="sig-name descname">name</code><em class="property"> = 'TrailingEmptyLine'</em><a class="headerlink" href="#pkgcheck.checks.whitespace.TrailingEmptyLine.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.whitespace.WhitespaceCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.whitespace.</code><code class="sig-name descname">WhitespaceCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/whitespace.html#WhitespaceCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.whitespace.WhitespaceCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.Check" title="pkgcheck.checks.Check"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.Check</span></code></a></p>
+<p>Scan ebuild for useless whitespace.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.whitespace.WhitespaceCheck.feed">
+<code class="sig-name descname">feed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/whitespace.html#WhitespaceCheck.feed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.whitespace.WhitespaceCheck.feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle functionality against the passed in item.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.whitespace.WhitespaceCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.whitespace.DoubleEmptyLine'&gt;, &lt;class 'pkgcheck.checks.whitespace.BadWhitespaceCharacter'&gt;, &lt;class 'pkgcheck.checks.whitespace.WrongIndentFound'&gt;, &lt;class 'pkgcheck.checks.whitespace.NoFinalNewline'&gt;, &lt;class 'pkgcheck.checks.whitespace.WhitespaceFound'&gt;, &lt;class 'pkgcheck.checks.whitespace.TrailingEmptyLine'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.whitespace.WhitespaceCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.whitespace.WhitespaceCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='version' &#64;0x7f81a648f5b0&gt;</em><a class="headerlink" href="#pkgcheck.checks.whitespace.WhitespaceCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.whitespace.WhitespaceData">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.whitespace.</code><code class="sig-name descname">WhitespaceData</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">unicode_version</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">chars</span><span class="p">:</span> <span class="n">tuple</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/whitespace.html#WhitespaceData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.whitespace.WhitespaceData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tuple</span></code></p>
+<p>Data format to register hardcoded list of bad whitespace characters.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.whitespace.WhitespaceData.chars">
+<code class="sig-name descname">chars</code><em class="property">: tuple</em><a class="headerlink" href="#pkgcheck.checks.whitespace.WhitespaceData.chars" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.whitespace.WhitespaceData.unicode_version">
+<code class="sig-name descname">unicode_version</code><em class="property">: str</em><a class="headerlink" href="#pkgcheck.checks.whitespace.WhitespaceData.unicode_version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.whitespace.WhitespaceFound">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.whitespace.</code><code class="sig-name descname">WhitespaceFound</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">leadtrail</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/whitespace.html#WhitespaceFound"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.whitespace.WhitespaceFound" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.whitespace._Whitespace</span></code></p>
+<p>Leading or trailing whitespace found.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.whitespace.WhitespaceFound.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.whitespace.WhitespaceFound.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.whitespace.WhitespaceFound.name">
+<code class="sig-name descname">name</code><em class="property"> = 'WhitespaceFound'</em><a class="headerlink" href="#pkgcheck.checks.whitespace.WhitespaceFound.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.whitespace.WrongIndentFound">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.whitespace.</code><code class="sig-name descname">WrongIndentFound</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">lines</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/whitespace.html#WrongIndentFound"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.whitespace.WrongIndentFound" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.whitespace._Whitespace</span></code></p>
+<p>Incorrect indentation whitespace found.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.whitespace.WrongIndentFound.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.whitespace.WrongIndentFound.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.whitespace.WrongIndentFound.name">
+<code class="sig-name descname">name</code><em class="property"> = 'WrongIndentFound'</em><a class="headerlink" href="#pkgcheck.checks.whitespace.WrongIndentFound.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/pkgcheck.checks.whitespace.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.whitespace module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

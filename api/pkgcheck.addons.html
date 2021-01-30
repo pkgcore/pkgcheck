@@ -1,0 +1,232 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.addons module &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.addons module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcheck.addons">
+<span id="pkgcheck-addons-module"></span><h1>pkgcheck.addons module<a class="headerlink" href="#module-pkgcheck.addons" title="Permalink to this headline">¶</a></h1>
+<p>Addon functionality shared by multiple checkers.</p>
+<dl class="py class">
+<dt id="pkgcheck.addons.ArchesAddon">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.addons.</code><code class="sig-name descname">ArchesAddon</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/addons.html#ArchesAddon"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.addons.ArchesAddon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.base.html#pkgcheck.base.Addon" title="pkgcheck.base.Addon"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.base.Addon</span></code></a></p>
+<p>Addon supporting ebuild repository architectures.</p>
+<dl class="py method">
+<dt id="pkgcheck.addons.ArchesAddon.mangle_argparser">
+<em class="property">classmethod </em><code class="sig-name descname">mangle_argparser</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parser</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/addons.html#ArchesAddon.mangle_argparser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.addons.ArchesAddon.mangle_argparser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add extra options and/or groups to the argparser.</p>
+<p>This hook is always triggered, even if the checker is not
+activated (because it runs before the commandline is parsed).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>parser</strong> – an C{argparse.ArgumentParser} instance.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.addons.ArchesArgs">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.addons.</code><code class="sig-name descname">ArchesArgs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">option_strings</span></em>, <em class="sig-param"><span class="n">dest</span></em>, <em class="sig-param"><span class="n">nargs</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">const</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">default</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">type</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">choices</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">required</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">help</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">metavar</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/addons.html#ArchesArgs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.addons.ArchesArgs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">snakeoil.cli.arghparse.CommaSeparatedNegations</span></code></p>
+<p>Parse arches args for the ArchesAddon.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.addons.BashAddon">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.addons.</code><code class="sig-name descname">BashAddon</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/addons.html#BashAddon"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.addons.BashAddon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.base.html#pkgcheck.base.Addon" title="pkgcheck.base.Addon"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.base.Addon</span></code></a></p>
+<p>Addon supporting parsing bash code.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.addons.KeywordsAddon">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.addons.</code><code class="sig-name descname">KeywordsAddon</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/addons.html#KeywordsAddon"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.addons.KeywordsAddon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.base.html#pkgcheck.base.Addon" title="pkgcheck.base.Addon"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.base.Addon</span></code></a></p>
+<p>Addon supporting various keywords sets.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.addons.NetAddon">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.addons.</code><code class="sig-name descname">NetAddon</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/addons.html#NetAddon"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.addons.NetAddon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.base.html#pkgcheck.base.Addon" title="pkgcheck.base.Addon"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.base.Addon</span></code></a></p>
+<p>Addon supporting network functionality.</p>
+<dl class="py method">
+<dt id="pkgcheck.addons.NetAddon.mangle_argparser">
+<em class="property">classmethod </em><code class="sig-name descname">mangle_argparser</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parser</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/addons.html#NetAddon.mangle_argparser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.addons.NetAddon.mangle_argparser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add extra options and/or groups to the argparser.</p>
+<p>This hook is always triggered, even if the checker is not
+activated (because it runs before the commandline is parsed).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>parser</strong> – an C{argparse.ArgumentParser} instance.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.addons.NetAddon.session">
+<em class="property">property </em><code class="sig-name descname">session</code><a class="headerlink" href="#pkgcheck.addons.NetAddon.session" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.addons.StableArchesAddon">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.addons.</code><code class="sig-name descname">StableArchesAddon</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/addons.html#StableArchesAddon"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.addons.StableArchesAddon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.base.html#pkgcheck.base.Addon" title="pkgcheck.base.Addon"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.base.Addon</span></code></a></p>
+<p>Addon supporting stable architectures.</p>
+<dl class="py method">
+<dt id="pkgcheck.addons.StableArchesAddon.mangle_argparser">
+<em class="property">classmethod </em><code class="sig-name descname">mangle_argparser</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parser</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/addons.html#StableArchesAddon.mangle_argparser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.addons.StableArchesAddon.mangle_argparser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add extra options and/or groups to the argparser.</p>
+<p>This hook is always triggered, even if the checker is not
+activated (because it runs before the commandline is parsed).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>parser</strong> – an C{argparse.ArgumentParser} instance.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.addons.StableArchesAddon.required_addons">
+<code class="sig-name descname">required_addons</code><em class="property"> = (&lt;class 'pkgcheck.addons.ArchesAddon'&gt;,)</em><a class="headerlink" href="#pkgcheck.addons.StableArchesAddon.required_addons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.addons.UnstatedIuse">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.addons.</code><code class="sig-name descname">UnstatedIuse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">attr</span></em>, <em class="sig-param"><span class="n">flags</span></em>, <em class="sig-param"><span class="n">profile</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">num_profiles</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/addons.html#UnstatedIuse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.addons.UnstatedIuse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Error" title="pkgcheck.results.Error"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Error</span></code></a></p>
+<p>Package is reliant on conditionals that aren’t in IUSE.</p>
+<dl class="py method">
+<dt id="pkgcheck.addons.UnstatedIuse.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.addons.UnstatedIuse.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.addons.UnstatedIuse.name">
+<code class="sig-name descname">name</code><em class="property"> = 'UnstatedIuse'</em><a class="headerlink" href="#pkgcheck.addons.UnstatedIuse.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.addons.UseAddon">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.addons.</code><code class="sig-name descname">UseAddon</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/addons.html#UseAddon"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.addons.UseAddon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.base.html#pkgcheck.base.Addon" title="pkgcheck.base.Addon"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.base.Addon</span></code></a></p>
+<p>Addon supporting USE flag functionality.</p>
+<dl class="py method">
+<dt id="pkgcheck.addons.UseAddon.allowed_iuse">
+<code class="sig-name descname">allowed_iuse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/addons.html#UseAddon.allowed_iuse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.addons.UseAddon.allowed_iuse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.addons.UseAddon.fake_use_validate">
+<em class="property">static </em><code class="sig-name descname">fake_use_validate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">klasses</span></em>, <em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">seq</span></em>, <em class="sig-param"><span class="n">attr</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/addons.html#UseAddon.fake_use_validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.addons.UseAddon.fake_use_validate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.addons.UseAddon.get_filter">
+<code class="sig-name descname">get_filter</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">attr</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/addons.html#UseAddon.get_filter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.addons.UseAddon.get_filter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.addons.UseAddon.use_validate">
+<code class="sig-name descname">use_validate</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">klasses</span></em>, <em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">seq</span></em>, <em class="sig-param"><span class="n">attr</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/addons.html#UseAddon.use_validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.addons.UseAddon.use_validate" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcheck.addons.init_addon">
+<code class="sig-prename descclassname">pkgcheck.addons.</code><code class="sig-name descname">init_addon</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cls</span></em>, <em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="n">addons_map</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/addons.html#init_addon"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.addons.init_addon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize a given addon.</p>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/pkgcheck.addons.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.addons module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

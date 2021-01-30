@@ -1,0 +1,2027 @@
+Keywords
+========
+
+List of result keywords that can be produced by pkgcheck.
+
+Commit scope
+------------
+
+BadCommitSummary
+^^^^^^^^^^^^^^^^
+
+Local package commit with poorly formatted or unmatching commit summary.
+
+Git commit messages for packages should be formatted in the standardized
+fashion described in the devmanual [#]_. Specifically, a
+``${CATEGORY}/${PN}:`` or ``${CATEGORY}/${P}:`` prefix should be used in
+the summary relating to the modified package.
+
+.. [#] https://devmanual.gentoo.org/ebuild-maintenance/git/#git-commit-message-format
+- Gentoo repo specific
+
+- level: warning
+- related check: `GitCommitsCheck`_
+
+InvalidCommitMessage
+^^^^^^^^^^^^^^^^^^^^
+
+Local commit has issues with its commit message.
+- Gentoo repo specific
+
+- level: warning
+- related check: `GitCommitsCheck`_
+
+InvalidCommitTag
+^^^^^^^^^^^^^^^^
+
+Local commit has a tag that is incompliant.
+
+Commit tags have restrictions as to the allowed format and data
+used per GLEP 66 [#]_.
+
+.. [#] https://www.gentoo.org/glep/glep-0066.html#commit-messages
+- Gentoo repo specific
+
+- level: warning
+- related check: `GitCommitsCheck`_
+
+MissingSignOff
+^^^^^^^^^^^^^^
+
+Local commit with missing sign offs.
+
+Sign offs are required for commits as specified by GLEP 76 [#]_. Note that
+sign off tags will be flagged if the name or email address doesn't match
+the values used by the commit author.
+
+.. [#] https://www.gentoo.org/glep/glep-0076.html#certificate-of-origin
+- Gentoo repo specific
+
+- level: error
+- related check: `GitCommitsCheck`_
+
+Profiles scope
+--------------
+
+ArchesWithoutProfiles
+^^^^^^^^^^^^^^^^^^^^^
+
+Arches without corresponding profile listings.
+
+- level: warning
+- related check: `RepoProfilesCheck`_
+
+LaggingProfileEapi
+^^^^^^^^^^^^^^^^^^
+
+Profile has an EAPI that is older than one of its parents.
+
+- level: warning
+- related check: `RepoProfilesCheck`_
+
+NonexistentCategories
+^^^^^^^^^^^^^^^^^^^^^
+
+Category entries in profiles/categories that don't exist in the repo.
+
+- level: warning
+- related check: `RepoProfilesCheck`_
+
+NonexistentProfilePath
+^^^^^^^^^^^^^^^^^^^^^^
+
+Specified profile path in profiles.desc doesn't exist.
+
+- level: error
+- related check: `RepoProfilesCheck`_
+
+ProfileError
+^^^^^^^^^^^^
+
+Erroneously formatted data in various profile files.
+
+- level: error
+- related checks: `ProfilesCheck`_, `RepoProfilesCheck`_
+
+ProfileWarning
+^^^^^^^^^^^^^^
+
+Badly formatted data in various profile files.
+
+- level: warning
+- related checks: `ProfilesCheck`_, `RepoProfilesCheck`_
+
+UnknownCategoryDirs
+^^^^^^^^^^^^^^^^^^^
+
+Category directories that aren't listed in a repo's categories.
+
+Or the categories of the repo's masters as well.
+
+- level: warning
+- related check: `RepoProfilesCheck`_
+
+UnknownProfilePackage
+^^^^^^^^^^^^^^^^^^^^^
+
+Profile files includes package entry that doesn't exist in the repo.
+
+- level: warning
+- related check: `ProfilesCheck`_
+
+UnknownProfilePackageKeywords
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Profile files include package keywords that don't exist.
+
+- level: warning
+- related check: `ProfilesCheck`_
+
+UnknownProfilePackageUse
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Profile files include entries with USE flags that aren't used on any matching packages.
+
+- level: warning
+- related check: `ProfilesCheck`_
+
+UnknownProfileUse
+^^^^^^^^^^^^^^^^^
+
+Profile files include USE flags that don't exist.
+
+- level: warning
+- related check: `ProfilesCheck`_
+
+UnusedProfileDirs
+^^^^^^^^^^^^^^^^^
+
+Unused profile directories detected.
+
+- level: warning
+- related check: `RepoProfilesCheck`_
+
+BadPackageUpdate
+^^^^^^^^^^^^^^^^
+
+Badly formatted package update in profiles/updates files.
+
+- level: error
+- related check: `PackageUpdatesCheck`_
+
+MovedPackageUpdate
+^^^^^^^^^^^^^^^^^^
+
+Entry for package already moved in profiles/updates files.
+
+- level: warning
+- related check: `PackageUpdatesCheck`_
+
+MultiMovePackageUpdate
+^^^^^^^^^^^^^^^^^^^^^^
+
+Entry for package moved multiple times in profiles/updates files.
+
+- level: warning
+- related check: `PackageUpdatesCheck`_
+
+OldMultiMovePackageUpdate
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Old entry for removed package moved multiple times in profiles/updates files.
+
+This means that the reported pkg has been moved at least three times and
+finally removed from the tree. All the related lines should be removed from
+the update files.
+
+- level: warning
+- related check: `PackageUpdatesCheck`_
+
+OldPackageUpdate
+^^^^^^^^^^^^^^^^
+
+Old entry for removed package in profiles/updates files.
+
+- level: warning
+- related check: `PackageUpdatesCheck`_
+
+RedundantPackageUpdate
+^^^^^^^^^^^^^^^^^^^^^^
+
+Move entry to the same package/slot (source == target).
+
+- level: warning
+- related check: `PackageUpdatesCheck`_
+
+Eclass scope
+------------
+
+EclassBashSyntaxError
+^^^^^^^^^^^^^^^^^^^^^
+
+Bash syntax error in the related eclass.
+
+- level: error
+- related check: `EclassCheck`_
+
+EclassDocError
+^^^^^^^^^^^^^^
+
+Error when parsing docs for the related eclass.
+
+Eclass docs are parsed as specified by the devmanual [#]_.
+
+.. [#] https://devmanual.gentoo.org/eclass-writing/#documenting-eclasses
+
+- level: warning
+- related check: `EclassCheck`_
+
+EclassDocMissingFunc
+^^^^^^^^^^^^^^^^^^^^
+
+Undocumented function(s) in the related eclass.
+
+- level: warning
+- related check: `EclassCheck`_
+
+EclassDocMissingVar
+^^^^^^^^^^^^^^^^^^^
+
+Undocumented variable(s) in the related eclass.
+
+All exported variables in an eclass should be documented using eclass doc
+tags. Temporary variables should be unset after use so they aren't
+exported.
+
+- level: warning
+- related check: `EclassCheck`_
+
+EclassIncorrectCopyright
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Changed eclass with incorrect copyright date.
+- Gentoo repo specific
+
+- level: warning
+- related check: `GitEclassCommitsCheck`_
+
+EclassInvalidCopyright
+^^^^^^^^^^^^^^^^^^^^^^
+
+File with invalid copyright.
+
+The file does not start with a valid copyright line. Each ebuild or eclass
+file must start with a copyright line of the form:
+
+    # Copyright YEARS MAIN-CONTRIBUTOR [OTHER-CONTRIBUTOR]... [and others]
+
+Files in the Gentoo repository must use:
+
+    # Copyright YEARS Gentoo Authors
+- Gentoo repo specific
+
+- level: error
+- related check: `EclassHeaderCheck`_
+
+EclassInvalidLicenseHeader
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+File with invalid license header.
+
+The file does not have with a valid license header.
+
+Ebuilds and eclasses in the Gentoo repository must use:
+
+    # Distributed under the terms of the GNU General Public License v2
+- Gentoo repo specific
+
+- level: error
+- related check: `EclassHeaderCheck`_
+
+EclassNonGentooAuthorsCopyright
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+File with copyright stating owner other than "Gentoo Authors".
+
+The file specifies explicit copyright owner, while the Gentoo repository
+policy specifies that all ebuilds and eclasses must use "Gentoo Authors".
+If the owner is not listed in metadata/AUTHORS, addition can be requested
+via bugs.gentoo.org.
+- Gentoo repo specific
+
+- level: error
+- related check: `EclassHeaderCheck`_
+
+EclassOldGentooCopyright
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+File with old Gentoo Foundation copyright.
+
+The file still assigns copyright to the Gentoo Foundation even though
+it has been committed after the new copyright policy was approved
+(2018-10-21).
+
+Ebuilds and eclasses in Gentoo repository must use 'Gentoo Authors'
+instead. Files in other repositories may specify an explicit copyright
+holder instead.
+- Gentoo repo specific
+
+- level: warning
+- related check: `EclassHeaderCheck`_
+
+Repo scope
+----------
+
+ConflictingAccountIdentifiers
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Same UID/GID is used by multiple packages.
+
+- level: error
+- related check: `AcctCheck`_
+
+IncorrectCopyright
+^^^^^^^^^^^^^^^^^^
+
+Changed file with incorrect copyright date.
+- Gentoo repo specific
+
+- level: warning
+- related checks: 
+
+InvalidCopyright
+^^^^^^^^^^^^^^^^
+
+File with invalid copyright.
+
+The file does not start with a valid copyright line. Each ebuild or eclass
+file must start with a copyright line of the form:
+
+    # Copyright YEARS MAIN-CONTRIBUTOR [OTHER-CONTRIBUTOR]... [and others]
+
+Files in the Gentoo repository must use:
+
+    # Copyright YEARS Gentoo Authors
+- Gentoo repo specific
+
+- level: error
+- related checks: 
+
+InvalidLicenseHeader
+^^^^^^^^^^^^^^^^^^^^
+
+File with invalid license header.
+
+The file does not have with a valid license header.
+
+Ebuilds and eclasses in the Gentoo repository must use:
+
+    # Distributed under the terms of the GNU General Public License v2
+- Gentoo repo specific
+
+- level: error
+- related checks: 
+
+NonGentooAuthorsCopyright
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+File with copyright stating owner other than "Gentoo Authors".
+
+The file specifies explicit copyright owner, while the Gentoo repository
+policy specifies that all ebuilds and eclasses must use "Gentoo Authors".
+If the owner is not listed in metadata/AUTHORS, addition can be requested
+via bugs.gentoo.org.
+- Gentoo repo specific
+
+- level: error
+- related checks: 
+
+OldGentooCopyright
+^^^^^^^^^^^^^^^^^^
+
+File with old Gentoo Foundation copyright.
+
+The file still assigns copyright to the Gentoo Foundation even though
+it has been committed after the new copyright policy was approved
+(2018-10-21).
+
+Ebuilds and eclasses in Gentoo repository must use 'Gentoo Authors'
+instead. Files in other repositories may specify an explicit copyright
+holder instead.
+- Gentoo repo specific
+
+- level: warning
+- related checks: 
+
+BinaryFile
+^^^^^^^^^^
+
+Binary file found in the repository.
+- Gentoo repo specific
+
+- level: error
+- related check: `RepoDirCheck`_
+
+EmptyCategoryDir
+^^^^^^^^^^^^^^^^
+
+Empty category directory in the repository.
+- Gentoo repo specific
+
+- level: warning
+- related check: `EmptyDirsCheck`_
+
+EmptyPackageDir
+^^^^^^^^^^^^^^^
+
+Empty package directory in the repository.
+- Gentoo repo specific
+
+- level: warning
+- related check: `EmptyDirsCheck`_
+
+EmptyProject
+^^^^^^^^^^^^
+
+A project has no developers.
+
+- level: warning
+- related check: `ProjectMetadataCheck`_
+
+PotentialGlobalUse
+^^^^^^^^^^^^^^^^^^
+
+Local USE flag is a potential global USE flag.
+
+- level: info
+- related check: `GlobalUseCheck`_
+
+PotentialLocalUse
+^^^^^^^^^^^^^^^^^
+
+Global USE flag is a potential local USE flag.
+
+- level: info
+- related check: `GlobalUseCheck`_
+
+UnknownLicenses
+^^^^^^^^^^^^^^^
+
+License(s) listed in license group(s) that don't exist.
+
+- level: warning
+- related check: `LicenseGroupsCheck`_
+
+UnusedEclasses
+^^^^^^^^^^^^^^
+
+Unused eclasses detected.
+
+- level: warning
+- related check: `UnusedEclassesCheck`_
+
+UnusedGlobalUse
+^^^^^^^^^^^^^^^
+
+Unused use.desc flag(s).
+
+- level: warning
+- related check: `GlobalUseCheck`_
+
+UnusedGlobalUseExpand
+^^^^^^^^^^^^^^^^^^^^^
+
+Unused global USE_EXPAND flag(s).
+
+- level: warning
+- related check: `GlobalUseCheck`_
+
+UnusedLicenses
+^^^^^^^^^^^^^^
+
+Unused license(s) detected.
+
+- level: warning
+- related check: `UnusedLicensesCheck`_
+
+UnusedMirrors
+^^^^^^^^^^^^^
+
+Unused mirrors detected.
+
+- level: warning
+- related check: `UnusedMirrorsCheck`_
+
+Category scope
+--------------
+
+CatBadlyFormedXml
+^^^^^^^^^^^^^^^^^
+
+Badly formed category metadata.xml.
+
+- level: warning
+- related check: `CategoryMetadataXmlCheck`_
+
+CatInvalidXml
+^^^^^^^^^^^^^
+
+Invalid category metadata.xml.
+
+- level: error
+- related check: `CategoryMetadataXmlCheck`_
+
+CatMetadataXmlEmptyElement
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Empty element in category metadata.xml file.
+
+- level: warning
+- related check: `CategoryMetadataXmlCheck`_
+
+CatMetadataXmlIndentation
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Inconsistent indentation in category metadata.xml file.
+
+Either all tabs or all spaces should be used, not a mixture of both.
+
+- level: warning
+- related check: `CategoryMetadataXmlCheck`_
+
+CatMetadataXmlInvalidCatRef
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Invalid category reference in category metadata.xml.
+
+- level: error
+- related check: `CategoryMetadataXmlCheck`_
+
+CatMetadataXmlInvalidPkgRef
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Invalid package reference in category metadata.xml.
+
+- level: error
+- related check: `CategoryMetadataXmlCheck`_
+
+CatMissingMetadataXml
+^^^^^^^^^^^^^^^^^^^^^
+
+Category is missing metadata.xml.
+
+- level: error
+- related check: `CategoryMetadataXmlCheck`_
+
+Package scope
+-------------
+
+DirectNoMaintainer
+^^^^^^^^^^^^^^^^^^
+
+Directly added, new package with no specified maintainer.
+- Gentoo repo specific
+
+- level: error
+- related check: `GitPkgCommitsCheck`_
+
+DroppedStableKeywords
+^^^^^^^^^^^^^^^^^^^^^
+
+Stable keywords dropped from package.
+- Gentoo repo specific
+
+- level: error
+- related check: `GitPkgCommitsCheck`_
+
+DroppedUnstableKeywords
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Unstable keywords dropped from package.
+- Gentoo repo specific
+
+- level: warning
+- related check: `GitPkgCommitsCheck`_
+
+MissingMove
+^^^^^^^^^^^
+
+Package was renamed without adding a move package update.
+
+When moving/renaming a package, a new entry must be created in
+profiles/updates. See the devmanual [#]_ for more info.
+
+.. [#] https://devmanual.gentoo.org/ebuild-maintenance/package-moves/
+- Gentoo repo specific
+
+- level: error
+- related check: `GitPkgCommitsCheck`_
+
+MatchingGlobalUse
+^^^^^^^^^^^^^^^^^
+
+Local USE flag description matches a global USE flag.
+
+- level: warning
+- related check: `LocalUseCheck`_
+
+ProbableGlobalUse
+^^^^^^^^^^^^^^^^^
+
+Local USE flag description closely matches a global USE flag.
+
+- level: style
+- related check: `LocalUseCheck`_
+
+ProbableUseExpand
+^^^^^^^^^^^^^^^^^
+
+Local USE flag that isn't overridden matches a USE_EXPAND group.
+
+The local USE flag starts with a prefix reserved to USE_EXPAND group,
+yet it is not a globally defined member of this group. According
+to the standing policy [#]_, all possible values for each USE_EXPAND
+must be defined and documented globally.
+
+This warning can be fixed via moving the local flag description
+into appropriate profiles/desc file.
+
+.. [#] https://devmanual.gentoo.org/general-concepts/use-flags/
+
+- level: warning
+- related check: `LocalUseCheck`_
+
+UnderscoreInUseFlag
+^^^^^^^^^^^^^^^^^^^
+
+USE flag uses underscore that is reserved for USE_EXPAND.
+
+The USE flag name uses underscore. However, according to PMS
+underscores are reserved for USE_EXPAND flags [#]_. The recommended
+replacement is hyphen ('-').
+
+.. [#] https://projects.gentoo.org/pms/7/pms.html#x1-200003.1.4
+
+- level: style
+- related check: `LocalUseCheck`_
+
+UnusedLocalUse
+^^^^^^^^^^^^^^
+
+Unused local USE flag(s).
+
+- level: warning
+- related check: `LocalUseCheck`_
+
+MaintainerNeeded
+^^^^^^^^^^^^^^^^
+
+Package with missing or invalid maintainer-needed comment in metadata.xml.
+
+- level: warning
+- related check: `PackageMetadataXmlCheck`_
+
+MaintainerWithoutProxy
+^^^^^^^^^^^^^^^^^^^^^^
+
+Package has a proxied maintainer without a proxy.
+
+All package maintainers have non-@gentoo.org e-mail addresses. Most likely,
+this means that the package is maintained by a proxied maintainer but there
+is no explicit proxy (developer or project) listed. This means no Gentoo
+developer will be CC-ed on bug reports, and most likely no developer
+oversees the proxied maintainer's activity.
+
+- level: warning
+- related check: `PackageMetadataXmlCheck`_
+
+NonexistentProjectMaintainer
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Package specifying nonexistent project as a maintainer.
+
+- level: warning
+- related check: `PackageMetadataXmlCheck`_
+
+PkgBadlyFormedXml
+^^^^^^^^^^^^^^^^^
+
+Badly formed package metadata.xml.
+
+- level: warning
+- related check: `PackageMetadataXmlCheck`_
+
+PkgInvalidXml
+^^^^^^^^^^^^^
+
+Invalid package metadata.xml.
+
+- level: error
+- related check: `PackageMetadataXmlCheck`_
+
+PkgMetadataXmlEmptyElement
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Empty element in package metadata.xml file.
+
+- level: warning
+- related check: `PackageMetadataXmlCheck`_
+
+PkgMetadataXmlIndentation
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Inconsistent indentation in package metadata.xml file.
+
+Either all tabs or all spaces should be used, not a mixture of both.
+
+- level: warning
+- related check: `PackageMetadataXmlCheck`_
+
+PkgMetadataXmlInvalidCatRef
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Invalid category reference in package metadata.xml.
+
+- level: error
+- related check: `PackageMetadataXmlCheck`_
+
+PkgMetadataXmlInvalidPkgRef
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Invalid package reference in package metadata.xml.
+
+- level: error
+- related check: `PackageMetadataXmlCheck`_
+
+PkgMissingMetadataXml
+^^^^^^^^^^^^^^^^^^^^^
+
+Package is missing metadata.xml.
+
+- level: error
+- related check: `PackageMetadataXmlCheck`_
+
+RedundantLongDescription
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Package's longdescription element in metadata.xml and DESCRIPTION are interchangeable.
+
+The longdescription element is for providing extended information that
+doesn't fit in DESCRIPTION.
+
+- level: warning
+- related check: `PackageMetadataXmlCheck`_
+
+StaleProxyMaintProject
+^^^^^^^^^^^^^^^^^^^^^^
+
+Package lists proxy-maint project but has no proxied maintainers.
+
+The package explicitly lists proxy-maint@g.o as the only maintainer.
+Most likely, this means that the proxied maintainer has been removed
+but proxy-maint was left over.
+
+- level: warning
+- related check: `PackageMetadataXmlCheck`_
+
+WrongMaintainerType
+^^^^^^^^^^^^^^^^^^^
+
+A person-type maintainer matches an existing project.
+
+- level: warning
+- related check: `PackageMetadataXmlCheck`_
+
+BannedCharacter
+^^^^^^^^^^^^^^^
+
+File or directory name doesn't abide by GLEP 31 requirements.
+
+See the official GLEP 31 documentation [#]_ for details.
+
+.. [#] https://www.gentoo.org/glep/glep-0031.html
+
+- level: error
+- related check: `PkgDirCheck`_
+
+DuplicateFiles
+^^^^^^^^^^^^^^
+
+Two or more identical files in FILESDIR.
+
+- level: warning
+- related check: `PkgDirCheck`_
+
+EmptyFile
+^^^^^^^^^
+
+File in FILESDIR is empty.
+
+- level: warning
+- related check: `PkgDirCheck`_
+
+EqualVersions
+^^^^^^^^^^^^^
+
+Ebuilds that have equal versions.
+
+For example, cat/pn-1.0.2, cat/pn-1.0.2-r0, cat/pn-1.0.2-r00 and
+cat/pn-1.000.2 all have equal versions according to PMS and therefore
+shouldn't exist in the same repository.
+
+- level: error
+- related check: `EqualVersionsCheck`_
+
+ExecutableFile
+^^^^^^^^^^^^^^
+
+File has executable bit, but doesn't need it.
+
+- level: warning
+- related check: `PkgDirCheck`_
+
+InvalidPN
+^^^^^^^^^
+
+Ebuilds that have invalid package names.
+
+- level: error
+- related check: `PkgDirCheck`_
+
+InvalidUTF8
+^^^^^^^^^^^
+
+File isn't UTF-8 compliant.
+
+- level: error
+- related check: `PkgDirCheck`_
+
+LiveOnlyPackage
+^^^^^^^^^^^^^^^
+
+Package has only had VCS-based ebuilds.
+- Gentoo repo specific
+
+- level: warning
+- related check: `LiveOnlyCheck`_
+
+MismatchedPN
+^^^^^^^^^^^^
+
+Ebuilds that have different names than their parent directory.
+
+- level: error
+- related check: `PkgDirCheck`_
+
+SizeViolation
+^^^^^^^^^^^^^
+
+File in $FILESDIR is too large (current limit is 20KiB).
+
+- level: warning
+- related check: `PkgDirCheck`_
+
+UnknownPkgDirEntry
+^^^^^^^^^^^^^^^^^^
+
+Unknown files or directories in package directory.
+
+Relevant for the gentoo repo only since the spec states that a package
+directory may contain other files or directories.
+
+- level: warning
+- related check: `PkgDirCheck`_
+
+InvalidManifest
+^^^^^^^^^^^^^^^
+
+Package's Manifest file is invalid.
+
+- level: error
+- related check: `ManifestCheck`_
+
+UnknownManifest
+^^^^^^^^^^^^^^^
+
+Manifest entries not matching any SRC_URI targets.
+
+- level: warning
+- related check: `ManifestCheck`_
+
+UnnecessaryManifest
+^^^^^^^^^^^^^^^^^^^
+
+Manifest entries for non-DIST targets on a repo with thin manifests enabled.
+
+- level: warning
+- related check: `ManifestCheck`_
+
+UnstableOnly
+^^^^^^^^^^^^
+
+Package/keywords that are strictly unstable.
+- Gentoo repo specific
+
+- level: info
+- related check: `UnstableOnlyCheck`_
+
+Version scope
+-------------
+
+MissingAccountIdentifier
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+UID/GID can not be found in account package.
+
+- level: warning
+- related check: `AcctCheck`_
+
+OutsideRangeAccountIdentifier
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+UID/GID outside allowed allocation range.
+
+- level: error
+- related check: `AcctCheck`_
+
+RedundantVersion
+^^^^^^^^^^^^^^^^
+
+Redundant version(s) of a package in a specific slot.
+
+- level: info
+- related check: `RedundantVersionCheck`_
+
+AbsoluteSymlink
+^^^^^^^^^^^^^^^
+
+Ebuild uses dosym with absolute paths instead of relative.
+
+- level: warning
+- related check: `AbsoluteSymlinkCheck`_
+
+BannedEapiCommand
+^^^^^^^^^^^^^^^^^
+
+Ebuild uses a banned EAPI command.
+
+- level: error
+- related check: `BadCommandsCheck`_
+
+DeprecatedEapiCommand
+^^^^^^^^^^^^^^^^^^^^^
+
+Ebuild uses a deprecated EAPI command.
+
+- level: warning
+- related check: `BadCommandsCheck`_
+
+DeprecatedInsinto
+^^^^^^^^^^^^^^^^^
+
+Ebuild uses insinto where more compact commands exist.
+
+- level: warning
+- related check: `InsintoCheck`_
+
+DoublePrefixInPath
+^^^^^^^^^^^^^^^^^^
+
+Ebuild uses two consecutive paths including EPREFIX.
+
+Ebuild combines two path variables (or a variable and a getter), both
+of which include EPREFIX, resulting in double prefixing. This is the case
+when combining many pkg-config-based or alike getters with ED or EROOT.
+
+For example, ``${ED}$(python_get_sitedir)`` should be replaced
+with ``${D}$(python_get_sitedir)``.
+
+- level: error
+- related check: `PathVariablesCheck`_
+
+HomepageInSrcUri
+^^^^^^^^^^^^^^^^
+
+${HOMEPAGE} is referenced in SRC_URI.
+
+SRC_URI is built on top of ${HOMEPAGE}. This is discouraged since HOMEPAGE
+is multi-valued by design, and is subject to potential changes that should
+not accidentally affect SRC_URI.
+
+- level: style
+- related check: `RawEbuildCheck`_
+
+IndirectInherits
+^^^^^^^^^^^^^^^^
+
+Ebuild uses function from indirectly inherited eclass.
+
+That doesn't allow indirect inherit usage via the @INDIRECT_INHERITS eclass
+doc tag in a parent eclass.
+
+- level: warning
+- related check: `InheritsCheck`_
+
+InternalEclassUsage
+^^^^^^^^^^^^^^^^^^^
+
+Ebuild uses internal functions or variables from eclass.
+
+- level: warning
+- related check: `InheritsCheck`_
+
+MissingInherits
+^^^^^^^^^^^^^^^
+
+Ebuild uses function from eclass that isn't inherited.
+
+- level: warning
+- related check: `InheritsCheck`_
+
+MissingSlash
+^^^^^^^^^^^^
+
+Ebuild uses a path variable missing a trailing slash.
+
+- level: error
+- related check: `PathVariablesCheck`_
+
+ObsoleteUri
+^^^^^^^^^^^
+
+URI used is obsolete.
+
+The URI used to fetch distfile is obsolete and can be replaced
+by something more modern. Note that the modern replacement usually
+results in different file contents, so you need to rename it (to
+avoid mirror collisions with the old file) and update the ebuild
+(for example, by removing no longer necessary vcs-snapshot.eclass).
+
+- level: style
+- related check: `ObsoleteUriCheck`_
+
+RedundantDodir
+^^^^^^^^^^^^^^
+
+Ebuild using a redundant dodir call.
+
+- level: style
+- related check: `RedundantDodirCheck`_
+
+StaticSrcUri
+^^^^^^^^^^^^
+
+SRC_URI contains static value instead of the dynamic equivalent.
+
+For example, using static text to relate to the package version in SRC_URI
+instead of ${P} or ${PV} where relevant.
+
+- level: style
+- related check: `RawEbuildCheck`_
+
+UnnecessarySlashStrip
+^^^^^^^^^^^^^^^^^^^^^
+
+Ebuild uses a path variable that strips a nonexistent slash.
+
+- level: style
+- related check: `PathVariablesCheck`_
+
+UnusedInherits
+^^^^^^^^^^^^^^
+
+Ebuild inherits eclasses that are unused.
+
+- level: warning
+- related check: `InheritsCheck`_
+
+VariableInHomepage
+^^^^^^^^^^^^^^^^^^
+
+HOMEPAGE includes a variable.
+
+The HOMEPAGE ebuild variable entry in the devmanual [#]_ states only raw
+text should be used.
+
+.. [#] https://devmanual.gentoo.org/ebuild-writing/variables/#ebuild-defined-variables
+
+- level: style
+- related check: `RawEbuildCheck`_
+
+DroppedKeywords
+^^^^^^^^^^^^^^^
+
+Arch keywords dropped during version bumping.
+
+- level: warning
+- related check: `DroppedKeywordsCheck`_
+
+DeprecatedEclass
+^^^^^^^^^^^^^^^^
+
+Package uses an eclass that is deprecated/abandoned.
+
+- level: warning
+- related check: `EclassUsageCheck`_
+
+DuplicateEclassInherit
+^^^^^^^^^^^^^^^^^^^^^^
+
+An ebuild directly inherits the same eclass multiple times.
+
+Note that this will flag ebuilds that conditionalize global metadata by
+package version (or some other fashion) while inheriting the same eclass
+under both branches, e.g. conditional live ebuilds. In this case, shared
+eclasses should be loaded in a separate, unconditional inherit call.
+
+- level: style
+- related check: `EclassUsageCheck`_
+
+MisplacedEclassVar
+^^^^^^^^^^^^^^^^^^
+
+Invalid placement of pre-inherit eclass variable in an ebuild.
+
+All eclass variables tagged with @PRE_INHERIT must be set
+before the first inherit call in an ebuild.
+
+- level: error
+- related check: `EclassUsageCheck`_
+
+DirectStableKeywords
+^^^^^^^^^^^^^^^^^^^^
+
+Newly committed ebuild with stable keywords.
+- Gentoo repo specific
+
+- level: error
+- related check: `GitPkgCommitsCheck`_
+
+EbuildIncorrectCopyright
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Changed ebuild with incorrect copyright date.
+- Gentoo repo specific
+
+- level: warning
+- related check: `GitPkgCommitsCheck`_
+
+MissingSlotmove
+^^^^^^^^^^^^^^^
+
+Package SLOT was changed without adding a slotmove package update.
+
+When changing an existing ebuild's SLOT, a new entry must be
+created in profiles/updates. See the devmanual [#]_ for more info.
+
+.. [#] https://devmanual.gentoo.org/ebuild-maintenance/package-moves/
+- Gentoo repo specific
+
+- level: error
+- related check: `GitPkgCommitsCheck`_
+
+RdependChange
+^^^^^^^^^^^^^
+
+Package RDEPEND was modified without adding a new ebuild revision.
+- Gentoo repo specific
+
+- level: warning
+- related check: `GitPkgCommitsCheck`_
+
+VulnerablePackage
+^^^^^^^^^^^^^^^^^
+
+Packages marked as vulnerable by GLSAs.
+- Gentoo repo specific
+
+- level: error
+- related check: `GlsaCheck`_
+
+EbuildInvalidCopyright
+^^^^^^^^^^^^^^^^^^^^^^
+
+File with invalid copyright.
+
+The file does not start with a valid copyright line. Each ebuild or eclass
+file must start with a copyright line of the form:
+
+    # Copyright YEARS MAIN-CONTRIBUTOR [OTHER-CONTRIBUTOR]... [and others]
+
+Files in the Gentoo repository must use:
+
+    # Copyright YEARS Gentoo Authors
+- Gentoo repo specific
+
+- level: error
+- related check: `EbuildHeaderCheck`_
+
+EbuildInvalidLicenseHeader
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+File with invalid license header.
+
+The file does not have with a valid license header.
+
+Ebuilds and eclasses in the Gentoo repository must use:
+
+    # Distributed under the terms of the GNU General Public License v2
+- Gentoo repo specific
+
+- level: error
+- related check: `EbuildHeaderCheck`_
+
+EbuildNonGentooAuthorsCopyright
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+File with copyright stating owner other than "Gentoo Authors".
+
+The file specifies explicit copyright owner, while the Gentoo repository
+policy specifies that all ebuilds and eclasses must use "Gentoo Authors".
+If the owner is not listed in metadata/AUTHORS, addition can be requested
+via bugs.gentoo.org.
+- Gentoo repo specific
+
+- level: error
+- related check: `EbuildHeaderCheck`_
+
+EbuildOldGentooCopyright
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+File with old Gentoo Foundation copyright.
+
+The file still assigns copyright to the Gentoo Foundation even though
+it has been committed after the new copyright policy was approved
+(2018-10-21).
+
+Ebuilds and eclasses in Gentoo repository must use 'Gentoo Authors'
+instead. Files in other repositories may specify an explicit copyright
+holder instead.
+- Gentoo repo specific
+
+- level: warning
+- related check: `EbuildHeaderCheck`_
+
+LaggingStable
+^^^^^^^^^^^^^
+
+Stable arches for stabilized package that are lagging from a stabling standpoint.
+
+- level: info
+- related check: `ImlateCheck`_
+
+PotentialStable
+^^^^^^^^^^^^^^^
+
+Stable arches with potential stable package candidates.
+
+- level: info
+- related check: `ImlateCheck`_
+
+BadDependency
+^^^^^^^^^^^^^
+
+Package dependency is bad for some reason.
+
+- level: error
+- related check: `DependencyCheck`_
+
+BadDescription
+^^^^^^^^^^^^^^
+
+Package's description is bad for some reason.
+
+- level: warning
+- related check: `DescriptionCheck`_
+
+BadFilename
+^^^^^^^^^^^
+
+URI uses unspecific or poor filename(s).
+
+Archive filenames should be disambiguated using ``->`` to rename them.
+
+- level: warning
+- related check: `SrcUriCheck`_
+
+BadHomepage
+^^^^^^^^^^^
+
+A package's HOMEPAGE is bad for some reason.
+
+See the HOMEPAGE ebuild variable entry in the devmanual [#]_ for more
+information.
+
+.. [#] https://devmanual.gentoo.org/ebuild-writing/variables/#ebuild-defined-variables
+
+- level: warning
+- related check: `HomepageCheck`_
+
+BadKeywords
+^^^^^^^^^^^
+
+Packages using ``-*`` should use package.mask instead.
+
+- level: warning
+- related check: `KeywordsCheck`_
+
+BadProtocol
+^^^^^^^^^^^
+
+URI uses an unsupported protocol.
+
+Valid protocols are currently: http, https, and ftp
+
+- level: error
+- related check: `SrcUriCheck`_
+
+BannedEapi
+^^^^^^^^^^
+
+Package's EAPI is banned according to repo metadata.
+
+- level: error
+- related check: `EapiCheck`_
+
+DeprecatedDep
+^^^^^^^^^^^^^
+
+Package dependencies matching deprecated packages flagged in profiles/package.deprecated.
+
+- level: warning
+- related check: `DependencyCheck`_
+
+DeprecatedEapi
+^^^^^^^^^^^^^^
+
+Package's EAPI is deprecated according to repo metadata.
+
+- level: warning
+- related check: `EapiCheck`_
+
+DuplicateKeywords
+^^^^^^^^^^^^^^^^^
+
+Packages having duplicate KEYWORDS.
+
+- level: style
+- related check: `KeywordsCheck`_
+
+InvalidBdepend
+^^^^^^^^^^^^^^
+
+Package has invalid BDEPEND.
+
+- level: error
+- related check: `DependencyCheck`_
+
+InvalidDepend
+^^^^^^^^^^^^^
+
+Package has invalid DEPEND.
+
+- level: error
+- related check: `DependencyCheck`_
+
+InvalidEapi
+^^^^^^^^^^^
+
+Package's EAPI is invalid.
+
+- level: error
+- related check: `SourcingCheck`_
+
+InvalidLicense
+^^^^^^^^^^^^^^
+
+Package's LICENSE is invalid.
+
+- level: error
+- related check: `LicenseCheck`_
+
+InvalidPdepend
+^^^^^^^^^^^^^^
+
+Package has invalid PDEPEND.
+
+- level: error
+- related check: `DependencyCheck`_
+
+InvalidProperties
+^^^^^^^^^^^^^^^^^
+
+Package's PROPERTIES is invalid.
+
+- level: error
+- related check: `PropertiesCheck`_
+
+InvalidRdepend
+^^^^^^^^^^^^^^
+
+Package has invalid RDEPEND.
+
+- level: error
+- related check: `DependencyCheck`_
+
+InvalidRequiredUse
+^^^^^^^^^^^^^^^^^^
+
+Package's REQUIRED_USE is invalid.
+
+- level: error
+- related check: `RequiredUseCheck`_
+
+InvalidRestrict
+^^^^^^^^^^^^^^^
+
+Package's RESTRICT is invalid.
+
+- level: error
+- related check: `RestrictCheck`_
+
+InvalidSlot
+^^^^^^^^^^^
+
+Package's SLOT is invalid.
+
+- level: error
+- related check: `SourcingCheck`_
+
+InvalidSrcUri
+^^^^^^^^^^^^^
+
+Package's SRC_URI is invalid.
+
+- level: error
+- related check: `SrcUriCheck`_
+
+InvalidUseFlags
+^^^^^^^^^^^^^^^
+
+Package IUSE contains invalid USE flags.
+
+- level: error
+- related check: `IuseCheck`_
+
+MissingLicense
+^^^^^^^^^^^^^^
+
+Package has no LICENSE defined.
+
+- level: error
+- related check: `LicenseCheck`_
+
+MissingLicenseFile
+^^^^^^^^^^^^^^^^^^
+
+Used license(s) have no matching license file(s).
+
+- level: error
+- related check: `LicenseCheck`_
+
+MissingLicenseRestricts
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Restrictive license used without matching RESTRICT.
+
+- level: warning
+- related check: `LicenseCheck`_
+
+MissingPackageRevision
+^^^^^^^^^^^^^^^^^^^^^^
+
+Missing package revision in =cat/pkg dependencies.
+
+The dependency string uses the ``=`` operator without specifying a revision.
+This means that only ``-r0`` of the dependency will be matched, and newer
+revisions of the same ebuild will not be accepted.
+
+If any revision of the package is acceptable, the ``~`` operator should be
+used instead of ``=``. If only the initial revision of the dependency is
+allowed, ``-r0`` should be appended in order to make the intent explicit.
+
+- level: warning
+- related check: `DependencyCheck`_
+
+MissingSlotDep
+^^^^^^^^^^^^^^
+
+Missing slot value in dependencies.
+
+The package dependency does not specify a slot but the target package
+has multiple slots. The behavior for satisfying this kind of dependency
+is not strictly defined, and may result in either any or the newest package
+slot being accepted.
+
+Please verify whether the package works with all the dependency slots.
+If only one slot is actually acceptable, specify it explicitly. If multiple
+slots are acceptable, please use either ``:=`` or explicit ``:*`` slot operator.
+The operators are described in detail in the devmanual [#]_.
+
+.. [#] https://devmanual.gentoo.org/general-concepts/dependencies/#slot-dependencies
+
+- level: warning
+- related check: `MissingSlotDepCheck`_
+
+MissingTestRestrict
+^^^^^^^^^^^^^^^^^^^
+
+Missing ``RESTRICT="!test? ( test )"``.
+
+Traditionally, it was assumed that ``IUSE=test`` is a special flag that is
+implicitly enabled when running ``src_test()`` is enabled. However, this is
+not standarized and packages need to explicitly specify
+``RESTRICT="!test? ( test )"`` in order to guarantee that test phase will
+be skipped when the flag is disabled and therefore test dependencies may
+not be installed.
+
+- level: warning
+- related check: `RestrictTestCheck`_
+
+MissingUnpackerDep
+^^^^^^^^^^^^^^^^^^
+
+Missing dependency on a required unpacker package.
+
+Package uses an archive format for which an unpacker is not provided by the
+system set, and lacks an explicit dependency on the unpacker package.
+
+- level: warning
+- related check: `MissingUnpackerDepCheck`_
+
+MissingUri
+^^^^^^^^^^
+
+RESTRICT=fetch isn't set, yet no full URI exists.
+
+- level: warning
+- related check: `SrcUriCheck`_
+
+MissingUseDepDefault
+^^^^^^^^^^^^^^^^^^^^
+
+Package dependencies with USE dependencies missing defaults.
+
+- level: warning
+- related check: `DependencyCheck`_
+
+NonexistentBlocker
+^^^^^^^^^^^^^^^^^^
+
+No matches for blocker dependency in repo history.
+
+For the gentoo repo this means it was either removed before the CVS -> git
+transition (which occurred around 2015-08-08) or it never existed at all.
+
+Note that this ignores slot/subslot deps and USE deps in blocker atoms.
+
+- level: warning
+- related check: `OutdatedBlockersCheck`_
+
+OutdatedBlocker
+^^^^^^^^^^^^^^^
+
+Blocker dependency removed at least two years ago from the tree.
+
+Note that this ignores slot/subslot deps and USE deps in blocker atoms.
+
+- level: info
+- related check: `OutdatedBlockersCheck`_
+
+OverlappingKeywords
+^^^^^^^^^^^^^^^^^^^
+
+Packages having overlapping arch and ~arch KEYWORDS.
+
+- level: style
+- related check: `KeywordsCheck`_
+
+RedundantUriRename
+^^^^^^^^^^^^^^^^^^
+
+URI uses a redundant rename that doesn't change the filename.
+
+- level: style
+- related check: `SrcUriCheck`_
+
+RequiredUseDefaults
+^^^^^^^^^^^^^^^^^^^
+
+Default USE flag settings don't satisfy REQUIRED_USE.
+
+The REQUIRED_USE constraints specified in the ebuild are not satisfied
+by the default USE flags used in one or more profiles. This means that
+users on those profiles may be unable to install the package out of the box,
+without having to modify package.use.
+
+This warning is usually fixed via using IUSE defaults to enable one
+of the needed flags, modifying package.use in the most relevant profiles
+or modifying REQUIRED_USE.
+
+- level: warning
+- related check: `RequiredUseCheck`_
+
+SourcingError
+^^^^^^^^^^^^^
+
+Failed sourcing ebuild.
+
+- level: error
+- related check: `SourcingCheck`_
+
+TarballAvailable
+^^^^^^^^^^^^^^^^
+
+URI uses .zip archive when .tar* is available.
+
+Tarballs should be preferred over zip archives due to better compression
+and no extra unpack dependencies.
+
+- level: style
+- related check: `SrcUriCheck`_
+
+UnknownKeywords
+^^^^^^^^^^^^^^^
+
+Packages using unknown KEYWORDS.
+
+- level: error
+- related check: `KeywordsCheck`_
+
+UnknownMirror
+^^^^^^^^^^^^^
+
+URI uses an unknown mirror.
+
+- level: error
+- related check: `SrcUriCheck`_
+
+UnknownProperties
+^^^^^^^^^^^^^^^^^
+
+Package's PROPERTIES metadata has unknown entries.
+
+- level: warning
+- related check: `PropertiesCheck`_
+
+UnknownRestrict
+^^^^^^^^^^^^^^^
+
+Package's RESTRICT metadata has unknown entries.
+
+- level: warning
+- related check: `RestrictCheck`_
+
+UnknownUseFlags
+^^^^^^^^^^^^^^^
+
+Package IUSE contains unknown USE flags.
+
+- level: error
+- related check: `IuseCheck`_
+
+UnnecessaryLicense
+^^^^^^^^^^^^^^^^^^
+
+LICENSE defined for package that is license-less.
+
+- level: warning
+- related check: `LicenseCheck`_
+
+UnsortedKeywords
+^^^^^^^^^^^^^^^^
+
+Packages with unsorted KEYWORDS.
+
+KEYWORDS should be sorted in alphabetical order with prefix keywords (those
+with hyphens in them, e.g. amd64-fbsd) after regular arches and globs (e.g. ``-*``)
+before them.
+
+- level: style
+- related check: `KeywordsCheck`_
+
+UnstatedIuse
+^^^^^^^^^^^^
+
+Package is reliant on conditionals that aren't in IUSE.
+
+- level: error
+- related checks: `DependencyCheck`_, `LicenseCheck`_, `LocalUseCheck`_, `PropertiesCheck`_, `RequiredUseCheck`_, `RestrictCheck`_, `SrcUriCheck`_
+
+UnsupportedEclassEapi
+^^^^^^^^^^^^^^^^^^^^^
+
+Ebuild inherits an eclass with outdated @SUPPORTED_EAPIS.
+
+- level: warning
+- related check: `EapiCheck`_
+
+VirtualKeywordsUpdate
+^^^^^^^^^^^^^^^^^^^^^
+
+Virtual packages with keywords that can be updated to match dependencies.
+
+- level: info
+- related check: `KeywordsCheck`_
+
+DeadUrl
+^^^^^^^
+
+Package with a dead URL of some type.
+
+- level: warning
+- related checks: `FetchablesUrlCheck`_, `HomepageUrlCheck`_, `MetadataUrlCheck`_
+
+HttpsUrlAvailable
+^^^^^^^^^^^^^^^^^
+
+URL uses http:// when https:// is available.
+
+- level: warning
+- related checks: `FetchablesUrlCheck`_, `HomepageUrlCheck`_, `MetadataUrlCheck`_
+
+RedirectedUrl
+^^^^^^^^^^^^^
+
+Package with a URL that permanently redirects to a different site.
+
+- level: warning
+- related checks: `FetchablesUrlCheck`_, `HomepageUrlCheck`_, `MetadataUrlCheck`_
+
+SSLCertificateError
+^^^^^^^^^^^^^^^^^^^
+
+Package with https:// HOMEPAGE with an invalid SSL cert.
+
+- level: warning
+- related checks: `FetchablesUrlCheck`_, `HomepageUrlCheck`_, `MetadataUrlCheck`_
+
+UnusedInMastersEclasses
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Eclasses detected that are unused in the master repo(s).
+
+In other words, they're likely to be removed so should be copied to the overlay.
+
+- level: warning
+- related check: `UnusedInMastersCheck`_
+
+UnusedInMastersGlobalUse
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Global USE flags detected that are unused in the master repo(s).
+
+In other words, they're likely to be removed so should be copied to the overlay.
+
+- level: warning
+- related check: `UnusedInMastersCheck`_
+
+UnusedInMastersLicenses
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Licenses detected that are unused in the master repo(s).
+
+In other words, they're likely to be removed so should be copied to the overlay.
+
+- level: warning
+- related check: `UnusedInMastersCheck`_
+
+UnusedInMastersMirrors
+^^^^^^^^^^^^^^^^^^^^^^
+
+Mirrors detected that are unused in the master repo(s).
+
+In other words, they're likely to be removed so should be copied to the overlay.
+
+- level: warning
+- related check: `UnusedInMastersCheck`_
+
+MismatchedPerlVersion
+^^^^^^^^^^^^^^^^^^^^^
+
+A package's normalized perl module version doesn't match its $PV.
+
+- level: warning
+- related check: `PerlCheck`_
+
+MissingPythonEclass
+^^^^^^^^^^^^^^^^^^^
+
+Package depends on Python but does not use the eclasses.
+
+All packages depending on Python are required to use one of the following
+python eclasses: python-r1, python-single-r1, or python-any-r1. For
+documentation on choosing the correct eclass, please see the Python project
+wiki page on eclasses [#]_.
+
+.. [#] https://wiki.gentoo.org/wiki/Project:Python/Eclasses
+
+- level: warning
+- related check: `PythonCheck`_
+
+PythonCompatUpdate
+^^^^^^^^^^^^^^^^^^
+
+PYTHON_COMPAT can be updated to support newer python version(s).
+
+- level: info
+- related check: `PythonCompatCheck`_
+
+PythonEclassError
+^^^^^^^^^^^^^^^^^
+
+Generic python eclass error.
+
+- level: error
+- related check: `PythonCheck`_
+
+PythonMissingDeps
+^^^^^^^^^^^^^^^^^
+
+Package is missing PYTHON_DEPS.
+
+The python-r1 and python-single-r1 eclasses require the packages
+to explicitly reference `${PYTHON_DEPS}` in RDEPEND (and DEPEND,
+if necessary); python-any-r1 requires it in DEPEND.
+
+If Python is used conditionally, the dependency can be wrapped
+in appropriate USE conditionals.
+
+- level: warning
+- related check: `PythonCheck`_
+
+PythonMissingRequiredUse
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Package is missing PYTHON_REQUIRED_USE.
+
+The python-r1 and python-single-r1 eclasses require the packages to
+explicitly specify `REQUIRED_USE=${PYTHON_REQUIRED_USE}`. If Python is used
+conditionally, it can be wrapped in appropriate USE conditionals.
+
+- level: warning
+- related check: `PythonCheck`_
+
+PythonRuntimeDepInAnyR1
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Package depends on Python at runtime but uses any-r1 eclass.
+
+The python-any-r1 eclass is meant to be used purely for build-time
+dependencies on Python. However, this package lists Python as a runtime
+dependency. If this is intentional, the package needs to switch to
+python-r1 or python-single-r1 eclass, otherwise the runtime dependency
+should be removed.
+
+- level: warning
+- related check: `PythonCheck`_
+
+ConflictingChksums
+^^^^^^^^^^^^^^^^^^
+
+Checksum conflict detected between two files.
+
+- level: error
+- related check: `ManifestCollisionCheck`_
+
+DeprecatedChksum
+^^^^^^^^^^^^^^^^
+
+A file in the chksum data does not use modern checksum set.
+
+- level: warning
+- related check: `ManifestCheck`_
+
+MatchingChksums
+^^^^^^^^^^^^^^^
+
+Two distfiles share the same checksums but use different names.
+
+- level: warning
+- related check: `ManifestCollisionCheck`_
+
+MissingChksum
+^^^^^^^^^^^^^
+
+A file in the chksum data lacks required checksums.
+
+- level: warning
+- related check: `ManifestCheck`_
+
+MissingManifest
+^^^^^^^^^^^^^^^
+
+SRC_URI targets missing from Manifest file.
+
+- level: error
+- related check: `ManifestCheck`_
+
+StableRequest
+^^^^^^^^^^^^^
+
+Unstable ebuild with no changes for over 30 days.
+- Gentoo repo specific
+
+- level: info
+- related check: `StableRequestCheck`_
+
+NonexistentDeps
+^^^^^^^^^^^^^^^
+
+No matches exist for a package dependency.
+
+- level: warning
+- related check: `VisibilityCheck`_
+
+NonsolvableDepsInDev
+^^^^^^^^^^^^^^^^^^^^
+
+No potential solution for dependency on dev profile.
+
+- level: error
+- related check: `VisibilityCheck`_
+
+NonsolvableDepsInExp
+^^^^^^^^^^^^^^^^^^^^
+
+No potential solution for dependency on exp profile.
+
+- level: error
+- related check: `VisibilityCheck`_
+
+NonsolvableDepsInStable
+^^^^^^^^^^^^^^^^^^^^^^^
+
+No potential solution for dependency on stable profile.
+
+- level: error
+- related check: `VisibilityCheck`_
+
+UncheckableDep
+^^^^^^^^^^^^^^
+
+Given dependency cannot be checked due to the number of transitive use deps in it.
+
+- level: warning
+- related check: `VisibilityCheck`_
+
+VisibleVcsPkg
+^^^^^^^^^^^^^
+
+Package is VCS-based, but visible.
+
+- level: warning
+- related check: `VisibilityCheck`_
+
+BadWhitespaceCharacter
+^^^^^^^^^^^^^^^^^^^^^^
+
+Ebuild uses whitespace that isn't a tab, newline, or single space.
+
+Bash does not treat unicode whitespace characters as regular whitespace so
+commands or operators separated by such characters will be treated as one
+string. This usually causes execution errors if the characters are used for
+separation purposes outside of comments or regular strings.
+
+- level: warning
+- related check: `WhitespaceCheck`_
+
+DoubleEmptyLine
+^^^^^^^^^^^^^^^
+
+Unneeded blank lines found.
+
+- level: style
+- related check: `WhitespaceCheck`_
+
+NoFinalNewline
+^^^^^^^^^^^^^^
+
+Ebuild's last line does not have a final newline.
+
+- level: style
+- related check: `WhitespaceCheck`_
+
+TrailingEmptyLine
+^^^^^^^^^^^^^^^^^
+
+Unneeded trailing blank lines found.
+
+- level: style
+- related check: `WhitespaceCheck`_
+
+WhitespaceFound
+^^^^^^^^^^^^^^^
+
+Leading or trailing whitespace found.
+
+- level: style
+- related check: `WhitespaceCheck`_
+
+WrongIndentFound
+^^^^^^^^^^^^^^^^
+
+Incorrect indentation whitespace found.
+
+- level: style
+- related check: `WhitespaceCheck`_

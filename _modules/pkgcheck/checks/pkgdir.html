@@ -1,0 +1,416 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.checks.pkgdir &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../checks.html" accesskey="U">pkgcheck.checks</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.pkgdir</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcheck.checks.pkgdir</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">stat</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+
+<span class="kn">from</span> <span class="nn">pkgcore.ebuild.atom</span> <span class="kn">import</span> <span class="n">MalformedAtom</span>
+<span class="kn">from</span> <span class="nn">pkgcore.ebuild.atom</span> <span class="kn">import</span> <span class="n">atom</span> <span class="k">as</span> <span class="n">atom_cls</span>
+<span class="kn">from</span> <span class="nn">snakeoil.chksum</span> <span class="kn">import</span> <span class="n">get_chksums</span>
+<span class="kn">from</span> <span class="nn">snakeoil.osutils</span> <span class="kn">import</span> <span class="n">listdir</span><span class="p">,</span> <span class="n">pjoin</span><span class="p">,</span> <span class="n">sizeof_fmt</span>
+<span class="kn">from</span> <span class="nn">snakeoil.strings</span> <span class="kn">import</span> <span class="n">pluralism</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">base</span><span class="p">,</span> <span class="n">git</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">sources</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">Check</span><span class="p">,</span> <span class="n">GentooRepoCheck</span>
+
+<span class="n">allowed_filename_chars</span> <span class="o">=</span> <span class="s2">&quot;a-zA-Z0-9._-+:&quot;</span>
+<span class="n">allowed_filename_chars_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+<span class="n">allowed_filename_chars_set</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">chr</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;a&#39;</span><span class="p">),</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;z&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+<span class="n">allowed_filename_chars_set</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">chr</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;A&#39;</span><span class="p">),</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;Z&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+<span class="n">allowed_filename_chars_set</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">chr</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;0&#39;</span><span class="p">),</span> <span class="nb">ord</span><span class="p">(</span><span class="s1">&#39;9&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+<span class="n">allowed_filename_chars_set</span><span class="o">.</span><span class="n">update</span><span class="p">([</span><span class="s2">&quot;.&quot;</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="s2">&quot;+&quot;</span><span class="p">,</span> <span class="s2">&quot;:&quot;</span><span class="p">])</span>
+
+
+<div class="viewcode-block" id="MismatchedPN"><a class="viewcode-back" href="../../../api/pkgcheck.checks.pkgdir.html#pkgcheck.checks.pkgdir.MismatchedPN">[docs]</a><span class="k">class</span> <span class="nc">MismatchedPN</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Ebuilds that have different names than their parent directory.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ebuilds</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ebuilds</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">ebuilds</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ebuilds</span><span class="p">)</span>
+        <span class="n">ebuilds</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ebuilds</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;mismatched package name</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">: [ </span><span class="si">{</span><span class="n">ebuilds</span><span class="si">}</span><span class="s1"> ]&#39;</span></div>
+
+
+<div class="viewcode-block" id="InvalidPN"><a class="viewcode-back" href="../../../api/pkgcheck.checks.pkgdir.html#pkgcheck.checks.pkgdir.InvalidPN">[docs]</a><span class="k">class</span> <span class="nc">InvalidPN</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Ebuilds that have invalid package names.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ebuilds</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ebuilds</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">ebuilds</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ebuilds</span><span class="p">)</span>
+        <span class="n">ebuilds</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ebuilds</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;invalid package name</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">: [ </span><span class="si">{</span><span class="n">ebuilds</span><span class="si">}</span><span class="s1"> ]&#39;</span></div>
+
+
+<div class="viewcode-block" id="EqualVersions"><a class="viewcode-back" href="../../../api/pkgcheck.checks.pkgdir.html#pkgcheck.checks.pkgdir.EqualVersions">[docs]</a><span class="k">class</span> <span class="nc">EqualVersions</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Ebuilds that have equal versions.</span>
+
+<span class="sd">    For example, cat/pn-1.0.2, cat/pn-1.0.2-r0, cat/pn-1.0.2-r00 and</span>
+<span class="sd">    cat/pn-1.000.2 all have equal versions according to PMS and therefore</span>
+<span class="sd">    shouldn&#39;t exist in the same repository.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">versions</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">versions</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">versions</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;equal package versions: [ </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">versions</span><span class="p">)</span><span class="si">}</span><span class="s2"> ]&quot;</span></div>
+
+
+<div class="viewcode-block" id="DuplicateFiles"><a class="viewcode-back" href="../../../api/pkgcheck.checks.pkgdir.html#pkgcheck.checks.pkgdir.DuplicateFiles">[docs]</a><span class="k">class</span> <span class="nc">DuplicateFiles</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Two or more identical files in FILESDIR.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">files</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">files</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">files</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">repr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">files</span><span class="p">))</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;duplicate identical files in FILESDIR: </span><span class="si">{</span><span class="n">files</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="EmptyFile"><a class="viewcode-back" href="../../../api/pkgcheck.checks.pkgdir.html#pkgcheck.checks.pkgdir.EmptyFile">[docs]</a><span class="k">class</span> <span class="nc">EmptyFile</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;File in FILESDIR is empty.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;empty file in FILESDIR: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="si">!r}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="ExecutableFile"><a class="viewcode-back" href="../../../api/pkgcheck.checks.pkgdir.html#pkgcheck.checks.pkgdir.ExecutableFile">[docs]</a><span class="k">class</span> <span class="nc">ExecutableFile</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;File has executable bit, but doesn&#39;t need it.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;unnecessary executable bit: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="si">!r}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="UnknownPkgDirEntry"><a class="viewcode-back" href="../../../api/pkgcheck.checks.pkgdir.html#pkgcheck.checks.pkgdir.UnknownPkgDirEntry">[docs]</a><span class="k">class</span> <span class="nc">UnknownPkgDirEntry</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Unknown files or directories in package directory.</span>
+
+<span class="sd">    Relevant for the gentoo repo only since the spec states that a package</span>
+<span class="sd">    directory may contain other files or directories.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filenames</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filenames</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">filenames</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">repr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">filenames</span><span class="p">))</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filenames</span><span class="p">,</span> <span class="n">singular</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">plural</span><span class="o">=</span><span class="s1">&#39;ies&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;unknown entr</span><span class="si">{</span><span class="n">y</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">files</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="SizeViolation"><a class="viewcode-back" href="../../../api/pkgcheck.checks.pkgdir.html#pkgcheck.checks.pkgdir.SizeViolation">[docs]</a><span class="k">class</span> <span class="nc">SizeViolation</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;File in $FILESDIR is too large (current limit is 20KiB).&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">size</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="si">!r}</span><span class="s1"> exceeds 20KiB in size; </span><span class="si">{</span><span class="n">sizeof_fmt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">)</span><span class="si">}</span><span class="s1"> total&#39;</span></div>
+
+
+<div class="viewcode-block" id="BannedCharacter"><a class="viewcode-back" href="../../../api/pkgcheck.checks.pkgdir.html#pkgcheck.checks.pkgdir.BannedCharacter">[docs]</a><span class="k">class</span> <span class="nc">BannedCharacter</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;File or directory name doesn&#39;t abide by GLEP 31 requirements.</span>
+
+<span class="sd">    See the official GLEP 31 documentation [#]_ for details.</span>
+
+<span class="sd">    .. [#] https://www.gentoo.org/glep/glep-0031.html</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">chars</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chars</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">chars</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">chars</span><span class="p">)</span>
+        <span class="n">chars</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">repr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">chars</span><span class="p">))</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;filename </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="si">!r}</span><span class="s1"> character</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1"> outside allowed set: </span><span class="si">{</span><span class="n">chars</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="InvalidUTF8"><a class="viewcode-back" href="../../../api/pkgcheck.checks.pkgdir.html#pkgcheck.checks.pkgdir.InvalidUTF8">[docs]</a><span class="k">class</span> <span class="nc">InvalidUTF8</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;File isn&#39;t UTF-8 compliant.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">err</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">err</span> <span class="o">=</span> <span class="n">err</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;invalid UTF-8: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">err</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="si">!r}</span><span class="s2">&quot;</span></div>
+
+
+<div class="viewcode-block" id="PkgDirCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.pkgdir.html#pkgcheck.checks.pkgdir.PkgDirCheck">[docs]</a><span class="k">class</span> <span class="nc">PkgDirCheck</span><span class="p">(</span><span class="n">Check</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Scan ebuild directory for various file-related issues.&quot;&quot;&quot;</span>
+
+    <span class="n">_source</span> <span class="o">=</span> <span class="p">(</span><span class="n">sources</span><span class="o">.</span><span class="n">PackageRepoSource</span><span class="p">,</span> <span class="p">(),</span> <span class="p">((</span><span class="s1">&#39;source&#39;</span><span class="p">,</span> <span class="n">sources</span><span class="o">.</span><span class="n">RawRepoSource</span><span class="p">),))</span>
+
+    <span class="n">ignore_dirs</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="s2">&quot;cvs&quot;</span><span class="p">,</span> <span class="s2">&quot;.svn&quot;</span><span class="p">,</span> <span class="s2">&quot;.bzr&quot;</span><span class="p">])</span>
+    <span class="n">required_addons</span> <span class="o">=</span> <span class="p">(</span><span class="n">git</span><span class="o">.</span><span class="n">GitAddon</span><span class="p">,)</span>
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span>
+        <span class="n">DuplicateFiles</span><span class="p">,</span> <span class="n">EmptyFile</span><span class="p">,</span> <span class="n">ExecutableFile</span><span class="p">,</span> <span class="n">UnknownPkgDirEntry</span><span class="p">,</span> <span class="n">SizeViolation</span><span class="p">,</span>
+        <span class="n">BannedCharacter</span><span class="p">,</span> <span class="n">InvalidUTF8</span><span class="p">,</span> <span class="n">MismatchedPN</span><span class="p">,</span> <span class="n">InvalidPN</span><span class="p">,</span>
+    <span class="p">])</span>
+
+    <span class="c1"># TODO: put some &#39;preferred algorithms by purpose&#39; into snakeoil?</span>
+    <span class="n">digest_algo</span> <span class="o">=</span> <span class="s1">&#39;sha256&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">git_addon</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gitignored</span> <span class="o">=</span> <span class="n">git_addon</span><span class="o">.</span><span class="n">gitignored</span>
+
+<div class="viewcode-block" id="PkgDirCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.pkgdir.html#pkgcheck.checks.pkgdir.PkgDirCheck.feed">[docs]</a>    <span class="k">def</span> <span class="nf">feed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkgset</span><span class="p">):</span>
+        <span class="n">pkg</span> <span class="o">=</span> <span class="n">pkgset</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">pkg_path</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">target_repo</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="n">pkg</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">pkg</span><span class="o">.</span><span class="n">package</span><span class="p">)</span>
+        <span class="n">ebuild_ext</span> <span class="o">=</span> <span class="s1">&#39;.ebuild&#39;</span>
+        <span class="n">mismatched</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">invalid</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">unknown</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># note we don&#39;t use os.walk, we need size info also</span>
+        <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">listdir</span><span class="p">(</span><span class="n">pkg_path</span><span class="p">):</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">pkg_path</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gitignored</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">stat</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">st_mode</span> <span class="o">&amp;</span> <span class="mo">0o111</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">ExecutableFile</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+
+            <span class="c1"># While this may seem odd, written this way such that the filtering</span>
+            <span class="c1"># happens all in the genexp. If the result was being handed to any,</span>
+            <span class="c1"># it&#39;s a frame switch each char, which adds up.</span>
+            <span class="k">if</span> <span class="n">banned_chars</span> <span class="o">:=</span> <span class="nb">set</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span> <span class="o">-</span> <span class="n">allowed_filename_chars_set</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">BannedCharacter</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">banned_chars</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">filename</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">ebuild_ext</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                        <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">8192</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+                <span class="k">except</span> <span class="ne">UnicodeDecodeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">InvalidUTF8</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+
+                <span class="n">pkg_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">filename</span><span class="p">[:</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">ebuild_ext</span><span class="p">)])</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">pkg_atom</span> <span class="o">=</span> <span class="n">atom_cls</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;=</span><span class="si">{</span><span class="n">pkg</span><span class="o">.</span><span class="n">category</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">pkg_name</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">pkg_atom</span><span class="o">.</span><span class="n">package</span> <span class="o">!=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">pkg_path</span><span class="p">):</span>
+                        <span class="n">mismatched</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pkg_name</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">MalformedAtom</span><span class="p">:</span>
+                    <span class="n">invalid</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pkg_name</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">gentoo_repo</span> <span class="ow">and</span>
+                    <span class="n">filename</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;Manifest&#39;</span><span class="p">,</span> <span class="s1">&#39;metadata.xml&#39;</span><span class="p">,</span> <span class="s1">&#39;files&#39;</span><span class="p">)):</span>
+                <span class="n">unknown</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">mismatched</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">MismatchedPN</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">mismatched</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">invalid</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">InvalidPN</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">invalid</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">unknown</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">UnknownPkgDirEntry</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">unknown</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+
+        <span class="n">files_by_size</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="n">pkg_path_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">pkg_path</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">root</span><span class="p">,</span> <span class="n">dirs</span><span class="p">,</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="n">pkg_path</span><span class="p">,</span> <span class="s1">&#39;files&#39;</span><span class="p">)):</span>
+            <span class="c1"># don&#39;t visit any ignored directories</span>
+            <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ignore_dirs</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">dirs</span><span class="p">):</span>
+                <span class="n">dirs</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+            <span class="n">base_dir</span> <span class="o">=</span> <span class="n">root</span><span class="p">[</span><span class="n">pkg_path_len</span><span class="p">:]</span>
+            <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+                <span class="n">path</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gitignored</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="n">file_stat</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">lstat</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">stat</span><span class="o">.</span><span class="n">S_ISREG</span><span class="p">(</span><span class="n">file_stat</span><span class="o">.</span><span class="n">st_mode</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">file_stat</span><span class="o">.</span><span class="n">st_mode</span> <span class="o">&amp;</span> <span class="mo">0o111</span><span class="p">:</span>
+                        <span class="k">yield</span> <span class="n">ExecutableFile</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="n">base_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">file_stat</span><span class="o">.</span><span class="n">st_size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="k">yield</span> <span class="n">EmptyFile</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="n">base_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">files_by_size</span><span class="p">[</span><span class="n">file_stat</span><span class="o">.</span><span class="n">st_size</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="n">base_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">))</span>
+                        <span class="k">if</span> <span class="n">file_stat</span><span class="o">.</span><span class="n">st_size</span> <span class="o">&gt;</span> <span class="mi">20480</span><span class="p">:</span>
+                            <span class="k">yield</span> <span class="n">SizeViolation</span><span class="p">(</span>
+                                <span class="n">pjoin</span><span class="p">(</span><span class="n">base_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">),</span> <span class="n">file_stat</span><span class="o">.</span><span class="n">st_size</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">banned_chars</span> <span class="o">:=</span> <span class="nb">set</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span> <span class="o">-</span> <span class="n">allowed_filename_chars_set</span><span class="p">:</span>
+                        <span class="k">yield</span> <span class="n">BannedCharacter</span><span class="p">(</span>
+                            <span class="n">pjoin</span><span class="p">(</span><span class="n">base_dir</span><span class="p">,</span> <span class="n">filename</span><span class="p">),</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">banned_chars</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+
+        <span class="n">files_by_digest</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">size</span><span class="p">,</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">files_by_size</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">files</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+                    <span class="n">digest</span> <span class="o">=</span> <span class="n">get_chksums</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="n">pkg_path</span><span class="p">,</span> <span class="n">f</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">digest_algo</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="n">files_by_digest</span><span class="p">[</span><span class="n">digest</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">digest</span><span class="p">,</span> <span class="n">files</span> <span class="ow">in</span> <span class="n">files_by_digest</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">files</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">DuplicateFiles</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">files</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="EqualVersionsCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.pkgdir.html#pkgcheck.checks.pkgdir.EqualVersionsCheck">[docs]</a><span class="k">class</span> <span class="nc">EqualVersionsCheck</span><span class="p">(</span><span class="n">Check</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Scan package ebuilds for semantically equal versions.&quot;&quot;&quot;</span>
+
+    <span class="n">_source</span> <span class="o">=</span> <span class="n">sources</span><span class="o">.</span><span class="n">PackageRepoSource</span>
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="n">EqualVersions</span><span class="p">])</span>
+
+<div class="viewcode-block" id="EqualVersionsCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.pkgdir.html#pkgcheck.checks.pkgdir.EqualVersionsCheck.feed">[docs]</a>    <span class="k">def</span> <span class="nf">feed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkgset</span><span class="p">):</span>
+        <span class="n">equal_versions</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
+        <span class="n">sorted_pkgset</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">pkgset</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">pkg_a</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sorted_pkgset</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">pkg_b</span> <span class="o">=</span> <span class="n">sorted_pkgset</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="k">if</span> <span class="n">pkg_a</span><span class="o">.</span><span class="n">versioned_atom</span> <span class="o">==</span> <span class="n">pkg_b</span><span class="o">.</span><span class="n">versioned_atom</span><span class="p">:</span>
+                <span class="n">equal_versions</span><span class="p">[</span><span class="n">pkg_a</span><span class="o">.</span><span class="n">versioned_atom</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">([</span><span class="n">pkg_a</span><span class="o">.</span><span class="n">fullver</span><span class="p">,</span> <span class="n">pkg_b</span><span class="o">.</span><span class="n">fullver</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">versions</span> <span class="ow">in</span> <span class="n">equal_versions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">yield</span> <span class="n">EqualVersions</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">versions</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="LiveOnlyPackage"><a class="viewcode-back" href="../../../api/pkgcheck.checks.pkgdir.html#pkgcheck.checks.pkgdir.LiveOnlyPackage">[docs]</a><span class="k">class</span> <span class="nc">LiveOnlyPackage</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Package has only had VCS-based ebuilds.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">age</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">age</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">age</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">age</span> <span class="o">&lt;</span> <span class="mi">365</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;all versions are VCS-based added over </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">age</span><span class="si">}</span><span class="s1"> days ago&#39;</span>
+        <span class="n">years</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">age</span> <span class="o">/</span> <span class="mi">365</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;all versions are VCS-based added over </span><span class="si">{</span><span class="n">years</span><span class="si">}</span><span class="s1"> years ago&#39;</span></div>
+
+
+<div class="viewcode-block" id="LiveOnlyCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.pkgdir.html#pkgcheck.checks.pkgdir.LiveOnlyCheck">[docs]</a><span class="k">class</span> <span class="nc">LiveOnlyCheck</span><span class="p">(</span><span class="n">GentooRepoCheck</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Scan for packages with only live versions.&quot;&quot;&quot;</span>
+
+    <span class="n">_source</span> <span class="o">=</span> <span class="n">sources</span><span class="o">.</span><span class="n">PackageRepoSource</span>
+    <span class="n">required_addons</span> <span class="o">=</span> <span class="p">(</span><span class="n">git</span><span class="o">.</span><span class="n">GitAddon</span><span class="p">,)</span>
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="n">LiveOnlyPackage</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">git_addon</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">today</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">today</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">added_repo</span> <span class="o">=</span> <span class="n">git_addon</span><span class="o">.</span><span class="n">cached_repo</span><span class="p">(</span><span class="n">git</span><span class="o">.</span><span class="n">GitAddedRepo</span><span class="p">)</span>
+
+<div class="viewcode-block" id="LiveOnlyCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.pkgdir.html#pkgcheck.checks.pkgdir.LiveOnlyCheck.feed">[docs]</a>    <span class="k">def</span> <span class="nf">feed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkgset</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">live</span> <span class="k">for</span> <span class="n">pkg</span> <span class="ow">in</span> <span class="n">pkgset</span><span class="p">):</span>
+            <span class="c1"># assume highest package version is most recently committed</span>
+            <span class="n">pkg</span> <span class="o">=</span> <span class="n">pkgset</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pkgset</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">pkgset</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">match</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">added_repo</span><span class="o">.</span><span class="n">itermatch</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">versioned_atom</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+                <span class="c1"># probably an uncommitted package</span>
+                <span class="k">return</span>
+            <span class="n">added</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">date</span><span class="p">,</span> <span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="n">days_old</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">today</span> <span class="o">-</span> <span class="n">added</span><span class="p">)</span><span class="o">.</span><span class="n">days</span>
+            <span class="k">yield</span> <span class="n">LiveOnlyPackage</span><span class="p">(</span><span class="n">days_old</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span></div></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../checks.html" >pkgcheck.checks</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.pkgdir</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

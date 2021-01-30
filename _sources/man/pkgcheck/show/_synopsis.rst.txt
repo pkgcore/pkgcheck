@@ -1,0 +1,4 @@
+Synopsis
+--------
+
+pkgcheck show [-h] [--debug] [-q] [-v] [--color BOOLEAN] [-k | -c | -s | -r | -C]

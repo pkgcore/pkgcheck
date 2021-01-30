@@ -1,0 +1,293 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.checks.header &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../checks.html" accesskey="U">pkgcheck.checks</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.header</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcheck.checks.header</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Various file-based header checks.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">re</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">base</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">sources</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">GentooRepoCheck</span>
+
+<span class="n">copyright_regex</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+    <span class="sa">r</span><span class="s1">&#39;^# Copyright (?P&lt;begin&gt;\d</span><span class="si">{4}</span><span class="s1">-)?(?P&lt;end&gt;\d</span><span class="si">{4}</span><span class="s1">) (?P&lt;holder&gt;.+)$&#39;</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">_FileHeaderResult</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">Result</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generic file header result.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line</span> <span class="o">=</span> <span class="n">line</span>
+
+
+<div class="viewcode-block" id="InvalidCopyright"><a class="viewcode-back" href="../../../api/pkgcheck.checks.header.html#pkgcheck.checks.header.InvalidCopyright">[docs]</a><span class="k">class</span> <span class="nc">InvalidCopyright</span><span class="p">(</span><span class="n">_FileHeaderResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;File with invalid copyright.</span>
+
+<span class="sd">    The file does not start with a valid copyright line. Each ebuild or eclass</span>
+<span class="sd">    file must start with a copyright line of the form:</span>
+
+<span class="sd">        # Copyright YEARS MAIN-CONTRIBUTOR [OTHER-CONTRIBUTOR]... [and others]</span>
+
+<span class="sd">    Files in the Gentoo repository must use:</span>
+
+<span class="sd">        # Copyright YEARS Gentoo Authors</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_name</span> <span class="o">=</span> <span class="s1">&#39;InvalidCopyright&#39;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;invalid copyright: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">line</span><span class="si">!r}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="OldGentooCopyright"><a class="viewcode-back" href="../../../api/pkgcheck.checks.header.html#pkgcheck.checks.header.OldGentooCopyright">[docs]</a><span class="k">class</span> <span class="nc">OldGentooCopyright</span><span class="p">(</span><span class="n">_FileHeaderResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;File with old Gentoo Foundation copyright.</span>
+
+<span class="sd">    The file still assigns copyright to the Gentoo Foundation even though</span>
+<span class="sd">    it has been committed after the new copyright policy was approved</span>
+<span class="sd">    (2018-10-21).</span>
+
+<span class="sd">    Ebuilds and eclasses in Gentoo repository must use &#39;Gentoo Authors&#39;</span>
+<span class="sd">    instead. Files in other repositories may specify an explicit copyright</span>
+<span class="sd">    holder instead.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_name</span> <span class="o">=</span> <span class="s1">&#39;OldGentooCopyright&#39;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;old copyright, update to &quot;Gentoo Authors&quot;: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">line</span><span class="si">!r}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="NonGentooAuthorsCopyright"><a class="viewcode-back" href="../../../api/pkgcheck.checks.header.html#pkgcheck.checks.header.NonGentooAuthorsCopyright">[docs]</a><span class="k">class</span> <span class="nc">NonGentooAuthorsCopyright</span><span class="p">(</span><span class="n">_FileHeaderResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;File with copyright stating owner other than &quot;Gentoo Authors&quot;.</span>
+
+<span class="sd">    The file specifies explicit copyright owner, while the Gentoo repository</span>
+<span class="sd">    policy specifies that all ebuilds and eclasses must use &quot;Gentoo Authors&quot;.</span>
+<span class="sd">    If the owner is not listed in metadata/AUTHORS, addition can be requested</span>
+<span class="sd">    via bugs.gentoo.org.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_name</span> <span class="o">=</span> <span class="s1">&#39;NonGentooAuthorsCopyright&#39;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;copyright line must state &quot;Gentoo Authors&quot;: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">line</span><span class="si">!r}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="InvalidLicenseHeader"><a class="viewcode-back" href="../../../api/pkgcheck.checks.header.html#pkgcheck.checks.header.InvalidLicenseHeader">[docs]</a><span class="k">class</span> <span class="nc">InvalidLicenseHeader</span><span class="p">(</span><span class="n">_FileHeaderResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;File with invalid license header.</span>
+
+<span class="sd">    The file does not have with a valid license header.</span>
+
+<span class="sd">    Ebuilds and eclasses in the Gentoo repository must use:</span>
+
+<span class="sd">        # Distributed under the terms of the GNU General Public License v2</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_name</span> <span class="o">=</span> <span class="s1">&#39;InvalidLicenseHeader&#39;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">line</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;invalid license header: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">line</span><span class="si">!r}</span><span class="s1">&#39;</span>
+        <span class="k">return</span> <span class="s1">&#39;missing license header&#39;</span></div>
+
+
+<span class="k">class</span> <span class="nc">_HeaderCheck</span><span class="p">(</span><span class="n">GentooRepoCheck</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Scan files for incorrect copyright/license headers.&quot;&quot;&quot;</span>
+
+    <span class="n">_invalid_copyright</span> <span class="o">=</span> <span class="n">InvalidCopyright</span>
+    <span class="n">_old_copyright</span> <span class="o">=</span> <span class="n">OldGentooCopyright</span>
+    <span class="n">_non_gentoo_authors</span> <span class="o">=</span> <span class="n">NonGentooAuthorsCopyright</span>
+    <span class="n">_invalid_license</span> <span class="o">=</span> <span class="n">InvalidLicenseHeader</span>
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span>
+        <span class="n">_invalid_copyright</span><span class="p">,</span> <span class="n">_old_copyright</span><span class="p">,</span> <span class="n">_non_gentoo_authors</span><span class="p">,</span> <span class="n">_invalid_license</span><span class="p">,</span>
+    <span class="p">])</span>
+    <span class="n">_item_attr</span> <span class="o">=</span> <span class="s1">&#39;pkg&#39;</span>
+
+    <span class="n">license_header</span> <span class="o">=</span> <span class="s1">&#39;# Distributed under the terms of the GNU General Public License v2&#39;</span>
+
+    <span class="k">def</span> <span class="nf">args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_item_attr</span><span class="p">:</span> <span class="n">item</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">feed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">item</span><span class="o">.</span><span class="n">lines</span><span class="p">:</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">mo</span> <span class="o">:=</span> <span class="n">copyright_regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+                <span class="c1"># Copyright policy is active since 2018-10-21, so it applies</span>
+                <span class="c1"># to all ebuilds committed in 2019 and later</span>
+                <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">mo</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;end&#39;</span><span class="p">))</span> <span class="o">&gt;=</span> <span class="mi">2019</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">mo</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;holder&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;Gentoo Foundation&#39;</span><span class="p">:</span>
+                        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_old_copyright</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">(</span><span class="n">item</span><span class="p">))</span>
+                    <span class="c1"># Gentoo policy requires &#39;Gentoo Authors&#39;</span>
+                    <span class="k">elif</span> <span class="n">mo</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;holder&#39;</span><span class="p">)</span> <span class="o">!=</span> <span class="s1">&#39;Gentoo Authors&#39;</span><span class="p">:</span>
+                        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_non_gentoo_authors</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">(</span><span class="n">item</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_invalid_copyright</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">(</span><span class="n">item</span><span class="p">))</span>
+
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="k">if</span> <span class="n">line</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">license_header</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">_invalid_license</span><span class="p">(</span><span class="n">line</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">(</span><span class="n">item</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="EbuildInvalidCopyright"><a class="viewcode-back" href="../../../api/pkgcheck.checks.header.html#pkgcheck.checks.header.EbuildInvalidCopyright">[docs]</a><span class="k">class</span> <span class="nc">EbuildInvalidCopyright</span><span class="p">(</span><span class="n">InvalidCopyright</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">):</span>
+    <span class="vm">__doc__</span> <span class="o">=</span> <span class="n">InvalidCopyright</span><span class="o">.</span><span class="vm">__doc__</span></div>
+
+
+<div class="viewcode-block" id="EbuildOldGentooCopyright"><a class="viewcode-back" href="../../../api/pkgcheck.checks.header.html#pkgcheck.checks.header.EbuildOldGentooCopyright">[docs]</a><span class="k">class</span> <span class="nc">EbuildOldGentooCopyright</span><span class="p">(</span><span class="n">OldGentooCopyright</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">):</span>
+    <span class="vm">__doc__</span> <span class="o">=</span> <span class="n">OldGentooCopyright</span><span class="o">.</span><span class="vm">__doc__</span></div>
+
+
+<div class="viewcode-block" id="EbuildNonGentooAuthorsCopyright"><a class="viewcode-back" href="../../../api/pkgcheck.checks.header.html#pkgcheck.checks.header.EbuildNonGentooAuthorsCopyright">[docs]</a><span class="k">class</span> <span class="nc">EbuildNonGentooAuthorsCopyright</span><span class="p">(</span><span class="n">NonGentooAuthorsCopyright</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">):</span>
+    <span class="vm">__doc__</span> <span class="o">=</span> <span class="n">NonGentooAuthorsCopyright</span><span class="o">.</span><span class="vm">__doc__</span></div>
+
+
+<div class="viewcode-block" id="EbuildInvalidLicenseHeader"><a class="viewcode-back" href="../../../api/pkgcheck.checks.header.html#pkgcheck.checks.header.EbuildInvalidLicenseHeader">[docs]</a><span class="k">class</span> <span class="nc">EbuildInvalidLicenseHeader</span><span class="p">(</span><span class="n">InvalidLicenseHeader</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">):</span>
+    <span class="vm">__doc__</span> <span class="o">=</span> <span class="n">InvalidLicenseHeader</span><span class="o">.</span><span class="vm">__doc__</span></div>
+
+
+<div class="viewcode-block" id="EbuildHeaderCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.header.html#pkgcheck.checks.header.EbuildHeaderCheck">[docs]</a><span class="k">class</span> <span class="nc">EbuildHeaderCheck</span><span class="p">(</span><span class="n">_HeaderCheck</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Scan ebuild for incorrect copyright/license headers.&quot;&quot;&quot;</span>
+
+    <span class="n">_source</span> <span class="o">=</span> <span class="n">sources</span><span class="o">.</span><span class="n">EbuildFileRepoSource</span>
+
+    <span class="n">_invalid_copyright</span> <span class="o">=</span> <span class="n">EbuildInvalidCopyright</span>
+    <span class="n">_old_copyright</span> <span class="o">=</span> <span class="n">EbuildOldGentooCopyright</span>
+    <span class="n">_non_gentoo_authors</span> <span class="o">=</span> <span class="n">EbuildNonGentooAuthorsCopyright</span>
+    <span class="n">_invalid_license</span> <span class="o">=</span> <span class="n">EbuildInvalidLicenseHeader</span>
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span>
+        <span class="n">_invalid_copyright</span><span class="p">,</span> <span class="n">_old_copyright</span><span class="p">,</span> <span class="n">_non_gentoo_authors</span><span class="p">,</span> <span class="n">_invalid_license</span><span class="p">,</span>
+    <span class="p">])</span>
+    <span class="n">_item_attr</span> <span class="o">=</span> <span class="s1">&#39;pkg&#39;</span></div>
+
+
+<div class="viewcode-block" id="EclassInvalidCopyright"><a class="viewcode-back" href="../../../api/pkgcheck.checks.header.html#pkgcheck.checks.header.EclassInvalidCopyright">[docs]</a><span class="k">class</span> <span class="nc">EclassInvalidCopyright</span><span class="p">(</span><span class="n">InvalidCopyright</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">EclassResult</span><span class="p">):</span>
+    <span class="vm">__doc__</span> <span class="o">=</span> <span class="n">InvalidCopyright</span><span class="o">.</span><span class="vm">__doc__</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">eclass</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">desc</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="EclassOldGentooCopyright"><a class="viewcode-back" href="../../../api/pkgcheck.checks.header.html#pkgcheck.checks.header.EclassOldGentooCopyright">[docs]</a><span class="k">class</span> <span class="nc">EclassOldGentooCopyright</span><span class="p">(</span><span class="n">OldGentooCopyright</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">EclassResult</span><span class="p">):</span>
+    <span class="vm">__doc__</span> <span class="o">=</span> <span class="n">OldGentooCopyright</span><span class="o">.</span><span class="vm">__doc__</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">eclass</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">desc</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="EclassNonGentooAuthorsCopyright"><a class="viewcode-back" href="../../../api/pkgcheck.checks.header.html#pkgcheck.checks.header.EclassNonGentooAuthorsCopyright">[docs]</a><span class="k">class</span> <span class="nc">EclassNonGentooAuthorsCopyright</span><span class="p">(</span><span class="n">NonGentooAuthorsCopyright</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">EclassResult</span><span class="p">):</span>
+    <span class="vm">__doc__</span> <span class="o">=</span> <span class="n">NonGentooAuthorsCopyright</span><span class="o">.</span><span class="vm">__doc__</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">eclass</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">desc</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="EclassInvalidLicenseHeader"><a class="viewcode-back" href="../../../api/pkgcheck.checks.header.html#pkgcheck.checks.header.EclassInvalidLicenseHeader">[docs]</a><span class="k">class</span> <span class="nc">EclassInvalidLicenseHeader</span><span class="p">(</span><span class="n">InvalidLicenseHeader</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">EclassResult</span><span class="p">):</span>
+    <span class="vm">__doc__</span> <span class="o">=</span> <span class="n">InvalidLicenseHeader</span><span class="o">.</span><span class="vm">__doc__</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">eclass</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">desc</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="EclassHeaderCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.header.html#pkgcheck.checks.header.EclassHeaderCheck">[docs]</a><span class="k">class</span> <span class="nc">EclassHeaderCheck</span><span class="p">(</span><span class="n">_HeaderCheck</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Scan eclasses for incorrect copyright/license headers.&quot;&quot;&quot;</span>
+
+    <span class="n">_source</span> <span class="o">=</span> <span class="n">sources</span><span class="o">.</span><span class="n">EclassRepoSource</span>
+
+    <span class="n">_invalid_copyright</span> <span class="o">=</span> <span class="n">EclassInvalidCopyright</span>
+    <span class="n">_old_copyright</span> <span class="o">=</span> <span class="n">EclassOldGentooCopyright</span>
+    <span class="n">_non_gentoo_authors</span> <span class="o">=</span> <span class="n">EclassNonGentooAuthorsCopyright</span>
+    <span class="n">_invalid_license</span> <span class="o">=</span> <span class="n">EclassInvalidLicenseHeader</span>
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span>
+        <span class="n">_invalid_copyright</span><span class="p">,</span> <span class="n">_old_copyright</span><span class="p">,</span> <span class="n">_non_gentoo_authors</span><span class="p">,</span> <span class="n">_invalid_license</span><span class="p">,</span>
+    <span class="p">])</span>
+    <span class="n">_item_attr</span> <span class="o">=</span> <span class="s1">&#39;eclass&#39;</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../checks.html" >pkgcheck.checks</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.header</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+pkgcheck.checks.repo\_metadata module
+=====================================
+
+.. automodule:: pkgcheck.checks.repo_metadata
+   :members:
+   :undoc-members:
+   :show-inheritance:

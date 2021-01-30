@@ -1,0 +1,267 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.checks.visibility module &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.visibility module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcheck.checks.visibility">
+<span id="pkgcheck-checks-visibility-module"></span><h1>pkgcheck.checks.visibility module<a class="headerlink" href="#module-pkgcheck.checks.visibility" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="pkgcheck.checks.visibility.FakeConfigurable">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.visibility.</code><code class="sig-name descname">FakeConfigurable</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">profile</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/visibility.html#FakeConfigurable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.visibility.FakeConfigurable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Package wrapper binding profile data.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.visibility.FakeConfigurable.changes_count">
+<code class="sig-name descname">changes_count</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/visibility.html#FakeConfigurable.changes_count"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.visibility.FakeConfigurable.changes_count" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.visibility.FakeConfigurable.configurable">
+<code class="sig-name descname">configurable</code><em class="property"> = True</em><a class="headerlink" href="#pkgcheck.checks.visibility.FakeConfigurable.configurable" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.visibility.FakeConfigurable.iuse">
+<code class="sig-name descname">iuse</code><a class="headerlink" href="#pkgcheck.checks.visibility.FakeConfigurable.iuse" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.visibility.FakeConfigurable.request_disable">
+<code class="sig-name descname">request_disable</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">attr</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">vals</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/visibility.html#FakeConfigurable.request_disable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.visibility.FakeConfigurable.request_disable" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.visibility.FakeConfigurable.request_enable">
+<code class="sig-name descname">request_enable</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">attr</span></em>, <em class="sig-param"><span class="o">*</span><span class="n">vals</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/visibility.html#FakeConfigurable.request_enable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.visibility.FakeConfigurable.request_enable" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.visibility.FakeConfigurable.rollback">
+<code class="sig-name descname">rollback</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">point</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/visibility.html#FakeConfigurable.rollback"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.visibility.FakeConfigurable.rollback" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.visibility.FakeConfigurable.use">
+<code class="sig-name descname">use</code><a class="headerlink" href="#pkgcheck.checks.visibility.FakeConfigurable.use" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.visibility.NonexistentDeps">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.visibility.</code><code class="sig-name descname">NonexistentDeps</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">attr</span></em>, <em class="sig-param"><span class="n">nonexistent</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/visibility.html#NonexistentDeps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.visibility.NonexistentDeps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>No matches exist for a package dependency.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.visibility.NonexistentDeps.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.visibility.NonexistentDeps.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.visibility.NonexistentDeps.name">
+<code class="sig-name descname">name</code><em class="property"> = 'NonexistentDeps'</em><a class="headerlink" href="#pkgcheck.checks.visibility.NonexistentDeps.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.visibility.NonsolvableDepsInDev">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.visibility.</code><code class="sig-name descname">NonsolvableDepsInDev</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">attr</span></em>, <em class="sig-param"><span class="n">keyword</span></em>, <em class="sig-param"><span class="n">profile</span></em>, <em class="sig-param"><span class="n">deps</span></em>, <em class="sig-param"><span class="n">profile_status</span></em>, <em class="sig-param"><span class="n">profile_deprecated</span></em>, <em class="sig-param"><span class="n">num_profiles</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/visibility.html#NonsolvableDepsInDev"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.visibility.NonsolvableDepsInDev" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.visibility._NonsolvableDeps</span></code></p>
+<p>No potential solution for dependency on dev profile.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.visibility.NonsolvableDepsInDev.name">
+<code class="sig-name descname">name</code><em class="property"> = 'NonsolvableDepsInDev'</em><a class="headerlink" href="#pkgcheck.checks.visibility.NonsolvableDepsInDev.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.visibility.NonsolvableDepsInExp">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.visibility.</code><code class="sig-name descname">NonsolvableDepsInExp</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">attr</span></em>, <em class="sig-param"><span class="n">keyword</span></em>, <em class="sig-param"><span class="n">profile</span></em>, <em class="sig-param"><span class="n">deps</span></em>, <em class="sig-param"><span class="n">profile_status</span></em>, <em class="sig-param"><span class="n">profile_deprecated</span></em>, <em class="sig-param"><span class="n">num_profiles</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/visibility.html#NonsolvableDepsInExp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.visibility.NonsolvableDepsInExp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.visibility._NonsolvableDeps</span></code></p>
+<p>No potential solution for dependency on exp profile.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.visibility.NonsolvableDepsInExp.name">
+<code class="sig-name descname">name</code><em class="property"> = 'NonsolvableDepsInExp'</em><a class="headerlink" href="#pkgcheck.checks.visibility.NonsolvableDepsInExp.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.visibility.NonsolvableDepsInStable">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.visibility.</code><code class="sig-name descname">NonsolvableDepsInStable</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">attr</span></em>, <em class="sig-param"><span class="n">keyword</span></em>, <em class="sig-param"><span class="n">profile</span></em>, <em class="sig-param"><span class="n">deps</span></em>, <em class="sig-param"><span class="n">profile_status</span></em>, <em class="sig-param"><span class="n">profile_deprecated</span></em>, <em class="sig-param"><span class="n">num_profiles</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/visibility.html#NonsolvableDepsInStable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.visibility.NonsolvableDepsInStable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.visibility._NonsolvableDeps</span></code></p>
+<p>No potential solution for dependency on stable profile.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.visibility.NonsolvableDepsInStable.name">
+<code class="sig-name descname">name</code><em class="property"> = 'NonsolvableDepsInStable'</em><a class="headerlink" href="#pkgcheck.checks.visibility.NonsolvableDepsInStable.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.visibility.UncheckableDep">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.visibility.</code><code class="sig-name descname">UncheckableDep</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">attr</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/visibility.html#UncheckableDep"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.visibility.UncheckableDep" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Given dependency cannot be checked due to the number of transitive use deps in it.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.visibility.UncheckableDep.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.visibility.UncheckableDep.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.visibility.UncheckableDep.name">
+<code class="sig-name descname">name</code><em class="property"> = 'UncheckableDep'</em><a class="headerlink" href="#pkgcheck.checks.visibility.UncheckableDep.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.visibility.VisibilityCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.visibility.</code><code class="sig-name descname">VisibilityCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">profile_addon</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/visibility.html#VisibilityCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.visibility.VisibilityCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.feeds.html#pkgcheck.feeds.EvaluateDepSet" title="pkgcheck.feeds.EvaluateDepSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.feeds.EvaluateDepSet</span></code></a>, <a class="reference internal" href="pkgcheck.feeds.html#pkgcheck.feeds.QueryCache" title="pkgcheck.feeds.QueryCache"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.feeds.QueryCache</span></code></a>, <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.Check" title="pkgcheck.checks.Check"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.Check</span></code></a></p>
+<p>Visibility dependency scans.</p>
+<p>Check that at least one solution is possible for a pkg, checking all
+profiles (defined by arch.list) visibility modifiers per stable/unstable
+keyword.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.visibility.VisibilityCheck.check_visibility_vcs">
+<code class="sig-name descname">check_visibility_vcs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/visibility.html#VisibilityCheck.check_visibility_vcs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.visibility.VisibilityCheck.check_visibility_vcs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.visibility.VisibilityCheck.feed">
+<code class="sig-name descname">feed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/visibility.html#VisibilityCheck.feed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.visibility.VisibilityCheck.feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle functionality against the passed in item.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.visibility.VisibilityCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.visibility.NonexistentDeps'&gt;, &lt;class 'pkgcheck.checks.visibility.UncheckableDep'&gt;, &lt;class 'pkgcheck.checks.visibility.NonsolvableDepsInExp'&gt;, &lt;class 'pkgcheck.checks.visibility.NonsolvableDepsInStable'&gt;, &lt;class 'pkgcheck.checks.visibility.NonsolvableDepsInDev'&gt;, &lt;class 'pkgcheck.checks.visibility.VisibleVcsPkg'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.visibility.VisibilityCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.visibility.VisibilityCheck.process_depset">
+<code class="sig-name descname">process_depset</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">attr</span></em>, <em class="sig-param"><span class="n">depset</span></em>, <em class="sig-param"><span class="n">edepset</span></em>, <em class="sig-param"><span class="n">profiles</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/visibility.html#VisibilityCheck.process_depset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.visibility.VisibilityCheck.process_depset" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.visibility.VisibilityCheck.required_addons">
+<code class="sig-name descname">required_addons</code><em class="property"> = (&lt;class 'pkgcheck.profiles.ProfileAddon'&gt;,)</em><a class="headerlink" href="#pkgcheck.checks.visibility.VisibilityCheck.required_addons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.visibility.VisibilityCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='version' &#64;0x7f81a648f5b0&gt;</em><a class="headerlink" href="#pkgcheck.checks.visibility.VisibilityCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.visibility.VisibleVcsPkg">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.visibility.</code><code class="sig-name descname">VisibleVcsPkg</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">arch</span></em>, <em class="sig-param"><span class="n">profile</span></em>, <em class="sig-param"><span class="n">num_profiles</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/visibility.html#VisibleVcsPkg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.visibility.VisibleVcsPkg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Package is VCS-based, but visible.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.visibility.VisibleVcsPkg.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.visibility.VisibleVcsPkg.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.visibility.VisibleVcsPkg.name">
+<code class="sig-name descname">name</code><em class="property"> = 'VisibleVcsPkg'</em><a class="headerlink" href="#pkgcheck.checks.visibility.VisibleVcsPkg.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcheck.checks.visibility.visit_atoms">
+<code class="sig-prename descclassname">pkgcheck.checks.visibility.</code><code class="sig-name descname">visit_atoms</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">stream</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/visibility.html#visit_atoms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.visibility.visit_atoms" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/pkgcheck.checks.visibility.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.visibility module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

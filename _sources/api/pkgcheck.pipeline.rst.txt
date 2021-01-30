@@ -1,0 +1,7 @@
+pkgcheck.pipeline module
+========================
+
+.. automodule:: pkgcheck.pipeline
+   :members:
+   :undoc-members:
+   :show-inheritance:

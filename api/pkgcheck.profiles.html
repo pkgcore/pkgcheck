@@ -1,0 +1,179 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.profiles module &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.profiles module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcheck.profiles">
+<span id="pkgcheck-profiles-module"></span><h1>pkgcheck.profiles module<a class="headerlink" href="#module-pkgcheck.profiles" title="Permalink to this headline">¶</a></h1>
+<p>Profile specific support and addon.</p>
+<dl class="py class">
+<dt id="pkgcheck.profiles.ProfileAddon">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.profiles.</code><code class="sig-name descname">ProfileAddon</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">arches_addon</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/profiles.html#ProfileAddon"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.profiles.ProfileAddon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.caches.html#pkgcheck.caches.CachedAddon" title="pkgcheck.caches.CachedAddon"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.caches.CachedAddon</span></code></a></p>
+<p>Addon supporting ebuild repository profiles.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.profiles.ProfileAddon.cache">
+<code class="sig-name descname">cache</code><em class="property"> = CacheData(type='profiles', file='profiles.pickle', version=2)</em><a class="headerlink" href="#pkgcheck.profiles.ProfileAddon.cache" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.profiles.ProfileAddon.get">
+<code class="sig-name descname">get</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">default</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/profiles.html#ProfileAddon.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.profiles.ProfileAddon.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return profiles matching a given keyword with a fallback if none exist.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.profiles.ProfileAddon.identify_profiles">
+<code class="sig-name descname">identify_profiles</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/profiles.html#ProfileAddon.identify_profiles"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.profiles.ProfileAddon.identify_profiles" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.profiles.ProfileAddon.mangle_argparser">
+<em class="property">classmethod </em><code class="sig-name descname">mangle_argparser</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parser</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/profiles.html#ProfileAddon.mangle_argparser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.profiles.ProfileAddon.mangle_argparser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add extra options and/or groups to the argparser.</p>
+<p>This hook is always triggered, even if the checker is not
+activated (because it runs before the commandline is parsed).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>parser</strong> – an C{argparse.ArgumentParser} instance.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.profiles.ProfileAddon.non_profile_dirs">
+<code class="sig-name descname">non_profile_dirs</code><em class="property"> = frozenset({'desc', 'updates'})</em><a class="headerlink" href="#pkgcheck.profiles.ProfileAddon.non_profile_dirs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.profiles.ProfileAddon.profile_data">
+<code class="sig-name descname">profile_data</code><a class="headerlink" href="#pkgcheck.profiles.ProfileAddon.profile_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mapping of profile age and file sets used to check cache viability.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.profiles.ProfileAddon.required_addons">
+<code class="sig-name descname">required_addons</code><em class="property"> = (&lt;class 'pkgcheck.addons.ArchesAddon'&gt;,)</em><a class="headerlink" href="#pkgcheck.profiles.ProfileAddon.required_addons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.profiles.ProfileAddon.update_cache">
+<code class="sig-name descname">update_cache</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">force</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/profiles.html#ProfileAddon.update_cache"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.profiles.ProfileAddon.update_cache" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update related cache and push updates to disk.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.profiles.ProfileData">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.profiles.</code><code class="sig-name descname">ProfileData</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">profile_name</span></em>, <em class="sig-param"><span class="n">key</span></em>, <em class="sig-param"><span class="n">provides</span></em>, <em class="sig-param"><span class="n">vfilter</span></em>, <em class="sig-param"><span class="n">iuse_effective</span></em>, <em class="sig-param"><span class="n">use</span></em>, <em class="sig-param"><span class="n">pkg_use</span></em>, <em class="sig-param"><span class="n">masked_use</span></em>, <em class="sig-param"><span class="n">forced_use</span></em>, <em class="sig-param"><span class="n">lookup_cache</span></em>, <em class="sig-param"><span class="n">insoluble</span></em>, <em class="sig-param"><span class="n">status</span></em>, <em class="sig-param"><span class="n">deprecated</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/profiles.html#ProfileData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.profiles.ProfileData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<dl class="py method">
+<dt id="pkgcheck.profiles.ProfileData.identify_use">
+<code class="sig-name descname">identify_use</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="n">known_flags</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/profiles.html#ProfileData.identify_use"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.profiles.ProfileData.identify_use" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.profiles.ProfileNode">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.profiles.</code><code class="sig-name descname">ProfileNode</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">a</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kw</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/profiles.html#ProfileNode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.profiles.ProfileNode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcore.ebuild.profiles.ProfileNode</span></code></p>
+<p>Re-inherited to disable instance caching.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.profiles.ProfilesArgs">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.profiles.</code><code class="sig-name descname">ProfilesArgs</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">option_strings</span></em>, <em class="sig-param"><span class="n">dest</span></em>, <em class="sig-param"><span class="n">nargs</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">const</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">default</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">type</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">choices</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">required</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">help</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">metavar</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/profiles.html#ProfilesArgs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.profiles.ProfilesArgs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">snakeoil.cli.arghparse.CommaSeparatedNegations</span></code></p>
+<p>Parse profiles args for the ProfileAddon.</p>
+<dl class="py method">
+<dt id="pkgcheck.profiles.ProfilesArgs.norm_name">
+<em class="property">static </em><code class="sig-name descname">norm_name</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">repo</span></em>, <em class="sig-param"><span class="n">s</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/profiles.html#ProfilesArgs.norm_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.profiles.ProfilesArgs.norm_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Expand status keywords and format paths.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/pkgcheck.profiles.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.profiles module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

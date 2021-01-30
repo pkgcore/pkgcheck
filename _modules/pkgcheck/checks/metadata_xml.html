@@ -1,0 +1,561 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.checks.metadata_xml &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../checks.html" accesskey="U">pkgcheck.checks</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.metadata_xml</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcheck.checks.metadata_xml</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">difflib</span> <span class="kn">import</span> <span class="n">SequenceMatcher</span>
+
+<span class="kn">from</span> <span class="nn">lxml</span> <span class="kn">import</span> <span class="n">etree</span>
+<span class="kn">from</span> <span class="nn">pkgcore</span> <span class="kn">import</span> <span class="n">const</span> <span class="k">as</span> <span class="n">pkgcore_const</span>
+<span class="kn">from</span> <span class="nn">pkgcore.ebuild.atom</span> <span class="kn">import</span> <span class="n">MalformedAtom</span><span class="p">,</span> <span class="n">atom</span>
+<span class="kn">from</span> <span class="nn">snakeoil.osutils</span> <span class="kn">import</span> <span class="n">pjoin</span>
+<span class="kn">from</span> <span class="nn">snakeoil.strings</span> <span class="kn">import</span> <span class="n">pluralism</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">base</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">sources</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">Check</span>
+
+
+<span class="k">class</span> <span class="nc">_MissingXml</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Required XML file is missing.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_attr</span><span class="si">}</span><span class="s1"> is missing </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="si">}</span><span class="s1">&#39;</span>
+
+
+<span class="k">class</span> <span class="nc">_BadlyFormedXml</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;XML isn&#39;t well formed.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">error</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_attr</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="si">}</span><span class="s1"> is not well formed xml: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="si">}</span><span class="s1">&#39;</span>
+
+
+<span class="k">class</span> <span class="nc">_InvalidXml</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;XML fails XML Schema validation.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_attr</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="si">}</span><span class="s1"> violates metadata.xsd:</span><span class="se">\n</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s1">&#39;</span>
+
+
+<span class="k">class</span> <span class="nc">_MetadataXmlInvalidPkgRef</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;metadata.xml &lt;pkg/&gt; references unknown/invalid package.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">pkgtext</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pkgtext</span> <span class="o">=</span> <span class="n">pkgtext</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_attr</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="si">}</span><span class="s1"> &lt;pkg/&gt; &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;references unknown/invalid package: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">pkgtext</span><span class="si">!r}</span><span class="s1">&#39;</span>
+        <span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">_MetadataXmlInvalidCatRef</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;metadata.xml &lt;cat/&gt; references unknown/invalid category.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">cattext</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cattext</span> <span class="o">=</span> <span class="n">cattext</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_attr</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="si">}</span><span class="s1"> &lt;cat/&gt; references &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;unknown/invalid category: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">cattext</span><span class="si">!r}</span><span class="s1">&#39;</span>
+        <span class="p">)</span>
+
+
+<div class="viewcode-block" id="MaintainerNeeded"><a class="viewcode-back" href="../../../api/pkgcheck.checks.metadata_xml.html#pkgcheck.checks.metadata_xml.MaintainerNeeded">[docs]</a><span class="k">class</span> <span class="nc">MaintainerNeeded</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Package with missing or invalid maintainer-needed comment in metadata.xml.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">needed</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">needed</span> <span class="o">=</span> <span class="n">needed</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">needed</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="si">}</span><span class="s1">: missing maintainer-needed comment&#39;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="si">}</span><span class="s1">: invalid maintainer-needed comment&#39;</span></div>
+
+
+<div class="viewcode-block" id="MaintainerWithoutProxy"><a class="viewcode-back" href="../../../api/pkgcheck.checks.metadata_xml.html#pkgcheck.checks.metadata_xml.MaintainerWithoutProxy">[docs]</a><span class="k">class</span> <span class="nc">MaintainerWithoutProxy</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Package has a proxied maintainer without a proxy.</span>
+
+<span class="sd">    All package maintainers have non-@gentoo.org e-mail addresses. Most likely,</span>
+<span class="sd">    this means that the package is maintained by a proxied maintainer but there</span>
+<span class="sd">    is no explicit proxy (developer or project) listed. This means no Gentoo</span>
+<span class="sd">    developer will be CC-ed on bug reports, and most likely no developer</span>
+<span class="sd">    oversees the proxied maintainer&#39;s activity.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">maintainers</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maintainers</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">maintainers</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">maintainers</span><span class="p">)</span>
+        <span class="n">maintainers</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">maintainers</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="si">}</span><span class="s1">: proxied maintainer</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1"> missing proxy dev/project: </span><span class="si">{</span><span class="n">maintainers</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="StaleProxyMaintProject"><a class="viewcode-back" href="../../../api/pkgcheck.checks.metadata_xml.html#pkgcheck.checks.metadata_xml.StaleProxyMaintProject">[docs]</a><span class="k">class</span> <span class="nc">StaleProxyMaintProject</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Package lists proxy-maint project but has no proxied maintainers.</span>
+
+<span class="sd">    The package explicitly lists proxy-maint@g.o as the only maintainer.</span>
+<span class="sd">    Most likely, this means that the proxied maintainer has been removed</span>
+<span class="sd">    but proxy-maint was left over.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="si">}</span><span class="s1">: proxy-maint maintainer with no proxies&#39;</span></div>
+
+
+<div class="viewcode-block" id="NonexistentProjectMaintainer"><a class="viewcode-back" href="../../../api/pkgcheck.checks.metadata_xml.html#pkgcheck.checks.metadata_xml.NonexistentProjectMaintainer">[docs]</a><span class="k">class</span> <span class="nc">NonexistentProjectMaintainer</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Package specifying nonexistent project as a maintainer.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">emails</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emails</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">emails</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">emails</span><span class="p">)</span>
+        <span class="n">emails</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">emails</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="si">}</span><span class="s1">: nonexistent project maintainer</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">emails</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="WrongMaintainerType"><a class="viewcode-back" href="../../../api/pkgcheck.checks.metadata_xml.html#pkgcheck.checks.metadata_xml.WrongMaintainerType">[docs]</a><span class="k">class</span> <span class="nc">WrongMaintainerType</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A person-type maintainer matches an existing project.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">emails</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emails</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">emails</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">emails</span><span class="p">)</span>
+        <span class="n">emails</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">emails</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="si">}</span><span class="s1">: project maintainer</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1"> with type=&quot;person&quot;: </span><span class="si">{</span><span class="n">emails</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="PkgMissingMetadataXml"><a class="viewcode-back" href="../../../api/pkgcheck.checks.metadata_xml.html#pkgcheck.checks.metadata_xml.PkgMissingMetadataXml">[docs]</a><span class="k">class</span> <span class="nc">PkgMissingMetadataXml</span><span class="p">(</span><span class="n">_MissingXml</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Package is missing metadata.xml.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="CatMissingMetadataXml"><a class="viewcode-back" href="../../../api/pkgcheck.checks.metadata_xml.html#pkgcheck.checks.metadata_xml.CatMissingMetadataXml">[docs]</a><span class="k">class</span> <span class="nc">CatMissingMetadataXml</span><span class="p">(</span><span class="n">_MissingXml</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">CategoryResult</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Category is missing metadata.xml.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="PkgInvalidXml"><a class="viewcode-back" href="../../../api/pkgcheck.checks.metadata_xml.html#pkgcheck.checks.metadata_xml.PkgInvalidXml">[docs]</a><span class="k">class</span> <span class="nc">PkgInvalidXml</span><span class="p">(</span><span class="n">_InvalidXml</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Invalid package metadata.xml.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="CatInvalidXml"><a class="viewcode-back" href="../../../api/pkgcheck.checks.metadata_xml.html#pkgcheck.checks.metadata_xml.CatInvalidXml">[docs]</a><span class="k">class</span> <span class="nc">CatInvalidXml</span><span class="p">(</span><span class="n">_InvalidXml</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">CategoryResult</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Invalid category metadata.xml.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="PkgBadlyFormedXml"><a class="viewcode-back" href="../../../api/pkgcheck.checks.metadata_xml.html#pkgcheck.checks.metadata_xml.PkgBadlyFormedXml">[docs]</a><span class="k">class</span> <span class="nc">PkgBadlyFormedXml</span><span class="p">(</span><span class="n">_BadlyFormedXml</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Badly formed package metadata.xml.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="CatBadlyFormedXml"><a class="viewcode-back" href="../../../api/pkgcheck.checks.metadata_xml.html#pkgcheck.checks.metadata_xml.CatBadlyFormedXml">[docs]</a><span class="k">class</span> <span class="nc">CatBadlyFormedXml</span><span class="p">(</span><span class="n">_BadlyFormedXml</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">CategoryResult</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Badly formed category metadata.xml.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="PkgMetadataXmlInvalidPkgRef"><a class="viewcode-back" href="../../../api/pkgcheck.checks.metadata_xml.html#pkgcheck.checks.metadata_xml.PkgMetadataXmlInvalidPkgRef">[docs]</a><span class="k">class</span> <span class="nc">PkgMetadataXmlInvalidPkgRef</span><span class="p">(</span><span class="n">_MetadataXmlInvalidPkgRef</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Invalid package reference in package metadata.xml.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="CatMetadataXmlInvalidPkgRef"><a class="viewcode-back" href="../../../api/pkgcheck.checks.metadata_xml.html#pkgcheck.checks.metadata_xml.CatMetadataXmlInvalidPkgRef">[docs]</a><span class="k">class</span> <span class="nc">CatMetadataXmlInvalidPkgRef</span><span class="p">(</span><span class="n">_MetadataXmlInvalidPkgRef</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">CategoryResult</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Invalid package reference in category metadata.xml.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="PkgMetadataXmlInvalidCatRef"><a class="viewcode-back" href="../../../api/pkgcheck.checks.metadata_xml.html#pkgcheck.checks.metadata_xml.PkgMetadataXmlInvalidCatRef">[docs]</a><span class="k">class</span> <span class="nc">PkgMetadataXmlInvalidCatRef</span><span class="p">(</span><span class="n">_MetadataXmlInvalidCatRef</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Invalid category reference in package metadata.xml.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="CatMetadataXmlInvalidCatRef"><a class="viewcode-back" href="../../../api/pkgcheck.checks.metadata_xml.html#pkgcheck.checks.metadata_xml.CatMetadataXmlInvalidCatRef">[docs]</a><span class="k">class</span> <span class="nc">CatMetadataXmlInvalidCatRef</span><span class="p">(</span><span class="n">_MetadataXmlInvalidCatRef</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">CategoryResult</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Invalid category reference in category metadata.xml.&quot;&quot;&quot;</span></div>
+
+
+<span class="k">class</span> <span class="nc">_MetadataXmlIndentation</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Inconsistent indentation in metadata.xml file.</span>
+
+<span class="sd">    Either all tabs or all spaces should be used, not a mixture of both.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">lines</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lines</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">)</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="si">}</span><span class="s1">: metadata.xml has inconsistent indentation on line</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">lines</span><span class="si">}</span><span class="s1">&#39;</span>
+
+
+<div class="viewcode-block" id="CatMetadataXmlIndentation"><a class="viewcode-back" href="../../../api/pkgcheck.checks.metadata_xml.html#pkgcheck.checks.metadata_xml.CatMetadataXmlIndentation">[docs]</a><span class="k">class</span> <span class="nc">CatMetadataXmlIndentation</span><span class="p">(</span><span class="n">_MetadataXmlIndentation</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">CategoryResult</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Inconsistent indentation in category metadata.xml file.</span>
+
+<span class="sd">    Either all tabs or all spaces should be used, not a mixture of both.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="PkgMetadataXmlIndentation"><a class="viewcode-back" href="../../../api/pkgcheck.checks.metadata_xml.html#pkgcheck.checks.metadata_xml.PkgMetadataXmlIndentation">[docs]</a><span class="k">class</span> <span class="nc">PkgMetadataXmlIndentation</span><span class="p">(</span><span class="n">_MetadataXmlIndentation</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Inconsistent indentation in package metadata.xml file.</span>
+
+<span class="sd">    Either all tabs or all spaces should be used, not a mixture of both.</span>
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+
+<span class="k">class</span> <span class="nc">_MetadataXmlEmptyElement</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Empty element in metadata.xml file.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">element</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="n">filename</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">element</span> <span class="o">=</span> <span class="n">element</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line</span> <span class="o">=</span> <span class="n">line</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="si">}</span><span class="s1">: empty element </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">element</span><span class="si">!r}</span><span class="s1"> on line </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">line</span><span class="si">}</span><span class="s1">&#39;</span>
+
+
+<div class="viewcode-block" id="CatMetadataXmlEmptyElement"><a class="viewcode-back" href="../../../api/pkgcheck.checks.metadata_xml.html#pkgcheck.checks.metadata_xml.CatMetadataXmlEmptyElement">[docs]</a><span class="k">class</span> <span class="nc">CatMetadataXmlEmptyElement</span><span class="p">(</span><span class="n">_MetadataXmlEmptyElement</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">CategoryResult</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Empty element in category metadata.xml file.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="PkgMetadataXmlEmptyElement"><a class="viewcode-back" href="../../../api/pkgcheck.checks.metadata_xml.html#pkgcheck.checks.metadata_xml.PkgMetadataXmlEmptyElement">[docs]</a><span class="k">class</span> <span class="nc">PkgMetadataXmlEmptyElement</span><span class="p">(</span><span class="n">_MetadataXmlEmptyElement</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Empty element in package metadata.xml file.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="RedundantLongDescription"><a class="viewcode-back" href="../../../api/pkgcheck.checks.metadata_xml.html#pkgcheck.checks.metadata_xml.RedundantLongDescription">[docs]</a><span class="k">class</span> <span class="nc">RedundantLongDescription</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Package&#39;s longdescription element in metadata.xml and DESCRIPTION are interchangeable.</span>
+
+<span class="sd">    The longdescription element is for providing extended information that</span>
+<span class="sd">    doesn&#39;t fit in DESCRIPTION.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">msg</span></div>
+
+
+<span class="k">class</span> <span class="nc">_XmlBaseCheck</span><span class="p">(</span><span class="n">Check</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Base class for metadata.xml scans.&quot;&quot;&quot;</span>
+
+    <span class="n">schema</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">misformed_error</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">invalid_error</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">missing_error</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">repo_base</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">target_repo</span><span class="o">.</span><span class="n">location</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pkgref_cache</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># content validation checks to run after parsing XML doc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_checks</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_check_&#39;</span><span class="p">))</span>
+
+        <span class="c1"># Prefer xsd file from the target repository or its masters, falling</span>
+        <span class="c1"># back to the file installed with pkgcore.</span>
+        <span class="k">for</span> <span class="n">repo</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">target_repo</span><span class="o">.</span><span class="n">trees</span><span class="p">):</span>
+            <span class="n">metadata_xsd</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="s1">&#39;metadata&#39;</span><span class="p">,</span> <span class="s1">&#39;xml-schema&#39;</span><span class="p">,</span> <span class="s1">&#39;metadata.xsd&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">metadata_xsd</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">schema</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">XMLSchema</span><span class="p">(</span><span class="n">etree</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">metadata_xsd</span><span class="p">))</span>
+                    <span class="k">break</span>
+                <span class="k">except</span> <span class="n">etree</span><span class="o">.</span><span class="n">XMLSchemaParseError</span><span class="p">:</span>
+                    <span class="c1"># ignore invalid xsd files</span>
+                    <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">metadata_xsd</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">pkgcore_const</span><span class="o">.</span><span class="n">DATA_PATH</span><span class="p">,</span> <span class="s1">&#39;xml-schema&#39;</span><span class="p">,</span> <span class="s1">&#39;metadata.xsd&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">schema</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">XMLSchema</span><span class="p">(</span><span class="n">etree</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">metadata_xsd</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_check_doc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">loc</span><span class="p">,</span> <span class="n">doc</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Perform additional document structure checks.&quot;&quot;&quot;</span>
+        <span class="c1"># find all root descendant elements that are empty</span>
+        <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">doc</span><span class="o">.</span><span class="n">getroot</span><span class="p">()</span><span class="o">.</span><span class="n">iterdescendants</span><span class="p">():</span>
+            <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">el</span><span class="o">.</span><span class="n">getchildren</span><span class="p">()</span> <span class="ow">and</span> <span class="p">(</span><span class="n">el</span><span class="o">.</span><span class="n">text</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">el</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+                    <span class="ow">and</span> <span class="ow">not</span> <span class="n">el</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s1">&#39;stabilize-allarches&#39;</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">empty_element</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">loc</span><span class="p">),</span> <span class="n">el</span><span class="o">.</span><span class="n">tag</span><span class="p">,</span> <span class="n">el</span><span class="o">.</span><span class="n">sourceline</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">doc</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;.//cat&#39;</span><span class="p">):</span>
+            <span class="n">c</span> <span class="o">=</span> <span class="n">el</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">search_repo</span><span class="o">.</span><span class="n">categories</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">catref_error</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">loc</span><span class="p">),</span> <span class="n">c</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">doc</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s1">&#39;.//pkg&#39;</span><span class="p">):</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="n">el</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">p</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkgref_cache</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">a</span> <span class="o">=</span> <span class="n">atom</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+                    <span class="n">found</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">search_repo</span><span class="o">.</span><span class="n">has_match</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">MalformedAtom</span><span class="p">:</span>
+                    <span class="n">found</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pkgref_cache</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="n">found</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkgref_cache</span><span class="p">[</span><span class="n">p</span><span class="p">]:</span>
+                <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">pkgref_error</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">loc</span><span class="p">),</span> <span class="n">p</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_check_whitespace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">loc</span><span class="p">,</span> <span class="n">doc</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Check for indentation consistency.&quot;&quot;&quot;</span>
+        <span class="n">orig_indent</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">indents</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">loc</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">line</span><span class="p">[:</span><span class="o">-</span><span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">lstrip</span><span class="p">())]:</span>
+                    <span class="k">if</span> <span class="n">i</span> <span class="o">!=</span> <span class="n">orig_indent</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">orig_indent</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                            <span class="n">orig_indent</span> <span class="o">=</span> <span class="n">i</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">indents</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">lineno</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">indents</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">indent_error</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">loc</span><span class="p">),</span> <span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">indents</span><span class="p">)),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_format_lxml_errors</span><span class="p">(</span><span class="n">error_log</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">error_log</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="sa">f</span><span class="s1">&#39;line </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">line</span><span class="si">}</span><span class="s1">, col </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">column</span><span class="si">}</span><span class="s1">: (</span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">type_name</span><span class="si">}</span><span class="s1">) </span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s1">&#39;</span>
+
+    <span class="k">def</span> <span class="nf">_parse_xml</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">loc</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">doc</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">loc</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">IOError</span><span class="p">,</span> <span class="ne">OSError</span><span class="p">):</span>
+            <span class="c1"># it&#39;s only an error when missing in the main gentoo repo</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">gentoo_repo</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">missing_error</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">loc</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+            <span class="k">return</span>
+        <span class="k">except</span> <span class="n">etree</span><span class="o">.</span><span class="n">XMLSyntaxError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">misformed_error</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">loc</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># note: while doc is available, do not pass it here as it may</span>
+        <span class="c1"># trigger undefined behavior due to incorrect structure</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="n">doc</span><span class="p">):</span>
+            <span class="n">message</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_format_lxml_errors</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">schema</span><span class="o">.</span><span class="n">error_log</span><span class="p">))</span>
+            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">invalid_error</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">loc</span><span class="p">),</span> <span class="n">message</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># run all post parsing/validation checks</span>
+        <span class="k">for</span> <span class="n">check</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_checks</span><span class="p">:</span>
+            <span class="k">yield from</span> <span class="n">check</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="n">loc</span><span class="p">,</span> <span class="n">doc</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">feed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkgset</span><span class="p">):</span>
+        <span class="n">pkg</span> <span class="o">=</span> <span class="n">pkgset</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">loc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_xml_location</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span>
+        <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_xml</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="n">loc</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="PackageMetadataXmlCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.metadata_xml.html#pkgcheck.checks.metadata_xml.PackageMetadataXmlCheck">[docs]</a><span class="k">class</span> <span class="nc">PackageMetadataXmlCheck</span><span class="p">(</span><span class="n">_XmlBaseCheck</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Package level metadata.xml scans.&quot;&quot;&quot;</span>
+
+    <span class="n">_source</span> <span class="o">=</span> <span class="n">sources</span><span class="o">.</span><span class="n">PackageRepoSource</span>
+    <span class="n">misformed_error</span> <span class="o">=</span> <span class="n">PkgBadlyFormedXml</span>
+    <span class="n">invalid_error</span> <span class="o">=</span> <span class="n">PkgInvalidXml</span>
+    <span class="n">missing_error</span> <span class="o">=</span> <span class="n">PkgMissingMetadataXml</span>
+    <span class="n">catref_error</span> <span class="o">=</span> <span class="n">PkgMetadataXmlInvalidCatRef</span>
+    <span class="n">pkgref_error</span> <span class="o">=</span> <span class="n">PkgMetadataXmlInvalidPkgRef</span>
+    <span class="n">indent_error</span> <span class="o">=</span> <span class="n">PkgMetadataXmlIndentation</span>
+    <span class="n">empty_element</span> <span class="o">=</span> <span class="n">PkgMetadataXmlEmptyElement</span>
+
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span>
+        <span class="n">PkgBadlyFormedXml</span><span class="p">,</span> <span class="n">PkgInvalidXml</span><span class="p">,</span> <span class="n">PkgMissingMetadataXml</span><span class="p">,</span>
+        <span class="n">PkgMetadataXmlInvalidPkgRef</span><span class="p">,</span> <span class="n">PkgMetadataXmlInvalidCatRef</span><span class="p">,</span>
+        <span class="n">PkgMetadataXmlIndentation</span><span class="p">,</span> <span class="n">PkgMetadataXmlEmptyElement</span><span class="p">,</span> <span class="n">MaintainerNeeded</span><span class="p">,</span>
+        <span class="n">MaintainerWithoutProxy</span><span class="p">,</span> <span class="n">StaleProxyMaintProject</span><span class="p">,</span> <span class="n">RedundantLongDescription</span><span class="p">,</span>
+        <span class="n">NonexistentProjectMaintainer</span><span class="p">,</span> <span class="n">WrongMaintainerType</span><span class="p">,</span>
+    <span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">_check_maintainers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">loc</span><span class="p">,</span> <span class="n">doc</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Validate maintainers in package metadata for the gentoo repo.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">gentoo_repo</span><span class="p">:</span>
+            <span class="n">maintainer_needed</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
+                <span class="n">c</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;maintainer-needed&#39;</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">doc</span><span class="o">.</span><span class="n">xpath</span><span class="p">(</span><span class="s1">&#39;//comment()&#39;</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">pkg</span><span class="o">.</span><span class="n">maintainers</span><span class="p">:</span>
+                <span class="c1"># check for invalid maintainer-needed comment</span>
+                <span class="k">if</span> <span class="n">maintainer_needed</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">MaintainerNeeded</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">loc</span><span class="p">),</span> <span class="n">maintainer_needed</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+                <span class="c1"># check proxy maintainers</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">email</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;@gentoo.org&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">maintainers</span><span class="p">):</span>
+                    <span class="n">maintainers</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">pkg</span><span class="o">.</span><span class="n">maintainers</span><span class="p">))</span>
+                    <span class="k">yield</span> <span class="n">MaintainerWithoutProxy</span><span class="p">(</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">loc</span><span class="p">),</span> <span class="n">maintainers</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="p">(</span><span class="nb">all</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">email</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;@gentoo.org&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">maintainers</span><span class="p">)</span> <span class="ow">and</span>
+                      <span class="s1">&#39;proxy-maint@gentoo.org&#39;</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">maintainers</span><span class="p">):</span>
+                    <span class="k">yield</span> <span class="n">StaleProxyMaintProject</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">loc</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="n">maintainer_needed</span><span class="p">:</span>
+                <span class="c1"># check for missing maintainer-needed comment</span>
+                <span class="k">yield</span> <span class="n">MaintainerNeeded</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">loc</span><span class="p">),</span> <span class="n">maintainer_needed</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+
+            <span class="c1"># check maintainer validity</span>
+            <span class="k">if</span> <span class="n">projects</span> <span class="o">:=</span> <span class="nb">set</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">projects_xml</span><span class="o">.</span><span class="n">projects</span><span class="p">):</span>
+                <span class="n">nonexistent</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">wrong_maintainers</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">maintainers</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">m</span><span class="o">.</span><span class="n">maint_type</span> <span class="o">==</span> <span class="s1">&#39;project&#39;</span> <span class="ow">and</span> <span class="n">m</span><span class="o">.</span><span class="n">email</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">projects</span><span class="p">:</span>
+                        <span class="n">nonexistent</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">email</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">m</span><span class="o">.</span><span class="n">maint_type</span> <span class="o">==</span> <span class="s1">&#39;person&#39;</span> <span class="ow">and</span> <span class="n">m</span><span class="o">.</span><span class="n">email</span> <span class="ow">in</span> <span class="n">projects</span><span class="p">:</span>
+                        <span class="n">wrong_maintainers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">m</span><span class="o">.</span><span class="n">email</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">nonexistent</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">NonexistentProjectMaintainer</span><span class="p">(</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">loc</span><span class="p">),</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">nonexistent</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">wrong_maintainers</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">WrongMaintainerType</span><span class="p">(</span>
+                        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">loc</span><span class="p">),</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">wrong_maintainers</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_check_longdescription</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">loc</span><span class="p">,</span> <span class="n">doc</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">pkg</span><span class="o">.</span><span class="n">longdescription</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">match_ratio</span> <span class="o">=</span> <span class="n">SequenceMatcher</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">pkg</span><span class="o">.</span><span class="n">description</span><span class="p">,</span> <span class="n">pkg</span><span class="o">.</span><span class="n">longdescription</span><span class="p">)</span><span class="o">.</span><span class="n">ratio</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">match_ratio</span> <span class="o">&gt;</span> <span class="mf">0.75</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;metadata.xml longdescription closely matches DESCRIPTION&#39;</span>
+                <span class="k">yield</span> <span class="n">RedundantLongDescription</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">longdescription</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">100</span><span class="p">:</span>
+                <span class="n">msg</span> <span class="o">=</span> <span class="s1">&#39;metadata.xml longdescription is too short&#39;</span>
+                <span class="k">yield</span> <span class="n">RedundantLongDescription</span><span class="p">(</span><span class="n">msg</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_xml_location</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the metadata.xml location for a given package.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">ebuild</span><span class="o">.</span><span class="n">path</span><span class="p">),</span> <span class="s1">&#39;metadata.xml&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CategoryMetadataXmlCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.metadata_xml.html#pkgcheck.checks.metadata_xml.CategoryMetadataXmlCheck">[docs]</a><span class="k">class</span> <span class="nc">CategoryMetadataXmlCheck</span><span class="p">(</span><span class="n">_XmlBaseCheck</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Category level metadata.xml scans.&quot;&quot;&quot;</span>
+
+    <span class="n">_source</span> <span class="o">=</span> <span class="p">(</span><span class="n">sources</span><span class="o">.</span><span class="n">CategoryRepoSource</span><span class="p">,</span> <span class="p">(),</span> <span class="p">((</span><span class="s1">&#39;source&#39;</span><span class="p">,</span> <span class="n">sources</span><span class="o">.</span><span class="n">RawRepoSource</span><span class="p">),))</span>
+    <span class="n">misformed_error</span> <span class="o">=</span> <span class="n">CatBadlyFormedXml</span>
+    <span class="n">invalid_error</span> <span class="o">=</span> <span class="n">CatInvalidXml</span>
+    <span class="n">missing_error</span> <span class="o">=</span> <span class="n">CatMissingMetadataXml</span>
+    <span class="n">catref_error</span> <span class="o">=</span> <span class="n">CatMetadataXmlInvalidCatRef</span>
+    <span class="n">pkgref_error</span> <span class="o">=</span> <span class="n">CatMetadataXmlInvalidPkgRef</span>
+    <span class="n">indent_error</span> <span class="o">=</span> <span class="n">CatMetadataXmlIndentation</span>
+    <span class="n">empty_element</span> <span class="o">=</span> <span class="n">CatMetadataXmlEmptyElement</span>
+
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span>
+        <span class="n">CatBadlyFormedXml</span><span class="p">,</span> <span class="n">CatInvalidXml</span><span class="p">,</span> <span class="n">CatMissingMetadataXml</span><span class="p">,</span>
+        <span class="n">CatMetadataXmlInvalidPkgRef</span><span class="p">,</span> <span class="n">CatMetadataXmlInvalidCatRef</span><span class="p">,</span>
+        <span class="n">CatMetadataXmlIndentation</span><span class="p">,</span> <span class="n">CatMetadataXmlEmptyElement</span><span class="p">,</span>
+    <span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">_get_xml_location</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the metadata.xml location for a given package&#39;s category.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">repo_base</span><span class="p">,</span> <span class="n">pkg</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="s1">&#39;metadata.xml&#39;</span><span class="p">)</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../checks.html" >pkgcheck.checks</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.metadata_xml</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

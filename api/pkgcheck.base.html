@@ -1,0 +1,265 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.base module &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.base module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcheck.base">
+<span id="pkgcheck-base-module"></span><h1>pkgcheck.base module<a class="headerlink" href="#module-pkgcheck.base" title="Permalink to this headline">¶</a></h1>
+<p>Core classes and interfaces.</p>
+<p>This defines a couple of standard feed types and scopes. Currently
+feed types are strings and scopes are integers, but you should use the
+symbolic names wherever possible (everywhere except for adding a new
+feed type) since this might change in the future. Scopes are integers,
+but do not rely on that either.</p>
+<p>Feed types have to match exactly. Scopes are ordered: they define a
+minimally accepted scope.</p>
+<dl class="py class">
+<dt id="pkgcheck.base.Addon">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.base.</code><code class="sig-name descname">Addon</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/base.html#Addon"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.base.Addon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Base class for extra functionality for pkgcheck other than a check.</p>
+<p>The checkers can depend on one or more of these. They will get
+called at various points where they can extend pkgcheck (if any
+active checks depend on the addon).</p>
+<p>These methods are not part of the checker interface because that
+would mean addon functionality shared by checkers would run twice.
+They are not plugins because they do not do anything useful if no
+checker depending on them is active.</p>
+<p>This interface is not finished. Expect it to grow more methods
+(but if not overridden they will be no-ops).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Variables</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#pkgcheck.base.Addon.required_addons" title="pkgcheck.base.Addon.required_addons"><strong>required_addons</strong></a> – sequence of addon dependencies</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="pkgcheck.base.Addon.mangle_argparser">
+<em class="property">static </em><code class="sig-name descname">mangle_argparser</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">parser</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/base.html#Addon.mangle_argparser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.base.Addon.mangle_argparser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add extra options and/or groups to the argparser.</p>
+<p>This hook is always triggered, even if the checker is not
+activated (because it runs before the commandline is parsed).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>parser</strong> – an C{argparse.ArgumentParser} instance.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.base.Addon.required_addons">
+<code class="sig-name descname">required_addons</code><em class="property"> = ()</em><a class="headerlink" href="#pkgcheck.base.Addon.required_addons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.base.ConditionalScope">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.base.</code><code class="sig-name descname">ConditionalScope</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">desc</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">level</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">- 99</span></em>, <em class="sig-param"><span class="n">_children</span><span class="p">:</span> <span class="n">tuple</span> <span class="o">=</span> <span class="default_value">()</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/base.html#ConditionalScope"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.base.ConditionalScope" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.base.Scope" title="pkgcheck.base.Scope"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.base.Scope</span></code></a></p>
+<p>Scope for checks run only in certain circumstances.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.base.ConditionalScope.level">
+<code class="sig-name descname">level</code><em class="property">: int</em><em class="property"> = -99</em><a class="headerlink" href="#pkgcheck.base.ConditionalScope.level" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.base.LocationScope">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.base.</code><code class="sig-name descname">LocationScope</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">desc</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">level</span><span class="p">:</span> <span class="n">int</span> <span class="o">=</span> <span class="default_value">0</span></em>, <em class="sig-param"><span class="n">_children</span><span class="p">:</span> <span class="n">tuple</span> <span class="o">=</span> <span class="default_value">()</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/base.html#LocationScope"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.base.LocationScope" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.base.Scope" title="pkgcheck.base.Scope"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.base.Scope</span></code></a></p>
+<p>Scope for location-specific checks.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.base.LocationScope.level">
+<code class="sig-name descname">level</code><em class="property">: int</em><em class="property"> = 0</em><a class="headerlink" href="#pkgcheck.base.LocationScope.level" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.base.LogMap">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.base.</code><code class="sig-name descname">LogMap</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">func</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">call</span><span class="p">:</span> <span class="n">Callable</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/base.html#LogMap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.base.LogMap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Log function to callable mapping.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.base.LogMap.call">
+<code class="sig-name descname">call</code><em class="property">: Callable</em><a class="headerlink" href="#pkgcheck.base.LogMap.call" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.base.LogMap.func">
+<code class="sig-name descname">func</code><em class="property">: str</em><a class="headerlink" href="#pkgcheck.base.LogMap.func" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcheck.base.LogReports">
+<code class="sig-prename descclassname">pkgcheck.base.</code><code class="sig-name descname">LogReports</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">logmaps</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/base.html#LogReports"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.base.LogReports" title="Permalink to this definition">¶</a></dt>
+<dd><p>Context manager for turning log messages into results.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.base.PackageScope">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.base.</code><code class="sig-name descname">PackageScope</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">desc</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">level</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">_children</span><span class="p">:</span> <span class="n">tuple</span> <span class="o">=</span> <span class="default_value">()</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/base.html#PackageScope"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.base.PackageScope" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.base.Scope" title="pkgcheck.base.Scope"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.base.Scope</span></code></a></p>
+<p>Scope for package-specific checks.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.base.PackageScope.desc">
+<code class="sig-name descname">desc</code><em class="property">: str</em><a class="headerlink" href="#pkgcheck.base.PackageScope.desc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.base.PackageScope.level">
+<code class="sig-name descname">level</code><em class="property">: int</em><a class="headerlink" href="#pkgcheck.base.PackageScope.level" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pkgcheck.base.PkgcheckException">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcheck.base.</code><code class="sig-name descname">PkgcheckException</code><a class="reference internal" href="../_modules/pkgcheck/base.html#PkgcheckException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.base.PkgcheckException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Generic pkgcheck exception.</p>
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pkgcheck.base.PkgcheckUserException">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcheck.base.</code><code class="sig-name descname">PkgcheckUserException</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">msg</span></em>, <em class="sig-param"><span class="n">verbosity</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/base.html#PkgcheckUserException"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.base.PkgcheckUserException" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.base.PkgcheckException" title="pkgcheck.base.PkgcheckException"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.base.PkgcheckException</span></code></a>, <code class="xref py py-class docutils literal notranslate"><span class="pre">snakeoil.cli.exceptions.UserException</span></code></p>
+<p>Generic pkgcheck exception for user-facing cli output..</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.base.ProgressManager">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.base.</code><code class="sig-name descname">ProgressManager</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">verbosity</span><span class="o">=</span><span class="default_value">0</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/base.html#ProgressManager"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.base.ProgressManager" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">contextlib.AbstractContextManager</span></code></p>
+<p>Context manager for handling progressive output.</p>
+<p>Useful for updating the user about the status of a long running process.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.base.Scope">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.base.</code><code class="sig-name descname">Scope</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">desc</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">level</span><span class="p">:</span> <span class="n">int</span></em>, <em class="sig-param"><span class="n">_children</span><span class="p">:</span> <span class="n">tuple</span> <span class="o">=</span> <span class="default_value">()</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/base.html#Scope"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.base.Scope" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Generic scope for scans, checks, and results.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.base.Scope.desc">
+<code class="sig-name descname">desc</code><em class="property">: str</em><a class="headerlink" href="#pkgcheck.base.Scope.desc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.base.Scope.level">
+<code class="sig-name descname">level</code><em class="property">: int</em><a class="headerlink" href="#pkgcheck.base.Scope.level" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcheck.base.contains">
+<code class="sig-prename descclassname">pkgcheck.base.</code><code class="sig-name descname">contains</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">obj_set</span></em>, <em class="sig-param"><span class="n">obj</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/base.html#contains"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.base.contains" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stub method for matching objects against a given set.</p>
+<p>Used to create pickleable scanning restrictions.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcheck.base.contains_restriction">
+<code class="sig-prename descclassname">pkgcheck.base.</code><code class="sig-name descname">contains_restriction</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">objs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/base.html#contains_restriction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.base.contains_restriction" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a restriction for a given iterable of hashable objects.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcheck.base.get_addons">
+<code class="sig-prename descclassname">pkgcheck.base.</code><code class="sig-name descname">get_addons</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">objects</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/base.html#get_addons"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.base.get_addons" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return tuple of addons for a given sequence of objects.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcheck.base.param_name">
+<code class="sig-prename descclassname">pkgcheck.base.</code><code class="sig-name descname">param_name</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cls</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/base.html#param_name"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.base.param_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Restructure class names for injected parameters.</p>
+<p>For example, GitAddon -&gt; git_addon and GitCache -&gt; git_cache.</p>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/pkgcheck.base.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.base module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

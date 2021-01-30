@@ -1,0 +1,635 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Checks &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Checks</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="checks">
+<h1>Checks<a class="headerlink" href="#checks" title="Permalink to this headline">¶</a></h1>
+<p>List of checks that can be selected to run.</p>
+<p>By default, all checks that operate at the current scope or below will be run.
+In other words, if running inside a package directory in a repo, only checks
+that operate at a package or version scope will be run. On the other hand, when
+running against an entire repo, all defined checks will be run.</p>
+<div class="section" id="commit-scope">
+<h2>Commit scope<a class="headerlink" href="#commit-scope" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="gitcommitscheck">
+<h3>GitCommitsCheck<a class="headerlink" href="#gitcommitscheck" title="Permalink to this headline">¶</a></h3>
+<p>Check unpushed git commits for various issues.</p>
+<ul class="simple">
+<li><p>Gentoo repo specific</p></li>
+</ul>
+<p>(known results: <a href="#id1"><span class="problematic" id="id2">`BadCommitSummary`_</span></a>, <a href="#id3"><span class="problematic" id="id4">`InvalidCommitMessage`_</span></a>, <a href="#id5"><span class="problematic" id="id6">`InvalidCommitTag`_</span></a>,
+<a href="#id7"><span class="problematic" id="id8">`MissingSignOff`_</span></a>)</p>
+</div>
+</div>
+<div class="section" id="profiles-scope">
+<h2>Profiles scope<a class="headerlink" href="#profiles-scope" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="repoprofilescheck">
+<h3>RepoProfilesCheck<a class="headerlink" href="#repoprofilescheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan repo for various profiles directory issues.</p>
+<p>Including unknown arches in profiles, arches without profiles, and unknown
+categories.</p>
+<p>(known results: <a href="#id9"><span class="problematic" id="id10">`ArchesWithoutProfiles`_</span></a>, <a href="#id11"><span class="problematic" id="id12">`LaggingProfileEapi`_</span></a>,
+<a href="#id13"><span class="problematic" id="id14">`NonexistentCategories`_</span></a>, <a href="#id15"><span class="problematic" id="id16">`NonexistentProfilePath`_</span></a>, <a href="#id17"><span class="problematic" id="id18">`ProfileError`_</span></a>,
+<a href="#id19"><span class="problematic" id="id20">`ProfileWarning`_</span></a>, <a href="#id21"><span class="problematic" id="id22">`UnknownCategoryDirs`_</span></a>, <a href="#id23"><span class="problematic" id="id24">`UnusedProfileDirs`_</span></a>)</p>
+</div>
+<div class="section" id="packageupdatescheck">
+<h3>PackageUpdatesCheck<a class="headerlink" href="#packageupdatescheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan profiles/updates/* for outdated entries and other issues.</p>
+<p>(known results: <a href="#id25"><span class="problematic" id="id26">`BadPackageUpdate`_</span></a>, <a href="#id27"><span class="problematic" id="id28">`MovedPackageUpdate`_</span></a>,
+<a href="#id29"><span class="problematic" id="id30">`MultiMovePackageUpdate`_</span></a>, <a href="#id31"><span class="problematic" id="id32">`OldMultiMovePackageUpdate`_</span></a>, <a href="#id33"><span class="problematic" id="id34">`OldPackageUpdate`_</span></a>,
+<a href="#id35"><span class="problematic" id="id36">`RedundantPackageUpdate`_</span></a>)</p>
+</div>
+</div>
+<div class="section" id="eclass-scope">
+<h2>Eclass scope<a class="headerlink" href="#eclass-scope" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="eclasscheck">
+<h3>EclassCheck<a class="headerlink" href="#eclasscheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan eclasses for various issues.</p>
+<p>(known results: <a href="#id37"><span class="problematic" id="id38">`EclassBashSyntaxError`_</span></a>, <a href="#id39"><span class="problematic" id="id40">`EclassDocError`_</span></a>, <a href="#id41"><span class="problematic" id="id42">`EclassDocMissingFunc`_</span></a>,
+<a href="#id43"><span class="problematic" id="id44">`EclassDocMissingVar`_</span></a>)</p>
+</div>
+<div class="section" id="giteclasscommitscheck">
+<h3>GitEclassCommitsCheck<a class="headerlink" href="#giteclasscommitscheck" title="Permalink to this headline">¶</a></h3>
+<p>Check unpushed git eclass commits for various issues.</p>
+<ul class="simple">
+<li><p>Gentoo repo specific</p></li>
+</ul>
+<p>(known result: <a href="#id45"><span class="problematic" id="id46">`EclassIncorrectCopyright`_</span></a>)</p>
+</div>
+<div class="section" id="eclassheadercheck">
+<h3>EclassHeaderCheck<a class="headerlink" href="#eclassheadercheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan eclasses for incorrect copyright/license headers.</p>
+<ul class="simple">
+<li><p>Gentoo repo specific</p></li>
+</ul>
+<p>(known results: <a href="#id47"><span class="problematic" id="id48">`EclassInvalidCopyright`_</span></a>, <a href="#id49"><span class="problematic" id="id50">`EclassInvalidLicenseHeader`_</span></a>,
+<a href="#id51"><span class="problematic" id="id52">`EclassNonGentooAuthorsCopyright`_</span></a>, <a href="#id53"><span class="problematic" id="id54">`EclassOldGentooCopyright`_</span></a>)</p>
+</div>
+</div>
+<div class="section" id="repo-scope">
+<h2>Repo scope<a class="headerlink" href="#repo-scope" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="acctcheck">
+<h3>AcctCheck<a class="headerlink" href="#acctcheck" title="Permalink to this headline">¶</a></h3>
+<p>Various checks for acct-* packages.</p>
+<p>Verify that acct-* packages do not use conflicting, invalid or out-of-range
+UIDs/GIDs.</p>
+<p>(known results: <a href="#id55"><span class="problematic" id="id56">`ConflictingAccountIdentifiers`_</span></a>, <a href="#id57"><span class="problematic" id="id58">`MissingAccountIdentifier`_</span></a>,
+<a href="#id59"><span class="problematic" id="id60">`OutsideRangeAccountIdentifier`_</span></a>)</p>
+</div>
+<div class="section" id="unusedinmasterscheck">
+<h3>UnusedInMastersCheck<a class="headerlink" href="#unusedinmasterscheck" title="Permalink to this headline">¶</a></h3>
+<p>Check for various metadata that may be removed from master repos.</p>
+<p>(known results: <a href="#id61"><span class="problematic" id="id62">`UnusedInMastersEclasses`_</span></a>, <a href="#id63"><span class="problematic" id="id64">`UnusedInMastersGlobalUse`_</span></a>,
+<a href="#id65"><span class="problematic" id="id66">`UnusedInMastersLicenses`_</span></a>, <a href="#id67"><span class="problematic" id="id68">`UnusedInMastersMirrors`_</span></a>)</p>
+</div>
+<div class="section" id="emptydirscheck">
+<h3>EmptyDirsCheck<a class="headerlink" href="#emptydirscheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan for empty category or package directories.</p>
+<ul class="simple">
+<li><p>Gentoo repo specific</p></li>
+</ul>
+<p>(known results: <a href="#id69"><span class="problematic" id="id70">`EmptyCategoryDir`_</span></a>, <a href="#id71"><span class="problematic" id="id72">`EmptyPackageDir`_</span></a>)</p>
+</div>
+<div class="section" id="repodircheck">
+<h3>RepoDirCheck<a class="headerlink" href="#repodircheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan all files in the repository for issues.</p>
+<ul class="simple">
+<li><p>Gentoo repo specific</p></li>
+</ul>
+<p>(known result: <a href="#id73"><span class="problematic" id="id74">`BinaryFile`_</span></a>)</p>
+</div>
+<div class="section" id="globalusecheck">
+<h3>GlobalUseCheck<a class="headerlink" href="#globalusecheck" title="Permalink to this headline">¶</a></h3>
+<p>Check global USE and USE_EXPAND flags for various issues.</p>
+<p>(known results: <a href="#id75"><span class="problematic" id="id76">`PotentialGlobalUse`_</span></a>, <a href="#id77"><span class="problematic" id="id78">`PotentialLocalUse`_</span></a>, <a href="#id79"><span class="problematic" id="id80">`UnusedGlobalUse`_</span></a>,
+<a href="#id81"><span class="problematic" id="id82">`UnusedGlobalUseExpand`_</span></a>)</p>
+</div>
+<div class="section" id="licensegroupscheck">
+<h3>LicenseGroupsCheck<a class="headerlink" href="#licensegroupscheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan license groups for unknown licenses.</p>
+<p>(known result: <a href="#id83"><span class="problematic" id="id84">`UnknownLicenses`_</span></a>)</p>
+</div>
+<div class="section" id="manifestcollisioncheck">
+<h3>ManifestCollisionCheck<a class="headerlink" href="#manifestcollisioncheck" title="Permalink to this headline">¶</a></h3>
+<p>Search Manifest entries for different types of distfile collisions.</p>
+<p>In particular, search for matching filenames with different checksums and
+different filenames with matching checksums.</p>
+<p>(known results: <a href="#id85"><span class="problematic" id="id86">`ConflictingChksums`_</span></a>, <a href="#id87"><span class="problematic" id="id88">`MatchingChksums`_</span></a>)</p>
+</div>
+<div class="section" id="projectmetadatacheck">
+<h3>ProjectMetadataCheck<a class="headerlink" href="#projectmetadatacheck" title="Permalink to this headline">¶</a></h3>
+<p>Check projects.xml for issues.</p>
+<p>(known result: <a href="#id89"><span class="problematic" id="id90">`EmptyProject`_</span></a>)</p>
+</div>
+<div class="section" id="unusedeclassescheck">
+<h3>UnusedEclassesCheck<a class="headerlink" href="#unusedeclassescheck" title="Permalink to this headline">¶</a></h3>
+<p>Check for unused eclasses.</p>
+<p>(known result: <a href="#id91"><span class="problematic" id="id92">`UnusedEclasses`_</span></a>)</p>
+</div>
+<div class="section" id="unusedlicensescheck">
+<h3>UnusedLicensesCheck<a class="headerlink" href="#unusedlicensescheck" title="Permalink to this headline">¶</a></h3>
+<p>Check for unused license files.</p>
+<p>(known result: <a href="#id93"><span class="problematic" id="id94">`UnusedLicenses`_</span></a>)</p>
+</div>
+<div class="section" id="unusedmirrorscheck">
+<h3>UnusedMirrorsCheck<a class="headerlink" href="#unusedmirrorscheck" title="Permalink to this headline">¶</a></h3>
+<p>Check for unused mirrors.</p>
+<p>(known result: <a href="#id95"><span class="problematic" id="id96">`UnusedMirrors`_</span></a>)</p>
+</div>
+</div>
+<div class="section" id="category-scope">
+<h2>Category scope<a class="headerlink" href="#category-scope" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="categorymetadataxmlcheck">
+<h3>CategoryMetadataXmlCheck<a class="headerlink" href="#categorymetadataxmlcheck" title="Permalink to this headline">¶</a></h3>
+<p>Category level metadata.xml scans.</p>
+<p>(known results: <a href="#id97"><span class="problematic" id="id98">`CatBadlyFormedXml`_</span></a>, <a href="#id99"><span class="problematic" id="id100">`CatInvalidXml`_</span></a>,
+<a href="#id101"><span class="problematic" id="id102">`CatMetadataXmlEmptyElement`_</span></a>, <a href="#id103"><span class="problematic" id="id104">`CatMetadataXmlIndentation`_</span></a>,
+<a href="#id105"><span class="problematic" id="id106">`CatMetadataXmlInvalidCatRef`_</span></a>, <a href="#id107"><span class="problematic" id="id108">`CatMetadataXmlInvalidPkgRef`_</span></a>,
+<a href="#id109"><span class="problematic" id="id110">`CatMissingMetadataXml`_</span></a>)</p>
+</div>
+</div>
+<div class="section" id="package-scope">
+<h2>Package scope<a class="headerlink" href="#package-scope" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="redundantversioncheck">
+<h3>RedundantVersionCheck<a class="headerlink" href="#redundantversioncheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan for overshadowed package versions.</p>
+<p>Scan for versions that are likely shadowed by later versions from a
+keywords standpoint (ignoring live packages that erroneously have
+keywords).</p>
+<p>Example: pkga-1 is keyworded amd64, pkga-2 is amd64.
+pkga-1 can potentially be removed.</p>
+<p>(known result: <a href="#id111"><span class="problematic" id="id112">`RedundantVersion`_</span></a>)</p>
+</div>
+<div class="section" id="droppedkeywordscheck">
+<h3>DroppedKeywordsCheck<a class="headerlink" href="#droppedkeywordscheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan packages for keyword dropping across versions.</p>
+<p>(known result: <a href="#id113"><span class="problematic" id="id114">`DroppedKeywords`_</span></a>)</p>
+</div>
+<div class="section" id="gitpkgcommitscheck">
+<h3>GitPkgCommitsCheck<a class="headerlink" href="#gitpkgcommitscheck" title="Permalink to this headline">¶</a></h3>
+<p>Check unpushed git package commits for various issues.</p>
+<ul class="simple">
+<li><p>Gentoo repo specific</p></li>
+</ul>
+<p>(known results: <a href="#id115"><span class="problematic" id="id116">`DirectNoMaintainer`_</span></a>, <a href="#id117"><span class="problematic" id="id118">`DirectStableKeywords`_</span></a>,
+<a href="#id119"><span class="problematic" id="id120">`DroppedStableKeywords`_</span></a>, <a href="#id121"><span class="problematic" id="id122">`DroppedUnstableKeywords`_</span></a>, <a href="#id123"><span class="problematic" id="id124">`EbuildIncorrectCopyright`_</span></a>,
+<a href="#id125"><span class="problematic" id="id126">`MissingMove`_</span></a>, <a href="#id127"><span class="problematic" id="id128">`MissingSlotmove`_</span></a>, <a href="#id129"><span class="problematic" id="id130">`RdependChange`_</span></a>)</p>
+</div>
+<div class="section" id="imlatecheck">
+<h3>ImlateCheck<a class="headerlink" href="#imlatecheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan for ebuilds that are lagging in stabilization.</p>
+<p>(known results: <a href="#id131"><span class="problematic" id="id132">`LaggingStable`_</span></a>, <a href="#id133"><span class="problematic" id="id134">`PotentialStable`_</span></a>)</p>
+</div>
+<div class="section" id="localusecheck">
+<h3>LocalUseCheck<a class="headerlink" href="#localusecheck" title="Permalink to this headline">¶</a></h3>
+<p>Check local USE flags in metadata.xml for various issues.</p>
+<p>(known results: <a href="#id135"><span class="problematic" id="id136">`MatchingGlobalUse`_</span></a>, <a href="#id137"><span class="problematic" id="id138">`ProbableGlobalUse`_</span></a>, <a href="#id139"><span class="problematic" id="id140">`ProbableUseExpand`_</span></a>,
+<a href="#id141"><span class="problematic" id="id142">`UnderscoreInUseFlag`_</span></a>, <a href="#id143"><span class="problematic" id="id144">`UnstatedIuse`_</span></a>, <a href="#id145"><span class="problematic" id="id146">`UnusedLocalUse`_</span></a>)</p>
+</div>
+<div class="section" id="packagemetadataxmlcheck">
+<h3>PackageMetadataXmlCheck<a class="headerlink" href="#packagemetadataxmlcheck" title="Permalink to this headline">¶</a></h3>
+<p>Package level metadata.xml scans.</p>
+<p>(known results: <a href="#id147"><span class="problematic" id="id148">`MaintainerNeeded`_</span></a>, <a href="#id149"><span class="problematic" id="id150">`MaintainerWithoutProxy`_</span></a>,
+<a href="#id151"><span class="problematic" id="id152">`NonexistentProjectMaintainer`_</span></a>, <a href="#id153"><span class="problematic" id="id154">`PkgBadlyFormedXml`_</span></a>, <a href="#id155"><span class="problematic" id="id156">`PkgInvalidXml`_</span></a>,
+<a href="#id157"><span class="problematic" id="id158">`PkgMetadataXmlEmptyElement`_</span></a>, <a href="#id159"><span class="problematic" id="id160">`PkgMetadataXmlIndentation`_</span></a>,
+<a href="#id161"><span class="problematic" id="id162">`PkgMetadataXmlInvalidCatRef`_</span></a>, <a href="#id163"><span class="problematic" id="id164">`PkgMetadataXmlInvalidPkgRef`_</span></a>,
+<a href="#id165"><span class="problematic" id="id166">`PkgMissingMetadataXml`_</span></a>, <a href="#id167"><span class="problematic" id="id168">`RedundantLongDescription`_</span></a>, <a href="#id169"><span class="problematic" id="id170">`StaleProxyMaintProject`_</span></a>,
+<a href="#id171"><span class="problematic" id="id172">`WrongMaintainerType`_</span></a>)</p>
+</div>
+<div class="section" id="metadataurlcheck">
+<h3>MetadataUrlCheck<a class="headerlink" href="#metadataurlcheck" title="Permalink to this headline">¶</a></h3>
+<p>Verify metadata.xml URLs.</p>
+<p>(known results: <a href="#id173"><span class="problematic" id="id174">`DeadUrl`_</span></a>, <a href="#id175"><span class="problematic" id="id176">`HttpsUrlAvailable`_</span></a>, <a href="#id177"><span class="problematic" id="id178">`RedirectedUrl`_</span></a>,
+<a href="#id179"><span class="problematic" id="id180">`SSLCertificateError`_</span></a>)</p>
+</div>
+<div class="section" id="equalversionscheck">
+<h3>EqualVersionsCheck<a class="headerlink" href="#equalversionscheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan package ebuilds for semantically equal versions.</p>
+<p>(known result: <a href="#id181"><span class="problematic" id="id182">`EqualVersions`_</span></a>)</p>
+</div>
+<div class="section" id="liveonlycheck">
+<h3>LiveOnlyCheck<a class="headerlink" href="#liveonlycheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan for packages with only live versions.</p>
+<ul class="simple">
+<li><p>Gentoo repo specific</p></li>
+</ul>
+<p>(known result: <a href="#id183"><span class="problematic" id="id184">`LiveOnlyPackage`_</span></a>)</p>
+</div>
+<div class="section" id="pkgdircheck">
+<h3>PkgDirCheck<a class="headerlink" href="#pkgdircheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan ebuild directory for various file-related issues.</p>
+<p>(known results: <a href="#id185"><span class="problematic" id="id186">`BannedCharacter`_</span></a>, <a href="#id187"><span class="problematic" id="id188">`DuplicateFiles`_</span></a>, <a href="#id189"><span class="problematic" id="id190">`EmptyFile`_</span></a>,
+<a href="#id191"><span class="problematic" id="id192">`ExecutableFile`_</span></a>, <a href="#id193"><span class="problematic" id="id194">`InvalidPN`_</span></a>, <a href="#id195"><span class="problematic" id="id196">`InvalidUTF8`_</span></a>, <a href="#id197"><span class="problematic" id="id198">`MismatchedPN`_</span></a>, <a href="#id199"><span class="problematic" id="id200">`SizeViolation`_</span></a>,
+<a href="#id201"><span class="problematic" id="id202">`UnknownPkgDirEntry`_</span></a>)</p>
+</div>
+<div class="section" id="manifestcheck">
+<h3>ManifestCheck<a class="headerlink" href="#manifestcheck" title="Permalink to this headline">¶</a></h3>
+<p>Manifest related checks.</p>
+<p>Verify that the Manifest file exists, doesn't have missing or
+extraneous entries, and that the required hashes are in use.</p>
+<p>(known results: <a href="#id203"><span class="problematic" id="id204">`DeprecatedChksum`_</span></a>, <a href="#id205"><span class="problematic" id="id206">`InvalidManifest`_</span></a>, <a href="#id207"><span class="problematic" id="id208">`MissingChksum`_</span></a>,
+<a href="#id209"><span class="problematic" id="id210">`MissingManifest`_</span></a>, <a href="#id211"><span class="problematic" id="id212">`UnknownManifest`_</span></a>, <a href="#id213"><span class="problematic" id="id214">`UnnecessaryManifest`_</span></a>)</p>
+</div>
+<div class="section" id="stablerequestcheck">
+<h3>StableRequestCheck<a class="headerlink" href="#stablerequestcheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan for unstable ebuilds with no changes for over 30 days.</p>
+<p>By default, only triggered for arches with stable profiles. To check
+additional arches outside the stable set specify them manually using the
+-a/--arches option.</p>
+<p>Note that packages with no stable keywords won't trigger this at all.
+Instead they'll be caught by the UnstableOnly check.</p>
+<ul class="simple">
+<li><p>Gentoo repo specific</p></li>
+</ul>
+<p>(known result: <a href="#id215"><span class="problematic" id="id216">`StableRequest`_</span></a>)</p>
+</div>
+<div class="section" id="unstableonlycheck">
+<h3>UnstableOnlyCheck<a class="headerlink" href="#unstableonlycheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan for packages that have just unstable keywords.</p>
+<ul class="simple">
+<li><p>Gentoo repo specific</p></li>
+</ul>
+<p>(known result: <a href="#id217"><span class="problematic" id="id218">`UnstableOnly`_</span></a>)</p>
+</div>
+</div>
+<div class="section" id="version-scope">
+<h2>Version scope<a class="headerlink" href="#version-scope" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="absolutesymlinkcheck">
+<h3>AbsoluteSymlinkCheck<a class="headerlink" href="#absolutesymlinkcheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan ebuild for dosym absolute path usage instead of relative.</p>
+<p>(known result: <a href="#id219"><span class="problematic" id="id220">`AbsoluteSymlink`_</span></a>)</p>
+</div>
+<div class="section" id="badcommandscheck">
+<h3>BadCommandsCheck<a class="headerlink" href="#badcommandscheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan ebuild for various deprecated and banned command usage.</p>
+<p>(known results: <a href="#id221"><span class="problematic" id="id222">`BannedEapiCommand`_</span></a>, <a href="#id223"><span class="problematic" id="id224">`DeprecatedEapiCommand`_</span></a>)</p>
+</div>
+<div class="section" id="inheritscheck">
+<h3>InheritsCheck<a class="headerlink" href="#inheritscheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan for ebuilds with missing or unused eclass inherits.</p>
+<p>Note that this requires using <code class="docutils literal notranslate"><span class="pre">pmaint</span> <span class="pre">regen</span></code> to generate repo metadata in
+order for direct inherits to be correct.</p>
+<p>(known results: <a href="#id225"><span class="problematic" id="id226">`IndirectInherits`_</span></a>, <a href="#id227"><span class="problematic" id="id228">`InternalEclassUsage`_</span></a>, <a href="#id229"><span class="problematic" id="id230">`MissingInherits`_</span></a>,
+<a href="#id231"><span class="problematic" id="id232">`UnusedInherits`_</span></a>)</p>
+</div>
+<div class="section" id="insintocheck">
+<h3>InsintoCheck<a class="headerlink" href="#insintocheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan ebuild for deprecated insinto usage.</p>
+<p>(known result: <a href="#id233"><span class="problematic" id="id234">`DeprecatedInsinto`_</span></a>)</p>
+</div>
+<div class="section" id="obsoleteuricheck">
+<h3>ObsoleteUriCheck<a class="headerlink" href="#obsoleteuricheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan ebuild for obsolete URIs.</p>
+<p>(known result: <a href="#id235"><span class="problematic" id="id236">`ObsoleteUri`_</span></a>)</p>
+</div>
+<div class="section" id="pathvariablescheck">
+<h3>PathVariablesCheck<a class="headerlink" href="#pathvariablescheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan ebuild for path variables with various issues.</p>
+<p>(known results: <a href="#id237"><span class="problematic" id="id238">`DoublePrefixInPath`_</span></a>, <a href="#id239"><span class="problematic" id="id240">`MissingSlash`_</span></a>, <a href="#id241"><span class="problematic" id="id242">`UnnecessarySlashStrip`_</span></a>)</p>
+</div>
+<div class="section" id="rawebuildcheck">
+<h3>RawEbuildCheck<a class="headerlink" href="#rawebuildcheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan raw ebuild content for various issues.</p>
+<p>(known results: <a href="#id243"><span class="problematic" id="id244">`HomepageInSrcUri`_</span></a>, <a href="#id245"><span class="problematic" id="id246">`StaticSrcUri`_</span></a>, <a href="#id247"><span class="problematic" id="id248">`VariableInHomepage`_</span></a>)</p>
+</div>
+<div class="section" id="redundantdodircheck">
+<h3>RedundantDodirCheck<a class="headerlink" href="#redundantdodircheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan ebuild for redundant dodir usage.</p>
+<p>(known result: <a href="#id249"><span class="problematic" id="id250">`RedundantDodir`_</span></a>)</p>
+</div>
+<div class="section" id="eclassusagecheck">
+<h3>EclassUsageCheck<a class="headerlink" href="#eclassusagecheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan packages for various eclass-related issues.</p>
+<p>(known results: <a href="#id251"><span class="problematic" id="id252">`DeprecatedEclass`_</span></a>, <a href="#id253"><span class="problematic" id="id254">`DuplicateEclassInherit`_</span></a>,
+<a href="#id255"><span class="problematic" id="id256">`MisplacedEclassVar`_</span></a>)</p>
+</div>
+<div class="section" id="glsacheck">
+<h3>GlsaCheck<a class="headerlink" href="#glsacheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan for vulnerable ebuilds in the tree.</p>
+<p>Requires a GLSA directory for vulnerability info.</p>
+<ul class="simple">
+<li><p>Gentoo repo specific</p></li>
+</ul>
+<p>(known result: <a href="#id257"><span class="problematic" id="id258">`VulnerablePackage`_</span></a>)</p>
+</div>
+<div class="section" id="ebuildheadercheck">
+<h3>EbuildHeaderCheck<a class="headerlink" href="#ebuildheadercheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan ebuild for incorrect copyright/license headers.</p>
+<ul class="simple">
+<li><p>Gentoo repo specific</p></li>
+</ul>
+<p>(known results: <a href="#id259"><span class="problematic" id="id260">`EbuildInvalidCopyright`_</span></a>, <a href="#id261"><span class="problematic" id="id262">`EbuildInvalidLicenseHeader`_</span></a>,
+<a href="#id263"><span class="problematic" id="id264">`EbuildNonGentooAuthorsCopyright`_</span></a>, <a href="#id265"><span class="problematic" id="id266">`EbuildOldGentooCopyright`_</span></a>)</p>
+</div>
+<div class="section" id="dependencycheck">
+<h3>DependencyCheck<a class="headerlink" href="#dependencycheck" title="Permalink to this headline">¶</a></h3>
+<p>Check BDEPEND, DEPEND, RDEPEND, and PDEPEND.</p>
+<p>(known results: <a href="#id267"><span class="problematic" id="id268">`BadDependency`_</span></a>, <a href="#id269"><span class="problematic" id="id270">`DeprecatedDep`_</span></a>, <a href="#id271"><span class="problematic" id="id272">`InvalidBdepend`_</span></a>,
+<a href="#id273"><span class="problematic" id="id274">`InvalidDepend`_</span></a>, <a href="#id275"><span class="problematic" id="id276">`InvalidPdepend`_</span></a>, <a href="#id277"><span class="problematic" id="id278">`InvalidRdepend`_</span></a>, <a href="#id279"><span class="problematic" id="id280">`MissingPackageRevision`_</span></a>,
+<a href="#id281"><span class="problematic" id="id282">`MissingUseDepDefault`_</span></a>, <a href="#id283"><span class="problematic" id="id284">`UnstatedIuse`_</span></a>)</p>
+</div>
+<div class="section" id="descriptioncheck">
+<h3>DescriptionCheck<a class="headerlink" href="#descriptioncheck" title="Permalink to this headline">¶</a></h3>
+<p>DESCRIPTION checks.</p>
+<p>Check on length (&lt;=150), too short (&lt;10), or generic (lifted from eclass or
+just using the package's name.</p>
+<p>(known result: <a href="#id285"><span class="problematic" id="id286">`BadDescription`_</span></a>)</p>
+</div>
+<div class="section" id="eapicheck">
+<h3>EapiCheck<a class="headerlink" href="#eapicheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan for packages with banned or deprecated EAPIs.</p>
+<p>(known results: <a href="#id287"><span class="problematic" id="id288">`BannedEapi`_</span></a>, <a href="#id289"><span class="problematic" id="id290">`DeprecatedEapi`_</span></a>, <a href="#id291"><span class="problematic" id="id292">`UnsupportedEclassEapi`_</span></a>)</p>
+</div>
+<div class="section" id="homepagecheck">
+<h3>HomepageCheck<a class="headerlink" href="#homepagecheck" title="Permalink to this headline">¶</a></h3>
+<p>HOMEPAGE checks.</p>
+<p>(known result: <a href="#id293"><span class="problematic" id="id294">`BadHomepage`_</span></a>)</p>
+</div>
+<div class="section" id="iusecheck">
+<h3>IuseCheck<a class="headerlink" href="#iusecheck" title="Permalink to this headline">¶</a></h3>
+<p>IUSE validity checks.</p>
+<p>(known results: <a href="#id295"><span class="problematic" id="id296">`InvalidUseFlags`_</span></a>, <a href="#id297"><span class="problematic" id="id298">`UnknownUseFlags`_</span></a>)</p>
+</div>
+<div class="section" id="keywordscheck">
+<h3>KeywordsCheck<a class="headerlink" href="#keywordscheck" title="Permalink to this headline">¶</a></h3>
+<p>Check package keywords for sanity; empty keywords, and -* are flagged.</p>
+<p>(known results: <a href="#id299"><span class="problematic" id="id300">`BadKeywords`_</span></a>, <a href="#id301"><span class="problematic" id="id302">`DuplicateKeywords`_</span></a>, <a href="#id303"><span class="problematic" id="id304">`OverlappingKeywords`_</span></a>,
+<a href="#id305"><span class="problematic" id="id306">`UnknownKeywords`_</span></a>, <a href="#id307"><span class="problematic" id="id308">`UnsortedKeywords`_</span></a>, <a href="#id309"><span class="problematic" id="id310">`VirtualKeywordsUpdate`_</span></a>)</p>
+</div>
+<div class="section" id="licensecheck">
+<h3>LicenseCheck<a class="headerlink" href="#licensecheck" title="Permalink to this headline">¶</a></h3>
+<p>LICENSE validity checks.</p>
+<p>(known results: <a href="#id311"><span class="problematic" id="id312">`InvalidLicense`_</span></a>, <a href="#id313"><span class="problematic" id="id314">`MissingLicense`_</span></a>, <a href="#id315"><span class="problematic" id="id316">`MissingLicenseFile`_</span></a>,
+<a href="#id317"><span class="problematic" id="id318">`MissingLicenseRestricts`_</span></a>, <a href="#id319"><span class="problematic" id="id320">`UnnecessaryLicense`_</span></a>, <a href="#id321"><span class="problematic" id="id322">`UnstatedIuse`_</span></a>)</p>
+</div>
+<div class="section" id="missingslotdepcheck">
+<h3>MissingSlotDepCheck<a class="headerlink" href="#missingslotdepcheck" title="Permalink to this headline">¶</a></h3>
+<p>Check for missing slot dependencies.</p>
+<p>(known result: <a href="#id323"><span class="problematic" id="id324">`MissingSlotDep`_</span></a>)</p>
+</div>
+<div class="section" id="missingunpackerdepcheck">
+<h3>MissingUnpackerDepCheck<a class="headerlink" href="#missingunpackerdepcheck" title="Permalink to this headline">¶</a></h3>
+<p>Check whether package is missing unpacker dependencies.</p>
+<p>(known result: <a href="#id325"><span class="problematic" id="id326">`MissingUnpackerDep`_</span></a>)</p>
+</div>
+<div class="section" id="outdatedblockerscheck">
+<h3>OutdatedBlockersCheck<a class="headerlink" href="#outdatedblockerscheck" title="Permalink to this headline">¶</a></h3>
+<p>Check for outdated and nonexistent blocker dependencies.</p>
+<p>(known results: <a href="#id327"><span class="problematic" id="id328">`NonexistentBlocker`_</span></a>, <a href="#id329"><span class="problematic" id="id330">`OutdatedBlocker`_</span></a>)</p>
+</div>
+<div class="section" id="propertiescheck">
+<h3>PropertiesCheck<a class="headerlink" href="#propertiescheck" title="Permalink to this headline">¶</a></h3>
+<p>PROPERTIES related checks.</p>
+<p>(known results: <a href="#id331"><span class="problematic" id="id332">`InvalidProperties`_</span></a>, <a href="#id333"><span class="problematic" id="id334">`UnknownProperties`_</span></a>, <a href="#id335"><span class="problematic" id="id336">`UnstatedIuse`_</span></a>)</p>
+</div>
+<div class="section" id="requiredusecheck">
+<h3>RequiredUseCheck<a class="headerlink" href="#requiredusecheck" title="Permalink to this headline">¶</a></h3>
+<p>REQUIRED_USE validity checks.</p>
+<p>(known results: <a href="#id337"><span class="problematic" id="id338">`InvalidRequiredUse`_</span></a>, <a href="#id339"><span class="problematic" id="id340">`RequiredUseDefaults`_</span></a>, <a href="#id341"><span class="problematic" id="id342">`UnstatedIuse`_</span></a>)</p>
+</div>
+<div class="section" id="restrictcheck">
+<h3>RestrictCheck<a class="headerlink" href="#restrictcheck" title="Permalink to this headline">¶</a></h3>
+<p>RESTRICT related checks.</p>
+<p>(known results: <a href="#id343"><span class="problematic" id="id344">`InvalidRestrict`_</span></a>, <a href="#id345"><span class="problematic" id="id346">`UnknownRestrict`_</span></a>, <a href="#id347"><span class="problematic" id="id348">`UnstatedIuse`_</span></a>)</p>
+</div>
+<div class="section" id="restricttestcheck">
+<h3>RestrictTestCheck<a class="headerlink" href="#restricttestcheck" title="Permalink to this headline">¶</a></h3>
+<p>Check whether packages specify RESTRICT=&quot;!test? ( test )&quot;.</p>
+<p>(known result: <a href="#id349"><span class="problematic" id="id350">`MissingTestRestrict`_</span></a>)</p>
+</div>
+<div class="section" id="sourcingcheck">
+<h3>SourcingCheck<a class="headerlink" href="#sourcingcheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan for packages with sourcing errors or invalid, sourced metadata variables.</p>
+<p>(known results: <a href="#id351"><span class="problematic" id="id352">`InvalidEapi`_</span></a>, <a href="#id353"><span class="problematic" id="id354">`InvalidSlot`_</span></a>, <a href="#id355"><span class="problematic" id="id356">`SourcingError`_</span></a>)</p>
+</div>
+<div class="section" id="srcuricheck">
+<h3>SrcUriCheck<a class="headerlink" href="#srcuricheck" title="Permalink to this headline">¶</a></h3>
+<p>SRC_URI related checks.</p>
+<p>Verify that URIs are valid, fetchable, using a supported protocol, and
+don't use unspecific filenames.</p>
+<p>(known results: <a href="#id357"><span class="problematic" id="id358">`BadFilename`_</span></a>, <a href="#id359"><span class="problematic" id="id360">`BadProtocol`_</span></a>, <a href="#id361"><span class="problematic" id="id362">`InvalidSrcUri`_</span></a>, <a href="#id363"><span class="problematic" id="id364">`MissingUri`_</span></a>,
+<a href="#id365"><span class="problematic" id="id366">`RedundantUriRename`_</span></a>, <a href="#id367"><span class="problematic" id="id368">`TarballAvailable`_</span></a>, <a href="#id369"><span class="problematic" id="id370">`UnknownMirror`_</span></a>, <a href="#id371"><span class="problematic" id="id372">`UnstatedIuse`_</span></a>)</p>
+</div>
+<div class="section" id="fetchablesurlcheck">
+<h3>FetchablesUrlCheck<a class="headerlink" href="#fetchablesurlcheck" title="Permalink to this headline">¶</a></h3>
+<p>Verify SRC_URI URLs.</p>
+<p>(known results: <a href="#id373"><span class="problematic" id="id374">`DeadUrl`_</span></a>, <a href="#id375"><span class="problematic" id="id376">`HttpsUrlAvailable`_</span></a>, <a href="#id377"><span class="problematic" id="id378">`RedirectedUrl`_</span></a>,
+<a href="#id379"><span class="problematic" id="id380">`SSLCertificateError`_</span></a>)</p>
+</div>
+<div class="section" id="homepageurlcheck">
+<h3>HomepageUrlCheck<a class="headerlink" href="#homepageurlcheck" title="Permalink to this headline">¶</a></h3>
+<p>Verify HOMEPAGE URLs.</p>
+<p>(known results: <a href="#id381"><span class="problematic" id="id382">`DeadUrl`_</span></a>, <a href="#id383"><span class="problematic" id="id384">`HttpsUrlAvailable`_</span></a>, <a href="#id385"><span class="problematic" id="id386">`RedirectedUrl`_</span></a>,
+<a href="#id387"><span class="problematic" id="id388">`SSLCertificateError`_</span></a>)</p>
+</div>
+<div class="section" id="perlcheck">
+<h3>PerlCheck<a class="headerlink" href="#perlcheck" title="Permalink to this headline">¶</a></h3>
+<p>Perl ebuild related checks.</p>
+<p>(known result: <a href="#id389"><span class="problematic" id="id390">`MismatchedPerlVersion`_</span></a>)</p>
+</div>
+<div class="section" id="pythoncheck">
+<h3>PythonCheck<a class="headerlink" href="#pythoncheck" title="Permalink to this headline">¶</a></h3>
+<p>Python eclass checks.</p>
+<p>Check whether Python eclasses are used for Python packages, and whether
+they don't suffer from common mistakes.</p>
+<p>(known results: <a href="#id391"><span class="problematic" id="id392">`MissingPythonEclass`_</span></a>, <a href="#id393"><span class="problematic" id="id394">`PythonEclassError`_</span></a>, <a href="#id395"><span class="problematic" id="id396">`PythonMissingDeps`_</span></a>,
+<a href="#id397"><span class="problematic" id="id398">`PythonMissingRequiredUse`_</span></a>, <a href="#id399"><span class="problematic" id="id400">`PythonRuntimeDepInAnyR1`_</span></a>)</p>
+</div>
+<div class="section" id="pythoncompatcheck">
+<h3>PythonCompatCheck<a class="headerlink" href="#pythoncompatcheck" title="Permalink to this headline">¶</a></h3>
+<p>Check python ebuilds for possible PYTHON_COMPAT updates.</p>
+<p>Supports ebuilds inheriting python-r1, python-single-r1, and python-any-r1.</p>
+<p>(known result: <a href="#id401"><span class="problematic" id="id402">`PythonCompatUpdate`_</span></a>)</p>
+</div>
+<div class="section" id="visibilitycheck">
+<h3>VisibilityCheck<a class="headerlink" href="#visibilitycheck" title="Permalink to this headline">¶</a></h3>
+<p>Visibility dependency scans.</p>
+<p>Check that at least one solution is possible for a pkg, checking all
+profiles (defined by arch.list) visibility modifiers per stable/unstable
+keyword.</p>
+<p>(known results: <a href="#id403"><span class="problematic" id="id404">`NonexistentDeps`_</span></a>, <a href="#id405"><span class="problematic" id="id406">`NonsolvableDepsInDev`_</span></a>, <a href="#id407"><span class="problematic" id="id408">`NonsolvableDepsInExp`_</span></a>,
+<a href="#id409"><span class="problematic" id="id410">`NonsolvableDepsInStable`_</span></a>, <a href="#id411"><span class="problematic" id="id412">`UncheckableDep`_</span></a>, <a href="#id413"><span class="problematic" id="id414">`VisibleVcsPkg`_</span></a>)</p>
+</div>
+<div class="section" id="whitespacecheck">
+<h3>WhitespaceCheck<a class="headerlink" href="#whitespacecheck" title="Permalink to this headline">¶</a></h3>
+<p>Scan ebuild for useless whitespace.</p>
+<p>(known results: <a href="#id415"><span class="problematic" id="id416">`BadWhitespaceCharacter`_</span></a>, <a href="#id417"><span class="problematic" id="id418">`DoubleEmptyLine`_</span></a>, <a href="#id419"><span class="problematic" id="id420">`NoFinalNewline`_</span></a>,
+<a href="#id421"><span class="problematic" id="id422">`TrailingEmptyLine`_</span></a>, <a href="#id423"><span class="problematic" id="id424">`WhitespaceFound`_</span></a>, <a href="#id425"><span class="problematic" id="id426">`WrongIndentFound`_</span></a>)</p>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Checks</a><ul>
+<li><a class="reference internal" href="#commit-scope">Commit scope</a><ul>
+<li><a class="reference internal" href="#gitcommitscheck">GitCommitsCheck</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#profiles-scope">Profiles scope</a><ul>
+<li><a class="reference internal" href="#repoprofilescheck">RepoProfilesCheck</a></li>
+<li><a class="reference internal" href="#packageupdatescheck">PackageUpdatesCheck</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#eclass-scope">Eclass scope</a><ul>
+<li><a class="reference internal" href="#eclasscheck">EclassCheck</a></li>
+<li><a class="reference internal" href="#giteclasscommitscheck">GitEclassCommitsCheck</a></li>
+<li><a class="reference internal" href="#eclassheadercheck">EclassHeaderCheck</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#repo-scope">Repo scope</a><ul>
+<li><a class="reference internal" href="#acctcheck">AcctCheck</a></li>
+<li><a class="reference internal" href="#unusedinmasterscheck">UnusedInMastersCheck</a></li>
+<li><a class="reference internal" href="#emptydirscheck">EmptyDirsCheck</a></li>
+<li><a class="reference internal" href="#repodircheck">RepoDirCheck</a></li>
+<li><a class="reference internal" href="#globalusecheck">GlobalUseCheck</a></li>
+<li><a class="reference internal" href="#licensegroupscheck">LicenseGroupsCheck</a></li>
+<li><a class="reference internal" href="#manifestcollisioncheck">ManifestCollisionCheck</a></li>
+<li><a class="reference internal" href="#projectmetadatacheck">ProjectMetadataCheck</a></li>
+<li><a class="reference internal" href="#unusedeclassescheck">UnusedEclassesCheck</a></li>
+<li><a class="reference internal" href="#unusedlicensescheck">UnusedLicensesCheck</a></li>
+<li><a class="reference internal" href="#unusedmirrorscheck">UnusedMirrorsCheck</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#category-scope">Category scope</a><ul>
+<li><a class="reference internal" href="#categorymetadataxmlcheck">CategoryMetadataXmlCheck</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#package-scope">Package scope</a><ul>
+<li><a class="reference internal" href="#redundantversioncheck">RedundantVersionCheck</a></li>
+<li><a class="reference internal" href="#droppedkeywordscheck">DroppedKeywordsCheck</a></li>
+<li><a class="reference internal" href="#gitpkgcommitscheck">GitPkgCommitsCheck</a></li>
+<li><a class="reference internal" href="#imlatecheck">ImlateCheck</a></li>
+<li><a class="reference internal" href="#localusecheck">LocalUseCheck</a></li>
+<li><a class="reference internal" href="#packagemetadataxmlcheck">PackageMetadataXmlCheck</a></li>
+<li><a class="reference internal" href="#metadataurlcheck">MetadataUrlCheck</a></li>
+<li><a class="reference internal" href="#equalversionscheck">EqualVersionsCheck</a></li>
+<li><a class="reference internal" href="#liveonlycheck">LiveOnlyCheck</a></li>
+<li><a class="reference internal" href="#pkgdircheck">PkgDirCheck</a></li>
+<li><a class="reference internal" href="#manifestcheck">ManifestCheck</a></li>
+<li><a class="reference internal" href="#stablerequestcheck">StableRequestCheck</a></li>
+<li><a class="reference internal" href="#unstableonlycheck">UnstableOnlyCheck</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#version-scope">Version scope</a><ul>
+<li><a class="reference internal" href="#absolutesymlinkcheck">AbsoluteSymlinkCheck</a></li>
+<li><a class="reference internal" href="#badcommandscheck">BadCommandsCheck</a></li>
+<li><a class="reference internal" href="#inheritscheck">InheritsCheck</a></li>
+<li><a class="reference internal" href="#insintocheck">InsintoCheck</a></li>
+<li><a class="reference internal" href="#obsoleteuricheck">ObsoleteUriCheck</a></li>
+<li><a class="reference internal" href="#pathvariablescheck">PathVariablesCheck</a></li>
+<li><a class="reference internal" href="#rawebuildcheck">RawEbuildCheck</a></li>
+<li><a class="reference internal" href="#redundantdodircheck">RedundantDodirCheck</a></li>
+<li><a class="reference internal" href="#eclassusagecheck">EclassUsageCheck</a></li>
+<li><a class="reference internal" href="#glsacheck">GlsaCheck</a></li>
+<li><a class="reference internal" href="#ebuildheadercheck">EbuildHeaderCheck</a></li>
+<li><a class="reference internal" href="#dependencycheck">DependencyCheck</a></li>
+<li><a class="reference internal" href="#descriptioncheck">DescriptionCheck</a></li>
+<li><a class="reference internal" href="#eapicheck">EapiCheck</a></li>
+<li><a class="reference internal" href="#homepagecheck">HomepageCheck</a></li>
+<li><a class="reference internal" href="#iusecheck">IuseCheck</a></li>
+<li><a class="reference internal" href="#keywordscheck">KeywordsCheck</a></li>
+<li><a class="reference internal" href="#licensecheck">LicenseCheck</a></li>
+<li><a class="reference internal" href="#missingslotdepcheck">MissingSlotDepCheck</a></li>
+<li><a class="reference internal" href="#missingunpackerdepcheck">MissingUnpackerDepCheck</a></li>
+<li><a class="reference internal" href="#outdatedblockerscheck">OutdatedBlockersCheck</a></li>
+<li><a class="reference internal" href="#propertiescheck">PropertiesCheck</a></li>
+<li><a class="reference internal" href="#requiredusecheck">RequiredUseCheck</a></li>
+<li><a class="reference internal" href="#restrictcheck">RestrictCheck</a></li>
+<li><a class="reference internal" href="#restricttestcheck">RestrictTestCheck</a></li>
+<li><a class="reference internal" href="#sourcingcheck">SourcingCheck</a></li>
+<li><a class="reference internal" href="#srcuricheck">SrcUriCheck</a></li>
+<li><a class="reference internal" href="#fetchablesurlcheck">FetchablesUrlCheck</a></li>
+<li><a class="reference internal" href="#homepageurlcheck">HomepageUrlCheck</a></li>
+<li><a class="reference internal" href="#perlcheck">PerlCheck</a></li>
+<li><a class="reference internal" href="#pythoncheck">PythonCheck</a></li>
+<li><a class="reference internal" href="#pythoncompatcheck">PythonCompatCheck</a></li>
+<li><a class="reference internal" href="#visibilitycheck">VisibilityCheck</a></li>
+<li><a class="reference internal" href="#whitespacecheck">WhitespaceCheck</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/man/pkgcheck/checks.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Checks</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

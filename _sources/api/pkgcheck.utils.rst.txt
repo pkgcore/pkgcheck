@@ -1,0 +1,7 @@
+pkgcheck.utils module
+=====================
+
+.. automodule:: pkgcheck.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:

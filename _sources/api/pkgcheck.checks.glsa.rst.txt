@@ -1,0 +1,7 @@
+pkgcheck.checks.glsa module
+===========================
+
+.. automodule:: pkgcheck.checks.glsa
+   :members:
+   :undoc-members:
+   :show-inheritance:

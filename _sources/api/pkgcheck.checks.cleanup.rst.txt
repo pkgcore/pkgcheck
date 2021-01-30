@@ -1,0 +1,7 @@
+pkgcheck.checks.cleanup module
+==============================
+
+.. automodule:: pkgcheck.checks.cleanup
+   :members:
+   :undoc-members:
+   :show-inheritance:

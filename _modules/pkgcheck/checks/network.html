@@ -1,0 +1,383 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.checks.network &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../checks.html" accesskey="U">pkgcheck.checks</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.network</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcheck.checks.network</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Various checks that require network support.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">import</span> <span class="nn">urllib.request</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+
+<span class="kn">from</span> <span class="nn">lxml</span> <span class="kn">import</span> <span class="n">etree</span>
+<span class="kn">from</span> <span class="nn">pkgcore.fetch</span> <span class="kn">import</span> <span class="n">fetchable</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">addons</span><span class="p">,</span> <span class="n">base</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">sources</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">NetworkCheck</span>
+
+
+<span class="k">class</span> <span class="nc">_UrlResult</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">FilteredVersionResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generic result for a URL with some type of failed status.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attr</span> <span class="o">=</span> <span class="n">attr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="n">url</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">attr</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">attr</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="si">}</span><span class="s1">&#39;</span>
+
+
+<div class="viewcode-block" id="DeadUrl"><a class="viewcode-back" href="../../../api/pkgcheck.checks.network.html#pkgcheck.checks.network.DeadUrl">[docs]</a><span class="k">class</span> <span class="nc">DeadUrl</span><span class="p">(</span><span class="n">_UrlResult</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Package with a dead URL of some type.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="SSLCertificateError"><a class="viewcode-back" href="../../../api/pkgcheck.checks.network.html#pkgcheck.checks.network.SSLCertificateError">[docs]</a><span class="k">class</span> <span class="nc">SSLCertificateError</span><span class="p">(</span><span class="n">_UrlResult</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Package with https:// HOMEPAGE with an invalid SSL cert.&quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">attr</span><span class="si">}</span><span class="s1">: SSL cert error: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">attr</span><span class="si">}</span><span class="s1">: SSL cert error: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<span class="k">class</span> <span class="nc">_UpdatedUrlResult</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">FilteredVersionResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generic result for a URL that should be updated to an alternative.&quot;&quot;&quot;</span>
+
+    <span class="n">message</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">new_url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attr</span> <span class="o">=</span> <span class="n">attr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">url</span> <span class="o">=</span> <span class="n">url</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">new_url</span> <span class="o">=</span> <span class="n">new_url</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">attr</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">msg</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+        <span class="n">msg</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">url</span><span class="si">}</span><span class="s1"> -&gt; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">new_url</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s1">&#39;: &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="RedirectedUrl"><a class="viewcode-back" href="../../../api/pkgcheck.checks.network.html#pkgcheck.checks.network.RedirectedUrl">[docs]</a><span class="k">class</span> <span class="nc">RedirectedUrl</span><span class="p">(</span><span class="n">_UpdatedUrlResult</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Package with a URL that permanently redirects to a different site.&quot;&quot;&quot;</span>
+
+    <span class="n">message</span> <span class="o">=</span> <span class="s1">&#39;permanently redirected&#39;</span></div>
+
+
+<div class="viewcode-block" id="HttpsUrlAvailable"><a class="viewcode-back" href="../../../api/pkgcheck.checks.network.html#pkgcheck.checks.network.HttpsUrlAvailable">[docs]</a><span class="k">class</span> <span class="nc">HttpsUrlAvailable</span><span class="p">(</span><span class="n">_UpdatedUrlResult</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;URL uses http:// when https:// is available.&quot;&quot;&quot;</span>
+
+    <span class="n">message</span> <span class="o">=</span> <span class="s1">&#39;HTTPS url available&#39;</span></div>
+
+
+<span class="k">class</span> <span class="nc">_RequestException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Wrapper for requests exceptions.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">request_exc</span> <span class="o">=</span> <span class="n">exc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">msg</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">msg</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">request_exc</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="SSLError"><a class="viewcode-back" href="../../../api/pkgcheck.checks.network.html#pkgcheck.checks.network.SSLError">[docs]</a><span class="k">class</span> <span class="nc">SSLError</span><span class="p">(</span><span class="n">_RequestException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Wrapper for requests SSLError exception.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="RequestError"><a class="viewcode-back" href="../../../api/pkgcheck.checks.network.html#pkgcheck.checks.network.RequestError">[docs]</a><span class="k">class</span> <span class="nc">RequestError</span><span class="p">(</span><span class="n">_RequestException</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Wrapper for generic requests exception.&quot;&quot;&quot;</span></div>
+
+
+<span class="k">class</span> <span class="nc">_UrlCheck</span><span class="p">(</span><span class="n">NetworkCheck</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generic URL verification check requiring network support.&quot;&quot;&quot;</span>
+
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span>
+        <span class="n">DeadUrl</span><span class="p">,</span> <span class="n">RedirectedUrl</span><span class="p">,</span> <span class="n">HttpsUrlAvailable</span><span class="p">,</span> <span class="n">SSLCertificateError</span><span class="p">,</span>
+    <span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">_http_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Verify http:// and https:// URLs.&quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">allow_redirects</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">r</span><span class="p">:</span>
+                <span class="n">redirected_url</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">for</span> <span class="n">response</span> <span class="ow">in</span> <span class="n">r</span><span class="o">.</span><span class="n">history</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">response</span><span class="o">.</span><span class="n">is_permanent_redirect</span><span class="p">:</span>
+                        <span class="k">break</span>
+                    <span class="n">redirected_url</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;location&#39;</span><span class="p">]</span>
+                    <span class="n">hsts</span> <span class="o">=</span> <span class="s1">&#39;strict-transport-security&#39;</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span>
+
+                <span class="k">if</span> <span class="n">redirected_url</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">redirected_url</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;https://&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">url</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;http://&#39;</span><span class="p">):</span>
+                        <span class="n">result</span> <span class="o">=</span> <span class="n">HttpsUrlAvailable</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">redirected_url</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">redirected_url</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;http://&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">hsts</span><span class="p">:</span>
+                        <span class="n">redirected_url</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;https://</span><span class="si">{</span><span class="n">redirected_url</span><span class="p">[</span><span class="mi">7</span><span class="p">:]</span><span class="si">}</span><span class="s1">&#39;</span>
+                        <span class="n">result</span> <span class="o">=</span> <span class="n">RedirectedUrl</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">redirected_url</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">result</span> <span class="o">=</span> <span class="n">RedirectedUrl</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">redirected_url</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">SSLError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">SSLCertificateError</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">RequestError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">DeadUrl</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span> <span class="nf">_https_available_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">future</span><span class="p">,</span> <span class="n">orig_url</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Check if https:// alternatives exist for http:// URLs.&quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">allow_redirects</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">stream</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">r</span><span class="p">:</span>
+                <span class="n">redirected_url</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">for</span> <span class="n">response</span> <span class="ow">in</span> <span class="n">r</span><span class="o">.</span><span class="n">history</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">response</span><span class="o">.</span><span class="n">is_permanent_redirect</span><span class="p">:</span>
+                        <span class="k">break</span>
+                    <span class="n">redirected_url</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="p">[</span><span class="s1">&#39;location&#39;</span><span class="p">]</span>
+                    <span class="n">hsts</span> <span class="o">=</span> <span class="s1">&#39;strict-transport-security&#39;</span> <span class="ow">in</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span>
+
+                <span class="c1"># skip result if http:// URL check was redirected to https://</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">(),</span> <span class="n">HttpsUrlAvailable</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">redirected_url</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="n">redirected_url</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;https://&#39;</span><span class="p">):</span>
+                            <span class="n">result</span> <span class="o">=</span> <span class="n">HttpsUrlAvailable</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">orig_url</span><span class="p">,</span> <span class="n">redirected_url</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+                        <span class="k">elif</span> <span class="n">redirected_url</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;http://&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">hsts</span><span class="p">:</span>
+                            <span class="n">redirected_url</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;https://</span><span class="si">{</span><span class="n">redirected_url</span><span class="p">[</span><span class="mi">7</span><span class="p">:]</span><span class="si">}</span><span class="s1">&#39;</span>
+                            <span class="n">result</span> <span class="o">=</span> <span class="n">HttpsUrlAvailable</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">orig_url</span><span class="p">,</span> <span class="n">redirected_url</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">result</span> <span class="o">=</span> <span class="n">HttpsUrlAvailable</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">orig_url</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">RequestError</span><span class="p">,</span> <span class="n">SSLError</span><span class="p">):</span>
+            <span class="k">pass</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span> <span class="nf">_ftp_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Verify ftp:// URLs with urllib.&quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlopen</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">urllib</span><span class="o">.</span><span class="n">error</span><span class="o">.</span><span class="n">URLError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">DeadUrl</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">reason</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">timeout</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">DeadUrl</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span> <span class="nf">task_done</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">future</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Determine the result of a given URL verification task.&quot;&quot;&quot;</span>
+        <span class="n">exc</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">exception</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">exc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># traceback can&#39;t be pickled so serialize it</span>
+            <span class="n">tb</span> <span class="o">=</span> <span class="n">traceback</span><span class="o">.</span><span class="n">format_exc</span><span class="p">()</span>
+            <span class="c1"># return exceptions that occurred in threads</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">results_q</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">tb</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">pkg</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># recreate result object with different pkg target</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">_create</span><span class="p">(</span><span class="o">**</span><span class="n">result</span><span class="o">.</span><span class="n">_attrs</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">results_q</span><span class="o">.</span><span class="n">put</span><span class="p">([</span><span class="n">result</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">_get_urls</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get URLs to verify for a given package.&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span>
+
+    <span class="k">def</span> <span class="nf">_schedule_check</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">executor</span><span class="p">,</span> <span class="n">futures</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Schedule verification method to run in a separate thread against a given URL.</span>
+
+<span class="sd">        Note that this tries to avoid hitting the network for the same URL</span>
+<span class="sd">        twice using a mapping from requested URLs to future objects, adding</span>
+<span class="sd">        result-checking callbacks to the futures of existing URLs.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">future</span> <span class="o">=</span> <span class="n">futures</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">future</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">future</span> <span class="o">=</span> <span class="n">executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">future</span><span class="o">.</span><span class="n">add_done_callback</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task_done</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+            <span class="n">futures</span><span class="p">[</span><span class="n">url</span><span class="p">]</span> <span class="o">=</span> <span class="n">future</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">future</span><span class="o">.</span><span class="n">add_done_callback</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">task_done</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;pkg&#39;</span><span class="p">]))</span>
+
+    <span class="k">def</span> <span class="nf">schedule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">executor</span><span class="p">,</span> <span class="n">futures</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Schedule verification methods to run in separate threads for all flagged URLs.&quot;&quot;&quot;</span>
+        <span class="n">http_urls</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">attr</span><span class="p">,</span> <span class="n">url</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_urls</span><span class="p">(</span><span class="n">pkg</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">url</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;ftp://&#39;</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_schedule_check</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_ftp_check</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">executor</span><span class="p">,</span> <span class="n">futures</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_schedule_check</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_http_check</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">executor</span><span class="p">,</span> <span class="n">futures</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+                <span class="n">http_urls</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">attr</span><span class="p">,</span> <span class="n">url</span><span class="p">))</span>
+
+        <span class="n">http_urls</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">http_urls</span><span class="p">)</span>
+        <span class="n">http_to_https_urls</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;https://</span><span class="si">{</span><span class="n">url</span><span class="p">[</span><span class="mi">7</span><span class="p">:]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">url</span><span class="p">)</span> <span class="ow">in</span> <span class="n">http_urls</span>
+            <span class="k">if</span> <span class="n">url</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;http://&#39;</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">attr</span><span class="p">,</span> <span class="n">orig_url</span><span class="p">,</span> <span class="n">url</span> <span class="ow">in</span> <span class="n">http_to_https_urls</span><span class="p">:</span>
+            <span class="n">future</span> <span class="o">=</span> <span class="n">futures</span><span class="p">[</span><span class="n">orig_url</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_schedule_check</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_https_available_check</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">executor</span><span class="p">,</span> <span class="n">futures</span><span class="p">,</span>
+                <span class="n">future</span><span class="o">=</span><span class="n">future</span><span class="p">,</span> <span class="n">orig_url</span><span class="o">=</span><span class="n">orig_url</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="HomepageUrlCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.network.html#pkgcheck.checks.network.HomepageUrlCheck">[docs]</a><span class="k">class</span> <span class="nc">HomepageUrlCheck</span><span class="p">(</span><span class="n">_UrlCheck</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Verify HOMEPAGE URLs.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_get_urls</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">homepage</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="s1">&#39;HOMEPAGE&#39;</span><span class="p">,</span> <span class="n">url</span></div>
+
+
+<div class="viewcode-block" id="FetchablesUrlCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.network.html#pkgcheck.checks.network.FetchablesUrlCheck">[docs]</a><span class="k">class</span> <span class="nc">FetchablesUrlCheck</span><span class="p">(</span><span class="n">_UrlCheck</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Verify SRC_URI URLs.&quot;&quot;&quot;</span>
+
+    <span class="n">required_addons</span> <span class="o">=</span> <span class="p">(</span><span class="n">addons</span><span class="o">.</span><span class="n">UseAddon</span><span class="p">,)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">use_addon</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fetch_filter</span> <span class="o">=</span> <span class="n">use_addon</span><span class="o">.</span><span class="n">get_filter</span><span class="p">(</span><span class="s1">&#39;fetchables&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_urls</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="c1"># ignore conditionals</span>
+        <span class="n">fetchables</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fetch_filter</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">fetchable</span><span class="p">,),</span> <span class="n">pkg</span><span class="p">,</span>
+            <span class="n">pkg</span><span class="o">.</span><span class="n">generate_fetchables</span><span class="p">(</span>
+                <span class="n">allow_missing_checksums</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ignore_unknown_mirrors</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">skip_default_mirrors</span><span class="o">=</span><span class="kc">True</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">fetchables</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">url</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">uri</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="s1">&#39;SRC_URI&#39;</span><span class="p">,</span> <span class="n">url</span></div>
+
+
+<div class="viewcode-block" id="MetadataUrlCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.network.html#pkgcheck.checks.network.MetadataUrlCheck">[docs]</a><span class="k">class</span> <span class="nc">MetadataUrlCheck</span><span class="p">(</span><span class="n">_UrlCheck</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Verify metadata.xml URLs.&quot;&quot;&quot;</span>
+
+    <span class="n">_source</span> <span class="o">=</span> <span class="n">sources</span><span class="o">.</span><span class="n">PackageRepoSource</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">protocols</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;http://&#39;</span><span class="p">,</span> <span class="s1">&#39;https://&#39;</span><span class="p">,</span> <span class="s1">&#39;ftp://&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">remote_map</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;bitbucket&#39;</span><span class="p">:</span> <span class="s1">&#39;https://bitbucket.org/</span><span class="si">{project}</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;cpan&#39;</span><span class="p">:</span> <span class="s1">&#39;https://metacpan.org/release/</span><span class="si">{project}</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;github&#39;</span><span class="p">:</span> <span class="s1">&#39;https://github.com/</span><span class="si">{project}</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;gitlab&#39;</span><span class="p">:</span> <span class="s1">&#39;https://gitlab.com/</span><span class="si">{project}</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;launchpad&#39;</span><span class="p">:</span> <span class="s1">&#39;https://launchpad.net/</span><span class="si">{project}</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;pear&#39;</span><span class="p">:</span> <span class="s1">&#39;https://pear.php.net/package/</span><span class="si">{project}</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;pypi&#39;</span><span class="p">:</span> <span class="s1">&#39;https://pypi.org/project/</span><span class="si">{project}</span><span class="s1">/&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;rubygems&#39;</span><span class="p">:</span> <span class="s1">&#39;https://rubygems.org/gems/</span><span class="si">{project}</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="s1">&#39;sourceforge&#39;</span><span class="p">:</span> <span class="s1">&#39;https://sourceforge.net/projects/</span><span class="si">{project}</span><span class="s1">/&#39;</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">_get_urls</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">tree</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">_shared_pkg_data</span><span class="o">.</span><span class="n">metadata_xml</span><span class="o">.</span><span class="n">_source</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">OSError</span><span class="p">,</span> <span class="n">etree</span><span class="o">.</span><span class="n">XMLSyntaxError</span><span class="p">):</span>
+            <span class="k">return</span>
+
+        <span class="c1"># TODO: move upstream parsing to a pkgcore attribute?</span>
+        <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;changelog&#39;</span><span class="p">,</span> <span class="s1">&#39;doc&#39;</span><span class="p">,</span> <span class="s1">&#39;bugs-to&#39;</span><span class="p">,</span> <span class="s1">&#39;remote-id&#39;</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">tree</span><span class="o">.</span><span class="n">xpath</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;//upstream/</span><span class="si">{</span><span class="n">element</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">text</span><span class="p">:</span>
+                    <span class="n">url</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">text</span>
+                    <span class="k">if</span> <span class="n">element</span> <span class="o">==</span> <span class="s1">&#39;remote-id&#39;</span><span class="p">:</span>
+                        <span class="c1"># Use remote-id -&gt; URL map to determine actual URL,</span>
+                        <span class="c1"># skipping verification for unmapped remote-ids.</span>
+                        <span class="k">try</span><span class="p">:</span>
+                            <span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">remote_map</span><span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">project</span><span class="o">=</span><span class="n">url</span><span class="p">)</span>
+                        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                            <span class="k">continue</span>
+                    <span class="c1"># skip unsupported protocols, e.g. mailto URLs from bugs-to</span>
+                    <span class="k">if</span> <span class="n">url</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">protocols</span><span class="p">):</span>
+                        <span class="k">yield</span> <span class="sa">f</span><span class="s1">&#39;metadata.xml: </span><span class="si">{</span><span class="n">element</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">url</span>
+
+<div class="viewcode-block" id="MetadataUrlCheck.schedule"><a class="viewcode-back" href="../../../api/pkgcheck.checks.network.html#pkgcheck.checks.network.MetadataUrlCheck.schedule">[docs]</a>    <span class="k">def</span> <span class="nf">schedule</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkgs</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">schedule</span><span class="p">(</span><span class="n">pkgs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../checks.html" >pkgcheck.checks</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.network</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

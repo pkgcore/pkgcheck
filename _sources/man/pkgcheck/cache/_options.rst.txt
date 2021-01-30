@@ -1,0 +1,121 @@
+Optional Arguments
+------------------
+
+--cache-dir CACHE_DIR   
+                        directory to use for storing cache files
+
+-l, --list              
+                        list available caches
+
+-u, --update            
+                        update caches
+
+-R, --remove            
+                        forcibly remove caches
+
+-f, --force             
+                        forcibly update/remove caches
+
+-n, --dry-run           
+                        dry run without performing any changes
+
+-t CACHE, --type CACHE  
+                        target cache types
+
+Repo Options
+------------
+
+-r REPO, --repo REPO  
+                      target repo
+
+Base Options
+------------
+
+-h, --help       
+                 Show this help message and exit. To get more
+                 information see the related man page.
+
+--debug          
+                 Enable debug checks and show verbose debug output.
+
+-q, --quiet      
+                 Suppress non-error, informational messages.
+
+-v, --verbose    
+                 Increase the verbosity of various output.
+
+--color BOOLEAN  
+                 Toggle colored output support. This can be used to forcibly
+                 enable color support when piping output or other sitations
+                 where stdout is not a tty.
+
+Arches
+------
+
+-a ARCH, --arches ARCH  
+                        Comma separated list of arches to enable and disable.
+                        
+                        To specify disabled arches prefix them with '-'. Note that when
+                        starting the argument list with a disabled arch an equals sign
+                        must be used, e.g. -a=-arch, otherwise the disabled arch
+                        argument is treated as an option.
+                        
+                        By default all repo defined arches are used; however,
+                        stable-related checks (e.g. UnstableOnly) default to the set of
+                        arches having stable profiles in the target repo.
+
+Profiles
+--------
+
+-p PROFILE, --profiles PROFILE  
+                                Comma separated list of profiles to enable and disable for
+                                scanning. Any profiles specified in this fashion will be the
+                                only profiles that get scanned, skipping any disabled profiles.
+                                In addition, if no profiles are explicitly enabled, all
+                                profiles defined in the target repo's profiles.desc file will be
+                                scanned except those marked as experimental (exp).
+                                
+                                To specify disabled profiles prefix them with ``-`` which
+                                removes the from the list of profiles to be considered. Note
+                                that when starting the argument list with a disabled profile an
+                                equals sign must be used, e.g.  ``-p=-path/to/profile``,
+                                otherwise the disabled profile argument is treated as an
+                                option.
+                                
+                                The special keywords of ``stable``, ``dev``, ``exp``, and
+                                ``deprecated`` correspond to the lists of stable, development,
+                                experimental, and deprecated profiles, respectively. Therefore,
+                                to only scan all stable profiles pass the ``stable`` argument
+                                to --profiles. Additionally the keyword ``all`` can be used to
+                                scan all defined profiles in the target repo.
+
+Git
+---
+
+Git repo support for various checks.
+
+Pkgcheck can create virtual package repos from a given git repo's history
+in order to provide more info for checks relating to stable requests,
+outdated blockers, or local commits. These virtual repos are cached and
+updated every run if new commits are detected.
+
+Git repos must have a supported config in order to work properly.
+Specifically, pkgcheck assumes that both origin and master branches exist
+and relate to the upstream and local development states, respectively.
+
+Additionally, the origin/HEAD ref must exist. If it doesn't, running ``git
+fetch origin`` should create it. Otherwise, using ``git remote set-head
+origin master`` or similar will also create the reference.
+
+--commits [COMMIT]  
+                    For a local git repo, pkgcheck will determine targets to scan
+                    from the committed changes compared to a given reference that
+                    defaults to the repo's origin.
+                    
+                    For example, to scan all the packages that have been changed in
+                    the current branch compared to the branch named 'old' use
+                    ``pkgcheck scan --commits old``. For two separate branches
+                    named 'old' and 'new' use ``pkgcheck scan --commits old..new``.
+                    
+                    Note that will also enable eclass-specific checks if it
+                    determines any commits have been made to eclasses.

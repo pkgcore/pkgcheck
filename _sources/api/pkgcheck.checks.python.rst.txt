@@ -1,0 +1,7 @@
+pkgcheck.checks.python module
+=============================
+
+.. automodule:: pkgcheck.checks.python
+   :members:
+   :undoc-members:
+   :show-inheritance:

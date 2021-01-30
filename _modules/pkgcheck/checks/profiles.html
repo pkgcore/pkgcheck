@@ -1,0 +1,487 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.checks.profiles &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../checks.html" accesskey="U">pkgcheck.checks</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.profiles</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcheck.checks.profiles</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Various profile-related checks.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+
+<span class="kn">from</span> <span class="nn">pkgcore.ebuild</span> <span class="kn">import</span> <span class="n">misc</span>
+<span class="kn">from</span> <span class="nn">pkgcore.ebuild</span> <span class="kn">import</span> <span class="n">profiles</span> <span class="k">as</span> <span class="n">profiles_mod</span>
+<span class="kn">from</span> <span class="nn">pkgcore.ebuild.atom</span> <span class="kn">import</span> <span class="n">atom</span> <span class="k">as</span> <span class="n">atom_cls</span>
+<span class="kn">from</span> <span class="nn">pkgcore.ebuild.repo_objs</span> <span class="kn">import</span> <span class="n">Profiles</span>
+<span class="kn">from</span> <span class="nn">snakeoil.osutils</span> <span class="kn">import</span> <span class="n">pjoin</span>
+<span class="kn">from</span> <span class="nn">snakeoil.sequences</span> <span class="kn">import</span> <span class="n">iflatten_instance</span>
+<span class="kn">from</span> <span class="nn">snakeoil.strings</span> <span class="kn">import</span> <span class="n">pluralism</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">addons</span><span class="p">,</span> <span class="n">base</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">sources</span>
+<span class="kn">from</span> <span class="nn">..profiles</span> <span class="kn">import</span> <span class="n">ProfileAddon</span><span class="p">,</span> <span class="n">ProfileNode</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">Check</span>
+
+
+<div class="viewcode-block" id="UnknownProfilePackage"><a class="viewcode-back" href="../../../api/pkgcheck.checks.profiles.html#pkgcheck.checks.profiles.UnknownProfilePackage">[docs]</a><span class="k">class</span> <span class="nc">UnknownProfilePackage</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">ProfilesResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Profile files includes package entry that doesn&#39;t exist in the repo.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">atom</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">atom</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">atom</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">!r}</span><span class="s1">: unknown package: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">atom</span><span class="si">!r}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="UnknownProfilePackageUse"><a class="viewcode-back" href="../../../api/pkgcheck.checks.profiles.html#pkgcheck.checks.profiles.UnknownProfilePackageUse">[docs]</a><span class="k">class</span> <span class="nc">UnknownProfilePackageUse</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">ProfilesResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Profile files include entries with USE flags that aren&#39;t used on any matching packages.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">flags</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">atom</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">atom</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flags</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">flags</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flags</span><span class="p">)</span>
+        <span class="n">flags</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flags</span><span class="p">)</span>
+        <span class="n">atom</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">atom</span><span class="si">}</span><span class="s1">[</span><span class="si">{</span><span class="n">flags</span><span class="si">}</span><span class="s1">]&#39;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">!r}</span><span class="s1">: unknown package USE flag</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">atom</span><span class="si">!r}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="UnknownProfileUse"><a class="viewcode-back" href="../../../api/pkgcheck.checks.profiles.html#pkgcheck.checks.profiles.UnknownProfileUse">[docs]</a><span class="k">class</span> <span class="nc">UnknownProfileUse</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">ProfilesResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Profile files include USE flags that don&#39;t exist.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">flags</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flags</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">flags</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flags</span><span class="p">)</span>
+        <span class="n">flags</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">repr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">flags</span><span class="p">))</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">!r}</span><span class="s1">: unknown USE flag</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">flags</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="UnknownProfilePackageKeywords"><a class="viewcode-back" href="../../../api/pkgcheck.checks.profiles.html#pkgcheck.checks.profiles.UnknownProfilePackageKeywords">[docs]</a><span class="k">class</span> <span class="nc">UnknownProfilePackageKeywords</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">ProfilesResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Profile files include package keywords that don&#39;t exist.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">atom</span><span class="p">,</span> <span class="n">keywords</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">atom</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">atom</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keywords</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">keywords</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keywords</span><span class="p">)</span>
+        <span class="n">keywords</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">repr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">keywords</span><span class="p">))</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">!r}</span><span class="s1">: unknown package keyword</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">atom</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">keywords</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="ProfileWarning"><a class="viewcode-back" href="../../../api/pkgcheck.checks.profiles.html#pkgcheck.checks.profiles.ProfileWarning">[docs]</a><span class="k">class</span> <span class="nc">ProfileWarning</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">ProfilesResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">LogWarning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Badly formatted data in various profile files.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="ProfileError"><a class="viewcode-back" href="../../../api/pkgcheck.checks.profiles.html#pkgcheck.checks.profiles.ProfileError">[docs]</a><span class="k">class</span> <span class="nc">ProfileError</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">ProfilesResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">LogError</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Erroneously formatted data in various profile files.&quot;&quot;&quot;</span></div>
+
+
+<span class="c1"># mapping of profile log levels to result classes</span>
+<span class="n">_logmap</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">base</span><span class="o">.</span><span class="n">LogMap</span><span class="p">(</span><span class="s1">&#39;pkgcore.log.logger.warning&#39;</span><span class="p">,</span> <span class="n">ProfileWarning</span><span class="p">),</span>
+    <span class="n">base</span><span class="o">.</span><span class="n">LogMap</span><span class="p">(</span><span class="s1">&#39;pkgcore.log.logger.error&#39;</span><span class="p">,</span> <span class="n">ProfileError</span><span class="p">),</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="verify_files"><a class="viewcode-back" href="../../../api/pkgcheck.checks.profiles.html#pkgcheck.checks.profiles.verify_files">[docs]</a><span class="k">def</span> <span class="nf">verify_files</span><span class="p">(</span><span class="o">*</span><span class="n">files</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Decorator to register file verification methods.&quot;&quot;&quot;</span>
+
+    <span class="k">class</span> <span class="nc">decorator</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Decorator with access to the class of a decorated function.&quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">func</span> <span class="o">=</span> <span class="n">func</span>
+
+        <span class="k">def</span> <span class="nf">__set_name__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">file</span><span class="p">,</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">files</span><span class="p">:</span>
+                <span class="n">owner</span><span class="o">.</span><span class="n">known_files</span><span class="p">[</span><span class="n">file</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">)</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">owner</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">decorator</span></div>
+
+
+<div class="viewcode-block" id="ProfilesCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.profiles.html#pkgcheck.checks.profiles.ProfilesCheck">[docs]</a><span class="k">class</span> <span class="nc">ProfilesCheck</span><span class="p">(</span><span class="n">Check</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Scan repo profiles for unknown flags/packages.&quot;&quot;&quot;</span>
+
+    <span class="n">_source</span> <span class="o">=</span> <span class="n">sources</span><span class="o">.</span><span class="n">ProfilesRepoSource</span>
+    <span class="n">required_addons</span> <span class="o">=</span> <span class="p">(</span><span class="n">addons</span><span class="o">.</span><span class="n">UseAddon</span><span class="p">,</span> <span class="n">addons</span><span class="o">.</span><span class="n">KeywordsAddon</span><span class="p">)</span>
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span>
+        <span class="n">UnknownProfilePackage</span><span class="p">,</span> <span class="n">UnknownProfilePackageUse</span><span class="p">,</span> <span class="n">UnknownProfileUse</span><span class="p">,</span>
+        <span class="n">UnknownProfilePackageKeywords</span><span class="p">,</span> <span class="n">ProfileWarning</span><span class="p">,</span> <span class="n">ProfileError</span><span class="p">,</span>
+    <span class="p">])</span>
+
+    <span class="c1"># mapping between known files and verification methods</span>
+    <span class="n">known_files</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">use_addon</span><span class="p">,</span> <span class="n">keywords_addon</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">target_repo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">target_repo</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keywords</span> <span class="o">=</span> <span class="n">keywords_addon</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">search_repo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">search_repo</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">profiles_dir</span> <span class="o">=</span> <span class="n">target_repo</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">profiles_base</span>
+
+        <span class="n">local_iuse</span> <span class="o">=</span> <span class="p">{</span><span class="n">use</span> <span class="k">for</span> <span class="n">pkg</span><span class="p">,</span> <span class="p">(</span><span class="n">use</span><span class="p">,</span> <span class="n">desc</span><span class="p">)</span> <span class="ow">in</span> <span class="n">target_repo</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">use_local_desc</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">available_iuse</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+            <span class="n">local_iuse</span> <span class="o">|</span> <span class="n">use_addon</span><span class="o">.</span><span class="n">global_iuse</span> <span class="o">|</span>
+            <span class="n">use_addon</span><span class="o">.</span><span class="n">global_iuse_expand</span> <span class="o">|</span> <span class="n">use_addon</span><span class="o">.</span><span class="n">global_iuse_implicit</span><span class="p">)</span>
+
+    <span class="nd">@verify_files</span><span class="p">((</span><span class="s1">&#39;parent&#39;</span><span class="p">,</span> <span class="s1">&#39;parents&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="s1">&#39;eapi&#39;</span><span class="p">,</span> <span class="s1">&#39;eapi&#39;</span><span class="p">))</span>
+    <span class="k">def</span> <span class="nf">_pull_attr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Verification only needs to pull the profile attr.&quot;&quot;&quot;</span>
+        <span class="k">yield from</span> <span class="p">()</span>
+
+    <span class="nd">@verify_files</span><span class="p">((</span><span class="s1">&#39;deprecated&#39;</span><span class="p">,</span> <span class="s1">&#39;deprecated&#39;</span><span class="p">))</span>
+    <span class="k">def</span> <span class="nf">_deprecated</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">vals</span><span class="p">):</span>
+        <span class="c1"># make sure replacement profile exists</span>
+        <span class="k">if</span> <span class="n">vals</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">replacement</span><span class="p">,</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">vals</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">ProfileNode</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profiles_dir</span><span class="p">,</span> <span class="n">replacement</span><span class="p">))</span>
+            <span class="k">except</span> <span class="n">profiles_mod</span><span class="o">.</span><span class="n">ProfileError</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">ProfileError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;nonexistent replacement </span><span class="si">{</span><span class="n">replacement</span><span class="si">!r}</span><span class="s1"> &#39;</span>
+                    <span class="sa">f</span><span class="s1">&#39;for deprecated profile: </span><span class="si">{</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+    <span class="c1"># non-spec files</span>
+    <span class="nd">@verify_files</span><span class="p">((</span><span class="s1">&#39;package.keywords&#39;</span><span class="p">,</span> <span class="s1">&#39;keywords&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="s1">&#39;package.accept_keywords&#39;</span><span class="p">,</span> <span class="s1">&#39;accept_keywords&#39;</span><span class="p">))</span>
+    <span class="k">def</span> <span class="nf">_pkg_keywords</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">vals</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">atom</span><span class="p">,</span> <span class="n">keywords</span> <span class="ow">in</span> <span class="n">vals</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">invalid</span> <span class="o">:=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">keywords</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">keywords</span><span class="o">.</span><span class="n">valid</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">UnknownProfilePackageKeywords</span><span class="p">(</span>
+                    <span class="n">pjoin</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">filename</span><span class="p">),</span> <span class="n">atom</span><span class="p">,</span> <span class="n">invalid</span><span class="p">)</span>
+
+    <span class="nd">@verify_files</span><span class="p">((</span><span class="s1">&#39;use.force&#39;</span><span class="p">,</span> <span class="s1">&#39;use_force&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="s1">&#39;use.stable.force&#39;</span><span class="p">,</span> <span class="s1">&#39;use_stable_force&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="s1">&#39;use.mask&#39;</span><span class="p">,</span> <span class="s1">&#39;use_mask&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="s1">&#39;use.stable.mask&#39;</span><span class="p">,</span> <span class="s1">&#39;use_stable_mask&#39;</span><span class="p">))</span>
+    <span class="k">def</span> <span class="nf">_use</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">vals</span><span class="p">):</span>
+        <span class="c1"># TODO: give ChunkedDataDict some dict view methods</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">vals</span><span class="o">.</span><span class="n">render_to_dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">entries</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">disabled</span><span class="p">,</span> <span class="n">enabled</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">unknown_disabled</span> <span class="o">:=</span> <span class="nb">set</span><span class="p">(</span><span class="n">disabled</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">available_iuse</span><span class="p">:</span>
+                    <span class="n">flags</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;-&#39;</span> <span class="o">+</span> <span class="n">u</span> <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">unknown_disabled</span><span class="p">)</span>
+                    <span class="k">yield</span> <span class="n">UnknownProfileUse</span><span class="p">(</span>
+                        <span class="n">pjoin</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">filename</span><span class="p">),</span> <span class="n">flags</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">unknown_enabled</span> <span class="o">:=</span> <span class="nb">set</span><span class="p">(</span><span class="n">enabled</span><span class="p">)</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">available_iuse</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">UnknownProfileUse</span><span class="p">(</span>
+                        <span class="n">pjoin</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">filename</span><span class="p">),</span> <span class="n">unknown_enabled</span><span class="p">)</span>
+
+    <span class="nd">@verify_files</span><span class="p">((</span><span class="s1">&#39;packages&#39;</span><span class="p">,</span> <span class="s1">&#39;packages&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="s1">&#39;package.mask&#39;</span><span class="p">,</span> <span class="s1">&#39;masks&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="s1">&#39;package.unmask&#39;</span><span class="p">,</span> <span class="s1">&#39;unmasks&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="s1">&#39;package.deprecated&#39;</span><span class="p">,</span> <span class="s1">&#39;pkg_deprecated&#39;</span><span class="p">))</span>
+    <span class="k">def</span> <span class="nf">_pkg_atoms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">vals</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">iflatten_instance</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> <span class="n">atom_cls</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_repo</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">UnknownProfilePackage</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">filename</span><span class="p">),</span> <span class="n">x</span><span class="p">)</span>
+
+    <span class="nd">@verify_files</span><span class="p">((</span><span class="s1">&#39;package.use&#39;</span><span class="p">,</span> <span class="s1">&#39;pkg_use&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="s1">&#39;package.use.force&#39;</span><span class="p">,</span> <span class="s1">&#39;pkg_use_force&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="s1">&#39;package.use.stable.force&#39;</span><span class="p">,</span> <span class="s1">&#39;pkg_use_stable_force&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="s1">&#39;package.use.mask&#39;</span><span class="p">,</span> <span class="s1">&#39;pkg_use_mask&#39;</span><span class="p">),</span>
+                  <span class="p">(</span><span class="s1">&#39;package.use.stable.mask&#39;</span><span class="p">,</span> <span class="s1">&#39;pkg_use_stable_mask&#39;</span><span class="p">))</span>
+    <span class="k">def</span> <span class="nf">_pkg_use</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">vals</span><span class="p">):</span>
+        <span class="c1"># TODO: give ChunkedDataDict some dict view methods</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">vals</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">misc</span><span class="o">.</span><span class="n">ChunkedDataDict</span><span class="p">):</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">vals</span><span class="o">.</span><span class="n">render_to_dict</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">_pkg</span><span class="p">,</span> <span class="n">entries</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">disabled</span><span class="p">,</span> <span class="n">enabled</span> <span class="ow">in</span> <span class="n">entries</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">pkgs</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">search_repo</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+                    <span class="n">available</span> <span class="o">=</span> <span class="p">{</span><span class="n">u</span> <span class="k">for</span> <span class="n">pkg</span> <span class="ow">in</span> <span class="n">pkgs</span> <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">iuse_stripped</span><span class="p">}</span>
+                    <span class="k">if</span> <span class="n">unknown_disabled</span> <span class="o">:=</span> <span class="nb">set</span><span class="p">(</span><span class="n">disabled</span><span class="p">)</span> <span class="o">-</span> <span class="n">available</span><span class="p">:</span>
+                        <span class="n">flags</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;-&#39;</span> <span class="o">+</span> <span class="n">u</span> <span class="k">for</span> <span class="n">u</span> <span class="ow">in</span> <span class="n">unknown_disabled</span><span class="p">)</span>
+                        <span class="k">yield</span> <span class="n">UnknownProfilePackageUse</span><span class="p">(</span>
+                            <span class="n">pjoin</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">filename</span><span class="p">),</span> <span class="n">a</span><span class="p">,</span> <span class="n">flags</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">unknown_enabled</span> <span class="o">:=</span> <span class="nb">set</span><span class="p">(</span><span class="n">enabled</span><span class="p">)</span> <span class="o">-</span> <span class="n">available</span><span class="p">:</span>
+                        <span class="k">yield</span> <span class="n">UnknownProfilePackageUse</span><span class="p">(</span>
+                            <span class="n">pjoin</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">filename</span><span class="p">),</span> <span class="n">a</span><span class="p">,</span> <span class="n">unknown_enabled</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">UnknownProfilePackage</span><span class="p">(</span>
+                        <span class="n">pjoin</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">filename</span><span class="p">),</span> <span class="n">a</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ProfilesCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.profiles.html#pkgcheck.checks.profiles.ProfilesCheck.feed">[docs]</a>    <span class="k">def</span> <span class="nf">feed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profile</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">profile</span><span class="o">.</span><span class="n">files</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">known_files</span><span class="p">):</span>
+            <span class="n">attr</span><span class="p">,</span> <span class="n">func</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">known_files</span><span class="p">[</span><span class="n">f</span><span class="p">]</span>
+            <span class="k">with</span> <span class="n">base</span><span class="o">.</span><span class="n">LogReports</span><span class="p">(</span><span class="o">*</span><span class="n">_logmap</span><span class="p">)</span> <span class="k">as</span> <span class="n">log_reports</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">profile</span><span class="o">.</span><span class="n">node</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+            <span class="k">yield from</span> <span class="n">func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">profile</span><span class="o">.</span><span class="n">node</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+            <span class="k">yield from</span> <span class="n">log_reports</span></div></div>
+
+
+<div class="viewcode-block" id="UnusedProfileDirs"><a class="viewcode-back" href="../../../api/pkgcheck.checks.profiles.html#pkgcheck.checks.profiles.UnusedProfileDirs">[docs]</a><span class="k">class</span> <span class="nc">UnusedProfileDirs</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">ProfilesResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Unused profile directories detected.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dirs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dirs</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">dirs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dirs</span><span class="p">)</span>
+        <span class="n">dirs</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">repr</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dirs</span><span class="p">))</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;unused profile dir</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">dirs</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="ArchesWithoutProfiles"><a class="viewcode-back" href="../../../api/pkgcheck.checks.profiles.html#pkgcheck.checks.profiles.ArchesWithoutProfiles">[docs]</a><span class="k">class</span> <span class="nc">ArchesWithoutProfiles</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">ProfilesResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Arches without corresponding profile listings.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arches</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">arches</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">arches</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">es</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arches</span><span class="p">,</span> <span class="n">plural</span><span class="o">=</span><span class="s1">&#39;es&#39;</span><span class="p">)</span>
+        <span class="n">arches</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arches</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;arch</span><span class="si">{</span><span class="n">es</span><span class="si">}</span><span class="s1"> without profiles: </span><span class="si">{</span><span class="n">arches</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="NonexistentProfilePath"><a class="viewcode-back" href="../../../api/pkgcheck.checks.profiles.html#pkgcheck.checks.profiles.NonexistentProfilePath">[docs]</a><span class="k">class</span> <span class="nc">NonexistentProfilePath</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">ProfilesResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Specified profile path in profiles.desc doesn&#39;t exist.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;nonexistent profile path: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">!r}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="LaggingProfileEapi"><a class="viewcode-back" href="../../../api/pkgcheck.checks.profiles.html#pkgcheck.checks.profiles.LaggingProfileEapi">[docs]</a><span class="k">class</span> <span class="nc">LaggingProfileEapi</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">ProfilesResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Profile has an EAPI that is older than one of its parents.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">profile</span><span class="p">,</span> <span class="n">eapi</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">parent_eapi</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">profile</span> <span class="o">=</span> <span class="n">profile</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eapi</span> <span class="o">=</span> <span class="n">eapi</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent_eapi</span> <span class="o">=</span> <span class="n">parent_eapi</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="si">!r}</span><span class="s1"> profile has EAPI </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">eapi</span><span class="si">}</span><span class="s1">, &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="si">!r}</span><span class="s1"> parent has EAPI </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">parent_eapi</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="UnknownCategoryDirs"><a class="viewcode-back" href="../../../api/pkgcheck.checks.profiles.html#pkgcheck.checks.profiles.UnknownCategoryDirs">[docs]</a><span class="k">class</span> <span class="nc">UnknownCategoryDirs</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">ProfilesResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Category directories that aren&#39;t listed in a repo&#39;s categories.</span>
+
+<span class="sd">    Or the categories of the repo&#39;s masters as well.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dirs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dirs</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">dirs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">dirs</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dirs</span><span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dirs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;unknown category dir</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">dirs</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="NonexistentCategories"><a class="viewcode-back" href="../../../api/pkgcheck.checks.profiles.html#pkgcheck.checks.profiles.NonexistentCategories">[docs]</a><span class="k">class</span> <span class="nc">NonexistentCategories</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">ProfilesResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Category entries in profiles/categories that don&#39;t exist in the repo.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">categories</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">categories</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">categories</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">categories</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">)</span>
+        <span class="n">ies</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">,</span> <span class="n">singular</span><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">plural</span><span class="o">=</span><span class="s1">&#39;ies&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;nonexistent profiles/categories entr</span><span class="si">{</span><span class="n">ies</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">categories</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="dir_parents"><a class="viewcode-back" href="../../../api/pkgcheck.checks.profiles.html#pkgcheck.checks.profiles.dir_parents">[docs]</a><span class="k">def</span> <span class="nf">dir_parents</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Yield all directory path parents excluding the root directory.</span>
+
+<span class="sd">    Example:</span>
+<span class="sd">    &gt;&gt;&gt; list(dir_parents(&#39;/root/foo/bar/baz&#39;))</span>
+<span class="sd">    [&#39;root/foo/bar&#39;, &#39;root/foo&#39;, &#39;root&#39;]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">))</span>
+    <span class="k">while</span> <span class="n">path</span><span class="p">:</span>
+        <span class="k">yield</span> <span class="n">path</span>
+        <span class="n">dirname</span><span class="p">,</span> <span class="n">_basename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">dirname</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="RepoProfilesCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.profiles.html#pkgcheck.checks.profiles.RepoProfilesCheck">[docs]</a><span class="k">class</span> <span class="nc">RepoProfilesCheck</span><span class="p">(</span><span class="n">Check</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Scan repo for various profiles directory issues.</span>
+
+<span class="sd">    Including unknown arches in profiles, arches without profiles, and unknown</span>
+<span class="sd">    categories.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_source</span> <span class="o">=</span> <span class="p">(</span><span class="n">sources</span><span class="o">.</span><span class="n">EmptySource</span><span class="p">,</span> <span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">profiles_scope</span><span class="p">,))</span>
+    <span class="n">required_addons</span> <span class="o">=</span> <span class="p">(</span><span class="n">ProfileAddon</span><span class="p">,)</span>
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span>
+        <span class="n">ArchesWithoutProfiles</span><span class="p">,</span> <span class="n">UnusedProfileDirs</span><span class="p">,</span> <span class="n">NonexistentProfilePath</span><span class="p">,</span>
+        <span class="n">UnknownCategoryDirs</span><span class="p">,</span> <span class="n">NonexistentCategories</span><span class="p">,</span> <span class="n">LaggingProfileEapi</span><span class="p">,</span>
+        <span class="n">ProfileError</span><span class="p">,</span> <span class="n">ProfileWarning</span><span class="p">,</span>
+    <span class="p">])</span>
+
+    <span class="c1"># known profile status types for the gentoo repo</span>
+    <span class="n">known_profile_statuses</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="s1">&#39;stable&#39;</span><span class="p">,</span> <span class="s1">&#39;dev&#39;</span><span class="p">,</span> <span class="s1">&#39;exp&#39;</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">profile_addon</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">arches</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">target_repo</span><span class="o">.</span><span class="n">known_arches</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">repo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">target_repo</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">profiles_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">profiles_base</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">non_profile_dirs</span> <span class="o">=</span> <span class="n">profile_addon</span><span class="o">.</span><span class="n">non_profile_dirs</span>
+
+<div class="viewcode-block" id="RepoProfilesCheck.finish"><a class="viewcode-back" href="../../../api/pkgcheck.checks.profiles.html#pkgcheck.checks.profiles.RepoProfilesCheck.finish">[docs]</a>    <span class="k">def</span> <span class="nf">finish</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">unknown_category_dirs</span> <span class="o">:=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">category_dirs</span><span class="p">)</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">categories</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">UnknownCategoryDirs</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">unknown_category_dirs</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">nonexistent_categories</span> <span class="o">:=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">categories</span><span class="p">)</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">category_dirs</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">NonexistentCategories</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">nonexistent_categories</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">arches_without_profiles</span> <span class="o">:=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arches</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">profiles</span><span class="o">.</span><span class="n">arches</span><span class="p">()):</span>
+            <span class="k">yield</span> <span class="n">ArchesWithoutProfiles</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">arches_without_profiles</span><span class="p">))</span>
+
+        <span class="n">root_profile_dirs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;embedded&#39;</span><span class="p">}</span>
+        <span class="n">available_profile_dirs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">root</span><span class="p">,</span> <span class="n">_dirs</span><span class="p">,</span> <span class="n">_files</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">walk</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profiles_dir</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">d</span> <span class="o">:=</span> <span class="n">root</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profiles_dir</span><span class="p">):]</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+                <span class="n">available_profile_dirs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="n">available_profile_dirs</span> <span class="o">-=</span> <span class="bp">self</span><span class="o">.</span><span class="n">non_profile_dirs</span> <span class="o">|</span> <span class="n">root_profile_dirs</span>
+
+        <span class="c1"># don&#39;t check for acceptable profile statuses on overlays</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">gentoo_repo</span><span class="p">:</span>
+            <span class="n">known_profile_statuses</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">known_profile_statuses</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">known_profile_statuses</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># forcibly parse profiles.desc and convert log warnings/errors into reports</span>
+        <span class="k">with</span> <span class="n">base</span><span class="o">.</span><span class="n">LogReports</span><span class="p">(</span><span class="o">*</span><span class="n">_logmap</span><span class="p">)</span> <span class="k">as</span> <span class="n">log_reports</span><span class="p">:</span>
+            <span class="n">profiles</span> <span class="o">=</span> <span class="n">Profiles</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">profiles_dir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">repo_id</span><span class="p">,</span>
+                <span class="n">known_status</span><span class="o">=</span><span class="n">known_profile_statuses</span><span class="p">,</span> <span class="n">known_arch</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">arches</span><span class="p">)</span>
+        <span class="k">yield from</span> <span class="n">log_reports</span>
+
+        <span class="n">seen_profile_dirs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">lagging_profile_eapi</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">profiles</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">profile</span> <span class="o">=</span> <span class="n">profiles_mod</span><span class="o">.</span><span class="n">ProfileStack</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">profiles_dir</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">path</span><span class="p">))</span>
+            <span class="k">except</span> <span class="n">profiles_mod</span><span class="o">.</span><span class="n">ProfileError</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">NonexistentProfilePath</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">for</span> <span class="n">parent</span> <span class="ow">in</span> <span class="n">profile</span><span class="o">.</span><span class="n">stack</span><span class="p">:</span>
+                <span class="n">seen_profile_dirs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">dir_parents</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+                <span class="c1"># flag lagging profile EAPIs -- assumes EAPIs are sequentially</span>
+                <span class="c1"># numbered which should be the case for the gentoo repo</span>
+                <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">gentoo_repo</span> <span class="ow">and</span> <span class="nb">str</span><span class="p">(</span><span class="n">profile</span><span class="o">.</span><span class="n">eapi</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">str</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">eapi</span><span class="p">)):</span>
+                    <span class="n">lagging_profile_eapi</span><span class="p">[</span><span class="n">profile</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">profile</span><span class="p">,</span> <span class="n">parents</span> <span class="ow">in</span> <span class="n">lagging_profile_eapi</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">parent</span> <span class="o">=</span> <span class="n">parents</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">yield</span> <span class="n">LaggingProfileEapi</span><span class="p">(</span>
+                <span class="n">profile</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">profile</span><span class="o">.</span><span class="n">eapi</span><span class="p">),</span> <span class="n">parent</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">parent</span><span class="o">.</span><span class="n">eapi</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">unused_profile_dirs</span> <span class="o">:=</span> <span class="n">available_profile_dirs</span> <span class="o">-</span> <span class="n">seen_profile_dirs</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">UnusedProfileDirs</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">unused_profile_dirs</span><span class="p">))</span></div></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../checks.html" >pkgcheck.checks</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.profiles</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

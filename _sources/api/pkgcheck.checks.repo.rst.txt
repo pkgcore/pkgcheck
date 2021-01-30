@@ -1,0 +1,7 @@
+pkgcheck.checks.repo module
+===========================
+
+.. automodule:: pkgcheck.checks.repo
+   :members:
+   :undoc-members:
+   :show-inheritance:

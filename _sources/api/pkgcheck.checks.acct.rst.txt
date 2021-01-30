@@ -1,0 +1,7 @@
+pkgcheck.checks.acct module
+===========================
+
+.. automodule:: pkgcheck.checks.acct
+   :members:
+   :undoc-members:
+   :show-inheritance:

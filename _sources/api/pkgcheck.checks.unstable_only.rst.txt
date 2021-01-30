@@ -1,0 +1,7 @@
+pkgcheck.checks.unstable\_only module
+=====================================
+
+.. automodule:: pkgcheck.checks.unstable_only
+   :members:
+   :undoc-members:
+   :show-inheritance:

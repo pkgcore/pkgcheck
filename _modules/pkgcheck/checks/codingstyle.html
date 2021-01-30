@@ -1,0 +1,799 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.checks.codingstyle &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../checks.html" accesskey="U">pkgcheck.checks</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.codingstyle</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcheck.checks.codingstyle</h1><div class="highlight"><pre>
+<span></span>&quot;&quot;&quot;Various line-based checks.&quot;&quot;&quot;
+
+import re
+from collections import defaultdict
+
+from pkgcore.ebuild.eapi import EAPI
+from snakeoil.mappings import ImmutableDict
+from snakeoil.sequences import stable_unique
+from snakeoil.strings import pluralism
+
+from .. import eclass as eclass_mod
+from .. import addons, results, sources
+from . import Check, OptionalCheck
+
+PREFIX_VARIABLES = (&#39;EROOT&#39;, &#39;ED&#39;, &#39;EPREFIX&#39;)
+PATH_VARIABLES = (&#39;BROOT&#39;, &#39;ROOT&#39;, &#39;D&#39;) + PREFIX_VARIABLES
+
+
+class _CommandResult(results.LineResult):
+    &quot;&quot;&quot;Generic command result.&quot;&quot;&quot;
+
+    def __init__(self, command, **kwargs):
+        super().__init__(**kwargs)
+        self.command = command
+
+    @property
+    def usage_desc(self):
+        return f&#39;{self.command!r}&#39;
+
+    @property
+    def desc(self):
+        s = f&#39;{self.usage_desc}, used on line {self.lineno}&#39;
+        if self.line != self.command:
+            s += f&#39;: {self.line!r}&#39;
+        return s
+
+
+class _EapiCommandResult(_CommandResult):
+    &quot;&quot;&quot;Generic EAPI command result.&quot;&quot;&quot;
+
+    _status = None
+
+    def __init__(self, *args, eapi, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.eapi = str(eapi)
+
+    @property
+    def usage_desc(self):
+        return f&#39;{self.command!r} {self._status} in EAPI {self.eapi}&#39;
+
+
+<div class="viewcode-block" id="DeprecatedEapiCommand"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.DeprecatedEapiCommand">[docs]</a>class DeprecatedEapiCommand(_EapiCommandResult, results.Warning):
+    &quot;&quot;&quot;Ebuild uses a deprecated EAPI command.&quot;&quot;&quot;
+
+    _status = &#39;deprecated&#39;</div>
+
+
+<div class="viewcode-block" id="BannedEapiCommand"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.BannedEapiCommand">[docs]</a>class BannedEapiCommand(_EapiCommandResult, results.Error):
+    &quot;&quot;&quot;Ebuild uses a banned EAPI command.&quot;&quot;&quot;
+
+    _status = &#39;banned&#39;</div>
+
+
+<div class="viewcode-block" id="BadCommandsCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.BadCommandsCheck">[docs]</a>class BadCommandsCheck(Check):
+    &quot;&quot;&quot;Scan ebuild for various deprecated and banned command usage.&quot;&quot;&quot;
+
+    _source = sources.EbuildParseRepoSource
+    known_results = frozenset([DeprecatedEapiCommand, BannedEapiCommand])
+    required_addons = (addons.BashAddon,)
+
+    def __init__(self, *args, bash_addon):
+        super().__init__(*args)
+        self.cmd_query = bash_addon.query(&#39;(command) @call&#39;)
+
+<div class="viewcode-block" id="BadCommandsCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.BadCommandsCheck.feed">[docs]</a>    def feed(self, pkg):
+        for node, _ in self.cmd_query.captures(pkg.tree.root_node):
+            call = pkg.node_str(node)
+            name = pkg.node_str(node.child_by_field_name(&#39;name&#39;))
+            lineno, colno = node.start_point
+            if name in pkg.eapi.bash_cmds_banned:
+                yield BannedEapiCommand(name, line=call, lineno=lineno+1, eapi=pkg.eapi, pkg=pkg)
+            elif name in pkg.eapi.bash_cmds_deprecated:
+                yield DeprecatedEapiCommand(name, line=call, lineno=lineno+1, eapi=pkg.eapi, pkg=pkg)</div></div>
+
+
+<div class="viewcode-block" id="MissingSlash"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.MissingSlash">[docs]</a>class MissingSlash(results.VersionResult, results.Error):
+    &quot;&quot;&quot;Ebuild uses a path variable missing a trailing slash.&quot;&quot;&quot;
+
+    def __init__(self, match, lines, **kwargs):
+        super().__init__(**kwargs)
+        self.match = match
+        self.lines = tuple(lines)
+
+    @property
+    def desc(self):
+        s = pluralism(self.lines)
+        lines = &#39;, &#39;.join(map(str, self.lines))
+        return f&#39;{self.match} missing trailing slash on line{s}: {lines}&#39;</div>
+
+
+<div class="viewcode-block" id="UnnecessarySlashStrip"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.UnnecessarySlashStrip">[docs]</a>class UnnecessarySlashStrip(results.VersionResult, results.Style):
+    &quot;&quot;&quot;Ebuild uses a path variable that strips a nonexistent slash.&quot;&quot;&quot;
+
+    def __init__(self, match, lines, **kwargs):
+        super().__init__(**kwargs)
+        self.match = match
+        self.lines = tuple(lines)
+
+    @property
+    def desc(self):
+        s = pluralism(self.lines)
+        lines = &#39;, &#39;.join(map(str, self.lines))
+        return f&#39;{self.match} unnecessary slash strip on line{s}: {lines}&#39;</div>
+
+
+<div class="viewcode-block" id="DoublePrefixInPath"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.DoublePrefixInPath">[docs]</a>class DoublePrefixInPath(results.VersionResult, results.Error):
+    &quot;&quot;&quot;Ebuild uses two consecutive paths including EPREFIX.
+
+    Ebuild combines two path variables (or a variable and a getter), both
+    of which include EPREFIX, resulting in double prefixing. This is the case
+    when combining many pkg-config-based or alike getters with ED or EROOT.
+
+    For example, ``${ED}$(python_get_sitedir)`` should be replaced
+    with ``${D}$(python_get_sitedir)``.
+    &quot;&quot;&quot;
+
+    def __init__(self, match, lines, **kwargs):
+        super().__init__(**kwargs)
+        self.match = match
+        self.lines = tuple(lines)
+
+    @property
+    def desc(self):
+        s = pluralism(self.lines)
+        lines = &#39;, &#39;.join(map(str, self.lines))
+        return f&#39;{self.match}: concatenates two paths containing EPREFIX on line{s} {lines}&#39;</div>
+
+
+<div class="viewcode-block" id="PathVariablesCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.PathVariablesCheck">[docs]</a>class PathVariablesCheck(Check):
+    &quot;&quot;&quot;Scan ebuild for path variables with various issues.&quot;&quot;&quot;
+
+    _source = sources.EbuildFileRepoSource
+    known_results = frozenset([MissingSlash, UnnecessarySlashStrip, DoublePrefixInPath])
+    prefixed_dir_functions = (
+        &#39;insinto&#39;, &#39;exeinto&#39;,
+        &#39;dodir&#39;, &#39;keepdir&#39;,
+        &#39;fowners&#39;, &#39;fperms&#39;,
+        # java-pkg-2
+        &#39;java-pkg_jarinto&#39;, &#39;java-pkg_sointo&#39;,
+        # python-utils-r1
+        &#39;python_scriptinto&#39;, &#39;python_moduleinto&#39;,
+    )
+    # TODO: add variables to mark this status in the eclasses in order to pull
+    # this data from parsed eclass docs
+    prefixed_getters = (
+        # bash-completion-r1.eclass
+        &#39;get_bashcompdir&#39;, &#39;get_bashhelpersdir&#39;,
+        # db-use.eclass
+        &#39;db_includedir&#39;,
+        # golang-base.eclass
+        &#39;get_golibdir_gopath&#39;,
+        # llvm.eclass
+        &#39;get_llvm_prefix&#39;,
+        # python-utils-r1.eclass
+        &#39;python_get_sitedir&#39;, &#39;python_get_includedir&#39;,
+        &#39;python_get_library_path&#39;, &#39;python_get_scriptdir&#39;,
+        # qmake-utils.eclass
+        &#39;qt4_get_bindir&#39;, &#39;qt5_get_bindir&#39;,
+        # s6.eclass
+        &#39;s6_get_servicedir&#39;,
+        # systemd.eclass
+        &#39;systemd_get_systemunitdir&#39;, &#39;systemd_get_userunitdir&#39;,
+        &#39;systemd_get_utildir&#39;, &#39;systemd_get_systemgeneratordir&#39;,
+    )
+    prefixed_rhs_variables = (
+        # catch silly ${ED}${EPREFIX} mistake ;-)
+        &#39;EPREFIX&#39;,
+        # python-utils-r1.eclass
+        &#39;PYTHON&#39;, &#39;PYTHON_SITEDIR&#39;, &#39;PYTHON_INCLUDEDIR&#39;, &#39;PYTHON_LIBPATH&#39;,
+        &#39;PYTHON_CONFIG&#39;, &#39;PYTHON_SCRIPTDIR&#39;,
+    )
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.missing_regex = re.compile(r&#39;(\${(%s)})&quot;?\w+/&#39; % r&#39;|&#39;.join(PATH_VARIABLES))
+        self.unnecessary_regex = re.compile(r&#39;(\${(%s)%%/})&#39; % r&#39;|&#39;.join(PATH_VARIABLES))
+        self.double_prefix_regex = re.compile(
+            r&#39;(\${(%s)(%%/)?}/?\$(\((%s)\)|{(%s)}))&#39; % (
+                r&#39;|&#39;.join(PREFIX_VARIABLES),
+                r&#39;|&#39;.join(self.prefixed_getters),
+                r&#39;|&#39;.join(self.prefixed_rhs_variables)))
+        self.double_prefix_func_regex = re.compile(
+            r&#39;\b(%s)\s[^&amp;|;]*\$(\((%s)\)|{(%s)})&#39; % (
+                r&#39;|&#39;.join(self.prefixed_dir_functions),
+                r&#39;|&#39;.join(self.prefixed_getters),
+                r&#39;|&#39;.join(self.prefixed_rhs_variables)))
+        # do not catch ${foo#${EPREFIX}} and similar
+        self.double_prefix_func_false_positive_regex = re.compile(
+            r&#39;.*?[#][&quot;]?\$(\((%s)\)|{(%s)})&#39; % (
+                r&#39;|&#39;.join(self.prefixed_getters),
+                r&#39;|&#39;.join(self.prefixed_rhs_variables)))
+
+<div class="viewcode-block" id="PathVariablesCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.PathVariablesCheck.feed">[docs]</a>    def feed(self, pkg):
+        missing = defaultdict(list)
+        unnecessary = defaultdict(list)
+        double_prefix = defaultdict(list)
+
+        for lineno, line in enumerate(pkg.lines, 1):
+            line = line.strip()
+            if not line:
+                continue
+
+            # flag double path prefix usage on uncommented lines only
+            if line[0] != &#39;#&#39;:
+                if mo := self.double_prefix_regex.search(line):
+                    double_prefix[mo.group(1)].append(lineno)
+                if mo := self.double_prefix_func_regex.search(line):
+                    if not self.double_prefix_func_false_positive_regex.match(mo.group(0)):
+                        double_prefix[mo.group(0)].append(lineno)
+
+            # skip EAPIs that don&#39;t require trailing slashes
+            if pkg.eapi.options.trailing_slash:
+                continue
+            if mo := self.missing_regex.search(line):
+                missing[mo.group(1)].append(lineno)
+            if mo := self.unnecessary_regex.search(line):
+                unnecessary[mo.group(1)].append(lineno)
+
+        for match, lines in missing.items():
+            yield MissingSlash(match, lines, pkg=pkg)
+        for match, lines in unnecessary.items():
+            yield UnnecessarySlashStrip(match, lines, pkg=pkg)
+        for match, lines in double_prefix.items():
+            yield DoublePrefixInPath(match, lines, pkg=pkg)</div></div>
+
+
+<div class="viewcode-block" id="AbsoluteSymlink"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.AbsoluteSymlink">[docs]</a>class AbsoluteSymlink(results.LineResult, results.Warning):
+    &quot;&quot;&quot;Ebuild uses dosym with absolute paths instead of relative.&quot;&quot;&quot;
+
+    def __init__(self, cmd, **kwargs):
+        super().__init__(**kwargs)
+        self.cmd = cmd
+
+    @property
+    def desc(self):
+        return f&quot;dosym called with absolute path on line {self.lineno}: {self.cmd}&quot;</div>
+
+
+<div class="viewcode-block" id="AbsoluteSymlinkCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.AbsoluteSymlinkCheck">[docs]</a>class AbsoluteSymlinkCheck(Check):
+    &quot;&quot;&quot;Scan ebuild for dosym absolute path usage instead of relative.&quot;&quot;&quot;
+
+    _source = sources.EbuildFileRepoSource
+    known_results = frozenset([AbsoluteSymlink])
+
+    DIRS = (&#39;bin&#39;, &#39;etc&#39;, &#39;lib&#39;, &#39;opt&#39;, &#39;sbin&#39;, &#39;srv&#39;, &#39;usr&#39;, &#39;var&#39;)
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        dirs = &#39;|&#39;.join(self.DIRS)
+        path_vars = &#39;|&#39;.join(PATH_VARIABLES)
+        prefixed_regex = rf&#39;&quot;\${{({path_vars})(%/)?}}(?P&lt;cp&gt;&quot;)?(?(cp)\S*|.*?&quot;)&#39;
+        non_prefixed_regex = rf&#39;(?P&lt;op&gt;[&quot;\&#39;])?/({dirs})(?(op).*?(?P=op)|\S*)&#39;
+        self.regex = re.compile(rf&#39;^\s*(?P&lt;cmd&gt;dosym\s+({prefixed_regex}|{non_prefixed_regex}))&#39;)
+
+<div class="viewcode-block" id="AbsoluteSymlinkCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.AbsoluteSymlinkCheck.feed">[docs]</a>    def feed(self, pkg):
+        for lineno, line in enumerate(pkg.lines, 1):
+            if not line.strip():
+                continue
+            if mo := self.regex.match(line):
+                yield AbsoluteSymlink(mo.group(&#39;cmd&#39;), line=line, lineno=lineno, pkg=pkg)</div></div>
+
+
+<div class="viewcode-block" id="DeprecatedInsinto"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.DeprecatedInsinto">[docs]</a>class DeprecatedInsinto(results.LineResult, results.Warning):
+    &quot;&quot;&quot;Ebuild uses insinto where more compact commands exist.&quot;&quot;&quot;
+
+    def __init__(self, cmd, **kwargs):
+        super().__init__(**kwargs)
+        self.cmd = cmd
+
+    @property
+    def desc(self):
+        return (
+            f&#39;deprecated insinto usage (use {self.cmd} instead), &#39;
+            f&#39;line {self.lineno}: {self.line}&#39;
+        )</div>
+
+
+<div class="viewcode-block" id="InsintoCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.InsintoCheck">[docs]</a>class InsintoCheck(Check):
+    &quot;&quot;&quot;Scan ebuild for deprecated insinto usage.&quot;&quot;&quot;
+
+    _source = sources.EbuildFileRepoSource
+    known_results = frozenset([DeprecatedInsinto])
+
+    path_mapping = ImmutableDict({
+        &#39;/etc/conf.d&#39;: &#39;doconfd or newconfd&#39;,
+        &#39;/etc/env.d&#39;: &#39;doenvd or newenvd&#39;,
+        &#39;/etc/init.d&#39;: &#39;doinitd or newinitd&#39;,
+        &#39;/etc/pam.d&#39;: &#39;dopamd or newpamd from pam.eclass&#39;,
+        &#39;/usr/share/applications&#39;: &#39;domenu or newmenu from desktop.eclass&#39;,
+    })
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        paths = &#39;|&#39;.join(s.replace(&#39;/&#39;, &#39;/+&#39;) + &#39;/?&#39; for s in self.path_mapping)
+        self._insinto_re = re.compile(
+            rf&#39;(?P&lt;insinto&gt;insinto[ \t]+(?P&lt;path&gt;{paths})(?!/\w+))(?:$|[/ \t])&#39;)
+        self._insinto_doc_re = re.compile(
+            r&#39;(?P&lt;insinto&gt;insinto[ \t]+/usr/share/doc/(&quot;)?\$\{PF?\}(?(2)\2)(/\w+)*)(?:$|[/ \t])&#39;)
+
+<div class="viewcode-block" id="InsintoCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.InsintoCheck.feed">[docs]</a>    def feed(self, pkg):
+        for lineno, line in enumerate(pkg.lines, 1):
+            if not line.strip():
+                continue
+            matches = self._insinto_re.search(line)
+            if matches is not None:
+                path = re.sub(&#39;//+&#39;, &#39;/&#39;, matches.group(&#39;path&#39;))
+                cmd = self.path_mapping[path.rstrip(&#39;/&#39;)]
+                yield DeprecatedInsinto(
+                    cmd, line=matches.group(&#39;insinto&#39;), lineno=lineno, pkg=pkg)
+                continue
+            # Check for insinto usage that should be replaced with
+            # docinto/dodoc [-r] under supported EAPIs.
+            if pkg.eapi.options.dodoc_allow_recursive:
+                matches = self._insinto_doc_re.search(line)
+                if matches is not None:
+                    yield DeprecatedInsinto(
+                        &#39;docinto/dodoc&#39;, line=matches.group(&#39;insinto&#39;),
+                        lineno=lineno, pkg=pkg)</div></div>
+
+
+<div class="viewcode-block" id="ObsoleteUri"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.ObsoleteUri">[docs]</a>class ObsoleteUri(results.VersionResult, results.Style):
+    &quot;&quot;&quot;URI used is obsolete.
+
+    The URI used to fetch distfile is obsolete and can be replaced
+    by something more modern. Note that the modern replacement usually
+    results in different file contents, so you need to rename it (to
+    avoid mirror collisions with the old file) and update the ebuild
+    (for example, by removing no longer necessary vcs-snapshot.eclass).
+    &quot;&quot;&quot;
+
+    def __init__(self, line, uri, replacement, **kwargs):
+        super().__init__(**kwargs)
+        self.line = line
+        self.uri = uri
+        self.replacement = replacement
+
+    @property
+    def desc(self):
+        return (f&quot;obsolete fetch URI: {self.uri} on line &quot;
+                f&quot;{self.line}, should be replaced by: {self.replacement}&quot;)</div>
+
+
+<div class="viewcode-block" id="ObsoleteUriCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.ObsoleteUriCheck">[docs]</a>class ObsoleteUriCheck(Check):
+    &quot;&quot;&quot;Scan ebuild for obsolete URIs.&quot;&quot;&quot;
+
+    _source = sources.EbuildFileRepoSource
+    known_results = frozenset([ObsoleteUri])
+
+    REGEXPS = (
+        (r&#39;.*\b(?P&lt;uri&gt;(?P&lt;prefix&gt;https?://github\.com/.*?/.*?/)&#39;
+         r&#39;(?:tar|zip)ball(?P&lt;ref&gt;\S*))&#39;,
+         r&#39;\g&lt;prefix&gt;archive\g&lt;ref&gt;.tar.gz&#39;),
+        (r&#39;.*\b(?P&lt;uri&gt;(?P&lt;prefix&gt;https?://gitlab\.com/.*?/(?P&lt;pkg&gt;.*?)/)&#39;
+         r&#39;repository/archive\.(?P&lt;format&gt;tar|tar\.gz|tar\.bz2|zip)&#39;
+         r&#39;\?ref=(?P&lt;ref&gt;\S*))&#39;,
+         r&#39;\g&lt;prefix&gt;-/archive/\g&lt;ref&gt;/\g&lt;pkg&gt;-\g&lt;ref&gt;.\g&lt;format&gt;&#39;),
+    )
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.regexes = []
+        for regexp, repl in self.REGEXPS:
+            self.regexes.append((re.compile(regexp), repl))
+
+<div class="viewcode-block" id="ObsoleteUriCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.ObsoleteUriCheck.feed">[docs]</a>    def feed(self, pkg):
+        for lineno, line in enumerate(pkg.lines, 1):
+            if not line.strip() or line.startswith(&#39;#&#39;):
+                continue
+            # searching for multiple matches on a single line is too slow
+            for regexp, repl in self.regexes:
+                if mo := regexp.match(line):
+                    uri = mo.group(&#39;uri&#39;)
+                    yield ObsoleteUri(lineno, uri, regexp.sub(repl, uri), pkg=pkg)</div></div>
+
+
+<div class="viewcode-block" id="HomepageInSrcUri"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.HomepageInSrcUri">[docs]</a>class HomepageInSrcUri(results.VersionResult, results.Style):
+    &quot;&quot;&quot;${HOMEPAGE} is referenced in SRC_URI.
+
+    SRC_URI is built on top of ${HOMEPAGE}. This is discouraged since HOMEPAGE
+    is multi-valued by design, and is subject to potential changes that should
+    not accidentally affect SRC_URI.
+    &quot;&quot;&quot;
+
+    @property
+    def desc(self):
+        return &#39;${HOMEPAGE} in SRC_URI&#39;</div>
+
+
+<div class="viewcode-block" id="StaticSrcUri"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.StaticSrcUri">[docs]</a>class StaticSrcUri(results.VersionResult, results.Style):
+    &quot;&quot;&quot;SRC_URI contains static value instead of the dynamic equivalent.
+
+    For example, using static text to relate to the package version in SRC_URI
+    instead of ${P} or ${PV} where relevant.
+    &quot;&quot;&quot;
+
+    def __init__(self, static_str, **kwargs):
+        super().__init__(**kwargs)
+        self.static_str = static_str
+
+    @property
+    def desc(self):
+        return f&#39;{self.static_str!r} in SRC_URI&#39;</div>
+
+
+<div class="viewcode-block" id="VariableInHomepage"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.VariableInHomepage">[docs]</a>class VariableInHomepage(results.VersionResult, results.Style):
+    &quot;&quot;&quot;HOMEPAGE includes a variable.
+
+    The HOMEPAGE ebuild variable entry in the devmanual [#]_ states only raw
+    text should be used.
+
+    .. [#] https://devmanual.gentoo.org/ebuild-writing/variables/#ebuild-defined-variables
+    &quot;&quot;&quot;
+
+    def __init__(self, variables, **kwargs):
+        super().__init__(**kwargs)
+        self.variables = tuple(variables)
+
+    @property
+    def desc(self):
+        s = pluralism(self.variables)
+        variables = &#39;, &#39;.join(self.variables)
+        return f&#39;HOMEPAGE includes variable{s}: {variables}&#39;</div>
+
+
+<div class="viewcode-block" id="RawEbuildCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.RawEbuildCheck">[docs]</a>class RawEbuildCheck(Check):
+    &quot;&quot;&quot;Scan raw ebuild content for various issues.&quot;&quot;&quot;
+
+    _source = sources.EbuildFileRepoSource
+    known_results = frozenset([HomepageInSrcUri, StaticSrcUri, VariableInHomepage])
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        attr_vars = (&#39;HOMEPAGE&#39;, &#39;SRC_URI&#39;)
+        self.attr_regex = re.compile(
+            rf&#39;|&#39;.join(rf&#39;^\s*(?P&lt;{x.lower()}&gt;{x}=&quot;[^&quot;]*&quot;)&#39; for x in attr_vars), re.MULTILINE)
+        self.var_regex = re.compile(r&#39;\${[^}]+}&#39;)
+
+<div class="viewcode-block" id="RawEbuildCheck.check_homepage"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.RawEbuildCheck.check_homepage">[docs]</a>    def check_homepage(self, pkg, s):
+        matches = self.var_regex.findall(s)
+        if matches:
+            yield VariableInHomepage(stable_unique(matches), pkg=pkg)</div>
+
+<div class="viewcode-block" id="RawEbuildCheck.check_src_uri"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.RawEbuildCheck.check_src_uri">[docs]</a>    def check_src_uri(self, pkg, s):
+        if &#39;${HOMEPAGE}&#39; in s:
+            yield HomepageInSrcUri(pkg=pkg)
+
+        exts = pkg.eapi.archive_exts_regex_pattern
+        P = re.escape(pkg.P)
+        PV = re.escape(pkg.PV)
+        static_src_uri_re = rf&#39;/(?P&lt;static_str&gt;({P}{exts}(?=&quot;|\n)|{PV}(?=/)))&#39;
+        for match in re.finditer(static_src_uri_re, s):
+            static_str = match.group(&#39;static_str&#39;)
+            yield StaticSrcUri(static_str, pkg=pkg)</div>
+
+<div class="viewcode-block" id="RawEbuildCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.RawEbuildCheck.feed">[docs]</a>    def feed(self, pkg):
+        for mo in self.attr_regex.finditer(&#39;&#39;.join(pkg.lines)):
+            attr = mo.lastgroup
+            func = getattr(self, f&#39;check_{attr}&#39;)
+            yield from func(pkg, mo.group(attr))</div></div>
+
+
+<div class="viewcode-block" id="MissingInherits"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.MissingInherits">[docs]</a>class MissingInherits(results.VersionResult, results.Warning):
+    &quot;&quot;&quot;Ebuild uses function from eclass that isn&#39;t inherited.&quot;&quot;&quot;
+
+    def __init__(self, eclass, lineno, usage, **kwargs):
+        super().__init__(**kwargs)
+        self.eclass = eclass
+        self.lineno = lineno
+        self.usage = usage
+
+    @property
+    def desc(self):
+        return f&#39;{self.eclass}: missing inherit usage: {repr(self.usage)}, line {self.lineno}&#39;</div>
+
+
+<div class="viewcode-block" id="IndirectInherits"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.IndirectInherits">[docs]</a>class IndirectInherits(results.VersionResult, results.Warning):
+    &quot;&quot;&quot;Ebuild uses function from indirectly inherited eclass.
+
+    That doesn&#39;t allow indirect inherit usage via the @INDIRECT_INHERITS eclass
+    doc tag in a parent eclass.
+    &quot;&quot;&quot;
+
+    def __init__(self, eclass, lineno, usage, **kwargs):
+        super().__init__(**kwargs)
+        self.eclass = eclass
+        self.lineno = lineno
+        self.usage = usage
+
+    @property
+    def desc(self):
+        return f&#39;{self.eclass}: indirect inherit usage: {repr(self.usage)}, line {self.lineno}&#39;</div>
+
+
+<div class="viewcode-block" id="UnusedInherits"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.UnusedInherits">[docs]</a>class UnusedInherits(results.VersionResult, results.Warning):
+    &quot;&quot;&quot;Ebuild inherits eclasses that are unused.&quot;&quot;&quot;
+
+    def __init__(self, eclasses, **kwargs):
+        super().__init__(**kwargs)
+        self.eclasses = tuple(eclasses)
+
+    @property
+    def desc(self):
+        es = pluralism(self.eclasses, plural=&#39;es&#39;)
+        eclasses = &#39;, &#39;.join(self.eclasses)
+        return f&#39;unused eclass{es}: {eclasses}&#39;</div>
+
+
+<div class="viewcode-block" id="InternalEclassUsage"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.InternalEclassUsage">[docs]</a>class InternalEclassUsage(results.VersionResult, results.Warning):
+    &quot;&quot;&quot;Ebuild uses internal functions or variables from eclass.&quot;&quot;&quot;
+
+    def __init__(self, eclass, lineno, usage, **kwargs):
+        super().__init__(**kwargs)
+        self.eclass = eclass
+        self.lineno = lineno
+        self.usage = usage
+
+    @property
+    def desc(self):
+        return f&#39;{self.eclass}: internal usage: {repr(self.usage)}, line {self.lineno}&#39;</div>
+
+
+<div class="viewcode-block" id="InheritsCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.InheritsCheck">[docs]</a>class InheritsCheck(OptionalCheck):
+    &quot;&quot;&quot;Scan for ebuilds with missing or unused eclass inherits.
+
+    Note that this requires using ``pmaint regen`` to generate repo metadata in
+    order for direct inherits to be correct.
+    &quot;&quot;&quot;
+
+    _source = sources.EbuildParseRepoSource
+    known_results = frozenset([
+        MissingInherits, IndirectInherits, UnusedInherits, InternalEclassUsage])
+    required_addons = (addons.BashAddon, eclass_mod.EclassAddon)
+
+    def __init__(self, *args, bash_addon, eclass_addon):
+        super().__init__(*args)
+        self.eclass_cache = eclass_addon.eclasses
+        self.internals = {}
+        self.exported = {}
+
+        # register internal and exported funcs/vars for all eclasses
+        for eclass, eclass_obj in self.eclass_cache.items():
+            self.internals[eclass] = (
+                eclass_obj.internal_function_names | eclass_obj.internal_variable_names)
+            for name in eclass_obj.exported_function_names:
+                self.exported.setdefault(name, set()).add(eclass)
+            # Don&#39;t use all exported vars in order to avoid
+            # erroneously exported temporary loop variables that
+            # should be flagged via EclassDocMissingVar.
+            for name in eclass_obj.variable_names:
+                self.exported.setdefault(name, set()).add(eclass)
+
+        # register EAPI-related funcs/cmds to ignore
+        self.eapi_funcs = {}
+        for eapi in EAPI.known_eapis.values():
+            s = set(eapi.bash_cmds_internal | eapi.bash_cmds_deprecated)
+            s.update(
+                x for x in (eapi.bash_funcs | eapi.bash_funcs_global)
+                if not x.startswith(&#39;_&#39;))
+            self.eapi_funcs[eapi] = frozenset(s)
+
+        # register EAPI-related vars to ignore
+        # TODO: add ebuild env vars via pkgcore setting, e.g. PN, PV, P, FILESDIR, etc
+        self.eapi_vars = {}
+        for eapi in EAPI.known_eapis.values():
+            s = set(eapi.eclass_keys)
+            self.eapi_vars[eapi] = frozenset(s)
+
+        # various bash parse tree queries
+        self.cmd_query = bash_addon.query(&#39;(command) @call&#39;)
+        self.var_query = bash_addon.query(&#39;(variable_name) @var&#39;)
+        self.var_assign_query = bash_addon.query(&#39;(variable_assignment) @assign&#39;)
+
+<div class="viewcode-block" id="InheritsCheck.get_eclass"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.InheritsCheck.get_eclass">[docs]</a>    def get_eclass(self, export, pkg):
+        &quot;&quot;&quot;Return the eclass related to a given exported variable or function name.&quot;&quot;&quot;
+        try:
+            eclass = self.exported[export]
+        except KeyError:
+            # function or variable not exported by any eclass
+            return
+
+        # last exporting eclass takes precedence for multiple inheritance
+        if len(eclass) &gt; 1:
+            if inherited := pkg.inherited.intersection(eclass):
+                eclass = (x for x in reversed(pkg.inherited) if x in inherited)
+            else:
+                return
+
+        return next(iter(eclass))</div>
+
+<div class="viewcode-block" id="InheritsCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.InheritsCheck.feed">[docs]</a>    def feed(self, pkg):
+        conditional = set()
+
+        # register variables assigned in ebuilds
+        assigned_vars = dict()
+        for node, _ in self.var_assign_query.captures(pkg.tree.root_node):
+            name = pkg.node_str(node.child_by_field_name(&#39;name&#39;))
+            if eclass := self.get_eclass(name, pkg):
+                assigned_vars[name] = eclass
+
+        # match captured commands with eclasses
+        used = defaultdict(list)
+        for node, _ in self.cmd_query.captures(pkg.tree.root_node):
+            call = pkg.node_str(node)
+            name = pkg.node_str(node.child_by_field_name(&#39;name&#39;))
+            if name == &#39;inherit&#39;:
+                # register conditional eclasses
+                eclasses = call.split()[1:]
+                if not pkg.inherited.intersection(eclasses):
+                    conditional.update(eclasses)
+            # Also ignore vars since any used in arithmetic expansions, i.e.
+            # $((...)), are captured as commands.
+            elif name not in self.eapi_funcs[pkg.eapi] | assigned_vars.keys():
+                lineno, colno = node.start_point
+                if eclass := self.get_eclass(name, pkg):
+                    used[eclass].append((lineno + 1, name, call.split(&#39;\n&#39;, 1)[0]))
+
+        # match captured variables with eclasses
+        for node, _ in self.var_query.captures(pkg.tree.root_node):
+            name = pkg.node_str(node)
+            if name not in self.eapi_vars[pkg.eapi] | assigned_vars.keys():
+                lineno, colno = node.start_point
+                if eclass := self.get_eclass(name, pkg):
+                    used[eclass].append((lineno + 1, name, name))
+
+        # allowed indirect inherits
+        indirect_allowed = set().union(*(
+            self.eclass_cache[x].indirect_eclasses for x in pkg.inherit))
+        # missing inherits
+        missing = used.keys() - pkg.inherit - indirect_allowed - conditional
+
+        unused = set(pkg.inherit) - used.keys() - set(assigned_vars.values())
+        # remove eclasses that use implicit phase functions
+        if unused and pkg.defined_phases:
+            phases = [pkg.eapi.phases[x] for x in pkg.defined_phases]
+            for eclass in list(unused):
+                if self.eclass_cache[eclass].exported_function_names.intersection(
+                        f&#39;{eclass}_{phase}&#39; for phase in phases):
+                    unused.discard(eclass)
+
+        for eclass in list(unused):
+            if self.eclass_cache[eclass].name is None:
+                # ignore eclasses with parsing failures
+                unused.discard(eclass)
+            else:
+                exported_eclass_keys = pkg.eapi.eclass_keys.intersection(
+                    self.eclass_cache[eclass].exported_variable_names)
+                if not self.eclass_cache[eclass].exported_function_names and exported_eclass_keys:
+                    # ignore eclasses that export ebuild metadata (e.g.
+                    # SRC_URI, S, ...) and no functions
+                    unused.discard(eclass)
+
+        for eclass in pkg.inherited.intersection(used):
+            for lineno, name, usage in used[eclass]:
+                if name in self.internals[eclass]:
+                    yield InternalEclassUsage(eclass, lineno, usage, pkg=pkg)
+
+        for eclass in missing:
+            lineno, name, usage = used[eclass][0]
+            if eclass in pkg.inherited:
+                yield IndirectInherits(eclass, lineno, usage, pkg=pkg)
+            elif not self.eclass_cache[eclass].live:
+                # try to ignore probable, conditional vcs eclasses
+                yield MissingInherits(eclass, lineno, usage, pkg=pkg)
+
+        if unused:
+            yield UnusedInherits(sorted(unused), pkg=pkg)</div></div>
+
+
+<div class="viewcode-block" id="RedundantDodir"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.RedundantDodir">[docs]</a>class RedundantDodir(results.LineResult, results.Style):
+    &quot;&quot;&quot;Ebuild using a redundant dodir call.&quot;&quot;&quot;
+
+    def __init__(self, cmd, **kwargs):
+        super().__init__(**kwargs)
+        self.cmd = cmd
+
+    @property
+    def desc(self):
+        return f&quot;dodir called before {self.cmd}, line {self.lineno}: {self.line}&quot;</div>
+
+
+<div class="viewcode-block" id="RedundantDodirCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.RedundantDodirCheck">[docs]</a>class RedundantDodirCheck(Check):
+    &quot;&quot;&quot;Scan ebuild for redundant dodir usage.&quot;&quot;&quot;
+
+    _source = sources.EbuildFileRepoSource
+    known_results = frozenset([RedundantDodir])
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        cmds = r&#39;|&#39;.join((&#39;insinto&#39;, &#39;exeinto&#39;, &#39;docinto&#39;))
+        self.cmds_regex = re.compile(rf&#39;^\s*(?P&lt;cmd&gt;({cmds}))\s+(?P&lt;path&gt;\S+)&#39;)
+        self.dodir_regex = re.compile(r&#39;^\s*(?P&lt;call&gt;dodir\s+(?P&lt;path&gt;\S+))&#39;)
+
+<div class="viewcode-block" id="RedundantDodirCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.codingstyle.html#pkgcheck.checks.codingstyle.RedundantDodirCheck.feed">[docs]</a>    def feed(self, pkg):
+        lines = enumerate(pkg.lines, 1)
+        for lineno, line in lines:
+            line = line.strip()
+            if not line or line[0] == &#39;#&#39;:
+                continue
+            if dodir := self.dodir_regex.match(line):
+                lineno, line = next(lines)
+                if cmd := self.cmds_regex.match(line):
+                    if dodir.group(&#39;path&#39;) == cmd.group(&#39;path&#39;):
+                        yield RedundantDodir(
+                            cmd.group(&#39;cmd&#39;), line=dodir.group(&#39;call&#39;),
+                            lineno=lineno - 1, pkg=pkg)</div></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../checks.html" >pkgcheck.checks</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.codingstyle</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

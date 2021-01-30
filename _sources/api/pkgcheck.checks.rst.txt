@@ -1,0 +1,40 @@
+pkgcheck.checks package
+=======================
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 4
+
+   pkgcheck.checks.acct
+   pkgcheck.checks.cleanup
+   pkgcheck.checks.codingstyle
+   pkgcheck.checks.dropped_keywords
+   pkgcheck.checks.eclass
+   pkgcheck.checks.git
+   pkgcheck.checks.glsa
+   pkgcheck.checks.header
+   pkgcheck.checks.imlate
+   pkgcheck.checks.metadata
+   pkgcheck.checks.metadata_xml
+   pkgcheck.checks.network
+   pkgcheck.checks.overlays
+   pkgcheck.checks.perl
+   pkgcheck.checks.pkgdir
+   pkgcheck.checks.profiles
+   pkgcheck.checks.python
+   pkgcheck.checks.repo
+   pkgcheck.checks.repo_metadata
+   pkgcheck.checks.stablereq
+   pkgcheck.checks.unstable_only
+   pkgcheck.checks.visibility
+   pkgcheck.checks.whitespace
+
+Module contents
+---------------
+
+.. automodule:: pkgcheck.checks
+   :members:
+   :undoc-members:
+   :show-inheritance:

@@ -1,0 +1,7 @@
+pkgcheck.checks.metadata\_xml module
+====================================
+
+.. automodule:: pkgcheck.checks.metadata_xml
+   :members:
+   :undoc-members:
+   :show-inheritance:

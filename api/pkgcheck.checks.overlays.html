@@ -1,0 +1,194 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.checks.overlays module &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.overlays module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcheck.checks.overlays">
+<span id="pkgcheck-checks-overlays-module"></span><h1>pkgcheck.checks.overlays module<a class="headerlink" href="#module-pkgcheck.checks.overlays" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="pkgcheck.checks.overlays.UnusedInMastersCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.overlays.</code><code class="sig-name descname">UnusedInMastersCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">use_addon</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/overlays.html#UnusedInMastersCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.overlays.UnusedInMastersCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.MirrorsCheck" title="pkgcheck.checks.MirrorsCheck"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.MirrorsCheck</span></code></a>, <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.OverlayRepoCheck" title="pkgcheck.checks.OverlayRepoCheck"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.OverlayRepoCheck</span></code></a>, <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.OptionalCheck" title="pkgcheck.checks.OptionalCheck"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.OptionalCheck</span></code></a></p>
+<p>Check for various metadata that may be removed from master repos.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.overlays.UnusedInMastersCheck.feed">
+<code class="sig-name descname">feed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/overlays.html#UnusedInMastersCheck.feed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.overlays.UnusedInMastersCheck.feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle functionality against the passed in item.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.overlays.UnusedInMastersCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.overlays.UnusedInMastersEclasses'&gt;, &lt;class 'pkgcheck.checks.overlays.UnusedInMastersLicenses'&gt;, &lt;class 'pkgcheck.checks.overlays.UnusedInMastersGlobalUse'&gt;, &lt;class 'pkgcheck.checks.overlays.UnusedInMastersMirrors'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.overlays.UnusedInMastersCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.overlays.UnusedInMastersCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='repo' &#64;0x7f81a6a420a0&gt;</em><a class="headerlink" href="#pkgcheck.checks.overlays.UnusedInMastersCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.overlays.UnusedInMastersCheck.start">
+<code class="sig-name descname">start</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/overlays.html#UnusedInMastersCheck.start"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.overlays.UnusedInMastersCheck.start" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do startup here.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.overlays.UnusedInMastersEclasses">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.overlays.</code><code class="sig-name descname">UnusedInMastersEclasses</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eclasses</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/overlays.html#UnusedInMastersEclasses"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.overlays.UnusedInMastersEclasses" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Eclasses detected that are unused in the master repo(s).</p>
+<p>In other words, they’re likely to be removed so should be copied to the overlay.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.overlays.UnusedInMastersEclasses.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.overlays.UnusedInMastersEclasses.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.overlays.UnusedInMastersEclasses.name">
+<code class="sig-name descname">name</code><em class="property"> = 'UnusedInMastersEclasses'</em><a class="headerlink" href="#pkgcheck.checks.overlays.UnusedInMastersEclasses.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.overlays.UnusedInMastersGlobalUse">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.overlays.</code><code class="sig-name descname">UnusedInMastersGlobalUse</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">flags</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/overlays.html#UnusedInMastersGlobalUse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.overlays.UnusedInMastersGlobalUse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Global USE flags detected that are unused in the master repo(s).</p>
+<p>In other words, they’re likely to be removed so should be copied to the overlay.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.overlays.UnusedInMastersGlobalUse.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.overlays.UnusedInMastersGlobalUse.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.overlays.UnusedInMastersGlobalUse.name">
+<code class="sig-name descname">name</code><em class="property"> = 'UnusedInMastersGlobalUse'</em><a class="headerlink" href="#pkgcheck.checks.overlays.UnusedInMastersGlobalUse.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.overlays.UnusedInMastersLicenses">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.overlays.</code><code class="sig-name descname">UnusedInMastersLicenses</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">licenses</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/overlays.html#UnusedInMastersLicenses"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.overlays.UnusedInMastersLicenses" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Licenses detected that are unused in the master repo(s).</p>
+<p>In other words, they’re likely to be removed so should be copied to the overlay.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.overlays.UnusedInMastersLicenses.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.overlays.UnusedInMastersLicenses.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.overlays.UnusedInMastersLicenses.name">
+<code class="sig-name descname">name</code><em class="property"> = 'UnusedInMastersLicenses'</em><a class="headerlink" href="#pkgcheck.checks.overlays.UnusedInMastersLicenses.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.overlays.UnusedInMastersMirrors">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.overlays.</code><code class="sig-name descname">UnusedInMastersMirrors</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mirrors</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/overlays.html#UnusedInMastersMirrors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.overlays.UnusedInMastersMirrors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Mirrors detected that are unused in the master repo(s).</p>
+<p>In other words, they’re likely to be removed so should be copied to the overlay.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.overlays.UnusedInMastersMirrors.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.overlays.UnusedInMastersMirrors.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.overlays.UnusedInMastersMirrors.name">
+<code class="sig-name descname">name</code><em class="property"> = 'UnusedInMastersMirrors'</em><a class="headerlink" href="#pkgcheck.checks.overlays.UnusedInMastersMirrors.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/pkgcheck.checks.overlays.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.overlays module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

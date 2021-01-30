@@ -1,0 +1,522 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.checks.git module &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.git module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcheck.checks.git">
+<span id="pkgcheck-checks-git-module"></span><h1>pkgcheck.checks.git module<a class="headerlink" href="#module-pkgcheck.checks.git" title="Permalink to this headline">¶</a></h1>
+<p>Various git-related checks.</p>
+<dl class="py class">
+<dt id="pkgcheck.checks.git.BadCommitSummary">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.git.</code><code class="sig-name descname">BadCommitSummary</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">error</span></em>, <em class="sig-param"><span class="n">summary</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/git.html#BadCommitSummary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.git.BadCommitSummary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.CommitResult" title="pkgcheck.results.CommitResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.CommitResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Local package commit with poorly formatted or unmatching commit summary.</p>
+<p>Git commit messages for packages should be formatted in the standardized
+fashion described in the devmanual <a class="footnote-reference brackets" href="#id2" id="id1">1</a>. Specifically, a
+<code class="docutils literal notranslate"><span class="pre">${CATEGORY}/${PN}:</span></code> or <code class="docutils literal notranslate"><span class="pre">${CATEGORY}/${P}:</span></code> prefix should be used in
+the summary relating to the modified package.</p>
+<dl class="footnote brackets">
+<dt class="label" id="id2"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
+<dd><p><a class="reference external" href="https://devmanual.gentoo.org/ebuild-maintenance/git/#git-commit-message-format">https://devmanual.gentoo.org/ebuild-maintenance/git/#git-commit-message-format</a></p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="pkgcheck.checks.git.BadCommitSummary.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.git.BadCommitSummary.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.BadCommitSummary.name">
+<code class="sig-name descname">name</code><em class="property"> = 'BadCommitSummary'</em><a class="headerlink" href="#pkgcheck.checks.git.BadCommitSummary.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.git.DirectNoMaintainer">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.git.</code><code class="sig-name descname">DirectNoMaintainer</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/git.html#DirectNoMaintainer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.git.DirectNoMaintainer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Error" title="pkgcheck.results.Error"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Error</span></code></a></p>
+<p>Directly added, new package with no specified maintainer.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.git.DirectNoMaintainer.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.git.DirectNoMaintainer.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.DirectNoMaintainer.name">
+<code class="sig-name descname">name</code><em class="property"> = 'DirectNoMaintainer'</em><a class="headerlink" href="#pkgcheck.checks.git.DirectNoMaintainer.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.git.DirectStableKeywords">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.git.</code><code class="sig-name descname">DirectStableKeywords</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">keywords</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/git.html#DirectStableKeywords"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.git.DirectStableKeywords" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Error" title="pkgcheck.results.Error"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Error</span></code></a></p>
+<p>Newly committed ebuild with stable keywords.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.git.DirectStableKeywords.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.git.DirectStableKeywords.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.DirectStableKeywords.name">
+<code class="sig-name descname">name</code><em class="property"> = 'DirectStableKeywords'</em><a class="headerlink" href="#pkgcheck.checks.git.DirectStableKeywords.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.git.DroppedStableKeywords">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.git.</code><code class="sig-name descname">DroppedStableKeywords</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">keywords</span></em>, <em class="sig-param"><span class="n">commit</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/git.html#DroppedStableKeywords"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.git.DroppedStableKeywords" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.git._DroppedKeywords</span></code>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Error" title="pkgcheck.results.Error"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Error</span></code></a></p>
+<p>Stable keywords dropped from package.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.DroppedStableKeywords.name">
+<code class="sig-name descname">name</code><em class="property"> = 'DroppedStableKeywords'</em><a class="headerlink" href="#pkgcheck.checks.git.DroppedStableKeywords.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.git.DroppedUnstableKeywords">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.git.</code><code class="sig-name descname">DroppedUnstableKeywords</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">keywords</span></em>, <em class="sig-param"><span class="n">commit</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/git.html#DroppedUnstableKeywords"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.git.DroppedUnstableKeywords" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.git._DroppedKeywords</span></code>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Unstable keywords dropped from package.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.DroppedUnstableKeywords.name">
+<code class="sig-name descname">name</code><em class="property"> = 'DroppedUnstableKeywords'</em><a class="headerlink" href="#pkgcheck.checks.git.DroppedUnstableKeywords.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.git.EbuildIncorrectCopyright">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.git.</code><code class="sig-name descname">EbuildIncorrectCopyright</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">year</span></em>, <em class="sig-param"><span class="n">line</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/git.html#EbuildIncorrectCopyright"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.git.EbuildIncorrectCopyright" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.checks.git.IncorrectCopyright" title="pkgcheck.checks.git.IncorrectCopyright"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.git.IncorrectCopyright</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a></p>
+<p>Changed ebuild with incorrect copyright date.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.EbuildIncorrectCopyright.name">
+<code class="sig-name descname">name</code><em class="property"> = 'IncorrectCopyright'</em><a class="headerlink" href="#pkgcheck.checks.git.EbuildIncorrectCopyright.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.git.EclassIncorrectCopyright">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.git.</code><code class="sig-name descname">EclassIncorrectCopyright</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">year</span></em>, <em class="sig-param"><span class="n">line</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/git.html#EclassIncorrectCopyright"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.git.EclassIncorrectCopyright" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.checks.git.IncorrectCopyright" title="pkgcheck.checks.git.IncorrectCopyright"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.git.IncorrectCopyright</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.EclassResult" title="pkgcheck.results.EclassResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.EclassResult</span></code></a></p>
+<p>Changed eclass with incorrect copyright date.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.git.EclassIncorrectCopyright.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.git.EclassIncorrectCopyright.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.EclassIncorrectCopyright.name">
+<code class="sig-name descname">name</code><em class="property"> = 'IncorrectCopyright'</em><a class="headerlink" href="#pkgcheck.checks.git.EclassIncorrectCopyright.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.git.GitCommitsCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.git.</code><code class="sig-name descname">GitCommitsCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/git.html#GitCommitsCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.git.GitCommitsCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.GentooRepoCheck" title="pkgcheck.checks.GentooRepoCheck"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.GentooRepoCheck</span></code></a>, <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.GitCheck" title="pkgcheck.checks.GitCheck"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.GitCheck</span></code></a></p>
+<p>Check unpushed git commits for various issues.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.git.GitCommitsCheck.feed">
+<code class="sig-name descname">feed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">commit</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/git.html#GitCommitsCheck.feed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.git.GitCommitsCheck.feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle functionality against the passed in item.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.GitCommitsCheck.git_cat_file">
+<code class="sig-name descname">git_cat_file</code><a class="headerlink" href="#pkgcheck.checks.git.GitCommitsCheck.git_cat_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Start a <cite>git cat-file</cite> process to verify git repo hashes.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.GitCommitsCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.git.InvalidCommitTag'&gt;, &lt;class 'pkgcheck.checks.git.InvalidCommitMessage'&gt;, &lt;class 'pkgcheck.checks.git.MissingSignOff'&gt;, &lt;class 'pkgcheck.checks.git.BadCommitSummary'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.git.GitCommitsCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.GitCommitsCheck.known_tags">
+<code class="sig-name descname">known_tags</code><em class="property"> = {'Bug': (&lt;function GitCommitsCheck._bug_tag&gt;, False), 'Closes': (&lt;function GitCommitsCheck._bug_tag&gt;, False), 'Fixes': (&lt;function GitCommitsCheck._commit_tag&gt;, False), 'Gentoo-Bug': (&lt;function GitCommitsCheck._deprecated_tag&gt;, False), 'Reverts': (&lt;function GitCommitsCheck._commit_tag&gt;, False), 'Signed-off-by': (&lt;function GitCommitsCheck._signed_off_by_tag&gt;, True)}</em><a class="headerlink" href="#pkgcheck.checks.git.GitCommitsCheck.known_tags" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.GitCommitsCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;ConditionalScope desc='commit' &#64;0x7f81a648fbb0&gt;</em><a class="headerlink" href="#pkgcheck.checks.git.GitCommitsCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.git.GitCommitsRepoSource">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.git.</code><code class="sig-name descname">GitCommitsRepoSource</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">git_addon</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/git.html#GitCommitsRepoSource"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.git.GitCommitsRepoSource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.sources.html#pkgcheck.sources.RepoSource" title="pkgcheck.sources.RepoSource"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.sources.RepoSource</span></code></a></p>
+<p>Repository source for locally changed packages in git history.</p>
+<p>Parses git log history to determine packages with changes that
+haven’t been pushed upstream yet.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.GitCommitsRepoSource.required_addons">
+<code class="sig-name descname">required_addons</code><em class="property"> = (&lt;class 'pkgcheck.git.GitAddon'&gt;,)</em><a class="headerlink" href="#pkgcheck.checks.git.GitCommitsRepoSource.required_addons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.git.GitCommitsSource">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.git.</code><code class="sig-name descname">GitCommitsSource</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">git_addon</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/git.html#GitCommitsSource"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.git.GitCommitsSource" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.sources.html#pkgcheck.sources.Source" title="pkgcheck.sources.Source"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.sources.Source</span></code></a></p>
+<p>Source for local commits in git history.</p>
+<p>Parses git log history to determine commits that haven’t been pushed
+upstream yet.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.GitCommitsSource.required_addons">
+<code class="sig-name descname">required_addons</code><em class="property"> = (&lt;class 'pkgcheck.git.GitAddon'&gt;,)</em><a class="headerlink" href="#pkgcheck.checks.git.GitCommitsSource.required_addons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.GitCommitsSource.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;ConditionalScope desc='commit' &#64;0x7f81a648fbb0&gt;</em><a class="headerlink" href="#pkgcheck.checks.git.GitCommitsSource.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.git.GitEclassCommitsCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.git.</code><code class="sig-name descname">GitEclassCommitsCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/git.html#GitEclassCommitsCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.git.GitEclassCommitsCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.GentooRepoCheck" title="pkgcheck.checks.GentooRepoCheck"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.GentooRepoCheck</span></code></a>, <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.GitCheck" title="pkgcheck.checks.GitCheck"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.GitCheck</span></code></a></p>
+<p>Check unpushed git eclass commits for various issues.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.git.GitEclassCommitsCheck.feed">
+<code class="sig-name descname">feed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eclass</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/git.html#GitEclassCommitsCheck.feed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.git.GitEclassCommitsCheck.feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle functionality against the passed in item.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.GitEclassCommitsCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.git.EclassIncorrectCopyright'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.git.GitEclassCommitsCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.GitEclassCommitsCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;LocationScope desc='eclass' &#64;0x7f81a648fd90&gt;</em><a class="headerlink" href="#pkgcheck.checks.git.GitEclassCommitsCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.git.GitPkgCommitsCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.git.</code><code class="sig-name descname">GitPkgCommitsCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">git_addon</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/git.html#GitPkgCommitsCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.git.GitPkgCommitsCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.GentooRepoCheck" title="pkgcheck.checks.GentooRepoCheck"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.GentooRepoCheck</span></code></a>, <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.GitCheck" title="pkgcheck.checks.GitCheck"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.GitCheck</span></code></a></p>
+<p>Check unpushed git package commits for various issues.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.GitPkgCommitsCheck.added_repo">
+<code class="sig-name descname">added_repo</code><a class="headerlink" href="#pkgcheck.checks.git.GitPkgCommitsCheck.added_repo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create/load cached repo of packages added to git.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.git.GitPkgCommitsCheck.feed">
+<code class="sig-name descname">feed</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkgset</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/git.html#GitPkgCommitsCheck.feed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.git.GitPkgCommitsCheck.feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle functionality against the passed in item.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.GitPkgCommitsCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.git.DirectNoMaintainer'&gt;, &lt;class 'pkgcheck.checks.git.DroppedStableKeywords'&gt;, &lt;class 'pkgcheck.checks.git.DroppedUnstableKeywords'&gt;, &lt;class 'pkgcheck.checks.git.MissingMove'&gt;, &lt;class 'pkgcheck.checks.git.DirectStableKeywords'&gt;, &lt;class 'pkgcheck.checks.git.MissingSlotmove'&gt;, &lt;class 'pkgcheck.checks.git.EbuildIncorrectCopyright'&gt;, &lt;class 'pkgcheck.checks.git.RdependChange'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.git.GitPkgCommitsCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.git.GitPkgCommitsCheck.modified_checks">
+<code class="sig-name descname">modified_checks</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkgs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/git.html#GitPkgCommitsCheck.modified_checks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.git.GitPkgCommitsCheck.modified_checks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check for issues due to package modifications.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.GitPkgCommitsCheck.modified_repo">
+<code class="sig-name descname">modified_repo</code><a class="headerlink" href="#pkgcheck.checks.git.GitPkgCommitsCheck.modified_repo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a repository of old packages newly modified in git.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.git.GitPkgCommitsCheck.removal_checks">
+<code class="sig-name descname">removal_checks</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkgs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/git.html#GitPkgCommitsCheck.removal_checks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.git.GitPkgCommitsCheck.removal_checks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check for issues due to package removals.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.GitPkgCommitsCheck.removal_repo">
+<code class="sig-name descname">removal_repo</code><a class="headerlink" href="#pkgcheck.checks.git.GitPkgCommitsCheck.removal_repo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a repository of packages removed from git.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.checks.git.GitPkgCommitsCheck.rename_checks">
+<code class="sig-name descname">rename_checks</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkgs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/git.html#GitPkgCommitsCheck.rename_checks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.git.GitPkgCommitsCheck.rename_checks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check for issues due to package modifications.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.GitPkgCommitsCheck.required_addons">
+<code class="sig-name descname">required_addons</code><em class="property"> = (&lt;class 'pkgcheck.git.GitAddon'&gt;,)</em><a class="headerlink" href="#pkgcheck.checks.git.GitPkgCommitsCheck.required_addons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.GitPkgCommitsCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='package' &#64;0x7f81a68053a0&gt;</em><a class="headerlink" href="#pkgcheck.checks.git.GitPkgCommitsCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.git.IncorrectCopyright">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.git.</code><code class="sig-name descname">IncorrectCopyright</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">year</span></em>, <em class="sig-param"><span class="n">line</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/git.html#IncorrectCopyright"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.git.IncorrectCopyright" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Changed file with incorrect copyright date.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.git.IncorrectCopyright.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.git.IncorrectCopyright.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.IncorrectCopyright.name">
+<code class="sig-name descname">name</code><em class="property"> = 'IncorrectCopyright'</em><a class="headerlink" href="#pkgcheck.checks.git.IncorrectCopyright.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.git.InvalidCommitMessage">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.git.</code><code class="sig-name descname">InvalidCommitMessage</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">error</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/git.html#InvalidCommitMessage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.git.InvalidCommitMessage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.CommitResult" title="pkgcheck.results.CommitResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.CommitResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Local commit has issues with its commit message.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.git.InvalidCommitMessage.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.git.InvalidCommitMessage.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.InvalidCommitMessage.name">
+<code class="sig-name descname">name</code><em class="property"> = 'InvalidCommitMessage'</em><a class="headerlink" href="#pkgcheck.checks.git.InvalidCommitMessage.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.git.InvalidCommitTag">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.git.</code><code class="sig-name descname">InvalidCommitTag</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">tag</span></em>, <em class="sig-param"><span class="n">value</span></em>, <em class="sig-param"><span class="n">error</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/git.html#InvalidCommitTag"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.git.InvalidCommitTag" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.CommitResult" title="pkgcheck.results.CommitResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.CommitResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Local commit has a tag that is incompliant.</p>
+<p>Commit tags have restrictions as to the allowed format and data
+used per GLEP 66 <a class="footnote-reference brackets" href="#id4" id="id3">2</a>.</p>
+<dl class="footnote brackets">
+<dt class="label" id="id4"><span class="brackets"><a class="fn-backref" href="#id3">2</a></span></dt>
+<dd><p><a class="reference external" href="https://www.gentoo.org/glep/glep-0066.html#commit-messages">https://www.gentoo.org/glep/glep-0066.html#commit-messages</a></p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="pkgcheck.checks.git.InvalidCommitTag.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.git.InvalidCommitTag.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.InvalidCommitTag.name">
+<code class="sig-name descname">name</code><em class="property"> = 'InvalidCommitTag'</em><a class="headerlink" href="#pkgcheck.checks.git.InvalidCommitTag.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.git.MissingMove">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.git.</code><code class="sig-name descname">MissingMove</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">old</span></em>, <em class="sig-param"><span class="n">new</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/git.html#MissingMove"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.git.MissingMove" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Error" title="pkgcheck.results.Error"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Error</span></code></a></p>
+<p>Package was renamed without adding a move package update.</p>
+<p>When moving/renaming a package, a new entry must be created in
+profiles/updates. See the devmanual <a class="footnote-reference brackets" href="#id6" id="id5">3</a> for more info.</p>
+<dl class="footnote brackets">
+<dt class="label" id="id6"><span class="brackets"><a class="fn-backref" href="#id5">3</a></span></dt>
+<dd><p><a class="reference external" href="https://devmanual.gentoo.org/ebuild-maintenance/package-moves/">https://devmanual.gentoo.org/ebuild-maintenance/package-moves/</a></p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="pkgcheck.checks.git.MissingMove.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.git.MissingMove.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.MissingMove.name">
+<code class="sig-name descname">name</code><em class="property"> = 'MissingMove'</em><a class="headerlink" href="#pkgcheck.checks.git.MissingMove.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.git.MissingSignOff">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.git.</code><code class="sig-name descname">MissingSignOff</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">missing_sign_offs</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/git.html#MissingSignOff"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.git.MissingSignOff" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.CommitResult" title="pkgcheck.results.CommitResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.CommitResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Error" title="pkgcheck.results.Error"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Error</span></code></a></p>
+<p>Local commit with missing sign offs.</p>
+<p>Sign offs are required for commits as specified by GLEP 76 <a class="footnote-reference brackets" href="#id8" id="id7">4</a>. Note that
+sign off tags will be flagged if the name or email address doesn’t match
+the values used by the commit author.</p>
+<dl class="footnote brackets">
+<dt class="label" id="id8"><span class="brackets"><a class="fn-backref" href="#id7">4</a></span></dt>
+<dd><p><a class="reference external" href="https://www.gentoo.org/glep/glep-0076.html#certificate-of-origin">https://www.gentoo.org/glep/glep-0076.html#certificate-of-origin</a></p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="pkgcheck.checks.git.MissingSignOff.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.git.MissingSignOff.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.MissingSignOff.name">
+<code class="sig-name descname">name</code><em class="property"> = 'MissingSignOff'</em><a class="headerlink" href="#pkgcheck.checks.git.MissingSignOff.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.git.MissingSlotmove">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.git.</code><code class="sig-name descname">MissingSlotmove</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">old</span></em>, <em class="sig-param"><span class="n">new</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/git.html#MissingSlotmove"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.git.MissingSlotmove" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Error" title="pkgcheck.results.Error"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Error</span></code></a></p>
+<p>Package SLOT was changed without adding a slotmove package update.</p>
+<p>When changing an existing ebuild’s SLOT, a new entry must be
+created in profiles/updates. See the devmanual <a class="footnote-reference brackets" href="#id10" id="id9">5</a> for more info.</p>
+<dl class="footnote brackets">
+<dt class="label" id="id10"><span class="brackets"><a class="fn-backref" href="#id9">5</a></span></dt>
+<dd><p><a class="reference external" href="https://devmanual.gentoo.org/ebuild-maintenance/package-moves/">https://devmanual.gentoo.org/ebuild-maintenance/package-moves/</a></p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="pkgcheck.checks.git.MissingSlotmove.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.git.MissingSlotmove.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.MissingSlotmove.name">
+<code class="sig-name descname">name</code><em class="property"> = 'MissingSlotmove'</em><a class="headerlink" href="#pkgcheck.checks.git.MissingSlotmove.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.git.RdependChange">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.git.</code><code class="sig-name descname">RdependChange</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/git.html#RdependChange"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.git.RdependChange" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Package RDEPEND was modified without adding a new ebuild revision.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.git.RdependChange.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.git.RdependChange.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.git.RdependChange.name">
+<code class="sig-name descname">name</code><em class="property"> = 'RdependChange'</em><a class="headerlink" href="#pkgcheck.checks.git.RdependChange.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="pkgcheck.checks.git.verify_tags">
+<code class="sig-prename descclassname">pkgcheck.checks.git.</code><code class="sig-name descname">verify_tags</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">tags</span></em>, <em class="sig-param"><span class="n">required</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/git.html#verify_tags"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.git.verify_tags" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decorator to register commit tag verification methods.</p>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/pkgcheck.checks.git.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.git module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,257 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.utils &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.utils</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcheck.utils</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Various miscellaneous utility functions.&quot;&quot;&quot;</span>
+
+<span class="c1"># based on https://github.com/audreyr/binaryornot</span>
+<span class="c1">#</span>
+<span class="c1"># Copyright (c) 2013, Audrey Roy</span>
+<span class="c1"># All rights reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Redistribution and use in source and binary forms, with or without</span>
+<span class="c1"># modification, are permitted provided that the following conditions are met:</span>
+<span class="c1">#</span>
+<span class="c1"># * Redistributions of source code must retain the above copyright notice, this</span>
+<span class="c1">#   list of conditions and the following disclaimer.</span>
+<span class="c1">#</span>
+<span class="c1"># * Redistributions in binary form must reproduce the above copyright notice,</span>
+<span class="c1">#   this list of conditions and the following disclaimer in the documentation</span>
+<span class="c1">#   and/or other materials provided with the distribution.</span>
+<span class="c1">#</span>
+<span class="c1"># * Neither the name of BinaryOrNot nor the names of its contributors may be used</span>
+<span class="c1">#   to endorse or promote products derived from this software without specific</span>
+<span class="c1">#   prior written permission.</span>
+<span class="c1">#</span>
+<span class="c1"># THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND</span>
+<span class="c1"># ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED</span>
+<span class="c1"># WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE</span>
+<span class="c1"># DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE</span>
+<span class="c1"># FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL</span>
+<span class="c1"># DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR</span>
+<span class="c1"># SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER</span>
+<span class="c1"># CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,</span>
+<span class="c1"># OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE</span>
+<span class="c1"># OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+
+<span class="n">_control_chars</span> <span class="o">=</span> <span class="sa">b</span><span class="s1">&#39;</span><span class="se">\n\r\t\f\b</span><span class="s1">&#39;</span>
+<span class="n">_printable_ascii</span> <span class="o">=</span> <span class="n">_control_chars</span> <span class="o">+</span> <span class="nb">bytes</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">127</span><span class="p">))</span>
+<span class="n">_printable_high_ascii</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">127</span><span class="p">,</span> <span class="mi">256</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="is_binary"><a class="viewcode-back" href="../../api/pkgcheck.utils.html#pkgcheck.utils.is_binary">[docs]</a><span class="k">def</span> <span class="nf">is_binary</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">blocksize</span><span class="o">=</span><span class="mi">1024</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check if a given file is binary or not.</span>
+
+<span class="sd">    Uses a simplified version of the Perl detection algorithm, based roughly on</span>
+<span class="sd">    Eli Bendersky&#39;s translation to Python:</span>
+<span class="sd">    http://eli.thegreenplace.net/2011/10/19/perls-guess-if-file-is-text-or-binary-implemented-in-python/</span>
+
+<span class="sd">    This is biased slightly more in favour of deeming files as text files than</span>
+<span class="sd">    the Perl algorithm, since all ASCII compatible character sets are accepted as</span>
+<span class="sd">    text, not just utf-8.</span>
+
+<span class="sd">    :param path: Path to a file to check.</span>
+<span class="sd">    :param blocksize: Amount of bytes to read for determination.</span>
+<span class="sd">    :returns: True if appears to be a binary, otherwise False.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">byte_str</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">blocksize</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="c1"># empty files are considered text</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">byte_str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="c1"># Now check for a high percentage of ASCII control characters</span>
+    <span class="c1"># Binary if control chars are &gt; 30% of the string</span>
+    <span class="n">low_chars</span> <span class="o">=</span> <span class="n">byte_str</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">_printable_ascii</span><span class="p">)</span>
+    <span class="n">nontext_ratio1</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">low_chars</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">byte_str</span><span class="p">)</span>
+
+    <span class="c1"># and check for a low percentage of high ASCII characters:</span>
+    <span class="c1"># Binary if high ASCII chars are &lt; 5% of the string</span>
+    <span class="c1"># From: https://en.wikipedia.org/wiki/UTF-8</span>
+    <span class="c1"># If the bytes are random, the chances of a byte with the high bit set</span>
+    <span class="c1"># starting a valid UTF-8 character is only 6.64%. The chances of finding 7</span>
+    <span class="c1"># of these without finding an invalid sequence is actually lower than the</span>
+    <span class="c1"># chance of the first three bytes randomly being the UTF-8 BOM.</span>
+    <span class="n">high_chars</span> <span class="o">=</span> <span class="n">byte_str</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">_printable_high_ascii</span><span class="p">)</span>
+    <span class="n">nontext_ratio2</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">high_chars</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">byte_str</span><span class="p">)</span>
+
+    <span class="n">is_likely_binary</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="n">nontext_ratio1</span> <span class="o">&gt;</span> <span class="mf">0.3</span> <span class="ow">and</span> <span class="n">nontext_ratio2</span> <span class="o">&lt;</span> <span class="mf">0.05</span><span class="p">)</span> <span class="ow">or</span>
+        <span class="p">(</span><span class="n">nontext_ratio1</span> <span class="o">&gt;</span> <span class="mf">0.8</span> <span class="ow">and</span> <span class="n">nontext_ratio2</span> <span class="o">&gt;</span> <span class="mf">0.8</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="n">decodable</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">byte_str</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+        <span class="n">decodable</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">except</span> <span class="ne">UnicodeDecodeError</span><span class="p">:</span>
+        <span class="c1"># Delay import to hide during wheel/sdist builds that iterate over and</span>
+        <span class="c1"># import most modules to generate check/keyword/reporter lists.</span>
+        <span class="kn">import</span> <span class="nn">chardet</span>
+
+        <span class="c1"># guess character encoding using chardet</span>
+        <span class="n">detected_encoding</span> <span class="o">=</span> <span class="n">chardet</span><span class="o">.</span><span class="n">detect</span><span class="p">(</span><span class="n">byte_str</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">detected_encoding</span><span class="p">[</span><span class="s1">&#39;confidence&#39;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.8</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">byte_str</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="n">detected_encoding</span><span class="p">[</span><span class="s1">&#39;encoding&#39;</span><span class="p">])</span>
+                <span class="n">decodable</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">UnicodeDecodeError</span><span class="p">,</span> <span class="ne">LookupError</span><span class="p">):</span>
+                <span class="k">pass</span>
+
+    <span class="c1"># finally use all the checks to decide binary or text</span>
+    <span class="k">if</span> <span class="n">decodable</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">is_likely_binary</span> <span class="ow">or</span> <span class="sa">b</span><span class="s1">&#39;</span><span class="se">\x00</span><span class="s1">&#39;</span> <span class="ow">in</span> <span class="n">byte_str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<span class="c1"># copied from tree-sitter with the following changes:</span>
+<span class="c1"># - prefer stdc++ over c++ when linking</span>
+<span class="c1"># - perform platform-specific compiler customizations</span>
+<div class="viewcode-block" id="build_library"><a class="viewcode-back" href="../../api/pkgcheck.utils.html#pkgcheck.utils.build_library">[docs]</a><span class="k">def</span> <span class="nf">build_library</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="n">repo_paths</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Build a dynamic library at the given path, based on the parser</span>
+<span class="sd">    repositories at the given paths.</span>
+
+<span class="sd">    Returns `True` if the dynamic library was compiled and `False` if</span>
+<span class="sd">    the library already existed and was modified more recently than</span>
+<span class="sd">    any of the source files.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">ctypes.util</span> <span class="kn">import</span> <span class="n">find_library</span>
+    <span class="kn">from</span> <span class="nn">distutils.ccompiler</span> <span class="kn">import</span> <span class="n">new_compiler</span>
+    <span class="kn">from</span> <span class="nn">distutils.sysconfig</span> <span class="kn">import</span> <span class="n">customize_compiler</span>
+    <span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">path</span>
+    <span class="kn">from</span> <span class="nn">platform</span> <span class="kn">import</span> <span class="n">system</span>
+    <span class="kn">from</span> <span class="nn">tempfile</span> <span class="kn">import</span> <span class="n">TemporaryDirectory</span>
+
+    <span class="n">output_mtime</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span> <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">output_path</span><span class="p">)</span> <span class="k">else</span> <span class="mi">0</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">repo_paths</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Must provide at least one language folder&quot;</span><span class="p">)</span>
+
+    <span class="n">cpp</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">source_paths</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">repo_path</span> <span class="ow">in</span> <span class="n">repo_paths</span><span class="p">:</span>
+        <span class="n">src_path</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">repo_path</span><span class="p">,</span> <span class="s2">&quot;src&quot;</span><span class="p">)</span>
+        <span class="n">source_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">src_path</span><span class="p">,</span> <span class="s2">&quot;parser.c&quot;</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">src_path</span><span class="p">,</span> <span class="s2">&quot;scanner.cc&quot;</span><span class="p">)):</span>
+            <span class="n">cpp</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">source_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">src_path</span><span class="p">,</span> <span class="s2">&quot;scanner.cc&quot;</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">src_path</span><span class="p">,</span> <span class="s2">&quot;scanner.c&quot;</span><span class="p">)):</span>
+            <span class="n">source_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">src_path</span><span class="p">,</span> <span class="s2">&quot;scanner.c&quot;</span><span class="p">))</span>
+    <span class="n">source_mtimes</span> <span class="o">=</span> <span class="p">[</span><span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)]</span> <span class="o">+</span> <span class="p">[</span>
+        <span class="n">path</span><span class="o">.</span><span class="n">getmtime</span><span class="p">(</span><span class="n">path_</span><span class="p">)</span> <span class="k">for</span> <span class="n">path_</span> <span class="ow">in</span> <span class="n">source_paths</span>
+    <span class="p">]</span>
+
+    <span class="n">compiler</span> <span class="o">=</span> <span class="n">new_compiler</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">cpp</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">find_library</span><span class="p">(</span><span class="s2">&quot;stdc++&quot;</span><span class="p">):</span>
+            <span class="n">compiler</span><span class="o">.</span><span class="n">add_library</span><span class="p">(</span><span class="s2">&quot;stdc++&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">find_library</span><span class="p">(</span><span class="s2">&quot;c++&quot;</span><span class="p">):</span>
+            <span class="n">compiler</span><span class="o">.</span><span class="n">add_library</span><span class="p">(</span><span class="s2">&quot;c++&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">max</span><span class="p">(</span><span class="n">source_mtimes</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">output_mtime</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="c1"># perform platform-specific compiler customizations</span>
+    <span class="n">customize_compiler</span><span class="p">(</span><span class="n">compiler</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">TemporaryDirectory</span><span class="p">(</span><span class="n">suffix</span><span class="o">=</span><span class="s2">&quot;tree_sitter_language&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">out_dir</span><span class="p">:</span>
+        <span class="n">object_paths</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">source_path</span> <span class="ow">in</span> <span class="n">source_paths</span><span class="p">:</span>
+            <span class="n">flags</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">if</span> <span class="n">system</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;Windows&quot;</span> <span class="ow">and</span> <span class="n">source_path</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.c&quot;</span><span class="p">):</span>
+                <span class="n">flags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;-std=c99&quot;</span><span class="p">)</span>
+            <span class="n">object_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">compiler</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+                    <span class="p">[</span><span class="n">source_path</span><span class="p">],</span>
+                    <span class="n">output_dir</span><span class="o">=</span><span class="n">out_dir</span><span class="p">,</span>
+                    <span class="n">include_dirs</span><span class="o">=</span><span class="p">[</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">source_path</span><span class="p">)],</span>
+                    <span class="n">extra_preargs</span><span class="o">=</span><span class="n">flags</span><span class="p">,</span>
+                <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="n">compiler</span><span class="o">.</span><span class="n">link_shared_object</span><span class="p">(</span><span class="n">object_paths</span><span class="p">,</span> <span class="n">output_path</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">True</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.utils</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

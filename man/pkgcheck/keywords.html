@@ -1,0 +1,2321 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Keywords &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Keywords</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="keywords">
+<h1>Keywords<a class="headerlink" href="#keywords" title="Permalink to this headline">¶</a></h1>
+<p>List of result keywords that can be produced by pkgcheck.</p>
+<div class="section" id="commit-scope">
+<h2>Commit scope<a class="headerlink" href="#commit-scope" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="badcommitsummary">
+<h3>BadCommitSummary<a class="headerlink" href="#badcommitsummary" title="Permalink to this headline">¶</a></h3>
+<p>Local package commit with poorly formatted or unmatching commit summary.</p>
+<p>Git commit messages for packages should be formatted in the standardized
+fashion described in the devmanual <a class="footnote-reference brackets" href="#id2" id="id1">1</a>. Specifically, a
+<code class="docutils literal notranslate"><span class="pre">${CATEGORY}/${PN}:</span></code> or <code class="docutils literal notranslate"><span class="pre">${CATEGORY}/${P}:</span></code> prefix should be used in
+the summary relating to the modified package.</p>
+<dl class="footnote brackets">
+<dt class="label" id="id2"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
+<dd><p><a class="reference external" href="https://devmanual.gentoo.org/ebuild-maintenance/git/#git-commit-message-format">https://devmanual.gentoo.org/ebuild-maintenance/git/#git-commit-message-format</a></p>
+</dd>
+</dl>
+<ul class="simple">
+<li><p>Gentoo repo specific</p></li>
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id27"><span class="problematic" id="id28">`GitCommitsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="invalidcommitmessage">
+<h3>InvalidCommitMessage<a class="headerlink" href="#invalidcommitmessage" title="Permalink to this headline">¶</a></h3>
+<p>Local commit has issues with its commit message.
+- Gentoo repo specific</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id29"><span class="problematic" id="id30">`GitCommitsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="invalidcommittag">
+<h3>InvalidCommitTag<a class="headerlink" href="#invalidcommittag" title="Permalink to this headline">¶</a></h3>
+<p>Local commit has a tag that is incompliant.</p>
+<p>Commit tags have restrictions as to the allowed format and data
+used per GLEP 66 <a class="footnote-reference brackets" href="#id4" id="id3">2</a>.</p>
+<dl class="footnote brackets">
+<dt class="label" id="id4"><span class="brackets"><a class="fn-backref" href="#id3">2</a></span></dt>
+<dd><p><a class="reference external" href="https://www.gentoo.org/glep/glep-0066.html#commit-messages">https://www.gentoo.org/glep/glep-0066.html#commit-messages</a></p>
+</dd>
+</dl>
+<ul class="simple">
+<li><p>Gentoo repo specific</p></li>
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id31"><span class="problematic" id="id32">`GitCommitsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="missingsignoff">
+<h3>MissingSignOff<a class="headerlink" href="#missingsignoff" title="Permalink to this headline">¶</a></h3>
+<p>Local commit with missing sign offs.</p>
+<p>Sign offs are required for commits as specified by GLEP 76 <a class="footnote-reference brackets" href="#id6" id="id5">3</a>. Note that
+sign off tags will be flagged if the name or email address doesn't match
+the values used by the commit author.</p>
+<dl class="footnote brackets">
+<dt class="label" id="id6"><span class="brackets"><a class="fn-backref" href="#id5">3</a></span></dt>
+<dd><p><a class="reference external" href="https://www.gentoo.org/glep/glep-0076.html#certificate-of-origin">https://www.gentoo.org/glep/glep-0076.html#certificate-of-origin</a></p>
+</dd>
+</dl>
+<ul class="simple">
+<li><p>Gentoo repo specific</p></li>
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id33"><span class="problematic" id="id34">`GitCommitsCheck`_</span></a></p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="profiles-scope">
+<h2>Profiles scope<a class="headerlink" href="#profiles-scope" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="archeswithoutprofiles">
+<h3>ArchesWithoutProfiles<a class="headerlink" href="#archeswithoutprofiles" title="Permalink to this headline">¶</a></h3>
+<p>Arches without corresponding profile listings.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id35"><span class="problematic" id="id36">`RepoProfilesCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="laggingprofileeapi">
+<h3>LaggingProfileEapi<a class="headerlink" href="#laggingprofileeapi" title="Permalink to this headline">¶</a></h3>
+<p>Profile has an EAPI that is older than one of its parents.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id37"><span class="problematic" id="id38">`RepoProfilesCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="nonexistentcategories">
+<h3>NonexistentCategories<a class="headerlink" href="#nonexistentcategories" title="Permalink to this headline">¶</a></h3>
+<p>Category entries in profiles/categories that don't exist in the repo.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id39"><span class="problematic" id="id40">`RepoProfilesCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="nonexistentprofilepath">
+<h3>NonexistentProfilePath<a class="headerlink" href="#nonexistentprofilepath" title="Permalink to this headline">¶</a></h3>
+<p>Specified profile path in profiles.desc doesn't exist.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id41"><span class="problematic" id="id42">`RepoProfilesCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="profileerror">
+<h3>ProfileError<a class="headerlink" href="#profileerror" title="Permalink to this headline">¶</a></h3>
+<p>Erroneously formatted data in various profile files.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related checks: <a href="#id43"><span class="problematic" id="id44">`ProfilesCheck`_</span></a>, <a href="#id45"><span class="problematic" id="id46">`RepoProfilesCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="profilewarning">
+<h3>ProfileWarning<a class="headerlink" href="#profilewarning" title="Permalink to this headline">¶</a></h3>
+<p>Badly formatted data in various profile files.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related checks: <a href="#id47"><span class="problematic" id="id48">`ProfilesCheck`_</span></a>, <a href="#id49"><span class="problematic" id="id50">`RepoProfilesCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unknowncategorydirs">
+<h3>UnknownCategoryDirs<a class="headerlink" href="#unknowncategorydirs" title="Permalink to this headline">¶</a></h3>
+<p>Category directories that aren't listed in a repo's categories.</p>
+<p>Or the categories of the repo's masters as well.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id51"><span class="problematic" id="id52">`RepoProfilesCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unknownprofilepackage">
+<h3>UnknownProfilePackage<a class="headerlink" href="#unknownprofilepackage" title="Permalink to this headline">¶</a></h3>
+<p>Profile files includes package entry that doesn't exist in the repo.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id53"><span class="problematic" id="id54">`ProfilesCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unknownprofilepackagekeywords">
+<h3>UnknownProfilePackageKeywords<a class="headerlink" href="#unknownprofilepackagekeywords" title="Permalink to this headline">¶</a></h3>
+<p>Profile files include package keywords that don't exist.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id55"><span class="problematic" id="id56">`ProfilesCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unknownprofilepackageuse">
+<h3>UnknownProfilePackageUse<a class="headerlink" href="#unknownprofilepackageuse" title="Permalink to this headline">¶</a></h3>
+<p>Profile files include entries with USE flags that aren't used on any matching packages.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id57"><span class="problematic" id="id58">`ProfilesCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unknownprofileuse">
+<h3>UnknownProfileUse<a class="headerlink" href="#unknownprofileuse" title="Permalink to this headline">¶</a></h3>
+<p>Profile files include USE flags that don't exist.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id59"><span class="problematic" id="id60">`ProfilesCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unusedprofiledirs">
+<h3>UnusedProfileDirs<a class="headerlink" href="#unusedprofiledirs" title="Permalink to this headline">¶</a></h3>
+<p>Unused profile directories detected.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id61"><span class="problematic" id="id62">`RepoProfilesCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="badpackageupdate">
+<h3>BadPackageUpdate<a class="headerlink" href="#badpackageupdate" title="Permalink to this headline">¶</a></h3>
+<p>Badly formatted package update in profiles/updates files.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id63"><span class="problematic" id="id64">`PackageUpdatesCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="movedpackageupdate">
+<h3>MovedPackageUpdate<a class="headerlink" href="#movedpackageupdate" title="Permalink to this headline">¶</a></h3>
+<p>Entry for package already moved in profiles/updates files.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id65"><span class="problematic" id="id66">`PackageUpdatesCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="multimovepackageupdate">
+<h3>MultiMovePackageUpdate<a class="headerlink" href="#multimovepackageupdate" title="Permalink to this headline">¶</a></h3>
+<p>Entry for package moved multiple times in profiles/updates files.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id67"><span class="problematic" id="id68">`PackageUpdatesCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="oldmultimovepackageupdate">
+<h3>OldMultiMovePackageUpdate<a class="headerlink" href="#oldmultimovepackageupdate" title="Permalink to this headline">¶</a></h3>
+<p>Old entry for removed package moved multiple times in profiles/updates files.</p>
+<p>This means that the reported pkg has been moved at least three times and
+finally removed from the tree. All the related lines should be removed from
+the update files.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id69"><span class="problematic" id="id70">`PackageUpdatesCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="oldpackageupdate">
+<h3>OldPackageUpdate<a class="headerlink" href="#oldpackageupdate" title="Permalink to this headline">¶</a></h3>
+<p>Old entry for removed package in profiles/updates files.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id71"><span class="problematic" id="id72">`PackageUpdatesCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="redundantpackageupdate">
+<h3>RedundantPackageUpdate<a class="headerlink" href="#redundantpackageupdate" title="Permalink to this headline">¶</a></h3>
+<p>Move entry to the same package/slot (source == target).</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id73"><span class="problematic" id="id74">`PackageUpdatesCheck`_</span></a></p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="eclass-scope">
+<h2>Eclass scope<a class="headerlink" href="#eclass-scope" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="eclassbashsyntaxerror">
+<h3>EclassBashSyntaxError<a class="headerlink" href="#eclassbashsyntaxerror" title="Permalink to this headline">¶</a></h3>
+<p>Bash syntax error in the related eclass.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id75"><span class="problematic" id="id76">`EclassCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="eclassdocerror">
+<h3>EclassDocError<a class="headerlink" href="#eclassdocerror" title="Permalink to this headline">¶</a></h3>
+<p>Error when parsing docs for the related eclass.</p>
+<p>Eclass docs are parsed as specified by the devmanual <a class="footnote-reference brackets" href="#id8" id="id7">4</a>.</p>
+<dl class="footnote brackets">
+<dt class="label" id="id8"><span class="brackets"><a class="fn-backref" href="#id7">4</a></span></dt>
+<dd><p><a class="reference external" href="https://devmanual.gentoo.org/eclass-writing/#documenting-eclasses">https://devmanual.gentoo.org/eclass-writing/#documenting-eclasses</a></p>
+</dd>
+</dl>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id77"><span class="problematic" id="id78">`EclassCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="eclassdocmissingfunc">
+<h3>EclassDocMissingFunc<a class="headerlink" href="#eclassdocmissingfunc" title="Permalink to this headline">¶</a></h3>
+<p>Undocumented function(s) in the related eclass.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id79"><span class="problematic" id="id80">`EclassCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="eclassdocmissingvar">
+<h3>EclassDocMissingVar<a class="headerlink" href="#eclassdocmissingvar" title="Permalink to this headline">¶</a></h3>
+<p>Undocumented variable(s) in the related eclass.</p>
+<p>All exported variables in an eclass should be documented using eclass doc
+tags. Temporary variables should be unset after use so they aren't
+exported.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id81"><span class="problematic" id="id82">`EclassCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="eclassincorrectcopyright">
+<h3>EclassIncorrectCopyright<a class="headerlink" href="#eclassincorrectcopyright" title="Permalink to this headline">¶</a></h3>
+<p>Changed eclass with incorrect copyright date.
+- Gentoo repo specific</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id83"><span class="problematic" id="id84">`GitEclassCommitsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="eclassinvalidcopyright">
+<h3>EclassInvalidCopyright<a class="headerlink" href="#eclassinvalidcopyright" title="Permalink to this headline">¶</a></h3>
+<p>File with invalid copyright.</p>
+<p>The file does not start with a valid copyright line. Each ebuild or eclass
+file must start with a copyright line of the form:</p>
+<blockquote>
+<div><p># Copyright YEARS MAIN-CONTRIBUTOR [OTHER-CONTRIBUTOR]... [and others]</p>
+</div></blockquote>
+<p>Files in the Gentoo repository must use:</p>
+<blockquote>
+<div><p># Copyright YEARS Gentoo Authors</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>Gentoo repo specific</p></li>
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id85"><span class="problematic" id="id86">`EclassHeaderCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="eclassinvalidlicenseheader">
+<h3>EclassInvalidLicenseHeader<a class="headerlink" href="#eclassinvalidlicenseheader" title="Permalink to this headline">¶</a></h3>
+<p>File with invalid license header.</p>
+<p>The file does not have with a valid license header.</p>
+<p>Ebuilds and eclasses in the Gentoo repository must use:</p>
+<blockquote>
+<div><p># Distributed under the terms of the GNU General Public License v2</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>Gentoo repo specific</p></li>
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id87"><span class="problematic" id="id88">`EclassHeaderCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="eclassnongentooauthorscopyright">
+<h3>EclassNonGentooAuthorsCopyright<a class="headerlink" href="#eclassnongentooauthorscopyright" title="Permalink to this headline">¶</a></h3>
+<p>File with copyright stating owner other than &quot;Gentoo Authors&quot;.</p>
+<p>The file specifies explicit copyright owner, while the Gentoo repository
+policy specifies that all ebuilds and eclasses must use &quot;Gentoo Authors&quot;.
+If the owner is not listed in metadata/AUTHORS, addition can be requested
+via bugs.gentoo.org.
+- Gentoo repo specific</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id89"><span class="problematic" id="id90">`EclassHeaderCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="eclassoldgentoocopyright">
+<h3>EclassOldGentooCopyright<a class="headerlink" href="#eclassoldgentoocopyright" title="Permalink to this headline">¶</a></h3>
+<p>File with old Gentoo Foundation copyright.</p>
+<p>The file still assigns copyright to the Gentoo Foundation even though
+it has been committed after the new copyright policy was approved
+(2018-10-21).</p>
+<p>Ebuilds and eclasses in Gentoo repository must use 'Gentoo Authors'
+instead. Files in other repositories may specify an explicit copyright
+holder instead.
+- Gentoo repo specific</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id91"><span class="problematic" id="id92">`EclassHeaderCheck`_</span></a></p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="repo-scope">
+<h2>Repo scope<a class="headerlink" href="#repo-scope" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="conflictingaccountidentifiers">
+<h3>ConflictingAccountIdentifiers<a class="headerlink" href="#conflictingaccountidentifiers" title="Permalink to this headline">¶</a></h3>
+<p>Same UID/GID is used by multiple packages.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id93"><span class="problematic" id="id94">`AcctCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="incorrectcopyright">
+<h3>IncorrectCopyright<a class="headerlink" href="#incorrectcopyright" title="Permalink to this headline">¶</a></h3>
+<p>Changed file with incorrect copyright date.
+- Gentoo repo specific</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related checks:</p></li>
+</ul>
+</div>
+<div class="section" id="invalidcopyright">
+<h3>InvalidCopyright<a class="headerlink" href="#invalidcopyright" title="Permalink to this headline">¶</a></h3>
+<p>File with invalid copyright.</p>
+<p>The file does not start with a valid copyright line. Each ebuild or eclass
+file must start with a copyright line of the form:</p>
+<blockquote>
+<div><p># Copyright YEARS MAIN-CONTRIBUTOR [OTHER-CONTRIBUTOR]... [and others]</p>
+</div></blockquote>
+<p>Files in the Gentoo repository must use:</p>
+<blockquote>
+<div><p># Copyright YEARS Gentoo Authors</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>Gentoo repo specific</p></li>
+<li><p>level: error</p></li>
+<li><p>related checks:</p></li>
+</ul>
+</div>
+<div class="section" id="invalidlicenseheader">
+<h3>InvalidLicenseHeader<a class="headerlink" href="#invalidlicenseheader" title="Permalink to this headline">¶</a></h3>
+<p>File with invalid license header.</p>
+<p>The file does not have with a valid license header.</p>
+<p>Ebuilds and eclasses in the Gentoo repository must use:</p>
+<blockquote>
+<div><p># Distributed under the terms of the GNU General Public License v2</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>Gentoo repo specific</p></li>
+<li><p>level: error</p></li>
+<li><p>related checks:</p></li>
+</ul>
+</div>
+<div class="section" id="nongentooauthorscopyright">
+<h3>NonGentooAuthorsCopyright<a class="headerlink" href="#nongentooauthorscopyright" title="Permalink to this headline">¶</a></h3>
+<p>File with copyright stating owner other than &quot;Gentoo Authors&quot;.</p>
+<p>The file specifies explicit copyright owner, while the Gentoo repository
+policy specifies that all ebuilds and eclasses must use &quot;Gentoo Authors&quot;.
+If the owner is not listed in metadata/AUTHORS, addition can be requested
+via bugs.gentoo.org.
+- Gentoo repo specific</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related checks:</p></li>
+</ul>
+</div>
+<div class="section" id="oldgentoocopyright">
+<h3>OldGentooCopyright<a class="headerlink" href="#oldgentoocopyright" title="Permalink to this headline">¶</a></h3>
+<p>File with old Gentoo Foundation copyright.</p>
+<p>The file still assigns copyright to the Gentoo Foundation even though
+it has been committed after the new copyright policy was approved
+(2018-10-21).</p>
+<p>Ebuilds and eclasses in Gentoo repository must use 'Gentoo Authors'
+instead. Files in other repositories may specify an explicit copyright
+holder instead.
+- Gentoo repo specific</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related checks:</p></li>
+</ul>
+</div>
+<div class="section" id="binaryfile">
+<h3>BinaryFile<a class="headerlink" href="#binaryfile" title="Permalink to this headline">¶</a></h3>
+<p>Binary file found in the repository.
+- Gentoo repo specific</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id95"><span class="problematic" id="id96">`RepoDirCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="emptycategorydir">
+<h3>EmptyCategoryDir<a class="headerlink" href="#emptycategorydir" title="Permalink to this headline">¶</a></h3>
+<p>Empty category directory in the repository.
+- Gentoo repo specific</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id97"><span class="problematic" id="id98">`EmptyDirsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="emptypackagedir">
+<h3>EmptyPackageDir<a class="headerlink" href="#emptypackagedir" title="Permalink to this headline">¶</a></h3>
+<p>Empty package directory in the repository.
+- Gentoo repo specific</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id99"><span class="problematic" id="id100">`EmptyDirsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="emptyproject">
+<h3>EmptyProject<a class="headerlink" href="#emptyproject" title="Permalink to this headline">¶</a></h3>
+<p>A project has no developers.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id101"><span class="problematic" id="id102">`ProjectMetadataCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="potentialglobaluse">
+<h3>PotentialGlobalUse<a class="headerlink" href="#potentialglobaluse" title="Permalink to this headline">¶</a></h3>
+<p>Local USE flag is a potential global USE flag.</p>
+<ul class="simple">
+<li><p>level: info</p></li>
+<li><p>related check: <a href="#id103"><span class="problematic" id="id104">`GlobalUseCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="potentiallocaluse">
+<h3>PotentialLocalUse<a class="headerlink" href="#potentiallocaluse" title="Permalink to this headline">¶</a></h3>
+<p>Global USE flag is a potential local USE flag.</p>
+<ul class="simple">
+<li><p>level: info</p></li>
+<li><p>related check: <a href="#id105"><span class="problematic" id="id106">`GlobalUseCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unknownlicenses">
+<h3>UnknownLicenses<a class="headerlink" href="#unknownlicenses" title="Permalink to this headline">¶</a></h3>
+<p>License(s) listed in license group(s) that don't exist.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id107"><span class="problematic" id="id108">`LicenseGroupsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unusedeclasses">
+<h3>UnusedEclasses<a class="headerlink" href="#unusedeclasses" title="Permalink to this headline">¶</a></h3>
+<p>Unused eclasses detected.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id109"><span class="problematic" id="id110">`UnusedEclassesCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unusedglobaluse">
+<h3>UnusedGlobalUse<a class="headerlink" href="#unusedglobaluse" title="Permalink to this headline">¶</a></h3>
+<p>Unused use.desc flag(s).</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id111"><span class="problematic" id="id112">`GlobalUseCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unusedglobaluseexpand">
+<h3>UnusedGlobalUseExpand<a class="headerlink" href="#unusedglobaluseexpand" title="Permalink to this headline">¶</a></h3>
+<p>Unused global USE_EXPAND flag(s).</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id113"><span class="problematic" id="id114">`GlobalUseCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unusedlicenses">
+<h3>UnusedLicenses<a class="headerlink" href="#unusedlicenses" title="Permalink to this headline">¶</a></h3>
+<p>Unused license(s) detected.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id115"><span class="problematic" id="id116">`UnusedLicensesCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unusedmirrors">
+<h3>UnusedMirrors<a class="headerlink" href="#unusedmirrors" title="Permalink to this headline">¶</a></h3>
+<p>Unused mirrors detected.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id117"><span class="problematic" id="id118">`UnusedMirrorsCheck`_</span></a></p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="category-scope">
+<h2>Category scope<a class="headerlink" href="#category-scope" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="catbadlyformedxml">
+<h3>CatBadlyFormedXml<a class="headerlink" href="#catbadlyformedxml" title="Permalink to this headline">¶</a></h3>
+<p>Badly formed category metadata.xml.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id119"><span class="problematic" id="id120">`CategoryMetadataXmlCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="catinvalidxml">
+<h3>CatInvalidXml<a class="headerlink" href="#catinvalidxml" title="Permalink to this headline">¶</a></h3>
+<p>Invalid category metadata.xml.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id121"><span class="problematic" id="id122">`CategoryMetadataXmlCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="catmetadataxmlemptyelement">
+<h3>CatMetadataXmlEmptyElement<a class="headerlink" href="#catmetadataxmlemptyelement" title="Permalink to this headline">¶</a></h3>
+<p>Empty element in category metadata.xml file.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id123"><span class="problematic" id="id124">`CategoryMetadataXmlCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="catmetadataxmlindentation">
+<h3>CatMetadataXmlIndentation<a class="headerlink" href="#catmetadataxmlindentation" title="Permalink to this headline">¶</a></h3>
+<p>Inconsistent indentation in category metadata.xml file.</p>
+<p>Either all tabs or all spaces should be used, not a mixture of both.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id125"><span class="problematic" id="id126">`CategoryMetadataXmlCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="catmetadataxmlinvalidcatref">
+<h3>CatMetadataXmlInvalidCatRef<a class="headerlink" href="#catmetadataxmlinvalidcatref" title="Permalink to this headline">¶</a></h3>
+<p>Invalid category reference in category metadata.xml.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id127"><span class="problematic" id="id128">`CategoryMetadataXmlCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="catmetadataxmlinvalidpkgref">
+<h3>CatMetadataXmlInvalidPkgRef<a class="headerlink" href="#catmetadataxmlinvalidpkgref" title="Permalink to this headline">¶</a></h3>
+<p>Invalid package reference in category metadata.xml.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id129"><span class="problematic" id="id130">`CategoryMetadataXmlCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="catmissingmetadataxml">
+<h3>CatMissingMetadataXml<a class="headerlink" href="#catmissingmetadataxml" title="Permalink to this headline">¶</a></h3>
+<p>Category is missing metadata.xml.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id131"><span class="problematic" id="id132">`CategoryMetadataXmlCheck`_</span></a></p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="package-scope">
+<h2>Package scope<a class="headerlink" href="#package-scope" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="directnomaintainer">
+<h3>DirectNoMaintainer<a class="headerlink" href="#directnomaintainer" title="Permalink to this headline">¶</a></h3>
+<p>Directly added, new package with no specified maintainer.
+- Gentoo repo specific</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id133"><span class="problematic" id="id134">`GitPkgCommitsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="droppedstablekeywords">
+<h3>DroppedStableKeywords<a class="headerlink" href="#droppedstablekeywords" title="Permalink to this headline">¶</a></h3>
+<p>Stable keywords dropped from package.
+- Gentoo repo specific</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id135"><span class="problematic" id="id136">`GitPkgCommitsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="droppedunstablekeywords">
+<h3>DroppedUnstableKeywords<a class="headerlink" href="#droppedunstablekeywords" title="Permalink to this headline">¶</a></h3>
+<p>Unstable keywords dropped from package.
+- Gentoo repo specific</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id137"><span class="problematic" id="id138">`GitPkgCommitsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="missingmove">
+<h3>MissingMove<a class="headerlink" href="#missingmove" title="Permalink to this headline">¶</a></h3>
+<p>Package was renamed without adding a move package update.</p>
+<p>When moving/renaming a package, a new entry must be created in
+profiles/updates. See the devmanual <a class="footnote-reference brackets" href="#id10" id="id9">5</a> for more info.</p>
+<dl class="footnote brackets">
+<dt class="label" id="id10"><span class="brackets"><a class="fn-backref" href="#id9">5</a></span></dt>
+<dd><p><a class="reference external" href="https://devmanual.gentoo.org/ebuild-maintenance/package-moves/">https://devmanual.gentoo.org/ebuild-maintenance/package-moves/</a></p>
+</dd>
+</dl>
+<ul class="simple">
+<li><p>Gentoo repo specific</p></li>
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id139"><span class="problematic" id="id140">`GitPkgCommitsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="matchingglobaluse">
+<h3>MatchingGlobalUse<a class="headerlink" href="#matchingglobaluse" title="Permalink to this headline">¶</a></h3>
+<p>Local USE flag description matches a global USE flag.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id141"><span class="problematic" id="id142">`LocalUseCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="probableglobaluse">
+<h3>ProbableGlobalUse<a class="headerlink" href="#probableglobaluse" title="Permalink to this headline">¶</a></h3>
+<p>Local USE flag description closely matches a global USE flag.</p>
+<ul class="simple">
+<li><p>level: style</p></li>
+<li><p>related check: <a href="#id143"><span class="problematic" id="id144">`LocalUseCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="probableuseexpand">
+<h3>ProbableUseExpand<a class="headerlink" href="#probableuseexpand" title="Permalink to this headline">¶</a></h3>
+<p>Local USE flag that isn't overridden matches a USE_EXPAND group.</p>
+<p>The local USE flag starts with a prefix reserved to USE_EXPAND group,
+yet it is not a globally defined member of this group. According
+to the standing policy <a class="footnote-reference brackets" href="#id12" id="id11">6</a>, all possible values for each USE_EXPAND
+must be defined and documented globally.</p>
+<p>This warning can be fixed via moving the local flag description
+into appropriate profiles/desc file.</p>
+<dl class="footnote brackets">
+<dt class="label" id="id12"><span class="brackets"><a class="fn-backref" href="#id11">6</a></span></dt>
+<dd><p><a class="reference external" href="https://devmanual.gentoo.org/general-concepts/use-flags/">https://devmanual.gentoo.org/general-concepts/use-flags/</a></p>
+</dd>
+</dl>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id145"><span class="problematic" id="id146">`LocalUseCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="underscoreinuseflag">
+<h3>UnderscoreInUseFlag<a class="headerlink" href="#underscoreinuseflag" title="Permalink to this headline">¶</a></h3>
+<p>USE flag uses underscore that is reserved for USE_EXPAND.</p>
+<p>The USE flag name uses underscore. However, according to PMS
+underscores are reserved for USE_EXPAND flags <a class="footnote-reference brackets" href="#id14" id="id13">7</a>. The recommended
+replacement is hyphen ('-').</p>
+<dl class="footnote brackets">
+<dt class="label" id="id14"><span class="brackets"><a class="fn-backref" href="#id13">7</a></span></dt>
+<dd><p><a class="reference external" href="https://projects.gentoo.org/pms/7/pms.html#x1-200003.1.4">https://projects.gentoo.org/pms/7/pms.html#x1-200003.1.4</a></p>
+</dd>
+</dl>
+<ul class="simple">
+<li><p>level: style</p></li>
+<li><p>related check: <a href="#id147"><span class="problematic" id="id148">`LocalUseCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unusedlocaluse">
+<h3>UnusedLocalUse<a class="headerlink" href="#unusedlocaluse" title="Permalink to this headline">¶</a></h3>
+<p>Unused local USE flag(s).</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id149"><span class="problematic" id="id150">`LocalUseCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="maintainerneeded">
+<h3>MaintainerNeeded<a class="headerlink" href="#maintainerneeded" title="Permalink to this headline">¶</a></h3>
+<p>Package with missing or invalid maintainer-needed comment in metadata.xml.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id151"><span class="problematic" id="id152">`PackageMetadataXmlCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="maintainerwithoutproxy">
+<h3>MaintainerWithoutProxy<a class="headerlink" href="#maintainerwithoutproxy" title="Permalink to this headline">¶</a></h3>
+<p>Package has a proxied maintainer without a proxy.</p>
+<p>All package maintainers have <a class="reference external" href="mailto:non-&#37;&#52;&#48;gentoo&#46;org">non-<span>&#64;</span>gentoo<span>&#46;</span>org</a> e-mail addresses. Most likely,
+this means that the package is maintained by a proxied maintainer but there
+is no explicit proxy (developer or project) listed. This means no Gentoo
+developer will be CC-ed on bug reports, and most likely no developer
+oversees the proxied maintainer's activity.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id153"><span class="problematic" id="id154">`PackageMetadataXmlCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="nonexistentprojectmaintainer">
+<h3>NonexistentProjectMaintainer<a class="headerlink" href="#nonexistentprojectmaintainer" title="Permalink to this headline">¶</a></h3>
+<p>Package specifying nonexistent project as a maintainer.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id155"><span class="problematic" id="id156">`PackageMetadataXmlCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="pkgbadlyformedxml">
+<h3>PkgBadlyFormedXml<a class="headerlink" href="#pkgbadlyformedxml" title="Permalink to this headline">¶</a></h3>
+<p>Badly formed package metadata.xml.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id157"><span class="problematic" id="id158">`PackageMetadataXmlCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="pkginvalidxml">
+<h3>PkgInvalidXml<a class="headerlink" href="#pkginvalidxml" title="Permalink to this headline">¶</a></h3>
+<p>Invalid package metadata.xml.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id159"><span class="problematic" id="id160">`PackageMetadataXmlCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="pkgmetadataxmlemptyelement">
+<h3>PkgMetadataXmlEmptyElement<a class="headerlink" href="#pkgmetadataxmlemptyelement" title="Permalink to this headline">¶</a></h3>
+<p>Empty element in package metadata.xml file.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id161"><span class="problematic" id="id162">`PackageMetadataXmlCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="pkgmetadataxmlindentation">
+<h3>PkgMetadataXmlIndentation<a class="headerlink" href="#pkgmetadataxmlindentation" title="Permalink to this headline">¶</a></h3>
+<p>Inconsistent indentation in package metadata.xml file.</p>
+<p>Either all tabs or all spaces should be used, not a mixture of both.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id163"><span class="problematic" id="id164">`PackageMetadataXmlCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="pkgmetadataxmlinvalidcatref">
+<h3>PkgMetadataXmlInvalidCatRef<a class="headerlink" href="#pkgmetadataxmlinvalidcatref" title="Permalink to this headline">¶</a></h3>
+<p>Invalid category reference in package metadata.xml.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id165"><span class="problematic" id="id166">`PackageMetadataXmlCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="pkgmetadataxmlinvalidpkgref">
+<h3>PkgMetadataXmlInvalidPkgRef<a class="headerlink" href="#pkgmetadataxmlinvalidpkgref" title="Permalink to this headline">¶</a></h3>
+<p>Invalid package reference in package metadata.xml.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id167"><span class="problematic" id="id168">`PackageMetadataXmlCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="pkgmissingmetadataxml">
+<h3>PkgMissingMetadataXml<a class="headerlink" href="#pkgmissingmetadataxml" title="Permalink to this headline">¶</a></h3>
+<p>Package is missing metadata.xml.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id169"><span class="problematic" id="id170">`PackageMetadataXmlCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="redundantlongdescription">
+<h3>RedundantLongDescription<a class="headerlink" href="#redundantlongdescription" title="Permalink to this headline">¶</a></h3>
+<p>Package's longdescription element in metadata.xml and DESCRIPTION are interchangeable.</p>
+<p>The longdescription element is for providing extended information that
+doesn't fit in DESCRIPTION.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id171"><span class="problematic" id="id172">`PackageMetadataXmlCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="staleproxymaintproject">
+<h3>StaleProxyMaintProject<a class="headerlink" href="#staleproxymaintproject" title="Permalink to this headline">¶</a></h3>
+<p>Package lists proxy-maint project but has no proxied maintainers.</p>
+<p>The package explicitly lists <a class="reference external" href="mailto:proxy-maint&#37;&#52;&#48;g&#46;o">proxy-maint<span>&#64;</span>g<span>&#46;</span>o</a> as the only maintainer.
+Most likely, this means that the proxied maintainer has been removed
+but proxy-maint was left over.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id173"><span class="problematic" id="id174">`PackageMetadataXmlCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="wrongmaintainertype">
+<h3>WrongMaintainerType<a class="headerlink" href="#wrongmaintainertype" title="Permalink to this headline">¶</a></h3>
+<p>A person-type maintainer matches an existing project.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id175"><span class="problematic" id="id176">`PackageMetadataXmlCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="bannedcharacter">
+<h3>BannedCharacter<a class="headerlink" href="#bannedcharacter" title="Permalink to this headline">¶</a></h3>
+<p>File or directory name doesn't abide by GLEP 31 requirements.</p>
+<p>See the official GLEP 31 documentation <a class="footnote-reference brackets" href="#id16" id="id15">8</a> for details.</p>
+<dl class="footnote brackets">
+<dt class="label" id="id16"><span class="brackets"><a class="fn-backref" href="#id15">8</a></span></dt>
+<dd><p><a class="reference external" href="https://www.gentoo.org/glep/glep-0031.html">https://www.gentoo.org/glep/glep-0031.html</a></p>
+</dd>
+</dl>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id177"><span class="problematic" id="id178">`PkgDirCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="duplicatefiles">
+<h3>DuplicateFiles<a class="headerlink" href="#duplicatefiles" title="Permalink to this headline">¶</a></h3>
+<p>Two or more identical files in FILESDIR.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id179"><span class="problematic" id="id180">`PkgDirCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="emptyfile">
+<h3>EmptyFile<a class="headerlink" href="#emptyfile" title="Permalink to this headline">¶</a></h3>
+<p>File in FILESDIR is empty.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id181"><span class="problematic" id="id182">`PkgDirCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="equalversions">
+<h3>EqualVersions<a class="headerlink" href="#equalversions" title="Permalink to this headline">¶</a></h3>
+<p>Ebuilds that have equal versions.</p>
+<p>For example, cat/pn-1.0.2, cat/pn-1.0.2-r0, cat/pn-1.0.2-r00 and
+cat/pn-1.000.2 all have equal versions according to PMS and therefore
+shouldn't exist in the same repository.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id183"><span class="problematic" id="id184">`EqualVersionsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="executablefile">
+<h3>ExecutableFile<a class="headerlink" href="#executablefile" title="Permalink to this headline">¶</a></h3>
+<p>File has executable bit, but doesn't need it.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id185"><span class="problematic" id="id186">`PkgDirCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="invalidpn">
+<h3>InvalidPN<a class="headerlink" href="#invalidpn" title="Permalink to this headline">¶</a></h3>
+<p>Ebuilds that have invalid package names.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id187"><span class="problematic" id="id188">`PkgDirCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="invalidutf8">
+<h3>InvalidUTF8<a class="headerlink" href="#invalidutf8" title="Permalink to this headline">¶</a></h3>
+<p>File isn't UTF-8 compliant.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id189"><span class="problematic" id="id190">`PkgDirCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="liveonlypackage">
+<h3>LiveOnlyPackage<a class="headerlink" href="#liveonlypackage" title="Permalink to this headline">¶</a></h3>
+<p>Package has only had VCS-based ebuilds.
+- Gentoo repo specific</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id191"><span class="problematic" id="id192">`LiveOnlyCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="mismatchedpn">
+<h3>MismatchedPN<a class="headerlink" href="#mismatchedpn" title="Permalink to this headline">¶</a></h3>
+<p>Ebuilds that have different names than their parent directory.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id193"><span class="problematic" id="id194">`PkgDirCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="sizeviolation">
+<h3>SizeViolation<a class="headerlink" href="#sizeviolation" title="Permalink to this headline">¶</a></h3>
+<p>File in $FILESDIR is too large (current limit is 20KiB).</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id195"><span class="problematic" id="id196">`PkgDirCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unknownpkgdirentry">
+<h3>UnknownPkgDirEntry<a class="headerlink" href="#unknownpkgdirentry" title="Permalink to this headline">¶</a></h3>
+<p>Unknown files or directories in package directory.</p>
+<p>Relevant for the gentoo repo only since the spec states that a package
+directory may contain other files or directories.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id197"><span class="problematic" id="id198">`PkgDirCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="invalidmanifest">
+<h3>InvalidManifest<a class="headerlink" href="#invalidmanifest" title="Permalink to this headline">¶</a></h3>
+<p>Package's Manifest file is invalid.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id199"><span class="problematic" id="id200">`ManifestCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unknownmanifest">
+<h3>UnknownManifest<a class="headerlink" href="#unknownmanifest" title="Permalink to this headline">¶</a></h3>
+<p>Manifest entries not matching any SRC_URI targets.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id201"><span class="problematic" id="id202">`ManifestCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unnecessarymanifest">
+<h3>UnnecessaryManifest<a class="headerlink" href="#unnecessarymanifest" title="Permalink to this headline">¶</a></h3>
+<p>Manifest entries for non-DIST targets on a repo with thin manifests enabled.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id203"><span class="problematic" id="id204">`ManifestCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unstableonly">
+<h3>UnstableOnly<a class="headerlink" href="#unstableonly" title="Permalink to this headline">¶</a></h3>
+<p>Package/keywords that are strictly unstable.
+- Gentoo repo specific</p>
+<ul class="simple">
+<li><p>level: info</p></li>
+<li><p>related check: <a href="#id205"><span class="problematic" id="id206">`UnstableOnlyCheck`_</span></a></p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="version-scope">
+<h2>Version scope<a class="headerlink" href="#version-scope" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="missingaccountidentifier">
+<h3>MissingAccountIdentifier<a class="headerlink" href="#missingaccountidentifier" title="Permalink to this headline">¶</a></h3>
+<p>UID/GID can not be found in account package.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id207"><span class="problematic" id="id208">`AcctCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="outsiderangeaccountidentifier">
+<h3>OutsideRangeAccountIdentifier<a class="headerlink" href="#outsiderangeaccountidentifier" title="Permalink to this headline">¶</a></h3>
+<p>UID/GID outside allowed allocation range.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id209"><span class="problematic" id="id210">`AcctCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="redundantversion">
+<h3>RedundantVersion<a class="headerlink" href="#redundantversion" title="Permalink to this headline">¶</a></h3>
+<p>Redundant version(s) of a package in a specific slot.</p>
+<ul class="simple">
+<li><p>level: info</p></li>
+<li><p>related check: <a href="#id211"><span class="problematic" id="id212">`RedundantVersionCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="absolutesymlink">
+<h3>AbsoluteSymlink<a class="headerlink" href="#absolutesymlink" title="Permalink to this headline">¶</a></h3>
+<p>Ebuild uses dosym with absolute paths instead of relative.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id213"><span class="problematic" id="id214">`AbsoluteSymlinkCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="bannedeapicommand">
+<h3>BannedEapiCommand<a class="headerlink" href="#bannedeapicommand" title="Permalink to this headline">¶</a></h3>
+<p>Ebuild uses a banned EAPI command.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id215"><span class="problematic" id="id216">`BadCommandsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="deprecatedeapicommand">
+<h3>DeprecatedEapiCommand<a class="headerlink" href="#deprecatedeapicommand" title="Permalink to this headline">¶</a></h3>
+<p>Ebuild uses a deprecated EAPI command.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id217"><span class="problematic" id="id218">`BadCommandsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="deprecatedinsinto">
+<h3>DeprecatedInsinto<a class="headerlink" href="#deprecatedinsinto" title="Permalink to this headline">¶</a></h3>
+<p>Ebuild uses insinto where more compact commands exist.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id219"><span class="problematic" id="id220">`InsintoCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="doubleprefixinpath">
+<h3>DoublePrefixInPath<a class="headerlink" href="#doubleprefixinpath" title="Permalink to this headline">¶</a></h3>
+<p>Ebuild uses two consecutive paths including EPREFIX.</p>
+<p>Ebuild combines two path variables (or a variable and a getter), both
+of which include EPREFIX, resulting in double prefixing. This is the case
+when combining many pkg-config-based or alike getters with ED or EROOT.</p>
+<p>For example, <code class="docutils literal notranslate"><span class="pre">${ED}$(python_get_sitedir)</span></code> should be replaced
+with <code class="docutils literal notranslate"><span class="pre">${D}$(python_get_sitedir)</span></code>.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id221"><span class="problematic" id="id222">`PathVariablesCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="homepageinsrcuri">
+<h3>HomepageInSrcUri<a class="headerlink" href="#homepageinsrcuri" title="Permalink to this headline">¶</a></h3>
+<p>${HOMEPAGE} is referenced in SRC_URI.</p>
+<p>SRC_URI is built on top of ${HOMEPAGE}. This is discouraged since HOMEPAGE
+is multi-valued by design, and is subject to potential changes that should
+not accidentally affect SRC_URI.</p>
+<ul class="simple">
+<li><p>level: style</p></li>
+<li><p>related check: <a href="#id223"><span class="problematic" id="id224">`RawEbuildCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="indirectinherits">
+<h3>IndirectInherits<a class="headerlink" href="#indirectinherits" title="Permalink to this headline">¶</a></h3>
+<p>Ebuild uses function from indirectly inherited eclass.</p>
+<p>That doesn't allow indirect inherit usage via the &#64;INDIRECT_INHERITS eclass
+doc tag in a parent eclass.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id225"><span class="problematic" id="id226">`InheritsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="internaleclassusage">
+<h3>InternalEclassUsage<a class="headerlink" href="#internaleclassusage" title="Permalink to this headline">¶</a></h3>
+<p>Ebuild uses internal functions or variables from eclass.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id227"><span class="problematic" id="id228">`InheritsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="missinginherits">
+<h3>MissingInherits<a class="headerlink" href="#missinginherits" title="Permalink to this headline">¶</a></h3>
+<p>Ebuild uses function from eclass that isn't inherited.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id229"><span class="problematic" id="id230">`InheritsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="missingslash">
+<h3>MissingSlash<a class="headerlink" href="#missingslash" title="Permalink to this headline">¶</a></h3>
+<p>Ebuild uses a path variable missing a trailing slash.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id231"><span class="problematic" id="id232">`PathVariablesCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="obsoleteuri">
+<h3>ObsoleteUri<a class="headerlink" href="#obsoleteuri" title="Permalink to this headline">¶</a></h3>
+<p>URI used is obsolete.</p>
+<p>The URI used to fetch distfile is obsolete and can be replaced
+by something more modern. Note that the modern replacement usually
+results in different file contents, so you need to rename it (to
+avoid mirror collisions with the old file) and update the ebuild
+(for example, by removing no longer necessary vcs-snapshot.eclass).</p>
+<ul class="simple">
+<li><p>level: style</p></li>
+<li><p>related check: <a href="#id233"><span class="problematic" id="id234">`ObsoleteUriCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="redundantdodir">
+<h3>RedundantDodir<a class="headerlink" href="#redundantdodir" title="Permalink to this headline">¶</a></h3>
+<p>Ebuild using a redundant dodir call.</p>
+<ul class="simple">
+<li><p>level: style</p></li>
+<li><p>related check: <a href="#id235"><span class="problematic" id="id236">`RedundantDodirCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="staticsrcuri">
+<h3>StaticSrcUri<a class="headerlink" href="#staticsrcuri" title="Permalink to this headline">¶</a></h3>
+<p>SRC_URI contains static value instead of the dynamic equivalent.</p>
+<p>For example, using static text to relate to the package version in SRC_URI
+instead of ${P} or ${PV} where relevant.</p>
+<ul class="simple">
+<li><p>level: style</p></li>
+<li><p>related check: <a href="#id237"><span class="problematic" id="id238">`RawEbuildCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unnecessaryslashstrip">
+<h3>UnnecessarySlashStrip<a class="headerlink" href="#unnecessaryslashstrip" title="Permalink to this headline">¶</a></h3>
+<p>Ebuild uses a path variable that strips a nonexistent slash.</p>
+<ul class="simple">
+<li><p>level: style</p></li>
+<li><p>related check: <a href="#id239"><span class="problematic" id="id240">`PathVariablesCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unusedinherits">
+<h3>UnusedInherits<a class="headerlink" href="#unusedinherits" title="Permalink to this headline">¶</a></h3>
+<p>Ebuild inherits eclasses that are unused.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id241"><span class="problematic" id="id242">`InheritsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="variableinhomepage">
+<h3>VariableInHomepage<a class="headerlink" href="#variableinhomepage" title="Permalink to this headline">¶</a></h3>
+<p>HOMEPAGE includes a variable.</p>
+<p>The HOMEPAGE ebuild variable entry in the devmanual <a class="footnote-reference brackets" href="#id18" id="id17">9</a> states only raw
+text should be used.</p>
+<dl class="footnote brackets">
+<dt class="label" id="id18"><span class="brackets"><a class="fn-backref" href="#id17">9</a></span></dt>
+<dd><p><a class="reference external" href="https://devmanual.gentoo.org/ebuild-writing/variables/#ebuild-defined-variables">https://devmanual.gentoo.org/ebuild-writing/variables/#ebuild-defined-variables</a></p>
+</dd>
+</dl>
+<ul class="simple">
+<li><p>level: style</p></li>
+<li><p>related check: <a href="#id243"><span class="problematic" id="id244">`RawEbuildCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="droppedkeywords">
+<h3>DroppedKeywords<a class="headerlink" href="#droppedkeywords" title="Permalink to this headline">¶</a></h3>
+<p>Arch keywords dropped during version bumping.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id245"><span class="problematic" id="id246">`DroppedKeywordsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="deprecatedeclass">
+<h3>DeprecatedEclass<a class="headerlink" href="#deprecatedeclass" title="Permalink to this headline">¶</a></h3>
+<p>Package uses an eclass that is deprecated/abandoned.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id247"><span class="problematic" id="id248">`EclassUsageCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="duplicateeclassinherit">
+<h3>DuplicateEclassInherit<a class="headerlink" href="#duplicateeclassinherit" title="Permalink to this headline">¶</a></h3>
+<p>An ebuild directly inherits the same eclass multiple times.</p>
+<p>Note that this will flag ebuilds that conditionalize global metadata by
+package version (or some other fashion) while inheriting the same eclass
+under both branches, e.g. conditional live ebuilds. In this case, shared
+eclasses should be loaded in a separate, unconditional inherit call.</p>
+<ul class="simple">
+<li><p>level: style</p></li>
+<li><p>related check: <a href="#id249"><span class="problematic" id="id250">`EclassUsageCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="misplacedeclassvar">
+<h3>MisplacedEclassVar<a class="headerlink" href="#misplacedeclassvar" title="Permalink to this headline">¶</a></h3>
+<p>Invalid placement of pre-inherit eclass variable in an ebuild.</p>
+<p>All eclass variables tagged with &#64;PRE_INHERIT must be set
+before the first inherit call in an ebuild.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id251"><span class="problematic" id="id252">`EclassUsageCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="directstablekeywords">
+<h3>DirectStableKeywords<a class="headerlink" href="#directstablekeywords" title="Permalink to this headline">¶</a></h3>
+<p>Newly committed ebuild with stable keywords.
+- Gentoo repo specific</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id253"><span class="problematic" id="id254">`GitPkgCommitsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="ebuildincorrectcopyright">
+<h3>EbuildIncorrectCopyright<a class="headerlink" href="#ebuildincorrectcopyright" title="Permalink to this headline">¶</a></h3>
+<p>Changed ebuild with incorrect copyright date.
+- Gentoo repo specific</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id255"><span class="problematic" id="id256">`GitPkgCommitsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="missingslotmove">
+<h3>MissingSlotmove<a class="headerlink" href="#missingslotmove" title="Permalink to this headline">¶</a></h3>
+<p>Package SLOT was changed without adding a slotmove package update.</p>
+<p>When changing an existing ebuild's SLOT, a new entry must be
+created in profiles/updates. See the devmanual <a class="footnote-reference brackets" href="#id20" id="id19">10</a> for more info.</p>
+<dl class="footnote brackets">
+<dt class="label" id="id20"><span class="brackets"><a class="fn-backref" href="#id19">10</a></span></dt>
+<dd><p><a class="reference external" href="https://devmanual.gentoo.org/ebuild-maintenance/package-moves/">https://devmanual.gentoo.org/ebuild-maintenance/package-moves/</a></p>
+</dd>
+</dl>
+<ul class="simple">
+<li><p>Gentoo repo specific</p></li>
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id257"><span class="problematic" id="id258">`GitPkgCommitsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="rdependchange">
+<h3>RdependChange<a class="headerlink" href="#rdependchange" title="Permalink to this headline">¶</a></h3>
+<p>Package RDEPEND was modified without adding a new ebuild revision.
+- Gentoo repo specific</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id259"><span class="problematic" id="id260">`GitPkgCommitsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="vulnerablepackage">
+<h3>VulnerablePackage<a class="headerlink" href="#vulnerablepackage" title="Permalink to this headline">¶</a></h3>
+<p>Packages marked as vulnerable by GLSAs.
+- Gentoo repo specific</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id261"><span class="problematic" id="id262">`GlsaCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="ebuildinvalidcopyright">
+<h3>EbuildInvalidCopyright<a class="headerlink" href="#ebuildinvalidcopyright" title="Permalink to this headline">¶</a></h3>
+<p>File with invalid copyright.</p>
+<p>The file does not start with a valid copyright line. Each ebuild or eclass
+file must start with a copyright line of the form:</p>
+<blockquote>
+<div><p># Copyright YEARS MAIN-CONTRIBUTOR [OTHER-CONTRIBUTOR]... [and others]</p>
+</div></blockquote>
+<p>Files in the Gentoo repository must use:</p>
+<blockquote>
+<div><p># Copyright YEARS Gentoo Authors</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>Gentoo repo specific</p></li>
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id263"><span class="problematic" id="id264">`EbuildHeaderCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="ebuildinvalidlicenseheader">
+<h3>EbuildInvalidLicenseHeader<a class="headerlink" href="#ebuildinvalidlicenseheader" title="Permalink to this headline">¶</a></h3>
+<p>File with invalid license header.</p>
+<p>The file does not have with a valid license header.</p>
+<p>Ebuilds and eclasses in the Gentoo repository must use:</p>
+<blockquote>
+<div><p># Distributed under the terms of the GNU General Public License v2</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>Gentoo repo specific</p></li>
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id265"><span class="problematic" id="id266">`EbuildHeaderCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="ebuildnongentooauthorscopyright">
+<h3>EbuildNonGentooAuthorsCopyright<a class="headerlink" href="#ebuildnongentooauthorscopyright" title="Permalink to this headline">¶</a></h3>
+<p>File with copyright stating owner other than &quot;Gentoo Authors&quot;.</p>
+<p>The file specifies explicit copyright owner, while the Gentoo repository
+policy specifies that all ebuilds and eclasses must use &quot;Gentoo Authors&quot;.
+If the owner is not listed in metadata/AUTHORS, addition can be requested
+via bugs.gentoo.org.
+- Gentoo repo specific</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id267"><span class="problematic" id="id268">`EbuildHeaderCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="ebuildoldgentoocopyright">
+<h3>EbuildOldGentooCopyright<a class="headerlink" href="#ebuildoldgentoocopyright" title="Permalink to this headline">¶</a></h3>
+<p>File with old Gentoo Foundation copyright.</p>
+<p>The file still assigns copyright to the Gentoo Foundation even though
+it has been committed after the new copyright policy was approved
+(2018-10-21).</p>
+<p>Ebuilds and eclasses in Gentoo repository must use 'Gentoo Authors'
+instead. Files in other repositories may specify an explicit copyright
+holder instead.
+- Gentoo repo specific</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id269"><span class="problematic" id="id270">`EbuildHeaderCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="laggingstable">
+<h3>LaggingStable<a class="headerlink" href="#laggingstable" title="Permalink to this headline">¶</a></h3>
+<p>Stable arches for stabilized package that are lagging from a stabling standpoint.</p>
+<ul class="simple">
+<li><p>level: info</p></li>
+<li><p>related check: <a href="#id271"><span class="problematic" id="id272">`ImlateCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="potentialstable">
+<h3>PotentialStable<a class="headerlink" href="#potentialstable" title="Permalink to this headline">¶</a></h3>
+<p>Stable arches with potential stable package candidates.</p>
+<ul class="simple">
+<li><p>level: info</p></li>
+<li><p>related check: <a href="#id273"><span class="problematic" id="id274">`ImlateCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="baddependency">
+<h3>BadDependency<a class="headerlink" href="#baddependency" title="Permalink to this headline">¶</a></h3>
+<p>Package dependency is bad for some reason.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id275"><span class="problematic" id="id276">`DependencyCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="baddescription">
+<h3>BadDescription<a class="headerlink" href="#baddescription" title="Permalink to this headline">¶</a></h3>
+<p>Package's description is bad for some reason.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id277"><span class="problematic" id="id278">`DescriptionCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="badfilename">
+<h3>BadFilename<a class="headerlink" href="#badfilename" title="Permalink to this headline">¶</a></h3>
+<p>URI uses unspecific or poor filename(s).</p>
+<p>Archive filenames should be disambiguated using <code class="docutils literal notranslate"><span class="pre">-&gt;</span></code> to rename them.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id279"><span class="problematic" id="id280">`SrcUriCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="badhomepage">
+<h3>BadHomepage<a class="headerlink" href="#badhomepage" title="Permalink to this headline">¶</a></h3>
+<p>A package's HOMEPAGE is bad for some reason.</p>
+<p>See the HOMEPAGE ebuild variable entry in the devmanual <a class="footnote-reference brackets" href="#id22" id="id21">11</a> for more
+information.</p>
+<dl class="footnote brackets">
+<dt class="label" id="id22"><span class="brackets"><a class="fn-backref" href="#id21">11</a></span></dt>
+<dd><p><a class="reference external" href="https://devmanual.gentoo.org/ebuild-writing/variables/#ebuild-defined-variables">https://devmanual.gentoo.org/ebuild-writing/variables/#ebuild-defined-variables</a></p>
+</dd>
+</dl>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id281"><span class="problematic" id="id282">`HomepageCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="badkeywords">
+<h3>BadKeywords<a class="headerlink" href="#badkeywords" title="Permalink to this headline">¶</a></h3>
+<p>Packages using <code class="docutils literal notranslate"><span class="pre">-*</span></code> should use package.mask instead.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id283"><span class="problematic" id="id284">`KeywordsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="badprotocol">
+<h3>BadProtocol<a class="headerlink" href="#badprotocol" title="Permalink to this headline">¶</a></h3>
+<p>URI uses an unsupported protocol.</p>
+<p>Valid protocols are currently: http, https, and ftp</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id285"><span class="problematic" id="id286">`SrcUriCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="bannedeapi">
+<h3>BannedEapi<a class="headerlink" href="#bannedeapi" title="Permalink to this headline">¶</a></h3>
+<p>Package's EAPI is banned according to repo metadata.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id287"><span class="problematic" id="id288">`EapiCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="deprecateddep">
+<h3>DeprecatedDep<a class="headerlink" href="#deprecateddep" title="Permalink to this headline">¶</a></h3>
+<p>Package dependencies matching deprecated packages flagged in profiles/package.deprecated.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id289"><span class="problematic" id="id290">`DependencyCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="deprecatedeapi">
+<h3>DeprecatedEapi<a class="headerlink" href="#deprecatedeapi" title="Permalink to this headline">¶</a></h3>
+<p>Package's EAPI is deprecated according to repo metadata.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id291"><span class="problematic" id="id292">`EapiCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="duplicatekeywords">
+<h3>DuplicateKeywords<a class="headerlink" href="#duplicatekeywords" title="Permalink to this headline">¶</a></h3>
+<p>Packages having duplicate KEYWORDS.</p>
+<ul class="simple">
+<li><p>level: style</p></li>
+<li><p>related check: <a href="#id293"><span class="problematic" id="id294">`KeywordsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="invalidbdepend">
+<h3>InvalidBdepend<a class="headerlink" href="#invalidbdepend" title="Permalink to this headline">¶</a></h3>
+<p>Package has invalid BDEPEND.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id295"><span class="problematic" id="id296">`DependencyCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="invaliddepend">
+<h3>InvalidDepend<a class="headerlink" href="#invaliddepend" title="Permalink to this headline">¶</a></h3>
+<p>Package has invalid DEPEND.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id297"><span class="problematic" id="id298">`DependencyCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="invalideapi">
+<h3>InvalidEapi<a class="headerlink" href="#invalideapi" title="Permalink to this headline">¶</a></h3>
+<p>Package's EAPI is invalid.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id299"><span class="problematic" id="id300">`SourcingCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="invalidlicense">
+<h3>InvalidLicense<a class="headerlink" href="#invalidlicense" title="Permalink to this headline">¶</a></h3>
+<p>Package's LICENSE is invalid.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id301"><span class="problematic" id="id302">`LicenseCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="invalidpdepend">
+<h3>InvalidPdepend<a class="headerlink" href="#invalidpdepend" title="Permalink to this headline">¶</a></h3>
+<p>Package has invalid PDEPEND.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id303"><span class="problematic" id="id304">`DependencyCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="invalidproperties">
+<h3>InvalidProperties<a class="headerlink" href="#invalidproperties" title="Permalink to this headline">¶</a></h3>
+<p>Package's PROPERTIES is invalid.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id305"><span class="problematic" id="id306">`PropertiesCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="invalidrdepend">
+<h3>InvalidRdepend<a class="headerlink" href="#invalidrdepend" title="Permalink to this headline">¶</a></h3>
+<p>Package has invalid RDEPEND.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id307"><span class="problematic" id="id308">`DependencyCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="invalidrequireduse">
+<h3>InvalidRequiredUse<a class="headerlink" href="#invalidrequireduse" title="Permalink to this headline">¶</a></h3>
+<p>Package's REQUIRED_USE is invalid.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id309"><span class="problematic" id="id310">`RequiredUseCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="invalidrestrict">
+<h3>InvalidRestrict<a class="headerlink" href="#invalidrestrict" title="Permalink to this headline">¶</a></h3>
+<p>Package's RESTRICT is invalid.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id311"><span class="problematic" id="id312">`RestrictCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="invalidslot">
+<h3>InvalidSlot<a class="headerlink" href="#invalidslot" title="Permalink to this headline">¶</a></h3>
+<p>Package's SLOT is invalid.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id313"><span class="problematic" id="id314">`SourcingCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="invalidsrcuri">
+<h3>InvalidSrcUri<a class="headerlink" href="#invalidsrcuri" title="Permalink to this headline">¶</a></h3>
+<p>Package's SRC_URI is invalid.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id315"><span class="problematic" id="id316">`SrcUriCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="invaliduseflags">
+<h3>InvalidUseFlags<a class="headerlink" href="#invaliduseflags" title="Permalink to this headline">¶</a></h3>
+<p>Package IUSE contains invalid USE flags.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id317"><span class="problematic" id="id318">`IuseCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="missinglicense">
+<h3>MissingLicense<a class="headerlink" href="#missinglicense" title="Permalink to this headline">¶</a></h3>
+<p>Package has no LICENSE defined.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id319"><span class="problematic" id="id320">`LicenseCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="missinglicensefile">
+<h3>MissingLicenseFile<a class="headerlink" href="#missinglicensefile" title="Permalink to this headline">¶</a></h3>
+<p>Used license(s) have no matching license file(s).</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id321"><span class="problematic" id="id322">`LicenseCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="missinglicenserestricts">
+<h3>MissingLicenseRestricts<a class="headerlink" href="#missinglicenserestricts" title="Permalink to this headline">¶</a></h3>
+<p>Restrictive license used without matching RESTRICT.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id323"><span class="problematic" id="id324">`LicenseCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="missingpackagerevision">
+<h3>MissingPackageRevision<a class="headerlink" href="#missingpackagerevision" title="Permalink to this headline">¶</a></h3>
+<p>Missing package revision in =cat/pkg dependencies.</p>
+<p>The dependency string uses the <code class="docutils literal notranslate"><span class="pre">=</span></code> operator without specifying a revision.
+This means that only <code class="docutils literal notranslate"><span class="pre">-r0</span></code> of the dependency will be matched, and newer
+revisions of the same ebuild will not be accepted.</p>
+<p>If any revision of the package is acceptable, the <code class="docutils literal notranslate"><span class="pre">~</span></code> operator should be
+used instead of <code class="docutils literal notranslate"><span class="pre">=</span></code>. If only the initial revision of the dependency is
+allowed, <code class="docutils literal notranslate"><span class="pre">-r0</span></code> should be appended in order to make the intent explicit.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id325"><span class="problematic" id="id326">`DependencyCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="missingslotdep">
+<h3>MissingSlotDep<a class="headerlink" href="#missingslotdep" title="Permalink to this headline">¶</a></h3>
+<p>Missing slot value in dependencies.</p>
+<p>The package dependency does not specify a slot but the target package
+has multiple slots. The behavior for satisfying this kind of dependency
+is not strictly defined, and may result in either any or the newest package
+slot being accepted.</p>
+<p>Please verify whether the package works with all the dependency slots.
+If only one slot is actually acceptable, specify it explicitly. If multiple
+slots are acceptable, please use either <code class="docutils literal notranslate"><span class="pre">:=</span></code> or explicit <code class="docutils literal notranslate"><span class="pre">:*</span></code> slot operator.
+The operators are described in detail in the devmanual <a class="footnote-reference brackets" href="#id24" id="id23">12</a>.</p>
+<dl class="footnote brackets">
+<dt class="label" id="id24"><span class="brackets"><a class="fn-backref" href="#id23">12</a></span></dt>
+<dd><p><a class="reference external" href="https://devmanual.gentoo.org/general-concepts/dependencies/#slot-dependencies">https://devmanual.gentoo.org/general-concepts/dependencies/#slot-dependencies</a></p>
+</dd>
+</dl>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id327"><span class="problematic" id="id328">`MissingSlotDepCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="missingtestrestrict">
+<h3>MissingTestRestrict<a class="headerlink" href="#missingtestrestrict" title="Permalink to this headline">¶</a></h3>
+<p>Missing <code class="docutils literal notranslate"><span class="pre">RESTRICT=&quot;!test?</span> <span class="pre">(</span> <span class="pre">test</span> <span class="pre">)&quot;</span></code>.</p>
+<p>Traditionally, it was assumed that <code class="docutils literal notranslate"><span class="pre">IUSE=test</span></code> is a special flag that is
+implicitly enabled when running <code class="docutils literal notranslate"><span class="pre">src_test()</span></code> is enabled. However, this is
+not standarized and packages need to explicitly specify
+<code class="docutils literal notranslate"><span class="pre">RESTRICT=&quot;!test?</span> <span class="pre">(</span> <span class="pre">test</span> <span class="pre">)&quot;</span></code> in order to guarantee that test phase will
+be skipped when the flag is disabled and therefore test dependencies may
+not be installed.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id329"><span class="problematic" id="id330">`RestrictTestCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="missingunpackerdep">
+<h3>MissingUnpackerDep<a class="headerlink" href="#missingunpackerdep" title="Permalink to this headline">¶</a></h3>
+<p>Missing dependency on a required unpacker package.</p>
+<p>Package uses an archive format for which an unpacker is not provided by the
+system set, and lacks an explicit dependency on the unpacker package.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id331"><span class="problematic" id="id332">`MissingUnpackerDepCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="missinguri">
+<h3>MissingUri<a class="headerlink" href="#missinguri" title="Permalink to this headline">¶</a></h3>
+<p>RESTRICT=fetch isn't set, yet no full URI exists.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id333"><span class="problematic" id="id334">`SrcUriCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="missingusedepdefault">
+<h3>MissingUseDepDefault<a class="headerlink" href="#missingusedepdefault" title="Permalink to this headline">¶</a></h3>
+<p>Package dependencies with USE dependencies missing defaults.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id335"><span class="problematic" id="id336">`DependencyCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="nonexistentblocker">
+<h3>NonexistentBlocker<a class="headerlink" href="#nonexistentblocker" title="Permalink to this headline">¶</a></h3>
+<p>No matches for blocker dependency in repo history.</p>
+<p>For the gentoo repo this means it was either removed before the CVS -&gt; git
+transition (which occurred around 2015-08-08) or it never existed at all.</p>
+<p>Note that this ignores slot/subslot deps and USE deps in blocker atoms.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id337"><span class="problematic" id="id338">`OutdatedBlockersCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="outdatedblocker">
+<h3>OutdatedBlocker<a class="headerlink" href="#outdatedblocker" title="Permalink to this headline">¶</a></h3>
+<p>Blocker dependency removed at least two years ago from the tree.</p>
+<p>Note that this ignores slot/subslot deps and USE deps in blocker atoms.</p>
+<ul class="simple">
+<li><p>level: info</p></li>
+<li><p>related check: <a href="#id339"><span class="problematic" id="id340">`OutdatedBlockersCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="overlappingkeywords">
+<h3>OverlappingKeywords<a class="headerlink" href="#overlappingkeywords" title="Permalink to this headline">¶</a></h3>
+<p>Packages having overlapping arch and ~arch KEYWORDS.</p>
+<ul class="simple">
+<li><p>level: style</p></li>
+<li><p>related check: <a href="#id341"><span class="problematic" id="id342">`KeywordsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="redundanturirename">
+<h3>RedundantUriRename<a class="headerlink" href="#redundanturirename" title="Permalink to this headline">¶</a></h3>
+<p>URI uses a redundant rename that doesn't change the filename.</p>
+<ul class="simple">
+<li><p>level: style</p></li>
+<li><p>related check: <a href="#id343"><span class="problematic" id="id344">`SrcUriCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="requiredusedefaults">
+<h3>RequiredUseDefaults<a class="headerlink" href="#requiredusedefaults" title="Permalink to this headline">¶</a></h3>
+<p>Default USE flag settings don't satisfy REQUIRED_USE.</p>
+<p>The REQUIRED_USE constraints specified in the ebuild are not satisfied
+by the default USE flags used in one or more profiles. This means that
+users on those profiles may be unable to install the package out of the box,
+without having to modify package.use.</p>
+<p>This warning is usually fixed via using IUSE defaults to enable one
+of the needed flags, modifying package.use in the most relevant profiles
+or modifying REQUIRED_USE.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id345"><span class="problematic" id="id346">`RequiredUseCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="sourcingerror">
+<h3>SourcingError<a class="headerlink" href="#sourcingerror" title="Permalink to this headline">¶</a></h3>
+<p>Failed sourcing ebuild.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id347"><span class="problematic" id="id348">`SourcingCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="tarballavailable">
+<h3>TarballAvailable<a class="headerlink" href="#tarballavailable" title="Permalink to this headline">¶</a></h3>
+<p>URI uses .zip archive when .tar* is available.</p>
+<p>Tarballs should be preferred over zip archives due to better compression
+and no extra unpack dependencies.</p>
+<ul class="simple">
+<li><p>level: style</p></li>
+<li><p>related check: <a href="#id349"><span class="problematic" id="id350">`SrcUriCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unknownkeywords">
+<h3>UnknownKeywords<a class="headerlink" href="#unknownkeywords" title="Permalink to this headline">¶</a></h3>
+<p>Packages using unknown KEYWORDS.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id351"><span class="problematic" id="id352">`KeywordsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unknownmirror">
+<h3>UnknownMirror<a class="headerlink" href="#unknownmirror" title="Permalink to this headline">¶</a></h3>
+<p>URI uses an unknown mirror.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id353"><span class="problematic" id="id354">`SrcUriCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unknownproperties">
+<h3>UnknownProperties<a class="headerlink" href="#unknownproperties" title="Permalink to this headline">¶</a></h3>
+<p>Package's PROPERTIES metadata has unknown entries.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id355"><span class="problematic" id="id356">`PropertiesCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unknownrestrict">
+<h3>UnknownRestrict<a class="headerlink" href="#unknownrestrict" title="Permalink to this headline">¶</a></h3>
+<p>Package's RESTRICT metadata has unknown entries.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id357"><span class="problematic" id="id358">`RestrictCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unknownuseflags">
+<h3>UnknownUseFlags<a class="headerlink" href="#unknownuseflags" title="Permalink to this headline">¶</a></h3>
+<p>Package IUSE contains unknown USE flags.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id359"><span class="problematic" id="id360">`IuseCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unnecessarylicense">
+<h3>UnnecessaryLicense<a class="headerlink" href="#unnecessarylicense" title="Permalink to this headline">¶</a></h3>
+<p>LICENSE defined for package that is license-less.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id361"><span class="problematic" id="id362">`LicenseCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unsortedkeywords">
+<h3>UnsortedKeywords<a class="headerlink" href="#unsortedkeywords" title="Permalink to this headline">¶</a></h3>
+<p>Packages with unsorted KEYWORDS.</p>
+<p>KEYWORDS should be sorted in alphabetical order with prefix keywords (those
+with hyphens in them, e.g. amd64-fbsd) after regular arches and globs (e.g. <code class="docutils literal notranslate"><span class="pre">-*</span></code>)
+before them.</p>
+<ul class="simple">
+<li><p>level: style</p></li>
+<li><p>related check: <a href="#id363"><span class="problematic" id="id364">`KeywordsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unstatediuse">
+<h3>UnstatedIuse<a class="headerlink" href="#unstatediuse" title="Permalink to this headline">¶</a></h3>
+<p>Package is reliant on conditionals that aren't in IUSE.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related checks: <a href="#id365"><span class="problematic" id="id366">`DependencyCheck`_</span></a>, <a href="#id367"><span class="problematic" id="id368">`LicenseCheck`_</span></a>, <a href="#id369"><span class="problematic" id="id370">`LocalUseCheck`_</span></a>, <a href="#id371"><span class="problematic" id="id372">`PropertiesCheck`_</span></a>, <a href="#id373"><span class="problematic" id="id374">`RequiredUseCheck`_</span></a>, <a href="#id375"><span class="problematic" id="id376">`RestrictCheck`_</span></a>, <a href="#id377"><span class="problematic" id="id378">`SrcUriCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unsupportedeclasseapi">
+<h3>UnsupportedEclassEapi<a class="headerlink" href="#unsupportedeclasseapi" title="Permalink to this headline">¶</a></h3>
+<p>Ebuild inherits an eclass with outdated &#64;SUPPORTED_EAPIS.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id379"><span class="problematic" id="id380">`EapiCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="virtualkeywordsupdate">
+<h3>VirtualKeywordsUpdate<a class="headerlink" href="#virtualkeywordsupdate" title="Permalink to this headline">¶</a></h3>
+<p>Virtual packages with keywords that can be updated to match dependencies.</p>
+<ul class="simple">
+<li><p>level: info</p></li>
+<li><p>related check: <a href="#id381"><span class="problematic" id="id382">`KeywordsCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="deadurl">
+<h3>DeadUrl<a class="headerlink" href="#deadurl" title="Permalink to this headline">¶</a></h3>
+<p>Package with a dead URL of some type.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related checks: <a href="#id383"><span class="problematic" id="id384">`FetchablesUrlCheck`_</span></a>, <a href="#id385"><span class="problematic" id="id386">`HomepageUrlCheck`_</span></a>, <a href="#id387"><span class="problematic" id="id388">`MetadataUrlCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="httpsurlavailable">
+<h3>HttpsUrlAvailable<a class="headerlink" href="#httpsurlavailable" title="Permalink to this headline">¶</a></h3>
+<p>URL uses <a class="reference external" href="http://">http://</a> when <a class="reference external" href="https://">https://</a> is available.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related checks: <a href="#id389"><span class="problematic" id="id390">`FetchablesUrlCheck`_</span></a>, <a href="#id391"><span class="problematic" id="id392">`HomepageUrlCheck`_</span></a>, <a href="#id393"><span class="problematic" id="id394">`MetadataUrlCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="redirectedurl">
+<h3>RedirectedUrl<a class="headerlink" href="#redirectedurl" title="Permalink to this headline">¶</a></h3>
+<p>Package with a URL that permanently redirects to a different site.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related checks: <a href="#id395"><span class="problematic" id="id396">`FetchablesUrlCheck`_</span></a>, <a href="#id397"><span class="problematic" id="id398">`HomepageUrlCheck`_</span></a>, <a href="#id399"><span class="problematic" id="id400">`MetadataUrlCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="sslcertificateerror">
+<h3>SSLCertificateError<a class="headerlink" href="#sslcertificateerror" title="Permalink to this headline">¶</a></h3>
+<p>Package with <a class="reference external" href="https://">https://</a> HOMEPAGE with an invalid SSL cert.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related checks: <a href="#id401"><span class="problematic" id="id402">`FetchablesUrlCheck`_</span></a>, <a href="#id403"><span class="problematic" id="id404">`HomepageUrlCheck`_</span></a>, <a href="#id405"><span class="problematic" id="id406">`MetadataUrlCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unusedinmasterseclasses">
+<h3>UnusedInMastersEclasses<a class="headerlink" href="#unusedinmasterseclasses" title="Permalink to this headline">¶</a></h3>
+<p>Eclasses detected that are unused in the master repo(s).</p>
+<p>In other words, they're likely to be removed so should be copied to the overlay.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id407"><span class="problematic" id="id408">`UnusedInMastersCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unusedinmastersglobaluse">
+<h3>UnusedInMastersGlobalUse<a class="headerlink" href="#unusedinmastersglobaluse" title="Permalink to this headline">¶</a></h3>
+<p>Global USE flags detected that are unused in the master repo(s).</p>
+<p>In other words, they're likely to be removed so should be copied to the overlay.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id409"><span class="problematic" id="id410">`UnusedInMastersCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unusedinmasterslicenses">
+<h3>UnusedInMastersLicenses<a class="headerlink" href="#unusedinmasterslicenses" title="Permalink to this headline">¶</a></h3>
+<p>Licenses detected that are unused in the master repo(s).</p>
+<p>In other words, they're likely to be removed so should be copied to the overlay.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id411"><span class="problematic" id="id412">`UnusedInMastersCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="unusedinmastersmirrors">
+<h3>UnusedInMastersMirrors<a class="headerlink" href="#unusedinmastersmirrors" title="Permalink to this headline">¶</a></h3>
+<p>Mirrors detected that are unused in the master repo(s).</p>
+<p>In other words, they're likely to be removed so should be copied to the overlay.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id413"><span class="problematic" id="id414">`UnusedInMastersCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="mismatchedperlversion">
+<h3>MismatchedPerlVersion<a class="headerlink" href="#mismatchedperlversion" title="Permalink to this headline">¶</a></h3>
+<p>A package's normalized perl module version doesn't match its $PV.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id415"><span class="problematic" id="id416">`PerlCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="missingpythoneclass">
+<h3>MissingPythonEclass<a class="headerlink" href="#missingpythoneclass" title="Permalink to this headline">¶</a></h3>
+<p>Package depends on Python but does not use the eclasses.</p>
+<p>All packages depending on Python are required to use one of the following
+python eclasses: python-r1, python-single-r1, or python-any-r1. For
+documentation on choosing the correct eclass, please see the Python project
+wiki page on eclasses <a class="footnote-reference brackets" href="#id26" id="id25">13</a>.</p>
+<dl class="footnote brackets">
+<dt class="label" id="id26"><span class="brackets"><a class="fn-backref" href="#id25">13</a></span></dt>
+<dd><p><a class="reference external" href="https://wiki.gentoo.org/wiki/Project:Python/Eclasses">https://wiki.gentoo.org/wiki/Project:Python/Eclasses</a></p>
+</dd>
+</dl>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id417"><span class="problematic" id="id418">`PythonCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="pythoncompatupdate">
+<h3>PythonCompatUpdate<a class="headerlink" href="#pythoncompatupdate" title="Permalink to this headline">¶</a></h3>
+<p>PYTHON_COMPAT can be updated to support newer python version(s).</p>
+<ul class="simple">
+<li><p>level: info</p></li>
+<li><p>related check: <a href="#id419"><span class="problematic" id="id420">`PythonCompatCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="pythoneclasserror">
+<h3>PythonEclassError<a class="headerlink" href="#pythoneclasserror" title="Permalink to this headline">¶</a></h3>
+<p>Generic python eclass error.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id421"><span class="problematic" id="id422">`PythonCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="pythonmissingdeps">
+<h3>PythonMissingDeps<a class="headerlink" href="#pythonmissingdeps" title="Permalink to this headline">¶</a></h3>
+<p>Package is missing PYTHON_DEPS.</p>
+<p>The python-r1 and python-single-r1 eclasses require the packages
+to explicitly reference <cite>${PYTHON_DEPS}</cite> in RDEPEND (and DEPEND,
+if necessary); python-any-r1 requires it in DEPEND.</p>
+<p>If Python is used conditionally, the dependency can be wrapped
+in appropriate USE conditionals.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id423"><span class="problematic" id="id424">`PythonCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="pythonmissingrequireduse">
+<h3>PythonMissingRequiredUse<a class="headerlink" href="#pythonmissingrequireduse" title="Permalink to this headline">¶</a></h3>
+<p>Package is missing PYTHON_REQUIRED_USE.</p>
+<p>The python-r1 and python-single-r1 eclasses require the packages to
+explicitly specify <cite>REQUIRED_USE=${PYTHON_REQUIRED_USE}</cite>. If Python is used
+conditionally, it can be wrapped in appropriate USE conditionals.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id425"><span class="problematic" id="id426">`PythonCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="pythonruntimedepinanyr1">
+<h3>PythonRuntimeDepInAnyR1<a class="headerlink" href="#pythonruntimedepinanyr1" title="Permalink to this headline">¶</a></h3>
+<p>Package depends on Python at runtime but uses any-r1 eclass.</p>
+<p>The python-any-r1 eclass is meant to be used purely for build-time
+dependencies on Python. However, this package lists Python as a runtime
+dependency. If this is intentional, the package needs to switch to
+python-r1 or python-single-r1 eclass, otherwise the runtime dependency
+should be removed.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id427"><span class="problematic" id="id428">`PythonCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="conflictingchksums">
+<h3>ConflictingChksums<a class="headerlink" href="#conflictingchksums" title="Permalink to this headline">¶</a></h3>
+<p>Checksum conflict detected between two files.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id429"><span class="problematic" id="id430">`ManifestCollisionCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="deprecatedchksum">
+<h3>DeprecatedChksum<a class="headerlink" href="#deprecatedchksum" title="Permalink to this headline">¶</a></h3>
+<p>A file in the chksum data does not use modern checksum set.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id431"><span class="problematic" id="id432">`ManifestCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="matchingchksums">
+<h3>MatchingChksums<a class="headerlink" href="#matchingchksums" title="Permalink to this headline">¶</a></h3>
+<p>Two distfiles share the same checksums but use different names.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id433"><span class="problematic" id="id434">`ManifestCollisionCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="missingchksum">
+<h3>MissingChksum<a class="headerlink" href="#missingchksum" title="Permalink to this headline">¶</a></h3>
+<p>A file in the chksum data lacks required checksums.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id435"><span class="problematic" id="id436">`ManifestCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="missingmanifest">
+<h3>MissingManifest<a class="headerlink" href="#missingmanifest" title="Permalink to this headline">¶</a></h3>
+<p>SRC_URI targets missing from Manifest file.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id437"><span class="problematic" id="id438">`ManifestCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="stablerequest">
+<h3>StableRequest<a class="headerlink" href="#stablerequest" title="Permalink to this headline">¶</a></h3>
+<p>Unstable ebuild with no changes for over 30 days.
+- Gentoo repo specific</p>
+<ul class="simple">
+<li><p>level: info</p></li>
+<li><p>related check: <a href="#id439"><span class="problematic" id="id440">`StableRequestCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="nonexistentdeps">
+<h3>NonexistentDeps<a class="headerlink" href="#nonexistentdeps" title="Permalink to this headline">¶</a></h3>
+<p>No matches exist for a package dependency.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id441"><span class="problematic" id="id442">`VisibilityCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="nonsolvabledepsindev">
+<h3>NonsolvableDepsInDev<a class="headerlink" href="#nonsolvabledepsindev" title="Permalink to this headline">¶</a></h3>
+<p>No potential solution for dependency on dev profile.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id443"><span class="problematic" id="id444">`VisibilityCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="nonsolvabledepsinexp">
+<h3>NonsolvableDepsInExp<a class="headerlink" href="#nonsolvabledepsinexp" title="Permalink to this headline">¶</a></h3>
+<p>No potential solution for dependency on exp profile.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id445"><span class="problematic" id="id446">`VisibilityCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="nonsolvabledepsinstable">
+<h3>NonsolvableDepsInStable<a class="headerlink" href="#nonsolvabledepsinstable" title="Permalink to this headline">¶</a></h3>
+<p>No potential solution for dependency on stable profile.</p>
+<ul class="simple">
+<li><p>level: error</p></li>
+<li><p>related check: <a href="#id447"><span class="problematic" id="id448">`VisibilityCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="uncheckabledep">
+<h3>UncheckableDep<a class="headerlink" href="#uncheckabledep" title="Permalink to this headline">¶</a></h3>
+<p>Given dependency cannot be checked due to the number of transitive use deps in it.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id449"><span class="problematic" id="id450">`VisibilityCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="visiblevcspkg">
+<h3>VisibleVcsPkg<a class="headerlink" href="#visiblevcspkg" title="Permalink to this headline">¶</a></h3>
+<p>Package is VCS-based, but visible.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id451"><span class="problematic" id="id452">`VisibilityCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="badwhitespacecharacter">
+<h3>BadWhitespaceCharacter<a class="headerlink" href="#badwhitespacecharacter" title="Permalink to this headline">¶</a></h3>
+<p>Ebuild uses whitespace that isn't a tab, newline, or single space.</p>
+<p>Bash does not treat unicode whitespace characters as regular whitespace so
+commands or operators separated by such characters will be treated as one
+string. This usually causes execution errors if the characters are used for
+separation purposes outside of comments or regular strings.</p>
+<ul class="simple">
+<li><p>level: warning</p></li>
+<li><p>related check: <a href="#id453"><span class="problematic" id="id454">`WhitespaceCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="doubleemptyline">
+<h3>DoubleEmptyLine<a class="headerlink" href="#doubleemptyline" title="Permalink to this headline">¶</a></h3>
+<p>Unneeded blank lines found.</p>
+<ul class="simple">
+<li><p>level: style</p></li>
+<li><p>related check: <a href="#id455"><span class="problematic" id="id456">`WhitespaceCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="nofinalnewline">
+<h3>NoFinalNewline<a class="headerlink" href="#nofinalnewline" title="Permalink to this headline">¶</a></h3>
+<p>Ebuild's last line does not have a final newline.</p>
+<ul class="simple">
+<li><p>level: style</p></li>
+<li><p>related check: <a href="#id457"><span class="problematic" id="id458">`WhitespaceCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="trailingemptyline">
+<h3>TrailingEmptyLine<a class="headerlink" href="#trailingemptyline" title="Permalink to this headline">¶</a></h3>
+<p>Unneeded trailing blank lines found.</p>
+<ul class="simple">
+<li><p>level: style</p></li>
+<li><p>related check: <a href="#id459"><span class="problematic" id="id460">`WhitespaceCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="whitespacefound">
+<h3>WhitespaceFound<a class="headerlink" href="#whitespacefound" title="Permalink to this headline">¶</a></h3>
+<p>Leading or trailing whitespace found.</p>
+<ul class="simple">
+<li><p>level: style</p></li>
+<li><p>related check: <a href="#id461"><span class="problematic" id="id462">`WhitespaceCheck`_</span></a></p></li>
+</ul>
+</div>
+<div class="section" id="wrongindentfound">
+<h3>WrongIndentFound<a class="headerlink" href="#wrongindentfound" title="Permalink to this headline">¶</a></h3>
+<p>Incorrect indentation whitespace found.</p>
+<ul class="simple">
+<li><p>level: style</p></li>
+<li><p>related check: <a href="#id463"><span class="problematic" id="id464">`WhitespaceCheck`_</span></a></p></li>
+</ul>
+</div>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Keywords</a><ul>
+<li><a class="reference internal" href="#commit-scope">Commit scope</a><ul>
+<li><a class="reference internal" href="#badcommitsummary">BadCommitSummary</a></li>
+<li><a class="reference internal" href="#invalidcommitmessage">InvalidCommitMessage</a></li>
+<li><a class="reference internal" href="#invalidcommittag">InvalidCommitTag</a></li>
+<li><a class="reference internal" href="#missingsignoff">MissingSignOff</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#profiles-scope">Profiles scope</a><ul>
+<li><a class="reference internal" href="#archeswithoutprofiles">ArchesWithoutProfiles</a></li>
+<li><a class="reference internal" href="#laggingprofileeapi">LaggingProfileEapi</a></li>
+<li><a class="reference internal" href="#nonexistentcategories">NonexistentCategories</a></li>
+<li><a class="reference internal" href="#nonexistentprofilepath">NonexistentProfilePath</a></li>
+<li><a class="reference internal" href="#profileerror">ProfileError</a></li>
+<li><a class="reference internal" href="#profilewarning">ProfileWarning</a></li>
+<li><a class="reference internal" href="#unknowncategorydirs">UnknownCategoryDirs</a></li>
+<li><a class="reference internal" href="#unknownprofilepackage">UnknownProfilePackage</a></li>
+<li><a class="reference internal" href="#unknownprofilepackagekeywords">UnknownProfilePackageKeywords</a></li>
+<li><a class="reference internal" href="#unknownprofilepackageuse">UnknownProfilePackageUse</a></li>
+<li><a class="reference internal" href="#unknownprofileuse">UnknownProfileUse</a></li>
+<li><a class="reference internal" href="#unusedprofiledirs">UnusedProfileDirs</a></li>
+<li><a class="reference internal" href="#badpackageupdate">BadPackageUpdate</a></li>
+<li><a class="reference internal" href="#movedpackageupdate">MovedPackageUpdate</a></li>
+<li><a class="reference internal" href="#multimovepackageupdate">MultiMovePackageUpdate</a></li>
+<li><a class="reference internal" href="#oldmultimovepackageupdate">OldMultiMovePackageUpdate</a></li>
+<li><a class="reference internal" href="#oldpackageupdate">OldPackageUpdate</a></li>
+<li><a class="reference internal" href="#redundantpackageupdate">RedundantPackageUpdate</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#eclass-scope">Eclass scope</a><ul>
+<li><a class="reference internal" href="#eclassbashsyntaxerror">EclassBashSyntaxError</a></li>
+<li><a class="reference internal" href="#eclassdocerror">EclassDocError</a></li>
+<li><a class="reference internal" href="#eclassdocmissingfunc">EclassDocMissingFunc</a></li>
+<li><a class="reference internal" href="#eclassdocmissingvar">EclassDocMissingVar</a></li>
+<li><a class="reference internal" href="#eclassincorrectcopyright">EclassIncorrectCopyright</a></li>
+<li><a class="reference internal" href="#eclassinvalidcopyright">EclassInvalidCopyright</a></li>
+<li><a class="reference internal" href="#eclassinvalidlicenseheader">EclassInvalidLicenseHeader</a></li>
+<li><a class="reference internal" href="#eclassnongentooauthorscopyright">EclassNonGentooAuthorsCopyright</a></li>
+<li><a class="reference internal" href="#eclassoldgentoocopyright">EclassOldGentooCopyright</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#repo-scope">Repo scope</a><ul>
+<li><a class="reference internal" href="#conflictingaccountidentifiers">ConflictingAccountIdentifiers</a></li>
+<li><a class="reference internal" href="#incorrectcopyright">IncorrectCopyright</a></li>
+<li><a class="reference internal" href="#invalidcopyright">InvalidCopyright</a></li>
+<li><a class="reference internal" href="#invalidlicenseheader">InvalidLicenseHeader</a></li>
+<li><a class="reference internal" href="#nongentooauthorscopyright">NonGentooAuthorsCopyright</a></li>
+<li><a class="reference internal" href="#oldgentoocopyright">OldGentooCopyright</a></li>
+<li><a class="reference internal" href="#binaryfile">BinaryFile</a></li>
+<li><a class="reference internal" href="#emptycategorydir">EmptyCategoryDir</a></li>
+<li><a class="reference internal" href="#emptypackagedir">EmptyPackageDir</a></li>
+<li><a class="reference internal" href="#emptyproject">EmptyProject</a></li>
+<li><a class="reference internal" href="#potentialglobaluse">PotentialGlobalUse</a></li>
+<li><a class="reference internal" href="#potentiallocaluse">PotentialLocalUse</a></li>
+<li><a class="reference internal" href="#unknownlicenses">UnknownLicenses</a></li>
+<li><a class="reference internal" href="#unusedeclasses">UnusedEclasses</a></li>
+<li><a class="reference internal" href="#unusedglobaluse">UnusedGlobalUse</a></li>
+<li><a class="reference internal" href="#unusedglobaluseexpand">UnusedGlobalUseExpand</a></li>
+<li><a class="reference internal" href="#unusedlicenses">UnusedLicenses</a></li>
+<li><a class="reference internal" href="#unusedmirrors">UnusedMirrors</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#category-scope">Category scope</a><ul>
+<li><a class="reference internal" href="#catbadlyformedxml">CatBadlyFormedXml</a></li>
+<li><a class="reference internal" href="#catinvalidxml">CatInvalidXml</a></li>
+<li><a class="reference internal" href="#catmetadataxmlemptyelement">CatMetadataXmlEmptyElement</a></li>
+<li><a class="reference internal" href="#catmetadataxmlindentation">CatMetadataXmlIndentation</a></li>
+<li><a class="reference internal" href="#catmetadataxmlinvalidcatref">CatMetadataXmlInvalidCatRef</a></li>
+<li><a class="reference internal" href="#catmetadataxmlinvalidpkgref">CatMetadataXmlInvalidPkgRef</a></li>
+<li><a class="reference internal" href="#catmissingmetadataxml">CatMissingMetadataXml</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#package-scope">Package scope</a><ul>
+<li><a class="reference internal" href="#directnomaintainer">DirectNoMaintainer</a></li>
+<li><a class="reference internal" href="#droppedstablekeywords">DroppedStableKeywords</a></li>
+<li><a class="reference internal" href="#droppedunstablekeywords">DroppedUnstableKeywords</a></li>
+<li><a class="reference internal" href="#missingmove">MissingMove</a></li>
+<li><a class="reference internal" href="#matchingglobaluse">MatchingGlobalUse</a></li>
+<li><a class="reference internal" href="#probableglobaluse">ProbableGlobalUse</a></li>
+<li><a class="reference internal" href="#probableuseexpand">ProbableUseExpand</a></li>
+<li><a class="reference internal" href="#underscoreinuseflag">UnderscoreInUseFlag</a></li>
+<li><a class="reference internal" href="#unusedlocaluse">UnusedLocalUse</a></li>
+<li><a class="reference internal" href="#maintainerneeded">MaintainerNeeded</a></li>
+<li><a class="reference internal" href="#maintainerwithoutproxy">MaintainerWithoutProxy</a></li>
+<li><a class="reference internal" href="#nonexistentprojectmaintainer">NonexistentProjectMaintainer</a></li>
+<li><a class="reference internal" href="#pkgbadlyformedxml">PkgBadlyFormedXml</a></li>
+<li><a class="reference internal" href="#pkginvalidxml">PkgInvalidXml</a></li>
+<li><a class="reference internal" href="#pkgmetadataxmlemptyelement">PkgMetadataXmlEmptyElement</a></li>
+<li><a class="reference internal" href="#pkgmetadataxmlindentation">PkgMetadataXmlIndentation</a></li>
+<li><a class="reference internal" href="#pkgmetadataxmlinvalidcatref">PkgMetadataXmlInvalidCatRef</a></li>
+<li><a class="reference internal" href="#pkgmetadataxmlinvalidpkgref">PkgMetadataXmlInvalidPkgRef</a></li>
+<li><a class="reference internal" href="#pkgmissingmetadataxml">PkgMissingMetadataXml</a></li>
+<li><a class="reference internal" href="#redundantlongdescription">RedundantLongDescription</a></li>
+<li><a class="reference internal" href="#staleproxymaintproject">StaleProxyMaintProject</a></li>
+<li><a class="reference internal" href="#wrongmaintainertype">WrongMaintainerType</a></li>
+<li><a class="reference internal" href="#bannedcharacter">BannedCharacter</a></li>
+<li><a class="reference internal" href="#duplicatefiles">DuplicateFiles</a></li>
+<li><a class="reference internal" href="#emptyfile">EmptyFile</a></li>
+<li><a class="reference internal" href="#equalversions">EqualVersions</a></li>
+<li><a class="reference internal" href="#executablefile">ExecutableFile</a></li>
+<li><a class="reference internal" href="#invalidpn">InvalidPN</a></li>
+<li><a class="reference internal" href="#invalidutf8">InvalidUTF8</a></li>
+<li><a class="reference internal" href="#liveonlypackage">LiveOnlyPackage</a></li>
+<li><a class="reference internal" href="#mismatchedpn">MismatchedPN</a></li>
+<li><a class="reference internal" href="#sizeviolation">SizeViolation</a></li>
+<li><a class="reference internal" href="#unknownpkgdirentry">UnknownPkgDirEntry</a></li>
+<li><a class="reference internal" href="#invalidmanifest">InvalidManifest</a></li>
+<li><a class="reference internal" href="#unknownmanifest">UnknownManifest</a></li>
+<li><a class="reference internal" href="#unnecessarymanifest">UnnecessaryManifest</a></li>
+<li><a class="reference internal" href="#unstableonly">UnstableOnly</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#version-scope">Version scope</a><ul>
+<li><a class="reference internal" href="#missingaccountidentifier">MissingAccountIdentifier</a></li>
+<li><a class="reference internal" href="#outsiderangeaccountidentifier">OutsideRangeAccountIdentifier</a></li>
+<li><a class="reference internal" href="#redundantversion">RedundantVersion</a></li>
+<li><a class="reference internal" href="#absolutesymlink">AbsoluteSymlink</a></li>
+<li><a class="reference internal" href="#bannedeapicommand">BannedEapiCommand</a></li>
+<li><a class="reference internal" href="#deprecatedeapicommand">DeprecatedEapiCommand</a></li>
+<li><a class="reference internal" href="#deprecatedinsinto">DeprecatedInsinto</a></li>
+<li><a class="reference internal" href="#doubleprefixinpath">DoublePrefixInPath</a></li>
+<li><a class="reference internal" href="#homepageinsrcuri">HomepageInSrcUri</a></li>
+<li><a class="reference internal" href="#indirectinherits">IndirectInherits</a></li>
+<li><a class="reference internal" href="#internaleclassusage">InternalEclassUsage</a></li>
+<li><a class="reference internal" href="#missinginherits">MissingInherits</a></li>
+<li><a class="reference internal" href="#missingslash">MissingSlash</a></li>
+<li><a class="reference internal" href="#obsoleteuri">ObsoleteUri</a></li>
+<li><a class="reference internal" href="#redundantdodir">RedundantDodir</a></li>
+<li><a class="reference internal" href="#staticsrcuri">StaticSrcUri</a></li>
+<li><a class="reference internal" href="#unnecessaryslashstrip">UnnecessarySlashStrip</a></li>
+<li><a class="reference internal" href="#unusedinherits">UnusedInherits</a></li>
+<li><a class="reference internal" href="#variableinhomepage">VariableInHomepage</a></li>
+<li><a class="reference internal" href="#droppedkeywords">DroppedKeywords</a></li>
+<li><a class="reference internal" href="#deprecatedeclass">DeprecatedEclass</a></li>
+<li><a class="reference internal" href="#duplicateeclassinherit">DuplicateEclassInherit</a></li>
+<li><a class="reference internal" href="#misplacedeclassvar">MisplacedEclassVar</a></li>
+<li><a class="reference internal" href="#directstablekeywords">DirectStableKeywords</a></li>
+<li><a class="reference internal" href="#ebuildincorrectcopyright">EbuildIncorrectCopyright</a></li>
+<li><a class="reference internal" href="#missingslotmove">MissingSlotmove</a></li>
+<li><a class="reference internal" href="#rdependchange">RdependChange</a></li>
+<li><a class="reference internal" href="#vulnerablepackage">VulnerablePackage</a></li>
+<li><a class="reference internal" href="#ebuildinvalidcopyright">EbuildInvalidCopyright</a></li>
+<li><a class="reference internal" href="#ebuildinvalidlicenseheader">EbuildInvalidLicenseHeader</a></li>
+<li><a class="reference internal" href="#ebuildnongentooauthorscopyright">EbuildNonGentooAuthorsCopyright</a></li>
+<li><a class="reference internal" href="#ebuildoldgentoocopyright">EbuildOldGentooCopyright</a></li>
+<li><a class="reference internal" href="#laggingstable">LaggingStable</a></li>
+<li><a class="reference internal" href="#potentialstable">PotentialStable</a></li>
+<li><a class="reference internal" href="#baddependency">BadDependency</a></li>
+<li><a class="reference internal" href="#baddescription">BadDescription</a></li>
+<li><a class="reference internal" href="#badfilename">BadFilename</a></li>
+<li><a class="reference internal" href="#badhomepage">BadHomepage</a></li>
+<li><a class="reference internal" href="#badkeywords">BadKeywords</a></li>
+<li><a class="reference internal" href="#badprotocol">BadProtocol</a></li>
+<li><a class="reference internal" href="#bannedeapi">BannedEapi</a></li>
+<li><a class="reference internal" href="#deprecateddep">DeprecatedDep</a></li>
+<li><a class="reference internal" href="#deprecatedeapi">DeprecatedEapi</a></li>
+<li><a class="reference internal" href="#duplicatekeywords">DuplicateKeywords</a></li>
+<li><a class="reference internal" href="#invalidbdepend">InvalidBdepend</a></li>
+<li><a class="reference internal" href="#invaliddepend">InvalidDepend</a></li>
+<li><a class="reference internal" href="#invalideapi">InvalidEapi</a></li>
+<li><a class="reference internal" href="#invalidlicense">InvalidLicense</a></li>
+<li><a class="reference internal" href="#invalidpdepend">InvalidPdepend</a></li>
+<li><a class="reference internal" href="#invalidproperties">InvalidProperties</a></li>
+<li><a class="reference internal" href="#invalidrdepend">InvalidRdepend</a></li>
+<li><a class="reference internal" href="#invalidrequireduse">InvalidRequiredUse</a></li>
+<li><a class="reference internal" href="#invalidrestrict">InvalidRestrict</a></li>
+<li><a class="reference internal" href="#invalidslot">InvalidSlot</a></li>
+<li><a class="reference internal" href="#invalidsrcuri">InvalidSrcUri</a></li>
+<li><a class="reference internal" href="#invaliduseflags">InvalidUseFlags</a></li>
+<li><a class="reference internal" href="#missinglicense">MissingLicense</a></li>
+<li><a class="reference internal" href="#missinglicensefile">MissingLicenseFile</a></li>
+<li><a class="reference internal" href="#missinglicenserestricts">MissingLicenseRestricts</a></li>
+<li><a class="reference internal" href="#missingpackagerevision">MissingPackageRevision</a></li>
+<li><a class="reference internal" href="#missingslotdep">MissingSlotDep</a></li>
+<li><a class="reference internal" href="#missingtestrestrict">MissingTestRestrict</a></li>
+<li><a class="reference internal" href="#missingunpackerdep">MissingUnpackerDep</a></li>
+<li><a class="reference internal" href="#missinguri">MissingUri</a></li>
+<li><a class="reference internal" href="#missingusedepdefault">MissingUseDepDefault</a></li>
+<li><a class="reference internal" href="#nonexistentblocker">NonexistentBlocker</a></li>
+<li><a class="reference internal" href="#outdatedblocker">OutdatedBlocker</a></li>
+<li><a class="reference internal" href="#overlappingkeywords">OverlappingKeywords</a></li>
+<li><a class="reference internal" href="#redundanturirename">RedundantUriRename</a></li>
+<li><a class="reference internal" href="#requiredusedefaults">RequiredUseDefaults</a></li>
+<li><a class="reference internal" href="#sourcingerror">SourcingError</a></li>
+<li><a class="reference internal" href="#tarballavailable">TarballAvailable</a></li>
+<li><a class="reference internal" href="#unknownkeywords">UnknownKeywords</a></li>
+<li><a class="reference internal" href="#unknownmirror">UnknownMirror</a></li>
+<li><a class="reference internal" href="#unknownproperties">UnknownProperties</a></li>
+<li><a class="reference internal" href="#unknownrestrict">UnknownRestrict</a></li>
+<li><a class="reference internal" href="#unknownuseflags">UnknownUseFlags</a></li>
+<li><a class="reference internal" href="#unnecessarylicense">UnnecessaryLicense</a></li>
+<li><a class="reference internal" href="#unsortedkeywords">UnsortedKeywords</a></li>
+<li><a class="reference internal" href="#unstatediuse">UnstatedIuse</a></li>
+<li><a class="reference internal" href="#unsupportedeclasseapi">UnsupportedEclassEapi</a></li>
+<li><a class="reference internal" href="#virtualkeywordsupdate">VirtualKeywordsUpdate</a></li>
+<li><a class="reference internal" href="#deadurl">DeadUrl</a></li>
+<li><a class="reference internal" href="#httpsurlavailable">HttpsUrlAvailable</a></li>
+<li><a class="reference internal" href="#redirectedurl">RedirectedUrl</a></li>
+<li><a class="reference internal" href="#sslcertificateerror">SSLCertificateError</a></li>
+<li><a class="reference internal" href="#unusedinmasterseclasses">UnusedInMastersEclasses</a></li>
+<li><a class="reference internal" href="#unusedinmastersglobaluse">UnusedInMastersGlobalUse</a></li>
+<li><a class="reference internal" href="#unusedinmasterslicenses">UnusedInMastersLicenses</a></li>
+<li><a class="reference internal" href="#unusedinmastersmirrors">UnusedInMastersMirrors</a></li>
+<li><a class="reference internal" href="#mismatchedperlversion">MismatchedPerlVersion</a></li>
+<li><a class="reference internal" href="#missingpythoneclass">MissingPythonEclass</a></li>
+<li><a class="reference internal" href="#pythoncompatupdate">PythonCompatUpdate</a></li>
+<li><a class="reference internal" href="#pythoneclasserror">PythonEclassError</a></li>
+<li><a class="reference internal" href="#pythonmissingdeps">PythonMissingDeps</a></li>
+<li><a class="reference internal" href="#pythonmissingrequireduse">PythonMissingRequiredUse</a></li>
+<li><a class="reference internal" href="#pythonruntimedepinanyr1">PythonRuntimeDepInAnyR1</a></li>
+<li><a class="reference internal" href="#conflictingchksums">ConflictingChksums</a></li>
+<li><a class="reference internal" href="#deprecatedchksum">DeprecatedChksum</a></li>
+<li><a class="reference internal" href="#matchingchksums">MatchingChksums</a></li>
+<li><a class="reference internal" href="#missingchksum">MissingChksum</a></li>
+<li><a class="reference internal" href="#missingmanifest">MissingManifest</a></li>
+<li><a class="reference internal" href="#stablerequest">StableRequest</a></li>
+<li><a class="reference internal" href="#nonexistentdeps">NonexistentDeps</a></li>
+<li><a class="reference internal" href="#nonsolvabledepsindev">NonsolvableDepsInDev</a></li>
+<li><a class="reference internal" href="#nonsolvabledepsinexp">NonsolvableDepsInExp</a></li>
+<li><a class="reference internal" href="#nonsolvabledepsinstable">NonsolvableDepsInStable</a></li>
+<li><a class="reference internal" href="#uncheckabledep">UncheckableDep</a></li>
+<li><a class="reference internal" href="#visiblevcspkg">VisibleVcsPkg</a></li>
+<li><a class="reference internal" href="#badwhitespacecharacter">BadWhitespaceCharacter</a></li>
+<li><a class="reference internal" href="#doubleemptyline">DoubleEmptyLine</a></li>
+<li><a class="reference internal" href="#nofinalnewline">NoFinalNewline</a></li>
+<li><a class="reference internal" href="#trailingemptyline">TrailingEmptyLine</a></li>
+<li><a class="reference internal" href="#whitespacefound">WhitespaceFound</a></li>
+<li><a class="reference internal" href="#wrongindentfound">WrongIndentFound</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/man/pkgcheck/keywords.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Keywords</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

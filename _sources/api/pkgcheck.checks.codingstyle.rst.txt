@@ -1,0 +1,7 @@
+pkgcheck.checks.codingstyle module
+==================================
+
+.. automodule:: pkgcheck.checks.codingstyle
+   :members:
+   :undoc-members:
+   :show-inheritance:

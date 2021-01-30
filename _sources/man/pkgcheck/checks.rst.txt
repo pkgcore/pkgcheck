@@ -1,0 +1,591 @@
+Checks
+======
+
+List of checks that can be selected to run.
+
+By default, all checks that operate at the current scope or below will be run.
+In other words, if running inside a package directory in a repo, only checks
+that operate at a package or version scope will be run. On the other hand, when
+running against an entire repo, all defined checks will be run.
+
+Commit scope
+------------
+
+GitCommitsCheck
+^^^^^^^^^^^^^^^
+
+Check unpushed git commits for various issues.
+
+- Gentoo repo specific
+
+(known results: `BadCommitSummary`_, `InvalidCommitMessage`_, `InvalidCommitTag`_,
+`MissingSignOff`_)
+
+Profiles scope
+--------------
+
+RepoProfilesCheck
+^^^^^^^^^^^^^^^^^
+
+Scan repo for various profiles directory issues.
+
+Including unknown arches in profiles, arches without profiles, and unknown
+categories.
+
+(known results: `ArchesWithoutProfiles`_, `LaggingProfileEapi`_,
+`NonexistentCategories`_, `NonexistentProfilePath`_, `ProfileError`_,
+`ProfileWarning`_, `UnknownCategoryDirs`_, `UnusedProfileDirs`_)
+
+PackageUpdatesCheck
+^^^^^^^^^^^^^^^^^^^
+
+Scan profiles/updates/* for outdated entries and other issues.
+
+(known results: `BadPackageUpdate`_, `MovedPackageUpdate`_,
+`MultiMovePackageUpdate`_, `OldMultiMovePackageUpdate`_, `OldPackageUpdate`_,
+`RedundantPackageUpdate`_)
+
+Eclass scope
+------------
+
+EclassCheck
+^^^^^^^^^^^
+
+Scan eclasses for various issues.
+
+(known results: `EclassBashSyntaxError`_, `EclassDocError`_, `EclassDocMissingFunc`_,
+`EclassDocMissingVar`_)
+
+GitEclassCommitsCheck
+^^^^^^^^^^^^^^^^^^^^^
+
+Check unpushed git eclass commits for various issues.
+
+- Gentoo repo specific
+
+(known result: `EclassIncorrectCopyright`_)
+
+EclassHeaderCheck
+^^^^^^^^^^^^^^^^^
+
+Scan eclasses for incorrect copyright/license headers.
+
+- Gentoo repo specific
+
+(known results: `EclassInvalidCopyright`_, `EclassInvalidLicenseHeader`_,
+`EclassNonGentooAuthorsCopyright`_, `EclassOldGentooCopyright`_)
+
+Repo scope
+----------
+
+AcctCheck
+^^^^^^^^^
+
+Various checks for acct-* packages.
+
+Verify that acct-* packages do not use conflicting, invalid or out-of-range
+UIDs/GIDs.
+
+(known results: `ConflictingAccountIdentifiers`_, `MissingAccountIdentifier`_,
+`OutsideRangeAccountIdentifier`_)
+
+UnusedInMastersCheck
+^^^^^^^^^^^^^^^^^^^^
+
+Check for various metadata that may be removed from master repos.
+
+(known results: `UnusedInMastersEclasses`_, `UnusedInMastersGlobalUse`_,
+`UnusedInMastersLicenses`_, `UnusedInMastersMirrors`_)
+
+EmptyDirsCheck
+^^^^^^^^^^^^^^
+
+Scan for empty category or package directories.
+
+- Gentoo repo specific
+
+(known results: `EmptyCategoryDir`_, `EmptyPackageDir`_)
+
+RepoDirCheck
+^^^^^^^^^^^^
+
+Scan all files in the repository for issues.
+
+- Gentoo repo specific
+
+(known result: `BinaryFile`_)
+
+GlobalUseCheck
+^^^^^^^^^^^^^^
+
+Check global USE and USE_EXPAND flags for various issues.
+
+(known results: `PotentialGlobalUse`_, `PotentialLocalUse`_, `UnusedGlobalUse`_,
+`UnusedGlobalUseExpand`_)
+
+LicenseGroupsCheck
+^^^^^^^^^^^^^^^^^^
+
+Scan license groups for unknown licenses.
+
+(known result: `UnknownLicenses`_)
+
+ManifestCollisionCheck
+^^^^^^^^^^^^^^^^^^^^^^
+
+Search Manifest entries for different types of distfile collisions.
+
+In particular, search for matching filenames with different checksums and
+different filenames with matching checksums.
+
+(known results: `ConflictingChksums`_, `MatchingChksums`_)
+
+ProjectMetadataCheck
+^^^^^^^^^^^^^^^^^^^^
+
+Check projects.xml for issues.
+
+(known result: `EmptyProject`_)
+
+UnusedEclassesCheck
+^^^^^^^^^^^^^^^^^^^
+
+Check for unused eclasses.
+
+(known result: `UnusedEclasses`_)
+
+UnusedLicensesCheck
+^^^^^^^^^^^^^^^^^^^
+
+Check for unused license files.
+
+(known result: `UnusedLicenses`_)
+
+UnusedMirrorsCheck
+^^^^^^^^^^^^^^^^^^
+
+Check for unused mirrors.
+
+(known result: `UnusedMirrors`_)
+
+Category scope
+--------------
+
+CategoryMetadataXmlCheck
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Category level metadata.xml scans.
+
+(known results: `CatBadlyFormedXml`_, `CatInvalidXml`_,
+`CatMetadataXmlEmptyElement`_, `CatMetadataXmlIndentation`_,
+`CatMetadataXmlInvalidCatRef`_, `CatMetadataXmlInvalidPkgRef`_,
+`CatMissingMetadataXml`_)
+
+Package scope
+-------------
+
+RedundantVersionCheck
+^^^^^^^^^^^^^^^^^^^^^
+
+Scan for overshadowed package versions.
+
+Scan for versions that are likely shadowed by later versions from a
+keywords standpoint (ignoring live packages that erroneously have
+keywords).
+
+Example: pkga-1 is keyworded amd64, pkga-2 is amd64.
+pkga-1 can potentially be removed.
+
+(known result: `RedundantVersion`_)
+
+DroppedKeywordsCheck
+^^^^^^^^^^^^^^^^^^^^
+
+Scan packages for keyword dropping across versions.
+
+(known result: `DroppedKeywords`_)
+
+GitPkgCommitsCheck
+^^^^^^^^^^^^^^^^^^
+
+Check unpushed git package commits for various issues.
+
+- Gentoo repo specific
+
+(known results: `DirectNoMaintainer`_, `DirectStableKeywords`_,
+`DroppedStableKeywords`_, `DroppedUnstableKeywords`_, `EbuildIncorrectCopyright`_,
+`MissingMove`_, `MissingSlotmove`_, `RdependChange`_)
+
+ImlateCheck
+^^^^^^^^^^^
+
+Scan for ebuilds that are lagging in stabilization.
+
+(known results: `LaggingStable`_, `PotentialStable`_)
+
+LocalUseCheck
+^^^^^^^^^^^^^
+
+Check local USE flags in metadata.xml for various issues.
+
+(known results: `MatchingGlobalUse`_, `ProbableGlobalUse`_, `ProbableUseExpand`_,
+`UnderscoreInUseFlag`_, `UnstatedIuse`_, `UnusedLocalUse`_)
+
+PackageMetadataXmlCheck
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Package level metadata.xml scans.
+
+(known results: `MaintainerNeeded`_, `MaintainerWithoutProxy`_,
+`NonexistentProjectMaintainer`_, `PkgBadlyFormedXml`_, `PkgInvalidXml`_,
+`PkgMetadataXmlEmptyElement`_, `PkgMetadataXmlIndentation`_,
+`PkgMetadataXmlInvalidCatRef`_, `PkgMetadataXmlInvalidPkgRef`_,
+`PkgMissingMetadataXml`_, `RedundantLongDescription`_, `StaleProxyMaintProject`_,
+`WrongMaintainerType`_)
+
+MetadataUrlCheck
+^^^^^^^^^^^^^^^^
+
+Verify metadata.xml URLs.
+
+(known results: `DeadUrl`_, `HttpsUrlAvailable`_, `RedirectedUrl`_,
+`SSLCertificateError`_)
+
+EqualVersionsCheck
+^^^^^^^^^^^^^^^^^^
+
+Scan package ebuilds for semantically equal versions.
+
+(known result: `EqualVersions`_)
+
+LiveOnlyCheck
+^^^^^^^^^^^^^
+
+Scan for packages with only live versions.
+
+- Gentoo repo specific
+
+(known result: `LiveOnlyPackage`_)
+
+PkgDirCheck
+^^^^^^^^^^^
+
+Scan ebuild directory for various file-related issues.
+
+(known results: `BannedCharacter`_, `DuplicateFiles`_, `EmptyFile`_,
+`ExecutableFile`_, `InvalidPN`_, `InvalidUTF8`_, `MismatchedPN`_, `SizeViolation`_,
+`UnknownPkgDirEntry`_)
+
+ManifestCheck
+^^^^^^^^^^^^^
+
+Manifest related checks.
+
+Verify that the Manifest file exists, doesn't have missing or
+extraneous entries, and that the required hashes are in use.
+
+(known results: `DeprecatedChksum`_, `InvalidManifest`_, `MissingChksum`_,
+`MissingManifest`_, `UnknownManifest`_, `UnnecessaryManifest`_)
+
+StableRequestCheck
+^^^^^^^^^^^^^^^^^^
+
+Scan for unstable ebuilds with no changes for over 30 days.
+
+By default, only triggered for arches with stable profiles. To check
+additional arches outside the stable set specify them manually using the
+-a/--arches option.
+
+Note that packages with no stable keywords won't trigger this at all.
+Instead they'll be caught by the UnstableOnly check.
+
+- Gentoo repo specific
+
+(known result: `StableRequest`_)
+
+UnstableOnlyCheck
+^^^^^^^^^^^^^^^^^
+
+Scan for packages that have just unstable keywords.
+
+- Gentoo repo specific
+
+(known result: `UnstableOnly`_)
+
+Version scope
+-------------
+
+AbsoluteSymlinkCheck
+^^^^^^^^^^^^^^^^^^^^
+
+Scan ebuild for dosym absolute path usage instead of relative.
+
+(known result: `AbsoluteSymlink`_)
+
+BadCommandsCheck
+^^^^^^^^^^^^^^^^
+
+Scan ebuild for various deprecated and banned command usage.
+
+(known results: `BannedEapiCommand`_, `DeprecatedEapiCommand`_)
+
+InheritsCheck
+^^^^^^^^^^^^^
+
+Scan for ebuilds with missing or unused eclass inherits.
+
+Note that this requires using ``pmaint regen`` to generate repo metadata in
+order for direct inherits to be correct.
+
+(known results: `IndirectInherits`_, `InternalEclassUsage`_, `MissingInherits`_,
+`UnusedInherits`_)
+
+InsintoCheck
+^^^^^^^^^^^^
+
+Scan ebuild for deprecated insinto usage.
+
+(known result: `DeprecatedInsinto`_)
+
+ObsoleteUriCheck
+^^^^^^^^^^^^^^^^
+
+Scan ebuild for obsolete URIs.
+
+(known result: `ObsoleteUri`_)
+
+PathVariablesCheck
+^^^^^^^^^^^^^^^^^^
+
+Scan ebuild for path variables with various issues.
+
+(known results: `DoublePrefixInPath`_, `MissingSlash`_, `UnnecessarySlashStrip`_)
+
+RawEbuildCheck
+^^^^^^^^^^^^^^
+
+Scan raw ebuild content for various issues.
+
+(known results: `HomepageInSrcUri`_, `StaticSrcUri`_, `VariableInHomepage`_)
+
+RedundantDodirCheck
+^^^^^^^^^^^^^^^^^^^
+
+Scan ebuild for redundant dodir usage.
+
+(known result: `RedundantDodir`_)
+
+EclassUsageCheck
+^^^^^^^^^^^^^^^^
+
+Scan packages for various eclass-related issues.
+
+(known results: `DeprecatedEclass`_, `DuplicateEclassInherit`_,
+`MisplacedEclassVar`_)
+
+GlsaCheck
+^^^^^^^^^
+
+Scan for vulnerable ebuilds in the tree.
+
+Requires a GLSA directory for vulnerability info.
+
+- Gentoo repo specific
+
+(known result: `VulnerablePackage`_)
+
+EbuildHeaderCheck
+^^^^^^^^^^^^^^^^^
+
+Scan ebuild for incorrect copyright/license headers.
+
+- Gentoo repo specific
+
+(known results: `EbuildInvalidCopyright`_, `EbuildInvalidLicenseHeader`_,
+`EbuildNonGentooAuthorsCopyright`_, `EbuildOldGentooCopyright`_)
+
+DependencyCheck
+^^^^^^^^^^^^^^^
+
+Check BDEPEND, DEPEND, RDEPEND, and PDEPEND.
+
+(known results: `BadDependency`_, `DeprecatedDep`_, `InvalidBdepend`_,
+`InvalidDepend`_, `InvalidPdepend`_, `InvalidRdepend`_, `MissingPackageRevision`_,
+`MissingUseDepDefault`_, `UnstatedIuse`_)
+
+DescriptionCheck
+^^^^^^^^^^^^^^^^
+
+DESCRIPTION checks.
+
+Check on length (<=150), too short (<10), or generic (lifted from eclass or
+just using the package's name.
+
+(known result: `BadDescription`_)
+
+EapiCheck
+^^^^^^^^^
+
+Scan for packages with banned or deprecated EAPIs.
+
+(known results: `BannedEapi`_, `DeprecatedEapi`_, `UnsupportedEclassEapi`_)
+
+HomepageCheck
+^^^^^^^^^^^^^
+
+HOMEPAGE checks.
+
+(known result: `BadHomepage`_)
+
+IuseCheck
+^^^^^^^^^
+
+IUSE validity checks.
+
+(known results: `InvalidUseFlags`_, `UnknownUseFlags`_)
+
+KeywordsCheck
+^^^^^^^^^^^^^
+
+Check package keywords for sanity; empty keywords, and -* are flagged.
+
+(known results: `BadKeywords`_, `DuplicateKeywords`_, `OverlappingKeywords`_,
+`UnknownKeywords`_, `UnsortedKeywords`_, `VirtualKeywordsUpdate`_)
+
+LicenseCheck
+^^^^^^^^^^^^
+
+LICENSE validity checks.
+
+(known results: `InvalidLicense`_, `MissingLicense`_, `MissingLicenseFile`_,
+`MissingLicenseRestricts`_, `UnnecessaryLicense`_, `UnstatedIuse`_)
+
+MissingSlotDepCheck
+^^^^^^^^^^^^^^^^^^^
+
+Check for missing slot dependencies.
+
+(known result: `MissingSlotDep`_)
+
+MissingUnpackerDepCheck
+^^^^^^^^^^^^^^^^^^^^^^^
+
+Check whether package is missing unpacker dependencies.
+
+(known result: `MissingUnpackerDep`_)
+
+OutdatedBlockersCheck
+^^^^^^^^^^^^^^^^^^^^^
+
+Check for outdated and nonexistent blocker dependencies.
+
+(known results: `NonexistentBlocker`_, `OutdatedBlocker`_)
+
+PropertiesCheck
+^^^^^^^^^^^^^^^
+
+PROPERTIES related checks.
+
+(known results: `InvalidProperties`_, `UnknownProperties`_, `UnstatedIuse`_)
+
+RequiredUseCheck
+^^^^^^^^^^^^^^^^
+
+REQUIRED_USE validity checks.
+
+(known results: `InvalidRequiredUse`_, `RequiredUseDefaults`_, `UnstatedIuse`_)
+
+RestrictCheck
+^^^^^^^^^^^^^
+
+RESTRICT related checks.
+
+(known results: `InvalidRestrict`_, `UnknownRestrict`_, `UnstatedIuse`_)
+
+RestrictTestCheck
+^^^^^^^^^^^^^^^^^
+
+Check whether packages specify RESTRICT="!test? ( test )".
+
+(known result: `MissingTestRestrict`_)
+
+SourcingCheck
+^^^^^^^^^^^^^
+
+Scan for packages with sourcing errors or invalid, sourced metadata variables.
+
+(known results: `InvalidEapi`_, `InvalidSlot`_, `SourcingError`_)
+
+SrcUriCheck
+^^^^^^^^^^^
+
+SRC_URI related checks.
+
+Verify that URIs are valid, fetchable, using a supported protocol, and
+don't use unspecific filenames.
+
+(known results: `BadFilename`_, `BadProtocol`_, `InvalidSrcUri`_, `MissingUri`_,
+`RedundantUriRename`_, `TarballAvailable`_, `UnknownMirror`_, `UnstatedIuse`_)
+
+FetchablesUrlCheck
+^^^^^^^^^^^^^^^^^^
+
+Verify SRC_URI URLs.
+
+(known results: `DeadUrl`_, `HttpsUrlAvailable`_, `RedirectedUrl`_,
+`SSLCertificateError`_)
+
+HomepageUrlCheck
+^^^^^^^^^^^^^^^^
+
+Verify HOMEPAGE URLs.
+
+(known results: `DeadUrl`_, `HttpsUrlAvailable`_, `RedirectedUrl`_,
+`SSLCertificateError`_)
+
+PerlCheck
+^^^^^^^^^
+
+Perl ebuild related checks.
+
+(known result: `MismatchedPerlVersion`_)
+
+PythonCheck
+^^^^^^^^^^^
+
+Python eclass checks.
+
+Check whether Python eclasses are used for Python packages, and whether
+they don't suffer from common mistakes.
+
+(known results: `MissingPythonEclass`_, `PythonEclassError`_, `PythonMissingDeps`_,
+`PythonMissingRequiredUse`_, `PythonRuntimeDepInAnyR1`_)
+
+PythonCompatCheck
+^^^^^^^^^^^^^^^^^
+
+Check python ebuilds for possible PYTHON_COMPAT updates.
+
+Supports ebuilds inheriting python-r1, python-single-r1, and python-any-r1.
+
+(known result: `PythonCompatUpdate`_)
+
+VisibilityCheck
+^^^^^^^^^^^^^^^
+
+Visibility dependency scans.
+
+Check that at least one solution is possible for a pkg, checking all
+profiles (defined by arch.list) visibility modifiers per stable/unstable
+keyword.
+
+(known results: `NonexistentDeps`_, `NonsolvableDepsInDev`_, `NonsolvableDepsInExp`_,
+`NonsolvableDepsInStable`_, `UncheckableDep`_, `VisibleVcsPkg`_)
+
+WhitespaceCheck
+^^^^^^^^^^^^^^^
+
+Scan ebuild for useless whitespace.
+
+(known results: `BadWhitespaceCharacter`_, `DoubleEmptyLine`_, `NoFinalNewline`_,
+`TrailingEmptyLine`_, `WhitespaceFound`_, `WrongIndentFound`_)

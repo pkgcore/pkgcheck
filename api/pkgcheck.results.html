@@ -1,0 +1,401 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.results module &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.results module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcheck.results">
+<span id="pkgcheck-results-module"></span><h1>pkgcheck.results module<a class="headerlink" href="#module-pkgcheck.results" title="Permalink to this headline">¶</a></h1>
+<p>Base classes for check results.</p>
+<dl class="py class">
+<dt id="pkgcheck.results.CategoryResult">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.results.</code><code class="sig-name descname">CategoryResult</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/results.html#CategoryResult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.results.CategoryResult" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.results.Result" title="pkgcheck.results.Result"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Result</span></code></a></p>
+<p>Result related to a specific category.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.results.CategoryResult.name">
+<code class="sig-name descname">name</code><em class="property"> = 'CategoryResult'</em><a class="headerlink" href="#pkgcheck.results.CategoryResult.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.results.CategoryResult.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='category' &#64;0x7f81a67f4f40&gt;</em><a class="headerlink" href="#pkgcheck.results.CategoryResult.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.results.CommitResult">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.results.</code><code class="sig-name descname">CommitResult</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">commit</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/results.html#CommitResult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.results.CommitResult" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.results.Result" title="pkgcheck.results.Result"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Result</span></code></a></p>
+<p>Result related to a specific git commit.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.results.CommitResult.name">
+<code class="sig-name descname">name</code><em class="property"> = 'CommitResult'</em><a class="headerlink" href="#pkgcheck.results.CommitResult.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.results.CommitResult.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;ConditionalScope desc='commit' &#64;0x7f81a648fbb0&gt;</em><a class="headerlink" href="#pkgcheck.results.CommitResult.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.results.EclassResult">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.results.</code><code class="sig-name descname">EclassResult</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">eclass</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/results.html#EclassResult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.results.EclassResult" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.results.Result" title="pkgcheck.results.Result"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Result</span></code></a></p>
+<p>Result related to a specific eclass.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.results.EclassResult.name">
+<code class="sig-name descname">name</code><em class="property"> = 'EclassResult'</em><a class="headerlink" href="#pkgcheck.results.EclassResult.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.results.EclassResult.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;LocationScope desc='eclass' &#64;0x7f81a648fd90&gt;</em><a class="headerlink" href="#pkgcheck.results.EclassResult.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.results.Error">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.results.</code><code class="sig-name descname">Error</code><a class="reference internal" href="../_modules/pkgcheck/results.html#Error"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.results.Error" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.results.Result" title="pkgcheck.results.Result"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Result</span></code></a></p>
+<p>Result with an error priority level.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.results.Error.color">
+<code class="sig-name descname">color</code><em class="property"> = 'red'</em><a class="headerlink" href="#pkgcheck.results.Error.color" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.results.Error.level">
+<code class="sig-name descname">level</code><em class="property"> = 'error'</em><a class="headerlink" href="#pkgcheck.results.Error.level" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.results.Error.name">
+<code class="sig-name descname">name</code><em class="property"> = 'Error'</em><a class="headerlink" href="#pkgcheck.results.Error.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.results.FilteredVersionResult">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.results.</code><code class="sig-name descname">FilteredVersionResult</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/results.html#FilteredVersionResult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.results.FilteredVersionResult" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a></p>
+<p>Result that will be optionally filtered for old packages by default.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.results.FilteredVersionResult.name">
+<code class="sig-name descname">name</code><em class="property"> = 'FilteredVersionResult'</em><a class="headerlink" href="#pkgcheck.results.FilteredVersionResult.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.results.Info">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.results.</code><code class="sig-name descname">Info</code><a class="reference internal" href="../_modules/pkgcheck/results.html#Info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.results.Info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.results.Result" title="pkgcheck.results.Result"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Result</span></code></a></p>
+<p>Result with an info priority level.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.results.Info.color">
+<code class="sig-name descname">color</code><em class="property"> = 'green'</em><a class="headerlink" href="#pkgcheck.results.Info.color" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.results.Info.level">
+<code class="sig-name descname">level</code><em class="property"> = 'info'</em><a class="headerlink" href="#pkgcheck.results.Info.level" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.results.Info.name">
+<code class="sig-name descname">name</code><em class="property"> = 'Info'</em><a class="headerlink" href="#pkgcheck.results.Info.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pkgcheck.results.InvalidResult">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcheck.results.</code><code class="sig-name descname">InvalidResult</code><a class="reference internal" href="../_modules/pkgcheck/results.html#InvalidResult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.results.InvalidResult" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">Exception</span></code></p>
+<p>Creating a result object failed in some fashion.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.results.LineResult">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.results.</code><code class="sig-name descname">LineResult</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">line</span></em>, <em class="sig-param"><span class="n">lineno</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/results.html#LineResult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.results.LineResult" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a></p>
+<p>Result related to a specific line of an ebuild.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.results.LineResult.name">
+<code class="sig-name descname">name</code><em class="property"> = 'LineResult'</em><a class="headerlink" href="#pkgcheck.results.LineResult.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.results.LogError">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.results.</code><code class="sig-name descname">LogError</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">msg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/results.html#LogError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.results.LogError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results._LogResult</span></code>, <a class="reference internal" href="#pkgcheck.results.Error" title="pkgcheck.results.Error"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Error</span></code></a></p>
+<p>Error caught from a logger instance.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.results.LogError.name">
+<code class="sig-name descname">name</code><em class="property"> = 'LogError'</em><a class="headerlink" href="#pkgcheck.results.LogError.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.results.LogWarning">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.results.</code><code class="sig-name descname">LogWarning</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">msg</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/results.html#LogWarning"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.results.LogWarning" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results._LogResult</span></code>, <a class="reference internal" href="#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Warning caught from a logger instance.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.results.LogWarning.name">
+<code class="sig-name descname">name</code><em class="property"> = 'LogWarning'</em><a class="headerlink" href="#pkgcheck.results.LogWarning.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.results.MetadataError">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.results.</code><code class="sig-name descname">MetadataError</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">attr</span></em>, <em class="sig-param"><span class="n">msg</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/results.html#MetadataError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.results.MetadataError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.results.Error" title="pkgcheck.results.Error"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Error</span></code></a></p>
+<p>Problem detected with a package’s metadata.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.results.MetadataError.attr">
+<code class="sig-name descname">attr</code><em class="property"> = None</em><a class="headerlink" href="#pkgcheck.results.MetadataError.attr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.results.MetadataError.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.results.MetadataError.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.results.MetadataError.name">
+<code class="sig-name descname">name</code><em class="property"> = 'MetadataError'</em><a class="headerlink" href="#pkgcheck.results.MetadataError.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.results.MetadataError.results">
+<code class="sig-name descname">results</code><em class="property"> = {'bdepend': &lt;class 'pkgcheck.checks.metadata.InvalidBdepend'&gt;, 'data': &lt;class 'pkgcheck.checks.metadata.SourcingError'&gt;, 'depend': &lt;class 'pkgcheck.checks.metadata.InvalidDepend'&gt;, 'eapi': &lt;class 'pkgcheck.checks.metadata.InvalidEapi'&gt;, 'fetchables': &lt;class 'pkgcheck.checks.metadata.InvalidSrcUri'&gt;, 'license': &lt;class 'pkgcheck.checks.metadata.InvalidLicense'&gt;, 'manifest': &lt;class 'pkgcheck.checks.repo_metadata.InvalidManifest'&gt;, 'pdepend': &lt;class 'pkgcheck.checks.metadata.InvalidPdepend'&gt;, 'properties': &lt;class 'pkgcheck.checks.metadata.InvalidProperties'&gt;, 'rdepend': &lt;class 'pkgcheck.checks.metadata.InvalidRdepend'&gt;, 'required_use': &lt;class 'pkgcheck.checks.metadata.InvalidRequiredUse'&gt;, 'restrict': &lt;class 'pkgcheck.checks.metadata.InvalidRestrict'&gt;, 'slot': &lt;class 'pkgcheck.checks.metadata.InvalidSlot'&gt;}</em><a class="headerlink" href="#pkgcheck.results.MetadataError.results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.results.PackageResult">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.results.</code><code class="sig-name descname">PackageResult</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/results.html#PackageResult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.results.PackageResult" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.results.CategoryResult" title="pkgcheck.results.CategoryResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.CategoryResult</span></code></a></p>
+<p>Result related to a specific package.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.results.PackageResult.name">
+<code class="sig-name descname">name</code><em class="property"> = 'PackageResult'</em><a class="headerlink" href="#pkgcheck.results.PackageResult.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.results.PackageResult.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='package' &#64;0x7f81a68053a0&gt;</em><a class="headerlink" href="#pkgcheck.results.PackageResult.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.results.ProfilesResult">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.results.</code><code class="sig-name descname">ProfilesResult</code><a class="reference internal" href="../_modules/pkgcheck/results.html#ProfilesResult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.results.ProfilesResult" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.results.Result" title="pkgcheck.results.Result"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Result</span></code></a></p>
+<p>Result related to profiles.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.results.ProfilesResult.name">
+<code class="sig-name descname">name</code><em class="property"> = 'ProfilesResult'</em><a class="headerlink" href="#pkgcheck.results.ProfilesResult.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.results.ProfilesResult.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;LocationScope desc='profiles' &#64;0x7f81a648f4f0&gt;</em><a class="headerlink" href="#pkgcheck.results.ProfilesResult.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.results.Result">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.results.</code><code class="sig-name descname">Result</code><a class="reference internal" href="../_modules/pkgcheck/results.html#Result"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.results.Result" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Generic report result returned from a check.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.results.Result.color">
+<code class="sig-name descname">color</code><em class="property"> = None</em><a class="headerlink" href="#pkgcheck.results.Result.color" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.results.Result.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.results.Result.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.results.Result.filtered">
+<code class="sig-name descname">filtered</code><em class="property"> = False</em><a class="headerlink" href="#pkgcheck.results.Result.filtered" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.results.Result.level">
+<code class="sig-name descname">level</code><em class="property"> = None</em><a class="headerlink" href="#pkgcheck.results.Result.level" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.results.Result.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='repo' &#64;0x7f81a6a420a0&gt;</em><a class="headerlink" href="#pkgcheck.results.Result.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.results.Style">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.results.</code><code class="sig-name descname">Style</code><a class="reference internal" href="../_modules/pkgcheck/results.html#Style"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.results.Style" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.results.Result" title="pkgcheck.results.Result"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Result</span></code></a></p>
+<p>Result with a coding style priority level.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.results.Style.color">
+<code class="sig-name descname">color</code><em class="property"> = 'cyan'</em><a class="headerlink" href="#pkgcheck.results.Style.color" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.results.Style.level">
+<code class="sig-name descname">level</code><em class="property"> = 'style'</em><a class="headerlink" href="#pkgcheck.results.Style.level" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.results.Style.name">
+<code class="sig-name descname">name</code><em class="property"> = 'Style'</em><a class="headerlink" href="#pkgcheck.results.Style.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.results.VersionResult">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.results.</code><code class="sig-name descname">VersionResult</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/results.html#VersionResult"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.results.VersionResult" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a></p>
+<p>Result related to a specific version of a package.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.results.VersionResult.name">
+<code class="sig-name descname">name</code><em class="property"> = 'VersionResult'</em><a class="headerlink" href="#pkgcheck.results.VersionResult.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.results.VersionResult.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='version' &#64;0x7f81a648f5b0&gt;</em><a class="headerlink" href="#pkgcheck.results.VersionResult.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.results.VersionResult.ver_rev">
+<code class="sig-name descname">ver_rev</code><a class="headerlink" href="#pkgcheck.results.VersionResult.ver_rev" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.results.Warning">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.results.</code><code class="sig-name descname">Warning</code><a class="reference internal" href="../_modules/pkgcheck/results.html#Warning"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.results.Warning" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.results.Result" title="pkgcheck.results.Result"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Result</span></code></a></p>
+<p>Result with a warning priority level.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.results.Warning.color">
+<code class="sig-name descname">color</code><em class="property"> = 'yellow'</em><a class="headerlink" href="#pkgcheck.results.Warning.color" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.results.Warning.level">
+<code class="sig-name descname">level</code><em class="property"> = 'warning'</em><a class="headerlink" href="#pkgcheck.results.Warning.level" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.results.Warning.name">
+<code class="sig-name descname">name</code><em class="property"> = 'Warning'</em><a class="headerlink" href="#pkgcheck.results.Warning.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/pkgcheck.results.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.results module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

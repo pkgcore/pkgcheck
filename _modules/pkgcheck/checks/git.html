@@ -1,0 +1,737 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.checks.git &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../checks.html" accesskey="U">pkgcheck.checks</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.git</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcheck.checks.git</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Various git-related checks.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">tarfile</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
+<span class="kn">from</span> <span class="nn">tempfile</span> <span class="kn">import</span> <span class="n">TemporaryDirectory</span>
+<span class="kn">from</span> <span class="nn">urllib.parse</span> <span class="kn">import</span> <span class="n">urlparse</span>
+
+<span class="kn">from</span> <span class="nn">pkgcore.ebuild.misc</span> <span class="kn">import</span> <span class="n">sort_keywords</span>
+<span class="kn">from</span> <span class="nn">pkgcore.ebuild.repository</span> <span class="kn">import</span> <span class="n">UnconfiguredTree</span>
+<span class="kn">from</span> <span class="nn">snakeoil</span> <span class="kn">import</span> <span class="n">klass</span>
+<span class="kn">from</span> <span class="nn">snakeoil.mappings</span> <span class="kn">import</span> <span class="n">ImmutableDict</span>
+<span class="kn">from</span> <span class="nn">snakeoil.osutils</span> <span class="kn">import</span> <span class="n">pjoin</span>
+<span class="kn">from</span> <span class="nn">snakeoil.strings</span> <span class="kn">import</span> <span class="n">pluralism</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">base</span><span class="p">,</span> <span class="n">git</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">sources</span>
+<span class="kn">from</span> <span class="nn">..base</span> <span class="kn">import</span> <span class="n">PkgcheckUserException</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">GentooRepoCheck</span><span class="p">,</span> <span class="n">GitCheck</span>
+<span class="kn">from</span> <span class="nn">.header</span> <span class="kn">import</span> <span class="n">copyright_regex</span>
+
+
+<div class="viewcode-block" id="GitCommitsRepoSource"><a class="viewcode-back" href="../../../api/pkgcheck.checks.git.html#pkgcheck.checks.git.GitCommitsRepoSource">[docs]</a><span class="k">class</span> <span class="nc">GitCommitsRepoSource</span><span class="p">(</span><span class="n">sources</span><span class="o">.</span><span class="n">RepoSource</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Repository source for locally changed packages in git history.</span>
+
+<span class="sd">    Parses git log history to determine packages with changes that</span>
+<span class="sd">    haven&#39;t been pushed upstream yet.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">required_addons</span> <span class="o">=</span> <span class="p">(</span><span class="n">git</span><span class="o">.</span><span class="n">GitAddon</span><span class="p">,)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">git_addon</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">repo</span> <span class="o">=</span> <span class="n">git_addon</span><span class="o">.</span><span class="n">commits_repo</span><span class="p">(</span><span class="n">git</span><span class="o">.</span><span class="n">GitChangedRepo</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="GitCommitsSource"><a class="viewcode-back" href="../../../api/pkgcheck.checks.git.html#pkgcheck.checks.git.GitCommitsSource">[docs]</a><span class="k">class</span> <span class="nc">GitCommitsSource</span><span class="p">(</span><span class="n">sources</span><span class="o">.</span><span class="n">Source</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Source for local commits in git history.</span>
+
+<span class="sd">    Parses git log history to determine commits that haven&#39;t been pushed</span>
+<span class="sd">    upstream yet.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">scope</span> <span class="o">=</span> <span class="n">base</span><span class="o">.</span><span class="n">commit_scope</span>
+    <span class="n">required_addons</span> <span class="o">=</span> <span class="p">(</span><span class="n">git</span><span class="o">.</span><span class="n">GitAddon</span><span class="p">,)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">git_addon</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="n">git_addon</span><span class="o">.</span><span class="n">commits</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="IncorrectCopyright"><a class="viewcode-back" href="../../../api/pkgcheck.checks.git.html#pkgcheck.checks.git.IncorrectCopyright">[docs]</a><span class="k">class</span> <span class="nc">IncorrectCopyright</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Changed file with incorrect copyright date.&quot;&quot;&quot;</span>
+
+    <span class="n">_name</span> <span class="o">=</span> <span class="s1">&#39;IncorrectCopyright&#39;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">year</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">year</span> <span class="o">=</span> <span class="n">year</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">line</span> <span class="o">=</span> <span class="n">line</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;incorrect copyright year </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">year</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">line</span><span class="si">!r}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="EbuildIncorrectCopyright"><a class="viewcode-back" href="../../../api/pkgcheck.checks.git.html#pkgcheck.checks.git.EbuildIncorrectCopyright">[docs]</a><span class="k">class</span> <span class="nc">EbuildIncorrectCopyright</span><span class="p">(</span><span class="n">IncorrectCopyright</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Changed ebuild with incorrect copyright date.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="DirectStableKeywords"><a class="viewcode-back" href="../../../api/pkgcheck.checks.git.html#pkgcheck.checks.git.DirectStableKeywords">[docs]</a><span class="k">class</span> <span class="nc">DirectStableKeywords</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Newly committed ebuild with stable keywords.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keywords</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keywords</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">keywords</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keywords</span><span class="p">)</span>
+        <span class="n">keywords</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keywords</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;directly committed with stable keyword</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">: [ </span><span class="si">{</span><span class="n">keywords</span><span class="si">}</span><span class="s1"> ]&#39;</span></div>
+
+
+<span class="k">class</span> <span class="nc">_DroppedKeywords</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Unstable keywords dropped from package.&quot;&quot;&quot;</span>
+
+    <span class="n">_status</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keywords</span><span class="p">,</span> <span class="n">commit</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keywords</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">keywords</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">commit</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">commit</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keywords</span><span class="p">)</span>
+        <span class="n">keywords</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keywords</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;commit </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">commit</span><span class="si">}</span><span class="s1"> (or later) dropped </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_status</span><span class="si">}</span><span class="s1"> &#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;keyword</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">: [ </span><span class="si">{</span><span class="n">keywords</span><span class="si">}</span><span class="s1"> ]&#39;</span>
+        <span class="p">)</span>
+
+
+<div class="viewcode-block" id="DroppedUnstableKeywords"><a class="viewcode-back" href="../../../api/pkgcheck.checks.git.html#pkgcheck.checks.git.DroppedUnstableKeywords">[docs]</a><span class="k">class</span> <span class="nc">DroppedUnstableKeywords</span><span class="p">(</span><span class="n">_DroppedKeywords</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Unstable keywords dropped from package.&quot;&quot;&quot;</span>
+
+    <span class="n">_status</span> <span class="o">=</span> <span class="s1">&#39;unstable&#39;</span></div>
+
+
+<div class="viewcode-block" id="DroppedStableKeywords"><a class="viewcode-back" href="../../../api/pkgcheck.checks.git.html#pkgcheck.checks.git.DroppedStableKeywords">[docs]</a><span class="k">class</span> <span class="nc">DroppedStableKeywords</span><span class="p">(</span><span class="n">_DroppedKeywords</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Stable keywords dropped from package.&quot;&quot;&quot;</span>
+
+    <span class="n">_status</span> <span class="o">=</span> <span class="s1">&#39;stable&#39;</span></div>
+
+
+<div class="viewcode-block" id="DirectNoMaintainer"><a class="viewcode-back" href="../../../api/pkgcheck.checks.git.html#pkgcheck.checks.git.DirectNoMaintainer">[docs]</a><span class="k">class</span> <span class="nc">DirectNoMaintainer</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Directly added, new package with no specified maintainer.&quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;directly committed with no package maintainer&#39;</span></div>
+
+
+<div class="viewcode-block" id="RdependChange"><a class="viewcode-back" href="../../../api/pkgcheck.checks.git.html#pkgcheck.checks.git.RdependChange">[docs]</a><span class="k">class</span> <span class="nc">RdependChange</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Package RDEPEND was modified without adding a new ebuild revision.&quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;RDEPEND modified without revbump&#39;</span></div>
+
+
+<div class="viewcode-block" id="MissingSlotmove"><a class="viewcode-back" href="../../../api/pkgcheck.checks.git.html#pkgcheck.checks.git.MissingSlotmove">[docs]</a><span class="k">class</span> <span class="nc">MissingSlotmove</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Package SLOT was changed without adding a slotmove package update.</span>
+
+<span class="sd">    When changing an existing ebuild&#39;s SLOT, a new entry must be</span>
+<span class="sd">    created in profiles/updates. See the devmanual [#]_ for more info.</span>
+
+<span class="sd">    .. [#] https://devmanual.gentoo.org/ebuild-maintenance/package-moves/</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">old</span> <span class="o">=</span> <span class="n">old</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">new</span> <span class="o">=</span> <span class="n">new</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;changed SLOT: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">old</span><span class="si">}</span><span class="s1"> -&gt; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">new</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="MissingMove"><a class="viewcode-back" href="../../../api/pkgcheck.checks.git.html#pkgcheck.checks.git.MissingMove">[docs]</a><span class="k">class</span> <span class="nc">MissingMove</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">PackageResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Package was renamed without adding a move package update.</span>
+
+<span class="sd">    When moving/renaming a package, a new entry must be created in</span>
+<span class="sd">    profiles/updates. See the devmanual [#]_ for more info.</span>
+
+<span class="sd">    .. [#] https://devmanual.gentoo.org/ebuild-maintenance/package-moves/</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">old</span> <span class="o">=</span> <span class="n">old</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">new</span> <span class="o">=</span> <span class="n">new</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;renamed package: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">old</span><span class="si">}</span><span class="s1"> -&gt; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">new</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<span class="k">class</span> <span class="nc">_RemovalRepo</span><span class="p">(</span><span class="n">UnconfiguredTree</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Repository of removed packages stored in a temporary directory.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repo</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__parent_repo</span> <span class="o">=</span> <span class="n">repo</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_eclasses</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="n">repo</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="s1">&#39;eclass&#39;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__tmpdir</span> <span class="o">=</span> <span class="n">TemporaryDirectory</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__created</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">repo_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__tmpdir</span><span class="o">.</span><span class="n">name</span>
+
+        <span class="c1"># set up some basic repo files so pkgcore doesn&#39;t complain</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="n">repo_dir</span><span class="p">,</span> <span class="s1">&#39;metadata&#39;</span><span class="p">))</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="n">repo_dir</span><span class="p">,</span> <span class="s1">&#39;metadata&#39;</span><span class="p">,</span> <span class="s1">&#39;layout.conf&#39;</span><span class="p">),</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;masters =</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="n">repo_dir</span><span class="p">,</span> <span class="s1">&#39;profiles&#39;</span><span class="p">))</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">pjoin</span><span class="p">(</span><span class="n">repo_dir</span><span class="p">,</span> <span class="s1">&#39;profiles&#39;</span><span class="p">,</span> <span class="s1">&#39;repo_name&#39;</span><span class="p">),</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;old-repo</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">repo_dir</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkgs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Update the repo with a given sequence of packages.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_populate</span><span class="p">(</span><span class="n">pkgs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">__created</span><span class="p">:</span>
+            <span class="c1"># notify the repo object that new pkgs were added</span>
+            <span class="k">for</span> <span class="n">pkg</span> <span class="ow">in</span> <span class="n">pkgs</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">notify_add_package</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__created</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">_populate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkgs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Populate the repo with a given sequence of historical packages.&quot;&quot;&quot;</span>
+        <span class="n">pkg</span> <span class="o">=</span> <span class="n">pkgs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">pjoin</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">category</span><span class="p">,</span> <span class="n">pkg</span><span class="o">.</span><span class="n">package</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__created</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eclasses</span><span class="p">:</span>
+            <span class="n">paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;eclass&#39;</span><span class="p">)</span>
+
+        <span class="n">old_files</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span>
+            <span class="p">[</span><span class="s1">&#39;git&#39;</span><span class="p">,</span> <span class="s1">&#39;archive&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">pkg</span><span class="o">.</span><span class="n">commit</span><span class="si">}</span><span class="s1">~1&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">paths</span><span class="p">,</span>
+            <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span>
+            <span class="n">cwd</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__parent_repo</span><span class="o">.</span><span class="n">location</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">old_files</span><span class="o">.</span><span class="n">poll</span><span class="p">():</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="n">old_files</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">raise</span> <span class="n">PkgcheckUserException</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;failed populating archive repo: </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;r|&#39;</span><span class="p">,</span> <span class="n">fileobj</span><span class="o">=</span><span class="n">old_files</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span> <span class="k">as</span> <span class="n">tar</span><span class="p">:</span>
+            <span class="n">tar</span><span class="o">.</span><span class="n">extractall</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="GitPkgCommitsCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.git.html#pkgcheck.checks.git.GitPkgCommitsCheck">[docs]</a><span class="k">class</span> <span class="nc">GitPkgCommitsCheck</span><span class="p">(</span><span class="n">GentooRepoCheck</span><span class="p">,</span> <span class="n">GitCheck</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check unpushed git package commits for various issues.&quot;&quot;&quot;</span>
+
+    <span class="n">_source</span> <span class="o">=</span> <span class="p">(</span><span class="n">sources</span><span class="o">.</span><span class="n">PackageRepoSource</span><span class="p">,</span> <span class="p">(),</span> <span class="p">((</span><span class="s1">&#39;source&#39;</span><span class="p">,</span> <span class="n">GitCommitsRepoSource</span><span class="p">),))</span>
+    <span class="n">required_addons</span> <span class="o">=</span> <span class="p">(</span><span class="n">git</span><span class="o">.</span><span class="n">GitAddon</span><span class="p">,)</span>
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span>
+        <span class="n">DirectStableKeywords</span><span class="p">,</span> <span class="n">DirectNoMaintainer</span><span class="p">,</span> <span class="n">RdependChange</span><span class="p">,</span> <span class="n">EbuildIncorrectCopyright</span><span class="p">,</span>
+        <span class="n">DroppedStableKeywords</span><span class="p">,</span> <span class="n">DroppedUnstableKeywords</span><span class="p">,</span> <span class="n">MissingSlotmove</span><span class="p">,</span> <span class="n">MissingMove</span><span class="p">,</span>
+    <span class="p">])</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">git_addon</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">today</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">today</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">repo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">target_repo</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">valid_arches</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">target_repo</span><span class="o">.</span><span class="n">known_arches</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_git_addon</span> <span class="o">=</span> <span class="n">git_addon</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">removal_repo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a repository of packages removed from git.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_RemovalRepo</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">modified_repo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a repository of old packages newly modified in git.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_RemovalRepo</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr</span>
+    <span class="k">def</span> <span class="nf">added_repo</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create/load cached repo of packages added to git.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_git_addon</span><span class="o">.</span><span class="n">cached_repo</span><span class="p">(</span><span class="n">git</span><span class="o">.</span><span class="n">GitAddedRepo</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GitPkgCommitsCheck.removal_checks"><a class="viewcode-back" href="../../../api/pkgcheck.checks.git.html#pkgcheck.checks.git.GitPkgCommitsCheck.removal_checks">[docs]</a>    <span class="k">def</span> <span class="nf">removal_checks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkgs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Check for issues due to package removals.&quot;&quot;&quot;</span>
+        <span class="n">pkg</span> <span class="o">=</span> <span class="n">pkgs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">removal_repo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">removal_repo</span><span class="p">(</span><span class="n">pkgs</span><span class="p">)</span>
+
+        <span class="n">old_keywords</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="o">*</span><span class="p">(</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">keywords</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">removal_repo</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">unversioned_atom</span><span class="p">)))</span>
+        <span class="n">new_keywords</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="o">*</span><span class="p">(</span>
+            <span class="n">p</span><span class="o">.</span><span class="n">keywords</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">unversioned_atom</span><span class="p">)))</span>
+
+        <span class="n">dropped_keywords</span> <span class="o">=</span> <span class="n">old_keywords</span> <span class="o">-</span> <span class="n">new_keywords</span>
+        <span class="n">dropped_stable_keywords</span> <span class="o">=</span> <span class="n">dropped_keywords</span> <span class="o">&amp;</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_arches</span>
+        <span class="n">dropped_unstable_keywords</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">keyword</span> <span class="ow">in</span> <span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">dropped_keywords</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;~&#39;</span><span class="p">):</span>
+            <span class="n">arch</span> <span class="o">=</span> <span class="n">keyword</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+            <span class="k">if</span> <span class="n">arch</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">valid_arches</span> <span class="ow">and</span> <span class="n">arch</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">new_keywords</span><span class="p">:</span>
+                <span class="n">dropped_unstable_keywords</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">keyword</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">dropped_stable_keywords</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">DroppedStableKeywords</span><span class="p">(</span>
+                <span class="n">sort_keywords</span><span class="p">(</span><span class="n">dropped_stable_keywords</span><span class="p">),</span> <span class="n">pkg</span><span class="o">.</span><span class="n">commit</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dropped_unstable_keywords</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">DroppedUnstableKeywords</span><span class="p">(</span>
+                <span class="n">sort_keywords</span><span class="p">(</span><span class="n">dropped_unstable_keywords</span><span class="p">),</span> <span class="n">pkg</span><span class="o">.</span><span class="n">commit</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="GitPkgCommitsCheck.rename_checks"><a class="viewcode-back" href="../../../api/pkgcheck.checks.git.html#pkgcheck.checks.git.GitPkgCommitsCheck.rename_checks">[docs]</a>    <span class="k">def</span> <span class="nf">rename_checks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkgs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Check for issues due to package modifications.&quot;&quot;&quot;</span>
+        <span class="n">pkg</span> <span class="o">=</span> <span class="n">pkgs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">old_key</span><span class="p">,</span> <span class="n">new_key</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">old</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">pkg</span><span class="o">.</span><span class="n">key</span>
+
+        <span class="c1"># same package, probably version bump and remove old</span>
+        <span class="k">if</span> <span class="n">old_key</span> <span class="o">==</span> <span class="n">new_key</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">pkgmoves</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">updates</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">old_key</span><span class="p">,</span> <span class="p">())</span>
+            <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;move&#39;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">old</span><span class="p">,</span> <span class="n">new</span> <span class="ow">in</span> <span class="n">pkgmoves</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">old</span><span class="o">.</span><span class="n">key</span> <span class="o">==</span> <span class="n">old_key</span> <span class="ow">and</span> <span class="n">new</span><span class="o">.</span><span class="n">key</span> <span class="o">==</span> <span class="n">new_key</span><span class="p">:</span>
+                <span class="k">break</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">MissingMove</span><span class="p">(</span><span class="n">old_key</span><span class="p">,</span> <span class="n">new_key</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="GitPkgCommitsCheck.modified_checks"><a class="viewcode-back" href="../../../api/pkgcheck.checks.git.html#pkgcheck.checks.git.GitPkgCommitsCheck.modified_checks">[docs]</a>    <span class="k">def</span> <span class="nf">modified_checks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkgs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Check for issues due to package modifications.&quot;&quot;&quot;</span>
+        <span class="n">pkg</span> <span class="o">=</span> <span class="n">pkgs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">new_pkg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">versioned_atom</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="c1"># ignore live ebuilds</span>
+        <span class="k">if</span> <span class="n">new_pkg</span><span class="o">.</span><span class="n">live</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">modified_repo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">modified_repo</span><span class="p">(</span><span class="n">pkgs</span><span class="p">)</span>
+        <span class="n">old_pkg</span> <span class="o">=</span> <span class="n">modified_repo</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">versioned_atom</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">old_pkg</span><span class="o">.</span><span class="n">rdepend</span> <span class="o">!=</span> <span class="n">new_pkg</span><span class="o">.</span><span class="n">rdepend</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">RdependChange</span><span class="p">(</span><span class="n">pkg</span><span class="o">=</span><span class="n">new_pkg</span><span class="p">)</span>
+
+        <span class="n">old_slot</span><span class="p">,</span> <span class="n">new_slot</span> <span class="o">=</span> <span class="n">old_pkg</span><span class="o">.</span><span class="n">slot</span><span class="p">,</span> <span class="n">new_pkg</span><span class="o">.</span><span class="n">slot</span>
+        <span class="k">if</span> <span class="n">old_slot</span> <span class="o">!=</span> <span class="n">new_slot</span><span class="p">:</span>
+            <span class="n">slotmoves</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">updates</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">new_pkg</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="p">())</span>
+                <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;slotmove&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">atom</span><span class="p">,</span> <span class="n">moved_slot</span> <span class="ow">in</span> <span class="n">slotmoves</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">atom</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">old_pkg</span><span class="p">)</span> <span class="ow">and</span> <span class="n">new_slot</span> <span class="o">==</span> <span class="n">moved_slot</span><span class="p">:</span>
+                    <span class="k">break</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">MissingSlotmove</span><span class="p">(</span><span class="n">old_slot</span><span class="p">,</span> <span class="n">new_slot</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">new_pkg</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="GitPkgCommitsCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.git.html#pkgcheck.checks.git.GitPkgCommitsCheck.feed">[docs]</a>    <span class="k">def</span> <span class="nf">feed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkgset</span><span class="p">):</span>
+        <span class="c1"># Mapping of commit types to pkgs, available commit types can be seen</span>
+        <span class="c1"># under the --diff-filter option in git log parsing support and are</span>
+        <span class="c1"># disambiguated as follows:</span>
+        <span class="c1"># A -&gt; added, R -&gt; renamed, M -&gt; modified, D -&gt; deleted</span>
+        <span class="n">pkg_map</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;A&#39;</span><span class="p">:</span> <span class="nb">set</span><span class="p">(),</span> <span class="s1">&#39;R&#39;</span><span class="p">:</span> <span class="nb">set</span><span class="p">(),</span> <span class="s1">&#39;M&#39;</span><span class="p">:</span> <span class="nb">set</span><span class="p">(),</span> <span class="s1">&#39;D&#39;</span><span class="p">:</span> <span class="nb">set</span><span class="p">()}</span>
+        <span class="c1"># Iterate over pkg commits in chronological order (git log defaults to</span>
+        <span class="c1"># the reverse) discarding matching pkg commits where relevant.</span>
+        <span class="k">for</span> <span class="n">pkg</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">pkgset</span><span class="p">):</span>
+            <span class="n">pkg_map</span><span class="p">[</span><span class="n">pkg</span><span class="o">.</span><span class="n">status</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">pkg</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s1">&#39;A&#39;</span><span class="p">:</span>
+                <span class="n">pkg_map</span><span class="p">[</span><span class="s1">&#39;D&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">pkg</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s1">&#39;D&#39;</span><span class="p">:</span>
+                <span class="n">pkg_map</span><span class="p">[</span><span class="s1">&#39;A&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">discard</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">pkg</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s1">&#39;R&#39;</span><span class="p">:</span>
+                <span class="c1"># create pkg add/removal for rename operation</span>
+                <span class="n">pkg_map</span><span class="p">[</span><span class="s1">&#39;A&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span>
+                <span class="n">pkg_map</span><span class="p">[</span><span class="s1">&#39;D&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">old_pkg</span><span class="p">())</span>
+
+        <span class="c1"># modified packages in current repo</span>
+        <span class="n">modified</span> <span class="o">=</span> <span class="p">[</span><span class="n">pkg</span> <span class="k">for</span> <span class="n">pkg</span> <span class="ow">in</span> <span class="n">pkg_map</span><span class="p">[</span><span class="s1">&#39;M&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">pkg</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">pkg_map</span><span class="p">[</span><span class="s1">&#39;D&#39;</span><span class="p">]]</span>
+
+        <span class="c1"># run removed package checks</span>
+        <span class="k">if</span> <span class="n">pkg_map</span><span class="p">[</span><span class="s1">&#39;D&#39;</span><span class="p">]:</span>
+            <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">removal_checks</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">pkg_map</span><span class="p">[</span><span class="s1">&#39;D&#39;</span><span class="p">]))</span>
+        <span class="c1"># run renamed package checks</span>
+        <span class="k">if</span> <span class="n">pkg_map</span><span class="p">[</span><span class="s1">&#39;R&#39;</span><span class="p">]:</span>
+            <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">rename_checks</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">pkg_map</span><span class="p">[</span><span class="s1">&#39;R&#39;</span><span class="p">]))</span>
+        <span class="c1"># run modified package checks</span>
+        <span class="k">if</span> <span class="n">modified</span><span class="p">:</span>
+            <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">modified_checks</span><span class="p">(</span><span class="n">modified</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">git_pkg</span> <span class="ow">in</span> <span class="n">pkgset</span><span class="p">:</span>
+            <span class="c1"># remaining checks are irrelevant for removed packages</span>
+            <span class="k">if</span> <span class="n">git_pkg</span> <span class="ow">in</span> <span class="n">pkg_map</span><span class="p">[</span><span class="s1">&#39;D&#39;</span><span class="p">]:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># pull actual package object from repo</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">pkg</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="o">.</span><span class="n">itermatch</span><span class="p">(</span><span class="n">git_pkg</span><span class="o">.</span><span class="n">versioned_atom</span><span class="p">))</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">ebuild</span><span class="o">.</span><span class="n">text_fileobj</span><span class="p">())</span>
+            <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+                <span class="c1"># ignore probable broken ebuild</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># check copyright on new/modified ebuilds</span>
+            <span class="k">if</span> <span class="n">mo</span> <span class="o">:=</span> <span class="n">copyright_regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+                <span class="n">year</span> <span class="o">=</span> <span class="n">mo</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;end&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">year</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">today</span><span class="o">.</span><span class="n">year</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">EbuildIncorrectCopyright</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+
+            <span class="c1"># checks for newly added ebuilds</span>
+            <span class="k">if</span> <span class="n">git_pkg</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s1">&#39;A&#39;</span><span class="p">:</span>
+                <span class="c1"># check for stable keywords</span>
+                <span class="n">stable_keywords</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">keywords</span> <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">not</span> <span class="ow">in</span> <span class="s1">&#39;~-&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">stable_keywords</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">DirectStableKeywords</span><span class="p">(</span><span class="n">stable_keywords</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+
+                <span class="c1"># pkg was just added to the tree</span>
+                <span class="n">newly_added</span> <span class="o">=</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">added_repo</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">git_pkg</span><span class="o">.</span><span class="n">unversioned_atom</span><span class="p">)</span>
+
+                <span class="c1"># check for no maintainers</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">pkg</span><span class="o">.</span><span class="n">maintainers</span> <span class="ow">and</span> <span class="n">newly_added</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">DirectNoMaintainer</span><span class="p">(</span><span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="MissingSignOff"><a class="viewcode-back" href="../../../api/pkgcheck.checks.git.html#pkgcheck.checks.git.MissingSignOff">[docs]</a><span class="k">class</span> <span class="nc">MissingSignOff</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">CommitResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Local commit with missing sign offs.</span>
+
+<span class="sd">    Sign offs are required for commits as specified by GLEP 76 [#]_. Note that</span>
+<span class="sd">    sign off tags will be flagged if the name or email address doesn&#39;t match</span>
+<span class="sd">    the values used by the commit author.</span>
+
+<span class="sd">    .. [#] https://www.gentoo.org/glep/glep-0076.html#certificate-of-origin</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">missing_sign_offs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">missing_sign_offs</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">missing_sign_offs</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">missing_sign_offs</span><span class="p">)</span>
+        <span class="n">sign_offs</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">missing_sign_offs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;commit </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">commit</span><span class="si">}</span><span class="s1">, missing sign-off</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">sign_offs</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="InvalidCommitTag"><a class="viewcode-back" href="../../../api/pkgcheck.checks.git.html#pkgcheck.checks.git.InvalidCommitTag">[docs]</a><span class="k">class</span> <span class="nc">InvalidCommitTag</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">CommitResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Local commit has a tag that is incompliant.</span>
+
+<span class="sd">    Commit tags have restrictions as to the allowed format and data</span>
+<span class="sd">    used per GLEP 66 [#]_.</span>
+
+<span class="sd">    .. [#] https://www.gentoo.org/glep/glep-0066.html#commit-messages</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">tag</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">error</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;commit </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">commit</span><span class="si">}</span><span class="s1">, tag &quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tag</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s1">&quot;: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="InvalidCommitMessage"><a class="viewcode-back" href="../../../api/pkgcheck.checks.git.html#pkgcheck.checks.git.InvalidCommitMessage">[docs]</a><span class="k">class</span> <span class="nc">InvalidCommitMessage</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">CommitResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Local commit has issues with its commit message.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">error</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;commit </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">commit</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="BadCommitSummary"><a class="viewcode-back" href="../../../api/pkgcheck.checks.git.html#pkgcheck.checks.git.BadCommitSummary">[docs]</a><span class="k">class</span> <span class="nc">BadCommitSummary</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">CommitResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Local package commit with poorly formatted or unmatching commit summary.</span>
+
+<span class="sd">    Git commit messages for packages should be formatted in the standardized</span>
+<span class="sd">    fashion described in the devmanual [#]_. Specifically, a</span>
+<span class="sd">    ``${CATEGORY}/${PN}:`` or ``${CATEGORY}/${P}:`` prefix should be used in</span>
+<span class="sd">    the summary relating to the modified package.</span>
+
+<span class="sd">    .. [#] https://devmanual.gentoo.org/ebuild-maintenance/git/#git-commit-message-format</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="n">summary</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">error</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">summary</span> <span class="o">=</span> <span class="n">summary</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;commit </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">commit</span><span class="si">}</span><span class="s1">, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">summary</span><span class="si">!r}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="verify_tags"><a class="viewcode-back" href="../../../api/pkgcheck.checks.git.html#pkgcheck.checks.git.verify_tags">[docs]</a><span class="k">def</span> <span class="nf">verify_tags</span><span class="p">(</span><span class="o">*</span><span class="n">tags</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Decorator to register commit tag verification methods.&quot;&quot;&quot;</span>
+
+    <span class="k">class</span> <span class="nc">decorator</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Decorator with access to the class of a decorated function.&quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">func</span> <span class="o">=</span> <span class="n">func</span>
+
+        <span class="k">def</span> <span class="nf">__set_name__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">owner</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">tags</span><span class="p">:</span>
+                <span class="n">owner</span><span class="o">.</span><span class="n">known_tags</span><span class="p">[</span><span class="n">tag</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">,</span> <span class="n">required</span><span class="p">)</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">owner</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">func</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">decorator</span></div>
+
+
+<div class="viewcode-block" id="GitCommitsCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.git.html#pkgcheck.checks.git.GitCommitsCheck">[docs]</a><span class="k">class</span> <span class="nc">GitCommitsCheck</span><span class="p">(</span><span class="n">GentooRepoCheck</span><span class="p">,</span> <span class="n">GitCheck</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check unpushed git commits for various issues.&quot;&quot;&quot;</span>
+
+    <span class="n">_source</span> <span class="o">=</span> <span class="n">GitCommitsSource</span>
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span>
+        <span class="n">MissingSignOff</span><span class="p">,</span> <span class="n">InvalidCommitTag</span><span class="p">,</span> <span class="n">InvalidCommitMessage</span><span class="p">,</span> <span class="n">BadCommitSummary</span><span class="p">,</span>
+    <span class="p">])</span>
+
+    <span class="c1"># mapping between known commit tags and verification methods</span>
+    <span class="n">known_tags</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">_commit_footer_regex</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^(?P&lt;tag&gt;[a-zA-Z0-9_-]+): (?P&lt;value&gt;.*)$&#39;</span><span class="p">)</span>
+    <span class="n">_git_cat_file_regex</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;^(?P&lt;object&gt;.+?) (?P&lt;status&gt;.+)$&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="c1"># mapping of required tags to forcibly run verifications methods</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_required_tags</span> <span class="o">=</span> <span class="n">ImmutableDict</span><span class="p">(</span>
+            <span class="p">((</span><span class="n">tag</span><span class="p">,</span> <span class="n">verify</span><span class="p">),</span> <span class="p">[])</span>
+            <span class="k">for</span> <span class="n">tag</span><span class="p">,</span> <span class="p">(</span><span class="n">verify</span><span class="p">,</span> <span class="n">required</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">known_tags</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">required</span><span class="p">)</span>
+
+    <span class="nd">@verify_tags</span><span class="p">(</span><span class="s1">&#39;Signed-off-by&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_signed_off_by_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">commit</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Verify commit contains all required sign offs in accordance with GLEP 76.&quot;&quot;&quot;</span>
+        <span class="n">required_sign_offs</span> <span class="o">=</span> <span class="p">{</span><span class="n">commit</span><span class="o">.</span><span class="n">author</span><span class="p">,</span> <span class="n">commit</span><span class="o">.</span><span class="n">committer</span><span class="p">}</span>
+        <span class="n">missing_sign_offs</span> <span class="o">=</span> <span class="n">required_sign_offs</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">missing_sign_offs</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">MissingSignOff</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">missing_sign_offs</span><span class="p">),</span> <span class="n">commit</span><span class="o">=</span><span class="n">commit</span><span class="p">)</span>
+
+    <span class="nd">@verify_tags</span><span class="p">(</span><span class="s1">&#39;Gentoo-Bug&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_deprecated_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">commit</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Flag deprecated tags that shouldn&#39;t be used.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">InvalidCommitTag</span><span class="p">(</span>
+                <span class="n">tag</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">tag</span><span class="si">}</span><span class="s2"> tag is no longer valid&quot;</span><span class="p">,</span> <span class="n">commit</span><span class="o">=</span><span class="n">commit</span><span class="p">)</span>
+
+    <span class="nd">@verify_tags</span><span class="p">(</span><span class="s1">&#39;Bug&#39;</span><span class="p">,</span> <span class="s1">&#39;Closes&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_bug_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">commit</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Verify values are URLs for Bug/Closes tags.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+            <span class="n">parsed</span> <span class="o">=</span> <span class="n">urlparse</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">parsed</span><span class="o">.</span><span class="n">scheme</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">InvalidCommitTag</span><span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="s2">&quot;value isn&#39;t a URL&quot;</span><span class="p">,</span> <span class="n">commit</span><span class="o">=</span><span class="n">commit</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">parsed</span><span class="o">.</span><span class="n">scheme</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;http&quot;</span><span class="p">,</span> <span class="s2">&quot;https&quot;</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">InvalidCommitTag</span><span class="p">(</span>
+                    <span class="n">tag</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="s2">&quot;invalid protocol; should be http or https&quot;</span><span class="p">,</span> <span class="n">commit</span><span class="o">=</span><span class="n">commit</span><span class="p">)</span>
+
+    <span class="nd">@klass</span><span class="o">.</span><span class="n">jit_attr_none</span>
+    <span class="k">def</span> <span class="nf">git_cat_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Start a `git cat-file` process to verify git repo hashes.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span>
+            <span class="p">[</span><span class="s1">&#39;git&#39;</span><span class="p">,</span> <span class="s1">&#39;cat-file&#39;</span><span class="p">,</span> <span class="s1">&#39;--batch-check&#39;</span><span class="p">],</span>
+            <span class="n">cwd</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">target_repo</span><span class="o">.</span><span class="n">location</span><span class="p">,</span>
+            <span class="n">stdin</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">DEVNULL</span><span class="p">,</span>
+            <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf8&#39;</span><span class="p">,</span> <span class="n">bufsize</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="nd">@verify_tags</span><span class="p">(</span><span class="s1">&#39;Fixes&#39;</span><span class="p">,</span> <span class="s1">&#39;Reverts&#39;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_commit_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">commit</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Verify referenced commits exist for Fixes/Reverts tags.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">git_cat_file</span><span class="o">.</span><span class="n">stdin</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">git_cat_file</span><span class="o">.</span><span class="n">poll</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)):</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">git_cat_file</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">mo</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_git_cat_file_regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+                    <span class="n">value</span> <span class="o">=</span> <span class="n">mo</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;object&#39;</span><span class="p">)</span>
+                    <span class="n">status</span> <span class="o">=</span> <span class="n">mo</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;status&#39;</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">status</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;commit &#39;</span><span class="p">):</span>
+                        <span class="k">yield</span> <span class="n">InvalidCommitTag</span><span class="p">(</span>
+                            <span class="n">tag</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="s1"> commit&#39;</span><span class="p">,</span> <span class="n">commit</span><span class="o">=</span><span class="n">commit</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GitCommitsCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.git.html#pkgcheck.checks.git.GitCommitsCheck.feed">[docs]</a>    <span class="k">def</span> <span class="nf">feed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">commit</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">commit</span><span class="o">.</span><span class="n">message</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">InvalidCommitMessage</span><span class="p">(</span><span class="s1">&#39;no commit message&#39;</span><span class="p">,</span> <span class="n">commit</span><span class="o">=</span><span class="n">commit</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="c1"># drop leading &#39;*: &#39; prefix assuming it&#39;s a package/eclass/file/path</span>
+        <span class="n">summary</span> <span class="o">=</span> <span class="n">commit</span><span class="o">.</span><span class="n">message</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">summary</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;: &#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">69</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">InvalidCommitMessage</span><span class="p">(</span><span class="s1">&#39;summary is too long&#39;</span><span class="p">,</span> <span class="n">commit</span><span class="o">=</span><span class="n">commit</span><span class="p">)</span>
+
+        <span class="c1"># categorize package changes</span>
+        <span class="n">pkg_changes</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">pkg</span> <span class="ow">in</span> <span class="n">commit</span><span class="o">.</span><span class="n">pkgs</span><span class="p">:</span>
+            <span class="n">pkg_changes</span><span class="p">[</span><span class="n">pkg</span><span class="o">.</span><span class="n">category</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">package</span><span class="p">)</span>
+
+        <span class="c1"># check git commit summary formatting</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pkg_changes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">category</span><span class="p">,</span> <span class="n">pkgs</span> <span class="o">=</span> <span class="n">pkg_changes</span><span class="o">.</span><span class="n">popitem</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">pkgs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="c1"># changes to a single cat/pn</span>
+                <span class="n">pkg</span> <span class="o">=</span> <span class="n">commit</span><span class="o">.</span><span class="n">pkgs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">rf</span><span class="s1">&#39;^(</span><span class="si">{</span><span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">key</span><span class="p">)</span><span class="si">}</span><span class="s1">|</span><span class="si">{</span><span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">cpvstr</span><span class="p">)</span><span class="si">}</span><span class="s1">): &#39;</span><span class="p">,</span> <span class="n">summary</span><span class="p">):</span>
+                    <span class="n">error</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;summary missing </span><span class="si">{</span><span class="n">pkg</span><span class="o">.</span><span class="n">key</span><span class="si">!r}</span><span class="s1"> package prefix&#39;</span>
+                    <span class="k">yield</span> <span class="n">BadCommitSummary</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">summary</span><span class="p">,</span> <span class="n">commit</span><span class="o">=</span><span class="n">commit</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># mutiple pkg changes in the same category</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">rf</span><span class="s1">&#39;^</span><span class="si">{</span><span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">category</span><span class="p">)</span><span class="si">}</span><span class="s1">: &#39;</span><span class="p">,</span> <span class="n">summary</span><span class="p">):</span>
+                    <span class="n">error</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;summary missing </span><span class="si">{</span><span class="n">category</span><span class="si">!r}</span><span class="s1"> category prefix&#39;</span>
+                    <span class="k">yield</span> <span class="n">BadCommitSummary</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">summary</span><span class="p">,</span> <span class="n">commit</span><span class="o">=</span><span class="n">commit</span><span class="p">)</span>
+
+        <span class="c1"># verify message body</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="nb">iter</span><span class="p">(</span><span class="n">commit</span><span class="o">.</span><span class="n">message</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+        <span class="n">lineno</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">lineno</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_commit_footer_regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">body</span> <span class="ow">and</span> <span class="n">commit</span><span class="o">.</span><span class="n">message</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">InvalidCommitMessage</span><span class="p">(</span>
+                        <span class="s1">&#39;missing empty line before body&#39;</span><span class="p">,</span> <span class="n">commit</span><span class="o">=</span><span class="n">commit</span><span class="p">)</span>
+                <span class="c1"># still processing the body</span>
+                <span class="n">body</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">line</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">80</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">InvalidCommitMessage</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s1">&#39;line </span><span class="si">{</span><span class="n">lineno</span><span class="si">}</span><span class="s1"> greater than 80 chars: </span><span class="si">{</span><span class="n">line</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">commit</span><span class="o">=</span><span class="n">commit</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">commit</span><span class="o">.</span><span class="n">message</span><span class="p">[</span><span class="n">lineno</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">InvalidCommitMessage</span><span class="p">(</span>
+                        <span class="s1">&#39;missing empty line before tags&#39;</span><span class="p">,</span> <span class="n">commit</span><span class="o">=</span><span class="n">commit</span><span class="p">)</span>
+                <span class="c1"># push it back on the stack</span>
+                <span class="n">i</span> <span class="o">=</span> <span class="n">chain</span><span class="p">([</span><span class="n">line</span><span class="p">],</span> <span class="n">i</span><span class="p">)</span>
+                <span class="k">break</span>
+
+        <span class="c1"># mapping of defined tags to any existing verification methods</span>
+        <span class="n">tags</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_required_tags</span><span class="p">)</span>
+
+        <span class="c1"># verify footer</span>
+        <span class="k">for</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">lineno</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+                <span class="c1"># single empty end line is ignored</span>
+                <span class="k">if</span> <span class="n">lineno</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">commit</span><span class="o">.</span><span class="n">message</span><span class="p">):</span>
+                    <span class="k">yield</span> <span class="n">InvalidCommitMessage</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s1">&#39;empty line </span><span class="si">{</span><span class="n">lineno</span><span class="si">}</span><span class="s1"> in footer&#39;</span><span class="p">,</span> <span class="n">commit</span><span class="o">=</span><span class="n">commit</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">mo</span> <span class="o">:=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_commit_footer_regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+                <span class="c1"># register known tags for verification</span>
+                <span class="n">tag</span> <span class="o">=</span> <span class="n">mo</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;tag&#39;</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">func</span><span class="p">,</span> <span class="n">required</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">known_tags</span><span class="p">[</span><span class="n">tag</span><span class="p">]</span>
+                    <span class="n">tags</span><span class="o">.</span><span class="n">setdefault</span><span class="p">((</span><span class="n">tag</span><span class="p">,</span> <span class="n">func</span><span class="p">),</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mo</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;value&#39;</span><span class="p">))</span>
+                <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                    <span class="k">continue</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">InvalidCommitMessage</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s1">&#39;non-tag in footer, line </span><span class="si">{</span><span class="n">lineno</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">line</span><span class="si">!r}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">commit</span><span class="o">=</span><span class="n">commit</span><span class="p">)</span>
+
+        <span class="c1"># run tag verification methods</span>
+        <span class="k">for</span> <span class="p">(</span><span class="n">tag</span><span class="p">,</span> <span class="n">func</span><span class="p">),</span> <span class="n">values</span> <span class="ow">in</span> <span class="n">tags</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">yield from</span> <span class="n">func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tag</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">commit</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="EclassIncorrectCopyright"><a class="viewcode-back" href="../../../api/pkgcheck.checks.git.html#pkgcheck.checks.git.EclassIncorrectCopyright">[docs]</a><span class="k">class</span> <span class="nc">EclassIncorrectCopyright</span><span class="p">(</span><span class="n">IncorrectCopyright</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">EclassResult</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Changed eclass with incorrect copyright date.&quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">eclass</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">desc</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="GitEclassCommitsCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.git.html#pkgcheck.checks.git.GitEclassCommitsCheck">[docs]</a><span class="k">class</span> <span class="nc">GitEclassCommitsCheck</span><span class="p">(</span><span class="n">GentooRepoCheck</span><span class="p">,</span> <span class="n">GitCheck</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check unpushed git eclass commits for various issues.&quot;&quot;&quot;</span>
+
+    <span class="n">_source</span> <span class="o">=</span> <span class="n">sources</span><span class="o">.</span><span class="n">EclassRepoSource</span>
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="n">EclassIncorrectCopyright</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">today</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">today</span><span class="p">()</span>
+
+<div class="viewcode-block" id="GitEclassCommitsCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.git.html#pkgcheck.checks.git.GitEclassCommitsCheck.feed">[docs]</a>    <span class="k">def</span> <span class="nf">feed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eclass</span><span class="p">):</span>
+        <span class="c1"># check copyright on new/modified eclasses</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">eclass</span><span class="o">.</span><span class="n">lines</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">mo</span> <span class="o">:=</span> <span class="n">copyright_regex</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">):</span>
+            <span class="n">year</span> <span class="o">=</span> <span class="n">mo</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s1">&#39;end&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">year</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">today</span><span class="o">.</span><span class="n">year</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">EclassIncorrectCopyright</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">),</span> <span class="n">eclass</span><span class="o">=</span><span class="n">eclass</span><span class="p">)</span></div></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../checks.html" >pkgcheck.checks</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.git</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

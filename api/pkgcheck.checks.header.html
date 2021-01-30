@@ -1,0 +1,388 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.checks.header module &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.header module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcheck.checks.header">
+<span id="pkgcheck-checks-header-module"></span><h1>pkgcheck.checks.header module<a class="headerlink" href="#module-pkgcheck.checks.header" title="Permalink to this headline">¶</a></h1>
+<p>Various file-based header checks.</p>
+<dl class="py class">
+<dt id="pkgcheck.checks.header.EbuildHeaderCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.header.</code><code class="sig-name descname">EbuildHeaderCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/header.html#EbuildHeaderCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.header.EbuildHeaderCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.header._HeaderCheck</span></code></p>
+<p>Scan ebuild for incorrect copyright/license headers.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.header.EbuildHeaderCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.header.EbuildOldGentooCopyright'&gt;, &lt;class 'pkgcheck.checks.header.EbuildNonGentooAuthorsCopyright'&gt;, &lt;class 'pkgcheck.checks.header.EbuildInvalidCopyright'&gt;, &lt;class 'pkgcheck.checks.header.EbuildInvalidLicenseHeader'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.header.EbuildHeaderCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.header.EbuildHeaderCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='version' &#64;0x7f81a648f5b0&gt;</em><a class="headerlink" href="#pkgcheck.checks.header.EbuildHeaderCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.header.EbuildInvalidCopyright">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.header.</code><code class="sig-name descname">EbuildInvalidCopyright</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">line</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/header.html#EbuildInvalidCopyright"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.header.EbuildInvalidCopyright" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.checks.header.InvalidCopyright" title="pkgcheck.checks.header.InvalidCopyright"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.header.InvalidCopyright</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a></p>
+<p>File with invalid copyright.</p>
+<p>The file does not start with a valid copyright line. Each ebuild or eclass
+file must start with a copyright line of the form:</p>
+<blockquote>
+<div><p># Copyright YEARS MAIN-CONTRIBUTOR [OTHER-CONTRIBUTOR]… [and others]</p>
+</div></blockquote>
+<p>Files in the Gentoo repository must use:</p>
+<blockquote>
+<div><p># Copyright YEARS Gentoo Authors</p>
+</div></blockquote>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.header.EbuildInvalidCopyright.name">
+<code class="sig-name descname">name</code><em class="property"> = 'InvalidCopyright'</em><a class="headerlink" href="#pkgcheck.checks.header.EbuildInvalidCopyright.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.header.EbuildInvalidLicenseHeader">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.header.</code><code class="sig-name descname">EbuildInvalidLicenseHeader</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">line</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/header.html#EbuildInvalidLicenseHeader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.header.EbuildInvalidLicenseHeader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.checks.header.InvalidLicenseHeader" title="pkgcheck.checks.header.InvalidLicenseHeader"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.header.InvalidLicenseHeader</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a></p>
+<p>File with invalid license header.</p>
+<p>The file does not have with a valid license header.</p>
+<p>Ebuilds and eclasses in the Gentoo repository must use:</p>
+<blockquote>
+<div><p># Distributed under the terms of the GNU General Public License v2</p>
+</div></blockquote>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.header.EbuildInvalidLicenseHeader.name">
+<code class="sig-name descname">name</code><em class="property"> = 'InvalidLicenseHeader'</em><a class="headerlink" href="#pkgcheck.checks.header.EbuildInvalidLicenseHeader.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.header.EbuildNonGentooAuthorsCopyright">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.header.</code><code class="sig-name descname">EbuildNonGentooAuthorsCopyright</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">line</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/header.html#EbuildNonGentooAuthorsCopyright"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.header.EbuildNonGentooAuthorsCopyright" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.checks.header.NonGentooAuthorsCopyright" title="pkgcheck.checks.header.NonGentooAuthorsCopyright"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.header.NonGentooAuthorsCopyright</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a></p>
+<p>File with copyright stating owner other than “Gentoo Authors”.</p>
+<p>The file specifies explicit copyright owner, while the Gentoo repository
+policy specifies that all ebuilds and eclasses must use “Gentoo Authors”.
+If the owner is not listed in metadata/AUTHORS, addition can be requested
+via bugs.gentoo.org.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.header.EbuildNonGentooAuthorsCopyright.name">
+<code class="sig-name descname">name</code><em class="property"> = 'NonGentooAuthorsCopyright'</em><a class="headerlink" href="#pkgcheck.checks.header.EbuildNonGentooAuthorsCopyright.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.header.EbuildOldGentooCopyright">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.header.</code><code class="sig-name descname">EbuildOldGentooCopyright</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">line</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/header.html#EbuildOldGentooCopyright"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.header.EbuildOldGentooCopyright" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.checks.header.OldGentooCopyright" title="pkgcheck.checks.header.OldGentooCopyright"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.header.OldGentooCopyright</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.VersionResult" title="pkgcheck.results.VersionResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.VersionResult</span></code></a></p>
+<p>File with old Gentoo Foundation copyright.</p>
+<p>The file still assigns copyright to the Gentoo Foundation even though
+it has been committed after the new copyright policy was approved
+(2018-10-21).</p>
+<p>Ebuilds and eclasses in Gentoo repository must use ‘Gentoo Authors’
+instead. Files in other repositories may specify an explicit copyright
+holder instead.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.header.EbuildOldGentooCopyright.name">
+<code class="sig-name descname">name</code><em class="property"> = 'OldGentooCopyright'</em><a class="headerlink" href="#pkgcheck.checks.header.EbuildOldGentooCopyright.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.header.EclassHeaderCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.header.</code><code class="sig-name descname">EclassHeaderCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/header.html#EclassHeaderCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.header.EclassHeaderCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.header._HeaderCheck</span></code></p>
+<p>Scan eclasses for incorrect copyright/license headers.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.header.EclassHeaderCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.header.EclassNonGentooAuthorsCopyright'&gt;, &lt;class 'pkgcheck.checks.header.EclassInvalidLicenseHeader'&gt;, &lt;class 'pkgcheck.checks.header.EclassInvalidCopyright'&gt;, &lt;class 'pkgcheck.checks.header.EclassOldGentooCopyright'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.header.EclassHeaderCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.header.EclassHeaderCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;LocationScope desc='eclass' &#64;0x7f81a648fd90&gt;</em><a class="headerlink" href="#pkgcheck.checks.header.EclassHeaderCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.header.EclassInvalidCopyright">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.header.</code><code class="sig-name descname">EclassInvalidCopyright</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">line</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/header.html#EclassInvalidCopyright"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.header.EclassInvalidCopyright" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.checks.header.InvalidCopyright" title="pkgcheck.checks.header.InvalidCopyright"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.header.InvalidCopyright</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.EclassResult" title="pkgcheck.results.EclassResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.EclassResult</span></code></a></p>
+<p>File with invalid copyright.</p>
+<p>The file does not start with a valid copyright line. Each ebuild or eclass
+file must start with a copyright line of the form:</p>
+<blockquote>
+<div><p># Copyright YEARS MAIN-CONTRIBUTOR [OTHER-CONTRIBUTOR]… [and others]</p>
+</div></blockquote>
+<p>Files in the Gentoo repository must use:</p>
+<blockquote>
+<div><p># Copyright YEARS Gentoo Authors</p>
+</div></blockquote>
+<dl class="py method">
+<dt id="pkgcheck.checks.header.EclassInvalidCopyright.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.header.EclassInvalidCopyright.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.header.EclassInvalidCopyright.name">
+<code class="sig-name descname">name</code><em class="property"> = 'InvalidCopyright'</em><a class="headerlink" href="#pkgcheck.checks.header.EclassInvalidCopyright.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.header.EclassInvalidLicenseHeader">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.header.</code><code class="sig-name descname">EclassInvalidLicenseHeader</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">line</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/header.html#EclassInvalidLicenseHeader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.header.EclassInvalidLicenseHeader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.checks.header.InvalidLicenseHeader" title="pkgcheck.checks.header.InvalidLicenseHeader"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.header.InvalidLicenseHeader</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.EclassResult" title="pkgcheck.results.EclassResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.EclassResult</span></code></a></p>
+<p>File with invalid license header.</p>
+<p>The file does not have with a valid license header.</p>
+<p>Ebuilds and eclasses in the Gentoo repository must use:</p>
+<blockquote>
+<div><p># Distributed under the terms of the GNU General Public License v2</p>
+</div></blockquote>
+<dl class="py method">
+<dt id="pkgcheck.checks.header.EclassInvalidLicenseHeader.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.header.EclassInvalidLicenseHeader.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.header.EclassInvalidLicenseHeader.name">
+<code class="sig-name descname">name</code><em class="property"> = 'InvalidLicenseHeader'</em><a class="headerlink" href="#pkgcheck.checks.header.EclassInvalidLicenseHeader.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.header.EclassNonGentooAuthorsCopyright">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.header.</code><code class="sig-name descname">EclassNonGentooAuthorsCopyright</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">line</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/header.html#EclassNonGentooAuthorsCopyright"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.header.EclassNonGentooAuthorsCopyright" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.checks.header.NonGentooAuthorsCopyright" title="pkgcheck.checks.header.NonGentooAuthorsCopyright"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.header.NonGentooAuthorsCopyright</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.EclassResult" title="pkgcheck.results.EclassResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.EclassResult</span></code></a></p>
+<p>File with copyright stating owner other than “Gentoo Authors”.</p>
+<p>The file specifies explicit copyright owner, while the Gentoo repository
+policy specifies that all ebuilds and eclasses must use “Gentoo Authors”.
+If the owner is not listed in metadata/AUTHORS, addition can be requested
+via bugs.gentoo.org.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.header.EclassNonGentooAuthorsCopyright.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.header.EclassNonGentooAuthorsCopyright.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.header.EclassNonGentooAuthorsCopyright.name">
+<code class="sig-name descname">name</code><em class="property"> = 'NonGentooAuthorsCopyright'</em><a class="headerlink" href="#pkgcheck.checks.header.EclassNonGentooAuthorsCopyright.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.header.EclassOldGentooCopyright">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.header.</code><code class="sig-name descname">EclassOldGentooCopyright</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">line</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/header.html#EclassOldGentooCopyright"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.header.EclassOldGentooCopyright" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#pkgcheck.checks.header.OldGentooCopyright" title="pkgcheck.checks.header.OldGentooCopyright"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.header.OldGentooCopyright</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.EclassResult" title="pkgcheck.results.EclassResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.EclassResult</span></code></a></p>
+<p>File with old Gentoo Foundation copyright.</p>
+<p>The file still assigns copyright to the Gentoo Foundation even though
+it has been committed after the new copyright policy was approved
+(2018-10-21).</p>
+<p>Ebuilds and eclasses in Gentoo repository must use ‘Gentoo Authors’
+instead. Files in other repositories may specify an explicit copyright
+holder instead.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.header.EclassOldGentooCopyright.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.header.EclassOldGentooCopyright.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.header.EclassOldGentooCopyright.name">
+<code class="sig-name descname">name</code><em class="property"> = 'OldGentooCopyright'</em><a class="headerlink" href="#pkgcheck.checks.header.EclassOldGentooCopyright.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.header.InvalidCopyright">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.header.</code><code class="sig-name descname">InvalidCopyright</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">line</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/header.html#InvalidCopyright"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.header.InvalidCopyright" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.header._FileHeaderResult</span></code>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Error" title="pkgcheck.results.Error"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Error</span></code></a></p>
+<p>File with invalid copyright.</p>
+<p>The file does not start with a valid copyright line. Each ebuild or eclass
+file must start with a copyright line of the form:</p>
+<blockquote>
+<div><p># Copyright YEARS MAIN-CONTRIBUTOR [OTHER-CONTRIBUTOR]… [and others]</p>
+</div></blockquote>
+<p>Files in the Gentoo repository must use:</p>
+<blockquote>
+<div><p># Copyright YEARS Gentoo Authors</p>
+</div></blockquote>
+<dl class="py method">
+<dt id="pkgcheck.checks.header.InvalidCopyright.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.header.InvalidCopyright.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.header.InvalidCopyright.name">
+<code class="sig-name descname">name</code><em class="property"> = 'InvalidCopyright'</em><a class="headerlink" href="#pkgcheck.checks.header.InvalidCopyright.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.header.InvalidLicenseHeader">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.header.</code><code class="sig-name descname">InvalidLicenseHeader</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">line</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/header.html#InvalidLicenseHeader"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.header.InvalidLicenseHeader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.header._FileHeaderResult</span></code>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Error" title="pkgcheck.results.Error"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Error</span></code></a></p>
+<p>File with invalid license header.</p>
+<p>The file does not have with a valid license header.</p>
+<p>Ebuilds and eclasses in the Gentoo repository must use:</p>
+<blockquote>
+<div><p># Distributed under the terms of the GNU General Public License v2</p>
+</div></blockquote>
+<dl class="py method">
+<dt id="pkgcheck.checks.header.InvalidLicenseHeader.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.header.InvalidLicenseHeader.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.header.InvalidLicenseHeader.name">
+<code class="sig-name descname">name</code><em class="property"> = 'InvalidLicenseHeader'</em><a class="headerlink" href="#pkgcheck.checks.header.InvalidLicenseHeader.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.header.NonGentooAuthorsCopyright">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.header.</code><code class="sig-name descname">NonGentooAuthorsCopyright</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">line</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/header.html#NonGentooAuthorsCopyright"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.header.NonGentooAuthorsCopyright" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.header._FileHeaderResult</span></code>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Error" title="pkgcheck.results.Error"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Error</span></code></a></p>
+<p>File with copyright stating owner other than “Gentoo Authors”.</p>
+<p>The file specifies explicit copyright owner, while the Gentoo repository
+policy specifies that all ebuilds and eclasses must use “Gentoo Authors”.
+If the owner is not listed in metadata/AUTHORS, addition can be requested
+via bugs.gentoo.org.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.header.NonGentooAuthorsCopyright.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.header.NonGentooAuthorsCopyright.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.header.NonGentooAuthorsCopyright.name">
+<code class="sig-name descname">name</code><em class="property"> = 'NonGentooAuthorsCopyright'</em><a class="headerlink" href="#pkgcheck.checks.header.NonGentooAuthorsCopyright.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.header.OldGentooCopyright">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.header.</code><code class="sig-name descname">OldGentooCopyright</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">line</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/header.html#OldGentooCopyright"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.header.OldGentooCopyright" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.header._FileHeaderResult</span></code>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>File with old Gentoo Foundation copyright.</p>
+<p>The file still assigns copyright to the Gentoo Foundation even though
+it has been committed after the new copyright policy was approved
+(2018-10-21).</p>
+<p>Ebuilds and eclasses in Gentoo repository must use ‘Gentoo Authors’
+instead. Files in other repositories may specify an explicit copyright
+holder instead.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.header.OldGentooCopyright.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.header.OldGentooCopyright.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.header.OldGentooCopyright.name">
+<code class="sig-name descname">name</code><em class="property"> = 'OldGentooCopyright'</em><a class="headerlink" href="#pkgcheck.checks.header.OldGentooCopyright.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/pkgcheck.checks.header.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.header module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

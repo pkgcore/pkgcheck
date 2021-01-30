@@ -1,0 +1,495 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.checks.metadata_xml module &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.metadata_xml module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcheck.checks.metadata_xml">
+<span id="pkgcheck-checks-metadata-xml-module"></span><h1>pkgcheck.checks.metadata_xml module<a class="headerlink" href="#module-pkgcheck.checks.metadata_xml" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="pkgcheck.checks.metadata_xml.CatBadlyFormedXml">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.metadata_xml.</code><code class="sig-name descname">CatBadlyFormedXml</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">error</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/metadata_xml.html#CatBadlyFormedXml"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.metadata_xml.CatBadlyFormedXml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml._BadlyFormedXml</span></code>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.CategoryResult" title="pkgcheck.results.CategoryResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.CategoryResult</span></code></a></p>
+<p>Badly formed category metadata.xml.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.CatBadlyFormedXml.name">
+<code class="sig-name descname">name</code><em class="property"> = 'CatBadlyFormedXml'</em><a class="headerlink" href="#pkgcheck.checks.metadata_xml.CatBadlyFormedXml.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.metadata_xml.CatInvalidXml">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.metadata_xml.</code><code class="sig-name descname">CatInvalidXml</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">message</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/metadata_xml.html#CatInvalidXml"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.metadata_xml.CatInvalidXml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml._InvalidXml</span></code>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.CategoryResult" title="pkgcheck.results.CategoryResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.CategoryResult</span></code></a></p>
+<p>Invalid category metadata.xml.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.CatInvalidXml.name">
+<code class="sig-name descname">name</code><em class="property"> = 'CatInvalidXml'</em><a class="headerlink" href="#pkgcheck.checks.metadata_xml.CatInvalidXml.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.metadata_xml.CatMetadataXmlEmptyElement">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.metadata_xml.</code><code class="sig-name descname">CatMetadataXmlEmptyElement</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">element</span></em>, <em class="sig-param"><span class="n">line</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/metadata_xml.html#CatMetadataXmlEmptyElement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.metadata_xml.CatMetadataXmlEmptyElement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml._MetadataXmlEmptyElement</span></code>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.CategoryResult" title="pkgcheck.results.CategoryResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.CategoryResult</span></code></a></p>
+<p>Empty element in category metadata.xml file.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.CatMetadataXmlEmptyElement.name">
+<code class="sig-name descname">name</code><em class="property"> = 'CatMetadataXmlEmptyElement'</em><a class="headerlink" href="#pkgcheck.checks.metadata_xml.CatMetadataXmlEmptyElement.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.metadata_xml.CatMetadataXmlIndentation">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.metadata_xml.</code><code class="sig-name descname">CatMetadataXmlIndentation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">lines</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/metadata_xml.html#CatMetadataXmlIndentation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.metadata_xml.CatMetadataXmlIndentation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml._MetadataXmlIndentation</span></code>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.CategoryResult" title="pkgcheck.results.CategoryResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.CategoryResult</span></code></a></p>
+<p>Inconsistent indentation in category metadata.xml file.</p>
+<p>Either all tabs or all spaces should be used, not a mixture of both.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.CatMetadataXmlIndentation.name">
+<code class="sig-name descname">name</code><em class="property"> = 'CatMetadataXmlIndentation'</em><a class="headerlink" href="#pkgcheck.checks.metadata_xml.CatMetadataXmlIndentation.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.metadata_xml.CatMetadataXmlInvalidCatRef">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.metadata_xml.</code><code class="sig-name descname">CatMetadataXmlInvalidCatRef</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">cattext</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/metadata_xml.html#CatMetadataXmlInvalidCatRef"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.metadata_xml.CatMetadataXmlInvalidCatRef" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml._MetadataXmlInvalidCatRef</span></code>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.CategoryResult" title="pkgcheck.results.CategoryResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.CategoryResult</span></code></a></p>
+<p>Invalid category reference in category metadata.xml.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.CatMetadataXmlInvalidCatRef.name">
+<code class="sig-name descname">name</code><em class="property"> = 'CatMetadataXmlInvalidCatRef'</em><a class="headerlink" href="#pkgcheck.checks.metadata_xml.CatMetadataXmlInvalidCatRef.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.metadata_xml.CatMetadataXmlInvalidPkgRef">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.metadata_xml.</code><code class="sig-name descname">CatMetadataXmlInvalidPkgRef</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">pkgtext</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/metadata_xml.html#CatMetadataXmlInvalidPkgRef"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.metadata_xml.CatMetadataXmlInvalidPkgRef" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml._MetadataXmlInvalidPkgRef</span></code>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.CategoryResult" title="pkgcheck.results.CategoryResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.CategoryResult</span></code></a></p>
+<p>Invalid package reference in category metadata.xml.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.CatMetadataXmlInvalidPkgRef.name">
+<code class="sig-name descname">name</code><em class="property"> = 'CatMetadataXmlInvalidPkgRef'</em><a class="headerlink" href="#pkgcheck.checks.metadata_xml.CatMetadataXmlInvalidPkgRef.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.metadata_xml.CatMissingMetadataXml">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.metadata_xml.</code><code class="sig-name descname">CatMissingMetadataXml</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/metadata_xml.html#CatMissingMetadataXml"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.metadata_xml.CatMissingMetadataXml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml._MissingXml</span></code>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.CategoryResult" title="pkgcheck.results.CategoryResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.CategoryResult</span></code></a></p>
+<p>Category is missing metadata.xml.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.CatMissingMetadataXml.name">
+<code class="sig-name descname">name</code><em class="property"> = 'CatMissingMetadataXml'</em><a class="headerlink" href="#pkgcheck.checks.metadata_xml.CatMissingMetadataXml.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.metadata_xml.CategoryMetadataXmlCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.metadata_xml.</code><code class="sig-name descname">CategoryMetadataXmlCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/metadata_xml.html#CategoryMetadataXmlCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.metadata_xml.CategoryMetadataXmlCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml._XmlBaseCheck</span></code></p>
+<p>Category level metadata.xml scans.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.CategoryMetadataXmlCheck.catref_error">
+<code class="sig-name descname">catref_error</code><a class="headerlink" href="#pkgcheck.checks.metadata_xml.CategoryMetadataXmlCheck.catref_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#pkgcheck.checks.metadata_xml.CatMetadataXmlInvalidCatRef" title="pkgcheck.checks.metadata_xml.CatMetadataXmlInvalidCatRef"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml.CatMetadataXmlInvalidCatRef</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.CategoryMetadataXmlCheck.empty_element">
+<code class="sig-name descname">empty_element</code><a class="headerlink" href="#pkgcheck.checks.metadata_xml.CategoryMetadataXmlCheck.empty_element" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#pkgcheck.checks.metadata_xml.CatMetadataXmlEmptyElement" title="pkgcheck.checks.metadata_xml.CatMetadataXmlEmptyElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml.CatMetadataXmlEmptyElement</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.CategoryMetadataXmlCheck.indent_error">
+<code class="sig-name descname">indent_error</code><a class="headerlink" href="#pkgcheck.checks.metadata_xml.CategoryMetadataXmlCheck.indent_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#pkgcheck.checks.metadata_xml.CatMetadataXmlIndentation" title="pkgcheck.checks.metadata_xml.CatMetadataXmlIndentation"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml.CatMetadataXmlIndentation</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.CategoryMetadataXmlCheck.invalid_error">
+<code class="sig-name descname">invalid_error</code><a class="headerlink" href="#pkgcheck.checks.metadata_xml.CategoryMetadataXmlCheck.invalid_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#pkgcheck.checks.metadata_xml.CatInvalidXml" title="pkgcheck.checks.metadata_xml.CatInvalidXml"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml.CatInvalidXml</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.CategoryMetadataXmlCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.metadata_xml.CatMissingMetadataXml'&gt;, &lt;class 'pkgcheck.checks.metadata_xml.CatMetadataXmlInvalidPkgRef'&gt;, &lt;class 'pkgcheck.checks.metadata_xml.CatBadlyFormedXml'&gt;, &lt;class 'pkgcheck.checks.metadata_xml.CatMetadataXmlIndentation'&gt;, &lt;class 'pkgcheck.checks.metadata_xml.CatMetadataXmlEmptyElement'&gt;, &lt;class 'pkgcheck.checks.metadata_xml.CatInvalidXml'&gt;, &lt;class 'pkgcheck.checks.metadata_xml.CatMetadataXmlInvalidCatRef'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.metadata_xml.CategoryMetadataXmlCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.CategoryMetadataXmlCheck.misformed_error">
+<code class="sig-name descname">misformed_error</code><a class="headerlink" href="#pkgcheck.checks.metadata_xml.CategoryMetadataXmlCheck.misformed_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#pkgcheck.checks.metadata_xml.CatBadlyFormedXml" title="pkgcheck.checks.metadata_xml.CatBadlyFormedXml"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml.CatBadlyFormedXml</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.CategoryMetadataXmlCheck.missing_error">
+<code class="sig-name descname">missing_error</code><a class="headerlink" href="#pkgcheck.checks.metadata_xml.CategoryMetadataXmlCheck.missing_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#pkgcheck.checks.metadata_xml.CatMissingMetadataXml" title="pkgcheck.checks.metadata_xml.CatMissingMetadataXml"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml.CatMissingMetadataXml</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.CategoryMetadataXmlCheck.pkgref_error">
+<code class="sig-name descname">pkgref_error</code><a class="headerlink" href="#pkgcheck.checks.metadata_xml.CategoryMetadataXmlCheck.pkgref_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#pkgcheck.checks.metadata_xml.CatMetadataXmlInvalidPkgRef" title="pkgcheck.checks.metadata_xml.CatMetadataXmlInvalidPkgRef"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml.CatMetadataXmlInvalidPkgRef</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.CategoryMetadataXmlCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='category' &#64;0x7f81a67f4f40&gt;</em><a class="headerlink" href="#pkgcheck.checks.metadata_xml.CategoryMetadataXmlCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.metadata_xml.MaintainerNeeded">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.metadata_xml.</code><code class="sig-name descname">MaintainerNeeded</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">needed</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/metadata_xml.html#MaintainerNeeded"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.metadata_xml.MaintainerNeeded" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Package with missing or invalid maintainer-needed comment in metadata.xml.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.metadata_xml.MaintainerNeeded.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.metadata_xml.MaintainerNeeded.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.MaintainerNeeded.name">
+<code class="sig-name descname">name</code><em class="property"> = 'MaintainerNeeded'</em><a class="headerlink" href="#pkgcheck.checks.metadata_xml.MaintainerNeeded.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.metadata_xml.MaintainerWithoutProxy">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.metadata_xml.</code><code class="sig-name descname">MaintainerWithoutProxy</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">maintainers</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/metadata_xml.html#MaintainerWithoutProxy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.metadata_xml.MaintainerWithoutProxy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Package has a proxied maintainer without a proxy.</p>
+<p>All package maintainers have <a class="reference external" href="mailto:non-&#37;&#52;&#48;gentoo&#46;org">non-<span>&#64;</span>gentoo<span>&#46;</span>org</a> e-mail addresses. Most likely,
+this means that the package is maintained by a proxied maintainer but there
+is no explicit proxy (developer or project) listed. This means no Gentoo
+developer will be CC-ed on bug reports, and most likely no developer
+oversees the proxied maintainer’s activity.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.metadata_xml.MaintainerWithoutProxy.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.metadata_xml.MaintainerWithoutProxy.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.MaintainerWithoutProxy.name">
+<code class="sig-name descname">name</code><em class="property"> = 'MaintainerWithoutProxy'</em><a class="headerlink" href="#pkgcheck.checks.metadata_xml.MaintainerWithoutProxy.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.metadata_xml.NonexistentProjectMaintainer">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.metadata_xml.</code><code class="sig-name descname">NonexistentProjectMaintainer</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">emails</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/metadata_xml.html#NonexistentProjectMaintainer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.metadata_xml.NonexistentProjectMaintainer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Package specifying nonexistent project as a maintainer.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.metadata_xml.NonexistentProjectMaintainer.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.metadata_xml.NonexistentProjectMaintainer.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.NonexistentProjectMaintainer.name">
+<code class="sig-name descname">name</code><em class="property"> = 'NonexistentProjectMaintainer'</em><a class="headerlink" href="#pkgcheck.checks.metadata_xml.NonexistentProjectMaintainer.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.metadata_xml.PackageMetadataXmlCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.metadata_xml.</code><code class="sig-name descname">PackageMetadataXmlCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/metadata_xml.html#PackageMetadataXmlCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.metadata_xml.PackageMetadataXmlCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml._XmlBaseCheck</span></code></p>
+<p>Package level metadata.xml scans.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.PackageMetadataXmlCheck.catref_error">
+<code class="sig-name descname">catref_error</code><a class="headerlink" href="#pkgcheck.checks.metadata_xml.PackageMetadataXmlCheck.catref_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#pkgcheck.checks.metadata_xml.PkgMetadataXmlInvalidCatRef" title="pkgcheck.checks.metadata_xml.PkgMetadataXmlInvalidCatRef"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml.PkgMetadataXmlInvalidCatRef</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.PackageMetadataXmlCheck.empty_element">
+<code class="sig-name descname">empty_element</code><a class="headerlink" href="#pkgcheck.checks.metadata_xml.PackageMetadataXmlCheck.empty_element" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#pkgcheck.checks.metadata_xml.PkgMetadataXmlEmptyElement" title="pkgcheck.checks.metadata_xml.PkgMetadataXmlEmptyElement"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml.PkgMetadataXmlEmptyElement</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.PackageMetadataXmlCheck.indent_error">
+<code class="sig-name descname">indent_error</code><a class="headerlink" href="#pkgcheck.checks.metadata_xml.PackageMetadataXmlCheck.indent_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#pkgcheck.checks.metadata_xml.PkgMetadataXmlIndentation" title="pkgcheck.checks.metadata_xml.PkgMetadataXmlIndentation"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml.PkgMetadataXmlIndentation</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.PackageMetadataXmlCheck.invalid_error">
+<code class="sig-name descname">invalid_error</code><a class="headerlink" href="#pkgcheck.checks.metadata_xml.PackageMetadataXmlCheck.invalid_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#pkgcheck.checks.metadata_xml.PkgInvalidXml" title="pkgcheck.checks.metadata_xml.PkgInvalidXml"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml.PkgInvalidXml</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.PackageMetadataXmlCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.metadata_xml.PkgInvalidXml'&gt;, &lt;class 'pkgcheck.checks.metadata_xml.MaintainerNeeded'&gt;, &lt;class 'pkgcheck.checks.metadata_xml.PkgMetadataXmlInvalidCatRef'&gt;, &lt;class 'pkgcheck.checks.metadata_xml.PkgMissingMetadataXml'&gt;, &lt;class 'pkgcheck.checks.metadata_xml.RedundantLongDescription'&gt;, &lt;class 'pkgcheck.checks.metadata_xml.PkgMetadataXmlInvalidPkgRef'&gt;, &lt;class 'pkgcheck.checks.metadata_xml.WrongMaintainerType'&gt;, &lt;class 'pkgcheck.checks.metadata_xml.PkgMetadataXmlIndentation'&gt;, &lt;class 'pkgcheck.checks.metadata_xml.PkgMetadataXmlEmptyElement'&gt;, &lt;class 'pkgcheck.checks.metadata_xml.NonexistentProjectMaintainer'&gt;, &lt;class 'pkgcheck.checks.metadata_xml.PkgBadlyFormedXml'&gt;, &lt;class 'pkgcheck.checks.metadata_xml.StaleProxyMaintProject'&gt;, &lt;class 'pkgcheck.checks.metadata_xml.MaintainerWithoutProxy'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.metadata_xml.PackageMetadataXmlCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.PackageMetadataXmlCheck.misformed_error">
+<code class="sig-name descname">misformed_error</code><a class="headerlink" href="#pkgcheck.checks.metadata_xml.PackageMetadataXmlCheck.misformed_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#pkgcheck.checks.metadata_xml.PkgBadlyFormedXml" title="pkgcheck.checks.metadata_xml.PkgBadlyFormedXml"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml.PkgBadlyFormedXml</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.PackageMetadataXmlCheck.missing_error">
+<code class="sig-name descname">missing_error</code><a class="headerlink" href="#pkgcheck.checks.metadata_xml.PackageMetadataXmlCheck.missing_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#pkgcheck.checks.metadata_xml.PkgMissingMetadataXml" title="pkgcheck.checks.metadata_xml.PkgMissingMetadataXml"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml.PkgMissingMetadataXml</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.PackageMetadataXmlCheck.pkgref_error">
+<code class="sig-name descname">pkgref_error</code><a class="headerlink" href="#pkgcheck.checks.metadata_xml.PackageMetadataXmlCheck.pkgref_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <a class="reference internal" href="#pkgcheck.checks.metadata_xml.PkgMetadataXmlInvalidPkgRef" title="pkgcheck.checks.metadata_xml.PkgMetadataXmlInvalidPkgRef"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml.PkgMetadataXmlInvalidPkgRef</span></code></a></p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.PackageMetadataXmlCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='package' &#64;0x7f81a68053a0&gt;</em><a class="headerlink" href="#pkgcheck.checks.metadata_xml.PackageMetadataXmlCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.metadata_xml.PkgBadlyFormedXml">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.metadata_xml.</code><code class="sig-name descname">PkgBadlyFormedXml</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">error</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/metadata_xml.html#PkgBadlyFormedXml"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.metadata_xml.PkgBadlyFormedXml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml._BadlyFormedXml</span></code>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a></p>
+<p>Badly formed package metadata.xml.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.PkgBadlyFormedXml.name">
+<code class="sig-name descname">name</code><em class="property"> = 'PkgBadlyFormedXml'</em><a class="headerlink" href="#pkgcheck.checks.metadata_xml.PkgBadlyFormedXml.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.metadata_xml.PkgInvalidXml">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.metadata_xml.</code><code class="sig-name descname">PkgInvalidXml</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">message</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/metadata_xml.html#PkgInvalidXml"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.metadata_xml.PkgInvalidXml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml._InvalidXml</span></code>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a></p>
+<p>Invalid package metadata.xml.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.PkgInvalidXml.name">
+<code class="sig-name descname">name</code><em class="property"> = 'PkgInvalidXml'</em><a class="headerlink" href="#pkgcheck.checks.metadata_xml.PkgInvalidXml.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.metadata_xml.PkgMetadataXmlEmptyElement">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.metadata_xml.</code><code class="sig-name descname">PkgMetadataXmlEmptyElement</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">element</span></em>, <em class="sig-param"><span class="n">line</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/metadata_xml.html#PkgMetadataXmlEmptyElement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.metadata_xml.PkgMetadataXmlEmptyElement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml._MetadataXmlEmptyElement</span></code>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a></p>
+<p>Empty element in package metadata.xml file.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.PkgMetadataXmlEmptyElement.name">
+<code class="sig-name descname">name</code><em class="property"> = 'PkgMetadataXmlEmptyElement'</em><a class="headerlink" href="#pkgcheck.checks.metadata_xml.PkgMetadataXmlEmptyElement.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.metadata_xml.PkgMetadataXmlIndentation">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.metadata_xml.</code><code class="sig-name descname">PkgMetadataXmlIndentation</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">lines</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/metadata_xml.html#PkgMetadataXmlIndentation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.metadata_xml.PkgMetadataXmlIndentation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml._MetadataXmlIndentation</span></code>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a></p>
+<p>Inconsistent indentation in package metadata.xml file.</p>
+<p>Either all tabs or all spaces should be used, not a mixture of both.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.PkgMetadataXmlIndentation.name">
+<code class="sig-name descname">name</code><em class="property"> = 'PkgMetadataXmlIndentation'</em><a class="headerlink" href="#pkgcheck.checks.metadata_xml.PkgMetadataXmlIndentation.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.metadata_xml.PkgMetadataXmlInvalidCatRef">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.metadata_xml.</code><code class="sig-name descname">PkgMetadataXmlInvalidCatRef</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">cattext</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/metadata_xml.html#PkgMetadataXmlInvalidCatRef"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.metadata_xml.PkgMetadataXmlInvalidCatRef" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml._MetadataXmlInvalidCatRef</span></code>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a></p>
+<p>Invalid category reference in package metadata.xml.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.PkgMetadataXmlInvalidCatRef.name">
+<code class="sig-name descname">name</code><em class="property"> = 'PkgMetadataXmlInvalidCatRef'</em><a class="headerlink" href="#pkgcheck.checks.metadata_xml.PkgMetadataXmlInvalidCatRef.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.metadata_xml.PkgMetadataXmlInvalidPkgRef">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.metadata_xml.</code><code class="sig-name descname">PkgMetadataXmlInvalidPkgRef</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">pkgtext</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/metadata_xml.html#PkgMetadataXmlInvalidPkgRef"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.metadata_xml.PkgMetadataXmlInvalidPkgRef" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml._MetadataXmlInvalidPkgRef</span></code>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a></p>
+<p>Invalid package reference in package metadata.xml.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.PkgMetadataXmlInvalidPkgRef.name">
+<code class="sig-name descname">name</code><em class="property"> = 'PkgMetadataXmlInvalidPkgRef'</em><a class="headerlink" href="#pkgcheck.checks.metadata_xml.PkgMetadataXmlInvalidPkgRef.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.metadata_xml.PkgMissingMetadataXml">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.metadata_xml.</code><code class="sig-name descname">PkgMissingMetadataXml</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/metadata_xml.html#PkgMissingMetadataXml"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.metadata_xml.PkgMissingMetadataXml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.metadata_xml._MissingXml</span></code>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a></p>
+<p>Package is missing metadata.xml.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.PkgMissingMetadataXml.name">
+<code class="sig-name descname">name</code><em class="property"> = 'PkgMissingMetadataXml'</em><a class="headerlink" href="#pkgcheck.checks.metadata_xml.PkgMissingMetadataXml.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.metadata_xml.RedundantLongDescription">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.metadata_xml.</code><code class="sig-name descname">RedundantLongDescription</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">msg</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/metadata_xml.html#RedundantLongDescription"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.metadata_xml.RedundantLongDescription" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Package’s longdescription element in metadata.xml and DESCRIPTION are interchangeable.</p>
+<p>The longdescription element is for providing extended information that
+doesn’t fit in DESCRIPTION.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.metadata_xml.RedundantLongDescription.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.metadata_xml.RedundantLongDescription.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.RedundantLongDescription.name">
+<code class="sig-name descname">name</code><em class="property"> = 'RedundantLongDescription'</em><a class="headerlink" href="#pkgcheck.checks.metadata_xml.RedundantLongDescription.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.metadata_xml.StaleProxyMaintProject">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.metadata_xml.</code><code class="sig-name descname">StaleProxyMaintProject</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/metadata_xml.html#StaleProxyMaintProject"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.metadata_xml.StaleProxyMaintProject" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Package lists proxy-maint project but has no proxied maintainers.</p>
+<p>The package explicitly lists <a class="reference external" href="mailto:proxy-maint&#37;&#52;&#48;g&#46;o">proxy-maint<span>&#64;</span>g<span>&#46;</span>o</a> as the only maintainer.
+Most likely, this means that the proxied maintainer has been removed
+but proxy-maint was left over.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.metadata_xml.StaleProxyMaintProject.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.metadata_xml.StaleProxyMaintProject.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.StaleProxyMaintProject.name">
+<code class="sig-name descname">name</code><em class="property"> = 'StaleProxyMaintProject'</em><a class="headerlink" href="#pkgcheck.checks.metadata_xml.StaleProxyMaintProject.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.metadata_xml.WrongMaintainerType">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.metadata_xml.</code><code class="sig-name descname">WrongMaintainerType</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">filename</span></em>, <em class="sig-param"><span class="n">emails</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/metadata_xml.html#WrongMaintainerType"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.metadata_xml.WrongMaintainerType" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>A person-type maintainer matches an existing project.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.metadata_xml.WrongMaintainerType.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.metadata_xml.WrongMaintainerType.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.metadata_xml.WrongMaintainerType.name">
+<code class="sig-name descname">name</code><em class="property"> = 'WrongMaintainerType'</em><a class="headerlink" href="#pkgcheck.checks.metadata_xml.WrongMaintainerType.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/pkgcheck.checks.metadata_xml.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.metadata_xml module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

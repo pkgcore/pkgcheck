@@ -1,0 +1,387 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.reporters &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.reporters</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcheck.reporters</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Basic result reporters.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">csv</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">string</span> <span class="kn">import</span> <span class="n">Formatter</span>
+<span class="kn">from</span> <span class="nn">xml.sax.saxutils</span> <span class="kn">import</span> <span class="n">escape</span> <span class="k">as</span> <span class="n">xml_escape</span>
+
+<span class="kn">from</span> <span class="nn">snakeoil.decorators</span> <span class="kn">import</span> <span class="n">coroutine</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">base</span>
+<span class="kn">from</span> <span class="nn">.results</span> <span class="kn">import</span> <span class="n">InvalidResult</span><span class="p">,</span> <span class="n">Result</span>
+
+
+<div class="viewcode-block" id="Reporter"><a class="viewcode-back" href="../../api/pkgcheck.reporters.html#pkgcheck.reporters.Reporter">[docs]</a><span class="k">class</span> <span class="nc">Reporter</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Generic result reporter.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">out</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialize</span>
+
+<span class="sd">        :type out: L{snakeoil.formatters.Formatter}</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">out</span> <span class="o">=</span> <span class="n">out</span>
+
+        <span class="c1"># initialize result processing coroutines</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">report</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_report</span><span class="p">()</span><span class="o">.</span><span class="n">send</span>
+
+    <span class="k">def</span> <span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_start</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="fm">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">excinfo</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_finish</span><span class="p">()</span>
+        <span class="c1"># flush output buffer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+
+    <span class="nd">@coroutine</span>
+    <span class="k">def</span> <span class="nf">_process_report</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Render and output a report result..&quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_process_report</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialize reporter output.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_finish</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Finalize reporter output.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="StrReporter"><a class="viewcode-back" href="../../api/pkgcheck.reporters.html#pkgcheck.reporters.StrReporter">[docs]</a><span class="k">class</span> <span class="nc">StrReporter</span><span class="p">(</span><span class="n">Reporter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Simple string reporter, pkgcheck-0.1 behaviour.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        sys-apps/portage-2.1-r2: sys-apps/portage-2.1-r2.ebuild has whitespace in indentation on line 169</span>
+<span class="sd">        sys-apps/portage-2.1-r2: rdepend  ppc-macos: unsolvable default-darwin/macos/10.4, solutions: [ &gt;=app-misc/pax-utils-0.1.13 ]</span>
+<span class="sd">        sys-apps/portage-2.1-r2: no change in 75 days, keywords [ ~x86-fbsd ]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">priority</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="nd">@coroutine</span>
+    <span class="k">def</span> <span class="nf">_process_report</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># scope to result prefix mapping</span>
+        <span class="n">scope_prefix_map</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">base</span><span class="o">.</span><span class="n">version_scope</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{category}</span><span class="s1">/</span><span class="si">{package}</span><span class="s1">-</span><span class="si">{version}</span><span class="s1">: &#39;</span><span class="p">,</span>
+            <span class="n">base</span><span class="o">.</span><span class="n">package_scope</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{category}</span><span class="s1">/</span><span class="si">{package}</span><span class="s1">: &#39;</span><span class="p">,</span>
+            <span class="n">base</span><span class="o">.</span><span class="n">category_scope</span><span class="p">:</span> <span class="s1">&#39;</span><span class="si">{category}</span><span class="s1">: &#39;</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="p">(</span><span class="k">yield</span><span class="p">)</span>
+            <span class="n">prefix</span> <span class="o">=</span> <span class="n">scope_prefix_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">scope</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">**</span><span class="nb">vars</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">prefix</span><span class="si">}{</span><span class="n">result</span><span class="o">.</span><span class="n">desc</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="FancyReporter"><a class="viewcode-back" href="../../api/pkgcheck.reporters.html#pkgcheck.reporters.FancyReporter">[docs]</a><span class="k">class</span> <span class="nc">FancyReporter</span><span class="p">(</span><span class="n">Reporter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Colored output grouped by result scope.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        sys-apps/portage</span>
+<span class="sd">          WrongIndentFound: sys-apps/portage-2.1-r2.ebuild has whitespace in indentation on line 169</span>
+<span class="sd">          NonsolvableDeps: sys-apps/portage-2.1-r2: rdepend  ppc-macos: unsolvable default-darwin/macos/10.4, solutions: [ &gt;=app-misc/pax-utils-0.1.13 ]</span>
+<span class="sd">          StableRequest: sys-apps/portage-2.1-r2: no change in 75 days, keywords [ ~x86 ]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">priority</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="nd">@coroutine</span>
+    <span class="k">def</span> <span class="nf">_process_report</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">prev_key</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="p">(</span><span class="k">yield</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">scope</span> <span class="ow">in</span> <span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">version_scope</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">package_scope</span><span class="p">):</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">category</span><span class="si">}</span><span class="s1">/</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">package</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="k">elif</span> <span class="n">result</span><span class="o">.</span><span class="n">scope</span> <span class="o">==</span> <span class="n">base</span><span class="o">.</span><span class="n">category_scope</span><span class="p">:</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">category</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">scope</span><span class="o">.</span><span class="n">desc</span>
+
+            <span class="k">if</span> <span class="n">key</span> <span class="o">!=</span> <span class="n">prev_key</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">prev_key</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">bold</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="s1">&#39;blue&#39;</span><span class="p">),</span> <span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">reset</span><span class="p">)</span>
+                <span class="n">prev_key</span> <span class="o">=</span> <span class="n">key</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">first_prefix</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;  &#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">later_prefix</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;    &#39;</span><span class="p">)</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">scope</span> <span class="o">==</span> <span class="n">base</span><span class="o">.</span><span class="n">version_scope</span><span class="p">:</span>
+                <span class="n">s</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;version </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">version</span><span class="si">}</span><span class="s2">: &quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">fg</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">color</span><span class="p">),</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">reset</span><span class="p">,</span>
+                <span class="s1">&#39;: &#39;</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">desc</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">first_prefix</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">later_prefix</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="JsonReporter"><a class="viewcode-back" href="../../api/pkgcheck.reporters.html#pkgcheck.reporters.JsonReporter">[docs]</a><span class="k">class</span> <span class="nc">JsonReporter</span><span class="p">(</span><span class="n">Reporter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Feed of newline-delimited JSON records.</span>
+
+<span class="sd">    Note that the format is newline-delimited JSON with each line being related</span>
+<span class="sd">    to a separate report. To merge the objects together a tool such as jq can</span>
+<span class="sd">    be leveraged similar to the following:</span>
+
+<span class="sd">    .. code::</span>
+
+<span class="sd">        jq -c -s &#39;reduce.[]as$x({};.*$x)&#39; orig.json &gt; new.json</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">priority</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1000</span>
+
+    <span class="nd">@coroutine</span>
+    <span class="k">def</span> <span class="nf">_process_report</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># arbitrarily nested defaultdicts</span>
+        <span class="n">json_dict</span> <span class="o">=</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">defaultdict</span><span class="p">(</span><span class="n">json_dict</span><span class="p">)</span>
+        <span class="c1"># scope to data conversion mapping</span>
+        <span class="n">scope_map</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">base</span><span class="o">.</span><span class="n">version_scope</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">data</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="n">data</span><span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">category</span><span class="p">][</span><span class="n">r</span><span class="o">.</span><span class="n">package</span><span class="p">][</span><span class="n">r</span><span class="o">.</span><span class="n">version</span><span class="p">],</span>
+            <span class="n">base</span><span class="o">.</span><span class="n">package_scope</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">data</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="n">data</span><span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">category</span><span class="p">][</span><span class="n">r</span><span class="o">.</span><span class="n">package</span><span class="p">],</span>
+            <span class="n">base</span><span class="o">.</span><span class="n">category_scope</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">data</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="n">data</span><span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">category</span><span class="p">],</span>
+        <span class="p">}</span>
+
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="p">(</span><span class="k">yield</span><span class="p">)</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">json_dict</span><span class="p">()</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">scope_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">scope</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span><span class="p">)(</span><span class="n">data</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
+            <span class="n">d</span><span class="p">[</span><span class="s1">&#39;_&#39;</span> <span class="o">+</span> <span class="n">result</span><span class="o">.</span><span class="n">level</span><span class="p">][</span><span class="n">result</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">desc</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+            <span class="c1"># flush output so partial objects aren&#39;t written</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="XmlReporter"><a class="viewcode-back" href="../../api/pkgcheck.reporters.html#pkgcheck.reporters.XmlReporter">[docs]</a><span class="k">class</span> <span class="nc">XmlReporter</span><span class="p">(</span><span class="n">Reporter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Feed of newline-delimited XML reports.&quot;&quot;&quot;</span>
+
+    <span class="n">priority</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1000</span>
+
+    <span class="k">def</span> <span class="nf">_start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;&lt;checks&gt;&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_finish</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">&#39;&lt;/checks&gt;&#39;</span><span class="p">)</span>
+
+    <span class="nd">@coroutine</span>
+    <span class="k">def</span> <span class="nf">_process_report</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">result_template</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot;&lt;result&gt;&lt;class&gt;</span><span class="si">%(class)s</span><span class="s2">&lt;/class&gt;&quot;</span>
+            <span class="s2">&quot;&lt;msg&gt;</span><span class="si">%(msg)s</span><span class="s2">&lt;/msg&gt;&lt;/result&gt;&quot;</span><span class="p">)</span>
+        <span class="n">cat_template</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot;&lt;result&gt;&lt;category&gt;</span><span class="si">%(category)s</span><span class="s2">&lt;/category&gt;&quot;</span>
+            <span class="s2">&quot;&lt;class&gt;</span><span class="si">%(class)s</span><span class="s2">&lt;/class&gt;&lt;msg&gt;</span><span class="si">%(msg)s</span><span class="s2">&lt;/msg&gt;&lt;/result&gt;&quot;</span><span class="p">)</span>
+        <span class="n">pkg_template</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot;&lt;result&gt;&lt;category&gt;</span><span class="si">%(category)s</span><span class="s2">&lt;/category&gt;&quot;</span>
+            <span class="s2">&quot;&lt;package&gt;</span><span class="si">%(package)s</span><span class="s2">&lt;/package&gt;&lt;class&gt;</span><span class="si">%(class)s</span><span class="s2">&lt;/class&gt;&quot;</span>
+            <span class="s2">&quot;&lt;msg&gt;</span><span class="si">%(msg)s</span><span class="s2">&lt;/msg&gt;&lt;/result&gt;&quot;</span><span class="p">)</span>
+        <span class="n">ver_template</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot;&lt;result&gt;&lt;category&gt;</span><span class="si">%(category)s</span><span class="s2">&lt;/category&gt;&quot;</span>
+            <span class="s2">&quot;&lt;package&gt;</span><span class="si">%(package)s</span><span class="s2">&lt;/package&gt;&lt;version&gt;</span><span class="si">%(version)s</span><span class="s2">&lt;/version&gt;&quot;</span>
+            <span class="s2">&quot;&lt;class&gt;</span><span class="si">%(class)s</span><span class="s2">&lt;/class&gt;&lt;msg&gt;</span><span class="si">%(msg)s</span><span class="s2">&lt;/msg&gt;&lt;/result&gt;&quot;</span><span class="p">)</span>
+
+        <span class="n">scope_map</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">base</span><span class="o">.</span><span class="n">category_scope</span><span class="p">:</span> <span class="n">cat_template</span><span class="p">,</span>
+            <span class="n">base</span><span class="o">.</span><span class="n">package_scope</span><span class="p">:</span> <span class="n">pkg_template</span><span class="p">,</span>
+            <span class="n">base</span><span class="o">.</span><span class="n">version_scope</span><span class="p">:</span> <span class="n">ver_template</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="p">(</span><span class="k">yield</span><span class="p">)</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;category&#39;</span><span class="p">,</span> <span class="s1">&#39;package&#39;</span><span class="p">,</span> <span class="s1">&#39;version&#39;</span><span class="p">)}</span>
+            <span class="n">d</span><span class="p">[</span><span class="s1">&#39;class&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xml_escape</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">d</span><span class="p">[</span><span class="s1">&#39;msg&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xml_escape</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">desc</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">scope_map</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">scope</span><span class="p">,</span> <span class="n">result_template</span><span class="p">)</span> <span class="o">%</span> <span class="n">d</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CsvReporter"><a class="viewcode-back" href="../../api/pkgcheck.reporters.html#pkgcheck.reporters.CsvReporter">[docs]</a><span class="k">class</span> <span class="nc">CsvReporter</span><span class="p">(</span><span class="n">Reporter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Comma-separated value reporter, convenient for shell processing.</span>
+
+<span class="sd">    Example::</span>
+
+<span class="sd">        ,,,&quot;global USE flag &#39;big-endian&#39; is a potential local, used by 1 package: dev-java/icedtea-bin&quot;</span>
+<span class="sd">        sys-apps,portage,2.1-r2,sys-apps/portage-2.1-r2.ebuild has whitespace in indentation on line 169</span>
+<span class="sd">        sys-apps,portage,2.1-r2,&quot;rdepend  ppc-macos: unsolvable default-darwin/macos/10.4, solutions: [ &gt;=app-misc/pax-utils-0.1.13 ]&quot;</span>
+<span class="sd">        sys-apps,portage,2.1-r2,&quot;no change in 75 days, keywords [ ~x86-fbsd ]&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">priority</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1001</span>
+
+    <span class="nd">@coroutine</span>
+    <span class="k">def</span> <span class="nf">_process_report</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">writer</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="p">,</span>
+            <span class="n">doublequote</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">escapechar</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\\</span><span class="s1">&#39;</span><span class="p">,</span>
+            <span class="n">lineterminator</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="p">(</span><span class="k">yield</span><span class="p">)</span>
+            <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">((</span>
+                <span class="nb">getattr</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s1">&#39;category&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">),</span>
+                <span class="nb">getattr</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s1">&#39;package&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">),</span>
+                <span class="nb">getattr</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="s1">&#39;version&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">),</span>
+                <span class="n">result</span><span class="o">.</span><span class="n">desc</span><span class="p">))</span></div>
+
+
+<span class="k">class</span> <span class="nc">_ResultFormatter</span><span class="p">(</span><span class="n">Formatter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Custom string formatter that collapses unmatched variables.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">get_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwds</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Retrieve a given field value, an empty string is returned for unmatched fields.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">kwds</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="k">return</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">raise</span> <span class="n">base</span><span class="o">.</span><span class="n">PkgcheckUserException</span><span class="p">(</span>
+            <span class="s1">&#39;FormatReporter: integer indexes are not supported&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="FormatReporter"><a class="viewcode-back" href="../../api/pkgcheck.reporters.html#pkgcheck.reporters.FormatReporter">[docs]</a><span class="k">class</span> <span class="nc">FormatReporter</span><span class="p">(</span><span class="n">Reporter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Custom format string reporter.&quot;&quot;&quot;</span>
+
+    <span class="n">priority</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1001</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">format_str</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">format_str</span> <span class="o">=</span> <span class="n">format_str</span>
+
+    <span class="nd">@coroutine</span>
+    <span class="k">def</span> <span class="nf">_process_report</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">formatter</span> <span class="o">=</span> <span class="n">_ResultFormatter</span><span class="p">()</span>
+        <span class="c1"># provide expansions for result desc, level, and output name properties</span>
+        <span class="n">properties</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;desc&#39;</span><span class="p">,</span> <span class="s1">&#39;level&#39;</span><span class="p">,</span> <span class="s1">&#39;name&#39;</span><span class="p">)</span>
+
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="p">(</span><span class="k">yield</span><span class="p">)</span>
+            <span class="n">attrs</span> <span class="o">=</span> <span class="nb">vars</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+            <span class="n">attrs</span><span class="o">.</span><span class="n">update</span><span class="p">((</span><span class="n">k</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">properties</span><span class="p">)</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">formatter</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">format_str</span><span class="p">,</span> <span class="o">**</span><span class="n">attrs</span><span class="p">)</span>
+            <span class="c1"># output strings with at least one valid expansion or non-whitespace character</span>
+            <span class="k">if</span> <span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="DeserializationError"><a class="viewcode-back" href="../../api/pkgcheck.reporters.html#pkgcheck.reporters.DeserializationError">[docs]</a><span class="k">class</span> <span class="nc">DeserializationError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Exception occurred while deserializing a data stream.&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="JsonStream"><a class="viewcode-back" href="../../api/pkgcheck.reporters.html#pkgcheck.reporters.JsonStream">[docs]</a><span class="k">class</span> <span class="nc">JsonStream</span><span class="p">(</span><span class="n">Reporter</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate a stream of result objects serialized in JSON.&quot;&quot;&quot;</span>
+
+    <span class="n">priority</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1001</span>
+
+<div class="viewcode-block" id="JsonStream.to_json"><a class="viewcode-back" href="../../api/pkgcheck.reporters.html#pkgcheck.reporters.JsonStream.to_json">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">to_json</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Serialize results and other objects to JSON.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">Result</span><span class="p">):</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;__class__&#39;</span><span class="p">:</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">}</span>
+            <span class="n">d</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">_attrs</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">d</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="JsonStream.from_iter"><a class="viewcode-back" href="../../api/pkgcheck.reporters.html#pkgcheck.reporters.JsonStream.from_iter">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">from_iter</span><span class="p">(</span><span class="n">iterable</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Deserialize results from a given iterable.&quot;&quot;&quot;</span>
+        <span class="c1"># avoid circular import issues</span>
+        <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">objects</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="nb">map</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">,</span> <span class="n">iterable</span><span class="p">):</span>
+                <span class="bp">cls</span> <span class="o">=</span> <span class="n">objects</span><span class="o">.</span><span class="n">KEYWORDS</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;__class__&#39;</span><span class="p">)]</span>
+                <span class="k">yield</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_create</span><span class="p">(</span><span class="o">**</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">decoder</span><span class="o">.</span><span class="n">JSONDecodeError</span><span class="p">,</span> <span class="ne">UnicodeDecodeError</span><span class="p">,</span> <span class="n">DeserializationError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">DeserializationError</span><span class="p">(</span><span class="s1">&#39;failed loading&#39;</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">e</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span> <span class="n">InvalidResult</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">DeserializationError</span><span class="p">(</span><span class="s1">&#39;unknown result&#39;</span><span class="p">)</span></div>
+
+    <span class="nd">@coroutine</span>
+    <span class="k">def</span> <span class="nf">_process_report</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="p">(</span><span class="k">yield</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">to_json</span><span class="p">))</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.reporters</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

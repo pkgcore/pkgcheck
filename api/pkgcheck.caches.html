@@ -1,0 +1,184 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.caches module &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.caches module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcheck.caches">
+<span id="pkgcheck-caches-module"></span><h1>pkgcheck.caches module<a class="headerlink" href="#module-pkgcheck.caches" title="Permalink to this headline">¶</a></h1>
+<p>Base cache support.</p>
+<dl class="py class">
+<dt id="pkgcheck.caches.Cache">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.caches.</code><code class="sig-name descname">Cache</code><a class="reference internal" href="../_modules/pkgcheck/caches.html#Cache"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.caches.Cache" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Mixin for data caches.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.caches.CacheData">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.caches.</code><code class="sig-name descname">CacheData</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">type</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">file</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">version</span><span class="p">:</span> <span class="n">int</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/caches.html#CacheData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.caches.CacheData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Cache registry data.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.caches.CacheData.file">
+<code class="sig-name descname">file</code><em class="property">: str</em><a class="headerlink" href="#pkgcheck.caches.CacheData.file" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.caches.CacheData.type">
+<code class="sig-name descname">type</code><em class="property">: str</em><a class="headerlink" href="#pkgcheck.caches.CacheData.type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.caches.CacheData.version">
+<code class="sig-name descname">version</code><em class="property">: int</em><a class="headerlink" href="#pkgcheck.caches.CacheData.version" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py exception">
+<dt id="pkgcheck.caches.CacheDisabled">
+<em class="property">exception </em><code class="sig-prename descclassname">pkgcheck.caches.</code><code class="sig-name descname">CacheDisabled</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">cache</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/caches.html#CacheDisabled"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.caches.CacheDisabled" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.base.html#pkgcheck.base.PkgcheckException" title="pkgcheck.base.PkgcheckException"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.base.PkgcheckException</span></code></a></p>
+<p>Exception flagging that a requested cache type is disabled.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.caches.CachedAddon">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.caches.</code><code class="sig-name descname">CachedAddon</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">options</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/caches.html#CachedAddon"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.caches.CachedAddon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.base.html#pkgcheck.base.Addon" title="pkgcheck.base.Addon"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.base.Addon</span></code></a></p>
+<p>Mixin for addon classes that create/use data caches.</p>
+<dl class="py attribute">
+<dt id="pkgcheck.caches.CachedAddon.cache">
+<code class="sig-name descname">cache</code><em class="property"> = None</em><a class="headerlink" href="#pkgcheck.caches.CachedAddon.cache" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.caches.CachedAddon.cache_file">
+<code class="sig-name descname">cache_file</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">repo</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/caches.html#CachedAddon.cache_file"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.caches.CachedAddon.cache_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the cache file for a given repository.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.caches.CachedAddon.caches">
+<code class="sig-name descname">caches</code><em class="property"> = {&lt;class 'pkgcheck.eclass.EclassAddon'&gt;: CacheData(type='eclass', file='eclass.pickle', version=2), &lt;class 'pkgcheck.profiles.ProfileAddon'&gt;: CacheData(type='profiles', file='profiles.pickle', version=2), &lt;class 'pkgcheck.git.GitAddon'&gt;: CacheData(type='git', file='git.pickle', version=4)}</em><a class="headerlink" href="#pkgcheck.caches.CachedAddon.caches" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.caches.CachedAddon.existing_caches">
+<code class="sig-name descname">existing_caches</code><a class="headerlink" href="#pkgcheck.caches.CachedAddon.existing_caches" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mapping of all existing cache types to file paths.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.caches.CachedAddon.load_cache">
+<code class="sig-name descname">load_cache</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">fallback</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/caches.html#CachedAddon.load_cache"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.caches.CachedAddon.load_cache" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.caches.CachedAddon.remove_caches">
+<code class="sig-name descname">remove_caches</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/caches.html#CachedAddon.remove_caches"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.caches.CachedAddon.remove_caches" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove all or selected caches.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.caches.CachedAddon.save_cache">
+<code class="sig-name descname">save_cache</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data</span></em>, <em class="sig-param"><span class="n">path</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/caches.html#CachedAddon.save_cache"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.caches.CachedAddon.save_cache" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="pkgcheck.caches.CachedAddon.update_cache">
+<code class="sig-name descname">update_cache</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">repo</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">force</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/caches.html#CachedAddon.update_cache"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.caches.CachedAddon.update_cache" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update related cache and push updates to disk.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.caches.DictCache">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.caches.</code><code class="sig-name descname">DictCache</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">data</span></em>, <em class="sig-param"><span class="n">cache</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/caches.html#DictCache"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.caches.DictCache" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">collections.UserDict</span></code>, <a class="reference internal" href="#pkgcheck.caches.Cache" title="pkgcheck.caches.Cache"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.caches.Cache</span></code></a></p>
+<p>Dictionary-based cache that encapsulates data.</p>
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/pkgcheck.caches.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.caches module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

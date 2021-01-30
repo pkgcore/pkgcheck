@@ -1,0 +1,328 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.checks.eclass &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../checks.html" accesskey="U">pkgcheck.checks</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.eclass</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcheck.checks.eclass</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">shlex</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+
+<span class="kn">from</span> <span class="nn">pkgcore.ebuild.eapi</span> <span class="kn">import</span> <span class="n">EAPI</span>
+<span class="kn">from</span> <span class="nn">pkgcore.ebuild.eclass</span> <span class="kn">import</span> <span class="n">EclassDoc</span>
+<span class="kn">from</span> <span class="nn">snakeoil.strings</span> <span class="kn">import</span> <span class="n">pluralism</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">addons</span><span class="p">,</span> <span class="n">results</span><span class="p">,</span> <span class="n">sources</span>
+<span class="kn">from</span> <span class="nn">..base</span> <span class="kn">import</span> <span class="n">LogMap</span><span class="p">,</span> <span class="n">LogReports</span>
+<span class="kn">from</span> <span class="nn">..eclass</span> <span class="kn">import</span> <span class="n">EclassAddon</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">Check</span>
+
+
+<div class="viewcode-block" id="DeprecatedEclass"><a class="viewcode-back" href="../../../api/pkgcheck.checks.eclass.html#pkgcheck.checks.eclass.DeprecatedEclass">[docs]</a><span class="k">class</span> <span class="nc">DeprecatedEclass</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Package uses an eclass that is deprecated/abandoned.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eclass</span><span class="p">,</span> <span class="n">replacement</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eclass</span> <span class="o">=</span> <span class="n">eclass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">replacement</span> <span class="o">=</span> <span class="n">replacement</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">replacement</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">replacement</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;migrate to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">replacement</span><span class="si">}</span><span class="s1">&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">replacement</span> <span class="o">=</span> <span class="s1">&#39;no replacement&#39;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;uses deprecated eclass: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">eclass</span><span class="si">}</span><span class="s1"> (</span><span class="si">{</span><span class="n">replacement</span><span class="si">}</span><span class="s1">)&#39;</span></div>
+
+
+<div class="viewcode-block" id="DuplicateEclassInherit"><a class="viewcode-back" href="../../../api/pkgcheck.checks.eclass.html#pkgcheck.checks.eclass.DuplicateEclassInherit">[docs]</a><span class="k">class</span> <span class="nc">DuplicateEclassInherit</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">LineResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Style</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;An ebuild directly inherits the same eclass multiple times.</span>
+
+<span class="sd">    Note that this will flag ebuilds that conditionalize global metadata by</span>
+<span class="sd">    package version (or some other fashion) while inheriting the same eclass</span>
+<span class="sd">    under both branches, e.g. conditional live ebuilds. In this case, shared</span>
+<span class="sd">    eclasses should be loaded in a separate, unconditional inherit call.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eclass</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eclass</span> <span class="o">=</span> <span class="n">eclass</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;duplicate eclass inherit </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">eclass</span><span class="si">!r}</span><span class="s1">, line </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">lineno</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="MisplacedEclassVar"><a class="viewcode-back" href="../../../api/pkgcheck.checks.eclass.html#pkgcheck.checks.eclass.MisplacedEclassVar">[docs]</a><span class="k">class</span> <span class="nc">MisplacedEclassVar</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">LineResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Invalid placement of pre-inherit eclass variable in an ebuild.</span>
+
+<span class="sd">    All eclass variables tagged with @PRE_INHERIT must be set</span>
+<span class="sd">    before the first inherit call in an ebuild.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variable</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variable</span> <span class="o">=</span> <span class="n">variable</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;invalid pre-inherit placement, line </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">lineno</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">line</span><span class="si">!r}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="EclassUsageCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.eclass.html#pkgcheck.checks.eclass.EclassUsageCheck">[docs]</a><span class="k">class</span> <span class="nc">EclassUsageCheck</span><span class="p">(</span><span class="n">Check</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Scan packages for various eclass-related issues.&quot;&quot;&quot;</span>
+
+    <span class="n">_source</span> <span class="o">=</span> <span class="n">sources</span><span class="o">.</span><span class="n">EbuildParseRepoSource</span>
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span>
+        <span class="n">DeprecatedEclass</span><span class="p">,</span> <span class="n">DuplicateEclassInherit</span><span class="p">,</span> <span class="n">MisplacedEclassVar</span><span class="p">,</span>
+    <span class="p">])</span>
+    <span class="n">required_addons</span> <span class="o">=</span> <span class="p">(</span><span class="n">addons</span><span class="o">.</span><span class="n">BashAddon</span><span class="p">,</span> <span class="n">EclassAddon</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">bash_addon</span><span class="p">,</span> <span class="n">eclass_addon</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">deprecated_eclasses</span> <span class="o">=</span> <span class="n">eclass_addon</span><span class="o">.</span><span class="n">deprecated</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eclass_cache</span> <span class="o">=</span> <span class="n">eclass_addon</span><span class="o">.</span><span class="n">eclasses</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cmd_query</span> <span class="o">=</span> <span class="n">bash_addon</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;(command) @call&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">var_assign_query</span> <span class="o">=</span> <span class="n">bash_addon</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s1">&#39;(variable_assignment) @assign&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="EclassUsageCheck.check_pre_inherits"><a class="viewcode-back" href="../../../api/pkgcheck.checks.eclass.html#pkgcheck.checks.eclass.EclassUsageCheck.check_pre_inherits">[docs]</a>    <span class="k">def</span> <span class="nf">check_pre_inherits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">inherit_lineno</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Check for invalid @PRE_INHERIT variable placement.&quot;&quot;&quot;</span>
+        <span class="n">pre_inherits</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="c1"># determine if any inherited eclasses have @PRE_INHERIT variables</span>
+        <span class="k">for</span> <span class="n">eclass</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">inherited</span><span class="p">:</span>
+            <span class="n">pre_inherits</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="n">var</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">eclass_cache</span><span class="p">[</span><span class="n">eclass</span><span class="p">]</span><span class="o">.</span><span class="n">variables</span>
+                <span class="k">if</span> <span class="n">var</span><span class="o">.</span><span class="n">pre_inherit</span>
+            <span class="p">)</span>
+
+        <span class="c1"># scan for any misplaced @PRE_INHERIT variables</span>
+        <span class="k">if</span> <span class="n">pre_inherits</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">node</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">var_assign_query</span><span class="o">.</span><span class="n">captures</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">root_node</span><span class="p">):</span>
+                <span class="n">var_name</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">node_str</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">child_by_field_name</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">))</span>
+                <span class="n">lineno</span><span class="p">,</span> <span class="n">_colno</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">start_point</span>
+                <span class="k">if</span> <span class="n">var_name</span> <span class="ow">in</span> <span class="n">pre_inherits</span> <span class="ow">and</span> <span class="n">lineno</span> <span class="o">&gt;</span> <span class="n">inherit_lineno</span><span class="p">:</span>
+                    <span class="n">line</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">node_str</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+                    <span class="k">yield</span> <span class="n">MisplacedEclassVar</span><span class="p">(</span>
+                        <span class="n">var_name</span><span class="p">,</span> <span class="n">line</span><span class="o">=</span><span class="n">line</span><span class="p">,</span> <span class="n">lineno</span><span class="o">=</span><span class="n">lineno</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="EclassUsageCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.eclass.html#pkgcheck.checks.eclass.EclassUsageCheck.feed">[docs]</a>    <span class="k">def</span> <span class="nf">feed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">pkg</span><span class="o">.</span><span class="n">inherit</span><span class="p">:</span>
+            <span class="n">inherited</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">node</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cmd_query</span><span class="o">.</span><span class="n">captures</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">root_node</span><span class="p">):</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">node_str</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">child_by_field_name</span><span class="p">(</span><span class="s1">&#39;name&#39;</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;inherit&#39;</span><span class="p">:</span>
+                    <span class="n">call</span> <span class="o">=</span> <span class="n">pkg</span><span class="o">.</span><span class="n">node_str</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+                    <span class="c1"># filter out line continuations and conditional inherits</span>
+                    <span class="k">if</span> <span class="n">inherits</span> <span class="o">:=</span> <span class="p">[</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">call</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">1</span><span class="p">:]</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">inherit</span><span class="p">]:</span>
+                        <span class="n">lineno</span><span class="p">,</span> <span class="n">_colno</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">start_point</span>
+                        <span class="c1"># verify any existing @PRE_INHERIT variable placement</span>
+                        <span class="k">if</span> <span class="ow">not</span> <span class="n">inherited</span> <span class="ow">and</span> <span class="n">inherits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">pkg</span><span class="o">.</span><span class="n">inherit</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                            <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_pre_inherits</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="n">lineno</span><span class="p">)</span>
+
+                        <span class="k">for</span> <span class="n">eclass</span> <span class="ow">in</span> <span class="n">inherits</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">eclass</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">inherited</span><span class="p">:</span>
+                                <span class="n">inherited</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">eclass</span><span class="p">)</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="k">yield</span> <span class="n">DuplicateEclassInherit</span><span class="p">(</span>
+                                    <span class="n">eclass</span><span class="p">,</span> <span class="n">line</span><span class="o">=</span><span class="n">call</span><span class="p">,</span> <span class="n">lineno</span><span class="o">=</span><span class="n">lineno</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">eclass</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">inherit</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">deprecated_eclasses</span><span class="p">):</span>
+                <span class="n">replacement</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">deprecated_eclasses</span><span class="p">[</span><span class="n">eclass</span><span class="p">]</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">replacement</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                    <span class="n">replacement</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">yield</span> <span class="n">DeprecatedEclass</span><span class="p">(</span><span class="n">eclass</span><span class="p">,</span> <span class="n">replacement</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="EclassBashSyntaxError"><a class="viewcode-back" href="../../../api/pkgcheck.checks.eclass.html#pkgcheck.checks.eclass.EclassBashSyntaxError">[docs]</a><span class="k">class</span> <span class="nc">EclassBashSyntaxError</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">EclassResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Bash syntax error in the related eclass.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lineno</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lineno</span> <span class="o">=</span> <span class="n">lineno</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">error</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">eclass</span><span class="si">}</span><span class="s1">: bash syntax error, line </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">lineno</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="EclassDocError"><a class="viewcode-back" href="../../../api/pkgcheck.checks.eclass.html#pkgcheck.checks.eclass.EclassDocError">[docs]</a><span class="k">class</span> <span class="nc">EclassDocError</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">EclassResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Error when parsing docs for the related eclass.</span>
+
+<span class="sd">    Eclass docs are parsed as specified by the devmanual [#]_.</span>
+
+<span class="sd">    .. [#] https://devmanual.gentoo.org/eclass-writing/#documenting-eclasses</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">error</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">eclass</span><span class="si">}</span><span class="s1">: failed parsing eclass docs: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">error</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="EclassDocMissingFunc"><a class="viewcode-back" href="../../../api/pkgcheck.checks.eclass.html#pkgcheck.checks.eclass.EclassDocMissingFunc">[docs]</a><span class="k">class</span> <span class="nc">EclassDocMissingFunc</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">EclassResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Undocumented function(s) in the related eclass.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">functions</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">functions</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">functions</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">functions</span><span class="p">)</span>
+        <span class="n">funcs</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">functions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">eclass</span><span class="si">}</span><span class="s1">: undocumented function</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">funcs</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="EclassDocMissingVar"><a class="viewcode-back" href="../../../api/pkgcheck.checks.eclass.html#pkgcheck.checks.eclass.EclassDocMissingVar">[docs]</a><span class="k">class</span> <span class="nc">EclassDocMissingVar</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">EclassResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Undocumented variable(s) in the related eclass.</span>
+
+<span class="sd">    All exported variables in an eclass should be documented using eclass doc</span>
+<span class="sd">    tags. Temporary variables should be unset after use so they aren&#39;t</span>
+<span class="sd">    exported.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">variables</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">variables</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">)</span>
+        <span class="n">variables</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">eclass</span><span class="si">}</span><span class="s1">: undocumented variable</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">variables</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="EclassCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.eclass.html#pkgcheck.checks.eclass.EclassCheck">[docs]</a><span class="k">class</span> <span class="nc">EclassCheck</span><span class="p">(</span><span class="n">Check</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Scan eclasses for various issues.&quot;&quot;&quot;</span>
+
+    <span class="n">_source</span> <span class="o">=</span> <span class="n">sources</span><span class="o">.</span><span class="n">EclassRepoSource</span>
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span>
+        <span class="n">EclassBashSyntaxError</span><span class="p">,</span> <span class="n">EclassDocError</span><span class="p">,</span> <span class="n">EclassDocMissingFunc</span><span class="p">,</span> <span class="n">EclassDocMissingVar</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">latest_eapi</span> <span class="o">=</span> <span class="n">EAPI</span><span class="o">.</span><span class="n">known_eapis</span><span class="p">[</span><span class="nb">sorted</span><span class="p">(</span><span class="n">EAPI</span><span class="o">.</span><span class="n">known_eapis</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+        <span class="c1"># all known build phases, e.g. src_configure</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">known_phases</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">latest_eapi</span><span class="o">.</span><span class="n">phases_rev</span><span class="p">)</span>
+        <span class="c1"># metadata variables allowed to be set in eclasses, e.g. SRC_URI</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eclass_keys</span> <span class="o">=</span> <span class="n">latest_eapi</span><span class="o">.</span><span class="n">eclass_keys</span>
+
+<div class="viewcode-block" id="EclassCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.eclass.html#pkgcheck.checks.eclass.EclassCheck.feed">[docs]</a>    <span class="k">def</span> <span class="nf">feed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eclass</span><span class="p">):</span>
+        <span class="c1"># check for eclass bash syntax errors</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+            <span class="p">[</span><span class="s1">&#39;bash&#39;</span><span class="p">,</span> <span class="s1">&#39;-n&#39;</span><span class="p">,</span> <span class="n">shlex</span><span class="o">.</span><span class="n">quote</span><span class="p">(</span><span class="n">eclass</span><span class="o">.</span><span class="n">path</span><span class="p">)],</span>
+            <span class="n">stderr</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">DEVNULL</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">&#39;utf8&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">returncode</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">stderr</span><span class="p">:</span>
+            <span class="n">lineno</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">p</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+                <span class="n">path</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">msg</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;: &#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="n">lineno</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">5</span><span class="p">:]</span>
+                <span class="n">error</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">msg</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">))</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="s1">&#39;: &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">error</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">EclassBashSyntaxError</span><span class="p">(</span><span class="n">lineno</span><span class="p">,</span> <span class="n">error</span><span class="p">,</span> <span class="n">eclass</span><span class="o">=</span><span class="n">eclass</span><span class="p">)</span>
+
+        <span class="n">report_logs</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">LogMap</span><span class="p">(</span><span class="s1">&#39;pkgcore.log.logger.error&#39;</span><span class="p">,</span> <span class="n">partial</span><span class="p">(</span><span class="n">EclassDocError</span><span class="p">,</span> <span class="n">eclass</span><span class="o">=</span><span class="n">eclass</span><span class="p">)),</span>
+            <span class="n">LogMap</span><span class="p">(</span><span class="s1">&#39;pkgcore.log.logger.warning&#39;</span><span class="p">,</span> <span class="n">partial</span><span class="p">(</span><span class="n">EclassDocError</span><span class="p">,</span> <span class="n">eclass</span><span class="o">=</span><span class="n">eclass</span><span class="p">)),</span>
+        <span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">LogReports</span><span class="p">(</span><span class="o">*</span><span class="n">report_logs</span><span class="p">)</span> <span class="k">as</span> <span class="n">log_reports</span><span class="p">:</span>
+            <span class="n">eclass_obj</span> <span class="o">=</span> <span class="n">EclassDoc</span><span class="p">(</span><span class="n">eclass</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">sourced</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">yield from</span> <span class="n">log_reports</span>
+
+        <span class="n">phase_funcs</span> <span class="o">=</span> <span class="p">{</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">eclass</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">phase</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">phase</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">known_phases</span><span class="p">}</span>
+        <span class="n">funcs_missing_docs</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">eclass_obj</span><span class="o">.</span><span class="n">exported_function_names</span> <span class="o">-</span> <span class="n">phase_funcs</span> <span class="o">-</span> <span class="n">eclass_obj</span><span class="o">.</span><span class="n">function_names</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">funcs_missing_docs</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">EclassDocMissingFunc</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">funcs_missing_docs</span><span class="p">),</span> <span class="n">eclass</span><span class="o">=</span><span class="n">eclass</span><span class="p">)</span>
+        <span class="c1"># ignore underscore-prefixed vars (mostly used for avoiding multiple inherits)</span>
+        <span class="n">exported_vars</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">eclass_obj</span><span class="o">.</span><span class="n">exported_variable_names</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;_&#39;</span><span class="p">)}</span>
+        <span class="n">vars_missing_docs</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">exported_vars</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">eclass_keys</span>
+            <span class="o">-</span> <span class="n">eclass_obj</span><span class="o">.</span><span class="n">variable_names</span> <span class="o">-</span> <span class="n">eclass_obj</span><span class="o">.</span><span class="n">function_variable_names</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">vars_missing_docs</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">EclassDocMissingVar</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">vars_missing_docs</span><span class="p">),</span> <span class="n">eclass</span><span class="o">=</span><span class="n">eclass</span><span class="p">)</span></div></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../checks.html" >pkgcheck.checks</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.eclass</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,209 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.checks.repo module &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.repo module</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-pkgcheck.checks.repo">
+<span id="pkgcheck-checks-repo-module"></span><h1>pkgcheck.checks.repo module<a class="headerlink" href="#module-pkgcheck.checks.repo" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt id="pkgcheck.checks.repo.BinaryFile">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo.</code><code class="sig-name descname">BinaryFile</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo.html#BinaryFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo.BinaryFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Error" title="pkgcheck.results.Error"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Error</span></code></a></p>
+<p>Binary file found in the repository.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo.BinaryFile.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.repo.BinaryFile.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo.BinaryFile.name">
+<code class="sig-name descname">name</code><em class="property"> = 'BinaryFile'</em><a class="headerlink" href="#pkgcheck.checks.repo.BinaryFile.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo.EmptyCategoryDir">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo.</code><code class="sig-name descname">EmptyCategoryDir</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo.html#EmptyCategoryDir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo.EmptyCategoryDir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.CategoryResult" title="pkgcheck.results.CategoryResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.CategoryResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Empty category directory in the repository.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo.EmptyCategoryDir.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.repo.EmptyCategoryDir.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo.EmptyCategoryDir.name">
+<code class="sig-name descname">name</code><em class="property"> = 'EmptyCategoryDir'</em><a class="headerlink" href="#pkgcheck.checks.repo.EmptyCategoryDir.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo.EmptyCategoryDir.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='repo' &#64;0x7f81a6a420a0&gt;</em><a class="headerlink" href="#pkgcheck.checks.repo.EmptyCategoryDir.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo.EmptyDirsCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo.</code><code class="sig-name descname">EmptyDirsCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo.html#EmptyDirsCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo.EmptyDirsCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.GentooRepoCheck" title="pkgcheck.checks.GentooRepoCheck"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.GentooRepoCheck</span></code></a></p>
+<p>Scan for empty category or package directories.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo.EmptyDirsCheck.finish">
+<code class="sig-name descname">finish</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo.html#EmptyDirsCheck.finish"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo.EmptyDirsCheck.finish" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do cleanup and yield final results here.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo.EmptyDirsCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.repo.EmptyPackageDir'&gt;, &lt;class 'pkgcheck.checks.repo.EmptyCategoryDir'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.repo.EmptyDirsCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo.EmptyDirsCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='repo' &#64;0x7f81a6a420a0&gt;</em><a class="headerlink" href="#pkgcheck.checks.repo.EmptyDirsCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo.EmptyPackageDir">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo.</code><code class="sig-name descname">EmptyPackageDir</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pkg</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo.html#EmptyPackageDir"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo.EmptyPackageDir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.PackageResult" title="pkgcheck.results.PackageResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.PackageResult</span></code></a>, <a class="reference internal" href="pkgcheck.results.html#pkgcheck.results.Warning" title="pkgcheck.results.Warning"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.results.Warning</span></code></a></p>
+<p>Empty package directory in the repository.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo.EmptyPackageDir.desc">
+<em class="property">property </em><code class="sig-name descname">desc</code><a class="headerlink" href="#pkgcheck.checks.repo.EmptyPackageDir.desc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Result description.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo.EmptyPackageDir.name">
+<code class="sig-name descname">name</code><em class="property"> = 'EmptyPackageDir'</em><a class="headerlink" href="#pkgcheck.checks.repo.EmptyPackageDir.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo.EmptyPackageDir.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='repo' &#64;0x7f81a6a420a0&gt;</em><a class="headerlink" href="#pkgcheck.checks.repo.EmptyPackageDir.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pkgcheck.checks.repo.RepoDirCheck">
+<em class="property">class </em><code class="sig-prename descclassname">pkgcheck.checks.repo.</code><code class="sig-name descname">RepoDirCheck</code><span class="sig-paren">(</span><em class="sig-param"><span class="o">*</span><span class="n">args</span></em>, <em class="sig-param"><span class="n">git_addon</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo.html#RepoDirCheck"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo.RepoDirCheck" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pkgcheck.checks.html#pkgcheck.checks.GentooRepoCheck" title="pkgcheck.checks.GentooRepoCheck"><code class="xref py py-class docutils literal notranslate"><span class="pre">pkgcheck.checks.GentooRepoCheck</span></code></a></p>
+<p>Scan all files in the repository for issues.</p>
+<dl class="py method">
+<dt id="pkgcheck.checks.repo.RepoDirCheck.finish">
+<code class="sig-name descname">finish</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pkgcheck/checks/repo.html#RepoDirCheck.finish"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pkgcheck.checks.repo.RepoDirCheck.finish" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do cleanup and yield final results here.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo.RepoDirCheck.ignored_root_dirs">
+<code class="sig-name descname">ignored_root_dirs</code><em class="property"> = frozenset({'.git'})</em><a class="headerlink" href="#pkgcheck.checks.repo.RepoDirCheck.ignored_root_dirs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo.RepoDirCheck.known_results">
+<code class="sig-name descname">known_results</code><em class="property"> = frozenset({&lt;class 'pkgcheck.checks.repo.BinaryFile'&gt;})</em><a class="headerlink" href="#pkgcheck.checks.repo.RepoDirCheck.known_results" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo.RepoDirCheck.required_addons">
+<code class="sig-name descname">required_addons</code><em class="property"> = (&lt;class 'pkgcheck.git.GitAddon'&gt;,)</em><a class="headerlink" href="#pkgcheck.checks.repo.RepoDirCheck.required_addons" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="pkgcheck.checks.repo.RepoDirCheck.scope">
+<code class="sig-name descname">scope</code><em class="property"> = &lt;PackageScope desc='repo' &#64;0x7f81a6a420a0&gt;</em><a class="headerlink" href="#pkgcheck.checks.repo.RepoDirCheck.scope" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/pkgcheck.checks.repo.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.repo module</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

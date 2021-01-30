@@ -1,0 +1,442 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.checks.python &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../checks.html" accesskey="U">pkgcheck.checks</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.python</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcheck.checks.python</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">itertools</span>
+
+<span class="kn">from</span> <span class="nn">pkgcore.ebuild.atom</span> <span class="kn">import</span> <span class="n">atom</span>
+<span class="kn">from</span> <span class="nn">pkgcore.restrictions</span> <span class="kn">import</span> <span class="n">packages</span><span class="p">,</span> <span class="n">values</span>
+<span class="kn">from</span> <span class="nn">pkgcore.restrictions.boolean</span> <span class="kn">import</span> <span class="n">JustOneRestriction</span><span class="p">,</span> <span class="n">OrRestriction</span>
+<span class="kn">from</span> <span class="nn">snakeoil.sequences</span> <span class="kn">import</span> <span class="n">iflatten_instance</span>
+<span class="kn">from</span> <span class="nn">snakeoil.strings</span> <span class="kn">import</span> <span class="n">pluralism</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">results</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">Check</span>
+
+<span class="c1"># NB: distutils-r1 inherits one of the first two</span>
+<span class="n">ECLASSES</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="s1">&#39;python-r1&#39;</span><span class="p">,</span> <span class="s1">&#39;python-single-r1&#39;</span><span class="p">,</span> <span class="s1">&#39;python-any-r1&#39;</span><span class="p">])</span>
+
+<span class="c1"># NB: dev-java/jython omitted as not supported by the eclasses atm</span>
+<span class="n">INTERPRETERS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span>
+    <span class="s1">&#39;dev-lang/python&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;dev-python/pypy&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;dev-python/pypy3&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;dev-python/pypy-bin&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;dev-python/pypy3-bin&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;virtual/pypy&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;virtual/pypy3&#39;</span><span class="p">,</span>
+<span class="p">])</span>
+
+<span class="n">CHECK_EXCLUDE</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="s1">&#39;virtual/pypy&#39;</span><span class="p">,</span> <span class="s1">&#39;virtual/pypy3&#39;</span><span class="p">])</span>
+
+<span class="n">IUSE_PREFIX</span> <span class="o">=</span> <span class="s1">&#39;python_targets_&#39;</span>
+<span class="n">IUSE_PREFIX_S</span> <span class="o">=</span> <span class="s1">&#39;python_single_target_&#39;</span>
+
+
+<div class="viewcode-block" id="get_python_eclass"><a class="viewcode-back" href="../../../api/pkgcheck.checks.python.html#pkgcheck.checks.python.get_python_eclass">[docs]</a><span class="k">def</span> <span class="nf">get_python_eclass</span><span class="p">(</span><span class="n">pkg</span><span class="p">):</span>
+    <span class="n">eclasses</span> <span class="o">=</span> <span class="n">ECLASSES</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">inherited</span><span class="p">)</span>
+    <span class="c1"># All three eclasses block one another, but check and throw an error</span>
+    <span class="c1"># just in case it isn&#39;t caught when sourcing the ebuild.</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">eclasses</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;python eclasses are mutually exclusive: [ </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">eclasses</span><span class="p">)</span><span class="si">}</span><span class="s2"> ]&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">eclasses</span><span class="p">))</span> <span class="k">if</span> <span class="n">eclasses</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="MissingPythonEclass"><a class="viewcode-back" href="../../../api/pkgcheck.checks.python.html#pkgcheck.checks.python.MissingPythonEclass">[docs]</a><span class="k">class</span> <span class="nc">MissingPythonEclass</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Package depends on Python but does not use the eclasses.</span>
+
+<span class="sd">    All packages depending on Python are required to use one of the following</span>
+<span class="sd">    python eclasses: python-r1, python-single-r1, or python-any-r1. For</span>
+<span class="sd">    documentation on choosing the correct eclass, please see the Python project</span>
+<span class="sd">    wiki page on eclasses [#]_.</span>
+
+<span class="sd">    .. [#] https://wiki.gentoo.org/wiki/Project:Python/Eclasses</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">eclass</span><span class="p">,</span> <span class="n">dep_type</span><span class="p">,</span> <span class="n">dep</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">eclass</span> <span class="o">=</span> <span class="n">eclass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dep_type</span> <span class="o">=</span> <span class="n">dep_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dep</span> <span class="o">=</span> <span class="n">dep</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;missing </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">eclass</span><span class="si">}</span><span class="s1"> eclass usage for </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dep_type</span><span class="si">}</span><span class="s1">=&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dep</span><span class="si">}</span><span class="s1">&quot;&#39;</span></div>
+
+
+<div class="viewcode-block" id="PythonMissingRequiredUse"><a class="viewcode-back" href="../../../api/pkgcheck.checks.python.html#pkgcheck.checks.python.PythonMissingRequiredUse">[docs]</a><span class="k">class</span> <span class="nc">PythonMissingRequiredUse</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Package is missing PYTHON_REQUIRED_USE.</span>
+
+<span class="sd">    The python-r1 and python-single-r1 eclasses require the packages to</span>
+<span class="sd">    explicitly specify `REQUIRED_USE=${PYTHON_REQUIRED_USE}`. If Python is used</span>
+<span class="sd">    conditionally, it can be wrapped in appropriate USE conditionals.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;missing REQUIRED_USE=&quot;$</span><span class="si">{PYTHON_REQUIRED_USE}</span><span class="s1">&quot;&#39;</span></div>
+
+
+<div class="viewcode-block" id="PythonMissingDeps"><a class="viewcode-back" href="../../../api/pkgcheck.checks.python.html#pkgcheck.checks.python.PythonMissingDeps">[docs]</a><span class="k">class</span> <span class="nc">PythonMissingDeps</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Package is missing PYTHON_DEPS.</span>
+
+<span class="sd">    The python-r1 and python-single-r1 eclasses require the packages</span>
+<span class="sd">    to explicitly reference `${PYTHON_DEPS}` in RDEPEND (and DEPEND,</span>
+<span class="sd">    if necessary); python-any-r1 requires it in DEPEND.</span>
+
+<span class="sd">    If Python is used conditionally, the dependency can be wrapped</span>
+<span class="sd">    in appropriate USE conditionals.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dep_type</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dep_type</span> <span class="o">=</span> <span class="n">dep_type</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;missing </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dep_type</span><span class="si">}</span><span class="s1">=&quot;$</span><span class="se">{{</span><span class="s1">PYTHON_DEPS</span><span class="se">}}</span><span class="s1">&quot;&#39;</span></div>
+
+
+<div class="viewcode-block" id="PythonRuntimeDepInAnyR1"><a class="viewcode-back" href="../../../api/pkgcheck.checks.python.html#pkgcheck.checks.python.PythonRuntimeDepInAnyR1">[docs]</a><span class="k">class</span> <span class="nc">PythonRuntimeDepInAnyR1</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Warning</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Package depends on Python at runtime but uses any-r1 eclass.</span>
+
+<span class="sd">    The python-any-r1 eclass is meant to be used purely for build-time</span>
+<span class="sd">    dependencies on Python. However, this package lists Python as a runtime</span>
+<span class="sd">    dependency. If this is intentional, the package needs to switch to</span>
+<span class="sd">    python-r1 or python-single-r1 eclass, otherwise the runtime dependency</span>
+<span class="sd">    should be removed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dep_type</span><span class="p">,</span> <span class="n">dep</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dep_type</span> <span class="o">=</span> <span class="n">dep_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dep</span> <span class="o">=</span> <span class="n">dep</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;inherits python-any-r1 with </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dep_type</span><span class="si">}</span><span class="s1">=&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dep</span><span class="si">}</span><span class="s1">&quot; -- &#39;</span>
+            <span class="s2">&quot;use python-r1 or python-single-r1 instead&quot;</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PythonEclassError"><a class="viewcode-back" href="../../../api/pkgcheck.checks.python.html#pkgcheck.checks.python.PythonEclassError">[docs]</a><span class="k">class</span> <span class="nc">PythonEclassError</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generic python eclass error.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">msg</span> <span class="o">=</span> <span class="n">msg</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">msg</span></div>
+
+
+<div class="viewcode-block" id="PythonCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.python.html#pkgcheck.checks.python.PythonCheck">[docs]</a><span class="k">class</span> <span class="nc">PythonCheck</span><span class="p">(</span><span class="n">Check</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Python eclass checks.</span>
+
+<span class="sd">    Check whether Python eclasses are used for Python packages, and whether</span>
+<span class="sd">    they don&#39;t suffer from common mistakes.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span>
+        <span class="n">MissingPythonEclass</span><span class="p">,</span> <span class="n">PythonMissingRequiredUse</span><span class="p">,</span>
+        <span class="n">PythonMissingDeps</span><span class="p">,</span> <span class="n">PythonRuntimeDepInAnyR1</span><span class="p">,</span> <span class="n">PythonEclassError</span><span class="p">,</span>
+    <span class="p">])</span>
+
+<div class="viewcode-block" id="PythonCheck.scan_tree_recursively"><a class="viewcode-back" href="../../../api/pkgcheck.checks.python.html#pkgcheck.checks.python.PythonCheck.scan_tree_recursively">[docs]</a>    <span class="k">def</span> <span class="nf">scan_tree_recursively</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">deptree</span><span class="p">,</span> <span class="n">expected_cls</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">deptree</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">expected_cls</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">scan_tree_recursively</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">expected_cls</span><span class="p">):</span>
+                    <span class="k">yield</span> <span class="n">y</span>
+        <span class="k">yield</span> <span class="n">deptree</span></div>
+
+<div class="viewcode-block" id="PythonCheck.check_required_use"><a class="viewcode-back" href="../../../api/pkgcheck.checks.python.html#pkgcheck.checks.python.PythonCheck.check_required_use">[docs]</a>    <span class="k">def</span> <span class="nf">check_required_use</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">requse</span><span class="p">,</span> <span class="n">flags</span><span class="p">,</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">container_cls</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">scan_tree_recursively</span><span class="p">(</span><span class="n">requse</span><span class="p">,</span>
+                                                <span class="n">values</span><span class="o">.</span><span class="n">ContainmentMatch2</span><span class="p">):</span>
+            <span class="c1"># pkgcore collapses single flag in ||/^^, so expect top-level flags</span>
+            <span class="c1"># when len(flags) == 1</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">flags</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">container_cls</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="n">matched</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">token</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">ContainmentMatch2</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">vals</span><span class="p">))</span>
+                <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">):</span>
+                    <span class="n">matched</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">prefix</span><span class="p">):])</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="n">container_cls</span><span class="p">):</span>
+                    <span class="c1"># skip the ||/^^ if it contains at least one foreign flag</span>
+                    <span class="k">break</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">flags</span> <span class="o">==</span> <span class="n">matched</span><span class="p">:</span>
+                    <span class="c1"># we found PYTHON_REQUIRED_USE, terminate</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="PythonCheck.check_depend"><a class="viewcode-back" href="../../../api/pkgcheck.checks.python.html#pkgcheck.checks.python.PythonCheck.check_depend">[docs]</a>    <span class="k">def</span> <span class="nf">check_depend</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">depend</span><span class="p">,</span> <span class="n">flags</span><span class="p">,</span> <span class="n">prefix</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">scan_tree_recursively</span><span class="p">(</span><span class="n">depend</span><span class="p">,</span> <span class="n">atom</span><span class="p">):</span>
+            <span class="n">matched</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">token</span><span class="p">:</span>
+                <span class="c1"># we are looking for USE-conditional on appropriate target</span>
+                <span class="c1"># flag, with dep on some interpreter</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">packages</span><span class="o">.</span><span class="n">Conditional</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="n">flag</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">restriction</span><span class="o">.</span><span class="n">vals</span><span class="p">))</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">flag</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">key</span> <span class="ow">in</span> <span class="n">INTERPRETERS</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">x</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">atom</span><span class="p">)):</span>
+                    <span class="k">continue</span>
+                <span class="n">matched</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">flag</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">prefix</span><span class="p">):])</span>
+            <span class="k">if</span> <span class="n">matched</span> <span class="o">==</span> <span class="n">flags</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="PythonCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.python.html#pkgcheck.checks.python.PythonCheck.feed">[docs]</a>    <span class="k">def</span> <span class="nf">feed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">eclass</span> <span class="o">=</span> <span class="n">get_python_eclass</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">PythonEclassError</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+            <span class="k">return</span>
+
+        <span class="k">if</span> <span class="n">eclass</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># virtual/pypy* need to be exempted as they serve as slot-matchers</span>
+            <span class="c1"># for other packages</span>
+            <span class="k">if</span> <span class="n">pkg</span><span class="o">.</span><span class="n">key</span> <span class="ow">in</span> <span class="n">CHECK_EXCLUDE</span><span class="p">:</span>
+                <span class="k">return</span>
+
+            <span class="c1"># check whether we should be using one</span>
+            <span class="n">highest_found</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">dep_keys</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">iflatten_instance</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="n">attr</span><span class="p">),</span> <span class="n">atom</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">blocks</span> <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">key</span> <span class="ow">in</span> <span class="n">INTERPRETERS</span><span class="p">:</span>
+                        <span class="n">highest_found</span> <span class="o">=</span> <span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+                        <span class="c1"># break scanning packages, go to next attr</span>
+                        <span class="k">break</span>
+
+            <span class="k">if</span> <span class="n">highest_found</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">attr</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">highest_found</span>
+                <span class="k">if</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;rdepend&quot;</span><span class="p">,</span> <span class="s2">&quot;pdepend&quot;</span><span class="p">):</span>
+                    <span class="n">recomm</span> <span class="o">=</span> <span class="s2">&quot;python-r1 or python-single-r1&quot;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">recomm</span> <span class="o">=</span> <span class="s2">&quot;python-any-r1&quot;</span>
+                <span class="k">yield</span> <span class="n">MissingPythonEclass</span><span class="p">(</span><span class="n">recomm</span><span class="p">,</span> <span class="n">attr</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">eclass</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;python-r1&#39;</span><span class="p">,</span> <span class="s1">&#39;python-single-r1&#39;</span><span class="p">):</span>
+            <span class="c1"># grab Python implementations from IUSE</span>
+            <span class="n">iuse</span> <span class="o">=</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s1">&#39;+-&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">pkg</span><span class="o">.</span><span class="n">iuse</span><span class="p">]</span>
+            <span class="n">flags</span> <span class="o">=</span> <span class="p">{</span><span class="n">x</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">IUSE_PREFIX</span><span class="p">):]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">iuse</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">IUSE_PREFIX</span><span class="p">)}</span>
+            <span class="n">s_flags</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">x</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">IUSE_PREFIX_S</span><span class="p">):]</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">iuse</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">IUSE_PREFIX_S</span><span class="p">)}</span>
+
+            <span class="k">if</span> <span class="n">eclass</span> <span class="o">==</span> <span class="s1">&#39;python-r1&#39;</span><span class="p">:</span>
+                <span class="n">req_use_args</span> <span class="o">=</span> <span class="p">(</span><span class="n">flags</span><span class="p">,</span> <span class="n">IUSE_PREFIX</span><span class="p">,</span> <span class="n">OrRestriction</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">req_use_args</span> <span class="o">=</span> <span class="p">(</span><span class="n">s_flags</span><span class="p">,</span> <span class="n">IUSE_PREFIX_S</span><span class="p">,</span> <span class="n">JustOneRestriction</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_required_use</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">required_use</span><span class="p">,</span> <span class="o">*</span><span class="n">req_use_args</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">PythonMissingRequiredUse</span><span class="p">(</span><span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_depend</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">rdepend</span><span class="p">,</span> <span class="o">*</span><span class="p">(</span><span class="n">req_use_args</span><span class="p">[:</span><span class="mi">2</span><span class="p">])):</span>
+                <span class="k">yield</span> <span class="n">PythonMissingDeps</span><span class="p">(</span><span class="s1">&#39;RDEPEND&#39;</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># python-any-r1</span>
+            <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;rdepend&quot;</span><span class="p">,</span> <span class="s2">&quot;pdepend&quot;</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">iflatten_instance</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="n">attr</span><span class="p">),</span> <span class="n">atom</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">blocks</span> <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">key</span> <span class="ow">in</span> <span class="n">INTERPRETERS</span><span class="p">:</span>
+                        <span class="k">yield</span> <span class="n">PythonRuntimeDepInAnyR1</span><span class="p">(</span><span class="n">attr</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="nb">str</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+                        <span class="k">break</span>
+            <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;depend&quot;</span><span class="p">,</span> <span class="s2">&quot;bdepend&quot;</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">iflatten_instance</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="n">attr</span><span class="p">),</span> <span class="n">atom</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">blocks</span> <span class="ow">and</span> <span class="n">p</span><span class="o">.</span><span class="n">key</span> <span class="ow">in</span> <span class="n">INTERPRETERS</span><span class="p">:</span>
+                        <span class="k">break</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="k">break</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">PythonMissingDeps</span><span class="p">(</span><span class="s1">&#39;DEPEND&#39;</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="PythonCompatUpdate"><a class="viewcode-back" href="../../../api/pkgcheck.checks.python.html#pkgcheck.checks.python.PythonCompatUpdate">[docs]</a><span class="k">class</span> <span class="nc">PythonCompatUpdate</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Info</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;PYTHON_COMPAT can be updated to support newer python version(s).&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">updates</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">updates</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">updates</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">updates</span><span class="p">)</span>
+        <span class="n">updates</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">updates</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s1">&#39;PYTHON_COMPAT update</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1"> available: </span><span class="si">{</span><span class="n">updates</span><span class="si">}</span><span class="s1">&#39;</span></div>
+
+
+<div class="viewcode-block" id="PythonCompatCheck"><a class="viewcode-back" href="../../../api/pkgcheck.checks.python.html#pkgcheck.checks.python.PythonCompatCheck">[docs]</a><span class="k">class</span> <span class="nc">PythonCompatCheck</span><span class="p">(</span><span class="n">Check</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Check python ebuilds for possible PYTHON_COMPAT updates.</span>
+
+<span class="sd">    Supports ebuilds inheriting python-r1, python-single-r1, and python-any-r1.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">known_results</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">([</span><span class="n">PythonCompatUpdate</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">repo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">target_repo</span>
+
+        <span class="c1"># determine available PYTHON_TARGET use flags</span>
+        <span class="n">targets</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">target</span><span class="p">,</span> <span class="n">_desc</span> <span class="ow">in</span> <span class="n">repo</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">use_expand_desc</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">IUSE_PREFIX</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="p">()):</span>
+            <span class="k">if</span> <span class="n">target</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">IUSE_PREFIX</span><span class="p">):]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;python&#39;</span><span class="p">):</span>
+                <span class="n">targets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">target</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">IUSE_PREFIX</span><span class="p">):])</span>
+        <span class="n">multi_targets</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">targets</span><span class="p">))</span>
+
+        <span class="c1"># determine available PYTHON_SINGLE_TARGET use flags</span>
+        <span class="n">targets</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">target</span><span class="p">,</span> <span class="n">_desc</span> <span class="ow">in</span> <span class="n">repo</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">use_expand_desc</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">IUSE_PREFIX_S</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="p">()):</span>
+            <span class="k">if</span> <span class="n">target</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">IUSE_PREFIX_S</span><span class="p">):]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;python&#39;</span><span class="p">):</span>
+                <span class="n">targets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">target</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">IUSE_PREFIX_S</span><span class="p">):])</span>
+        <span class="n">single_targets</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">targets</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;python-r1&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">multi_targets</span><span class="p">,</span> <span class="n">IUSE_PREFIX</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="s1">&#39;python-single-r1&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">single_targets</span><span class="p">,</span> <span class="n">IUSE_PREFIX_S</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="s1">&#39;python-any-r1&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">multi_targets</span><span class="p">,</span> <span class="p">(</span><span class="n">IUSE_PREFIX</span><span class="p">,</span> <span class="n">IUSE_PREFIX_S</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;depend&#39;</span><span class="p">,</span> <span class="s1">&#39;bdepend&#39;</span><span class="p">)),</span>
+        <span class="p">}</span>
+
+<div class="viewcode-block" id="PythonCompatCheck.python_deps"><a class="viewcode-back" href="../../../api/pkgcheck.checks.python.html#pkgcheck.checks.python.PythonCompatCheck.python_deps">[docs]</a>    <span class="k">def</span> <span class="nf">python_deps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">deps</span><span class="p">,</span> <span class="n">prefix</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">dep</span> <span class="ow">in</span> <span class="p">(</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">deps</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">use</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">dep</span><span class="o">.</span><span class="n">use</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;!&#39;</span><span class="p">)):</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">):</span>
+                    <span class="k">yield</span> <span class="n">dep</span><span class="o">.</span><span class="n">no_usedeps</span>
+                    <span class="k">break</span></div>
+
+<div class="viewcode-block" id="PythonCompatCheck.deps"><a class="viewcode-back" href="../../../api/pkgcheck.checks.python.html#pkgcheck.checks.python.PythonCompatCheck.deps">[docs]</a>    <span class="k">def</span> <span class="nf">deps</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">attrs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set of dependencies for a given package&#39;s attributes.&quot;&quot;&quot;</span>
+        <span class="n">attrs</span> <span class="o">=</span> <span class="n">attrs</span> <span class="k">if</span> <span class="n">attrs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">pkg</span><span class="o">.</span><span class="n">eapi</span><span class="o">.</span><span class="n">dep_keys</span>
+        <span class="n">deps</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">attrs</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">iflatten_instance</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="n">attr</span><span class="p">),</span> <span class="n">atom</span><span class="p">):</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">p</span><span class="o">.</span><span class="n">blocks</span><span class="p">:</span>
+                    <span class="n">deps</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">deps</span></div>
+
+<div class="viewcode-block" id="PythonCompatCheck.feed"><a class="viewcode-back" href="../../../api/pkgcheck.checks.python.html#pkgcheck.checks.python.PythonCompatCheck.feed">[docs]</a>    <span class="k">def</span> <span class="nf">feed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">eclass</span> <span class="o">=</span> <span class="n">get_python_eclass</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span>
+            <span class="n">available_targets</span><span class="p">,</span> <span class="n">prefix</span><span class="p">,</span> <span class="n">attrs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="p">[</span><span class="n">eclass</span><span class="p">]</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">KeyError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+            <span class="k">return</span>
+
+        <span class="n">deps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">deps</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="n">attrs</span><span class="o">=</span><span class="n">attrs</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># determine the latest supported python version</span>
+            <span class="n">latest_target</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;python</span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">slot</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="s1">&#39;_&#39;</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">deps</span>
+                <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">key</span> <span class="o">==</span> <span class="s1">&#39;dev-lang/python&#39;</span> <span class="ow">and</span> <span class="n">x</span><span class="o">.</span><span class="n">slot</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+            <span class="c1"># should be flagged by PythonMissingDeps</span>
+            <span class="k">return</span>
+
+        <span class="c1"># ignore pkgs that probably aren&#39;t py3 compatible</span>
+        <span class="k">if</span> <span class="n">latest_target</span> <span class="o">==</span> <span class="s1">&#39;python2_7&#39;</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c1"># determine python impls to target</span>
+        <span class="n">targets</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">takewhile</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span> <span class="o">!=</span> <span class="n">latest_target</span><span class="p">,</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">available_targets</span><span class="p">)))</span>
+
+        <span class="k">if</span> <span class="n">targets</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># determine if deps support missing python targets</span>
+                <span class="k">for</span> <span class="n">dep</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">python_deps</span><span class="p">(</span><span class="n">deps</span><span class="p">,</span> <span class="n">prefix</span><span class="p">):</span>
+                    <span class="c1"># TODO: use query caching for repo matching?</span>
+                    <span class="n">latest</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">search_repo</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">dep</span><span class="p">))[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                    <span class="n">targets</span><span class="o">.</span><span class="n">intersection_update</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;python</span><span class="si">{</span><span class="n">x</span><span class="o">.</span><span class="n">rsplit</span><span class="p">(</span><span class="s1">&#39;python&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                        <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">latest</span><span class="o">.</span><span class="n">iuse_stripped</span> <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span><span class="p">))</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">targets</span><span class="p">:</span>
+                        <span class="k">return</span>
+            <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+                <span class="k">return</span>
+
+            <span class="k">yield</span> <span class="n">PythonCompatUpdate</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">targets</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span></div></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../checks.html" >pkgcheck.checks</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.checks.python</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,7 @@
+pkgcheck.checks.metadata module
+===============================
+
+.. automodule:: pkgcheck.checks.metadata
+   :members:
+   :undoc-members:
+   :show-inheritance:

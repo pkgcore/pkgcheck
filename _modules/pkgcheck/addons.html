@@ -1,0 +1,411 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pkgcheck.addons &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" accesskey="U">Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.addons</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for pkgcheck.addons</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Addon functionality shared by multiple checkers.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span><span class="p">,</span> <span class="n">filterfalse</span>
+
+<span class="kn">from</span> <span class="nn">pkgcore.ebuild</span> <span class="kn">import</span> <span class="n">misc</span>
+<span class="kn">from</span> <span class="nn">pkgcore.ebuild</span> <span class="kn">import</span> <span class="n">profiles</span> <span class="k">as</span> <span class="n">profiles_mod</span>
+<span class="kn">from</span> <span class="nn">pkgcore.restrictions</span> <span class="kn">import</span> <span class="n">packages</span>
+<span class="kn">from</span> <span class="nn">snakeoil.cli</span> <span class="kn">import</span> <span class="n">arghparse</span>
+<span class="kn">from</span> <span class="nn">snakeoil.osutils</span> <span class="kn">import</span> <span class="n">pjoin</span>
+<span class="kn">from</span> <span class="nn">snakeoil.sequences</span> <span class="kn">import</span> <span class="n">iflatten_instance</span>
+<span class="kn">from</span> <span class="nn">snakeoil.strings</span> <span class="kn">import</span> <span class="n">pluralism</span>
+<span class="kn">from</span> <span class="nn">tree_sitter</span> <span class="kn">import</span> <span class="n">Language</span><span class="p">,</span> <span class="n">Parser</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">base</span><span class="p">,</span> <span class="n">caches</span><span class="p">,</span> <span class="n">const</span><span class="p">,</span> <span class="n">results</span>
+<span class="kn">from</span> <span class="nn">.base</span> <span class="kn">import</span> <span class="n">PkgcheckUserException</span>
+<span class="kn">from</span> <span class="nn">.log</span> <span class="kn">import</span> <span class="n">logger</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">build_library</span>
+
+
+<div class="viewcode-block" id="ArchesArgs"><a class="viewcode-back" href="../../api/pkgcheck.addons.html#pkgcheck.addons.ArchesArgs">[docs]</a><span class="k">class</span> <span class="nc">ArchesArgs</span><span class="p">(</span><span class="n">arghparse</span><span class="o">.</span><span class="n">CommaSeparatedNegations</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Parse arches args for the ArchesAddon.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parser</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">option_string</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">disabled</span><span class="p">,</span> <span class="n">enabled</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parse_values</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="n">all_arches</span> <span class="o">=</span> <span class="n">namespace</span><span class="o">.</span><span class="n">target_repo</span><span class="o">.</span><span class="n">known_arches</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">enabled</span><span class="p">:</span>
+            <span class="c1"># enable all non-prefix arches</span>
+            <span class="n">enabled</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">arch</span> <span class="k">for</span> <span class="n">arch</span> <span class="ow">in</span> <span class="n">all_arches</span> <span class="k">if</span> <span class="s1">&#39;-&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">arch</span><span class="p">)</span>
+
+        <span class="n">arches</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">enabled</span><span class="p">)</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">disabled</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">all_arches</span> <span class="ow">and</span> <span class="p">(</span><span class="n">unknown_arches</span> <span class="o">:=</span> <span class="n">arches</span><span class="o">.</span><span class="n">difference</span><span class="p">(</span><span class="n">all_arches</span><span class="p">)):</span>
+            <span class="n">es</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="n">unknown_arches</span><span class="p">,</span> <span class="n">plural</span><span class="o">=</span><span class="s1">&#39;es&#39;</span><span class="p">)</span>
+            <span class="n">unknown</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">unknown_arches</span><span class="p">)</span>
+            <span class="n">valid</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">all_arches</span><span class="p">))</span>
+            <span class="n">parser</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;unknown arch</span><span class="si">{</span><span class="n">es</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">unknown</span><span class="si">}</span><span class="s1"> (valid arches: </span><span class="si">{</span><span class="n">valid</span><span class="si">}</span><span class="s1">)&#39;</span><span class="p">)</span>
+
+        <span class="c1"># check if any selected arch only has experimental profiles</span>
+        <span class="k">for</span> <span class="n">arch</span> <span class="ow">in</span> <span class="n">arches</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s1">&#39;exp&#39;</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">namespace</span><span class="o">.</span><span class="n">target_repo</span><span class="o">.</span><span class="n">profiles</span> <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">arch</span> <span class="o">==</span> <span class="n">arch</span><span class="p">):</span>
+                <span class="n">namespace</span><span class="o">.</span><span class="n">exp_profiles_required</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">break</span>
+
+        <span class="n">arches</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">arches</span><span class="p">)</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">namespace</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dest</span><span class="p">,</span> <span class="n">arches</span><span class="p">)</span>
+        <span class="n">namespace</span><span class="o">.</span><span class="n">arches</span> <span class="o">=</span> <span class="n">arches</span></div>
+
+
+<div class="viewcode-block" id="ArchesAddon"><a class="viewcode-back" href="../../api/pkgcheck.addons.html#pkgcheck.addons.ArchesAddon">[docs]</a><span class="k">class</span> <span class="nc">ArchesAddon</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">Addon</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Addon supporting ebuild repository architectures.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ArchesAddon.mangle_argparser"><a class="viewcode-back" href="../../api/pkgcheck.addons.html#pkgcheck.addons.ArchesAddon.mangle_argparser">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">mangle_argparser</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">parser</span><span class="p">):</span>
+        <span class="n">group</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_argument_group</span><span class="p">(</span><span class="s1">&#39;arches&#39;</span><span class="p">)</span>
+        <span class="n">group</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+            <span class="s1">&#39;-a&#39;</span><span class="p">,</span> <span class="s1">&#39;--arches&#39;</span><span class="p">,</span> <span class="n">dest</span><span class="o">=</span><span class="s1">&#39;selected_arches&#39;</span><span class="p">,</span> <span class="n">metavar</span><span class="o">=</span><span class="s1">&#39;ARCH&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="p">(),</span>
+            <span class="n">action</span><span class="o">=</span><span class="n">arghparse</span><span class="o">.</span><span class="n">Delayed</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="n">ArchesArgs</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s1">&#39;comma separated list of arches to enable/disable&#39;</span><span class="p">,</span>
+            <span class="n">docs</span><span class="o">=</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                Comma separated list of arches to enable and disable.</span>
+
+<span class="s2">                To specify disabled arches prefix them with &#39;-&#39;. Note that when</span>
+<span class="s2">                starting the argument list with a disabled arch an equals sign</span>
+<span class="s2">                must be used, e.g. -a=-arch, otherwise the disabled arch</span>
+<span class="s2">                argument is treated as an option.</span>
+
+<span class="s2">                By default all repo defined arches are used; however,</span>
+<span class="s2">                stable-related checks (e.g. UnstableOnly) default to the set of</span>
+<span class="s2">                arches having stable profiles in the target repo.</span>
+<span class="s2">            &quot;&quot;&quot;</span><span class="p">)</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">bind_delayed_default</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="s1">&#39;arches&#39;</span><span class="p">)(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_default_arches</span><span class="p">)</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_default_arches</span><span class="p">(</span><span class="n">namespace</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Use all known arches by default.&quot;&quot;&quot;</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">namespace</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">namespace</span><span class="o">.</span><span class="n">target_repo</span><span class="o">.</span><span class="n">known_arches</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="KeywordsAddon"><a class="viewcode-back" href="../../api/pkgcheck.addons.html#pkgcheck.addons.KeywordsAddon">[docs]</a><span class="k">class</span> <span class="nc">KeywordsAddon</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">Addon</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Addon supporting various keywords sets.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">special</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;-*&#39;</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">arches</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">target_repo</span><span class="o">.</span><span class="n">known_arches</span>
+        <span class="n">unstable</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;~&#39;</span> <span class="o">+</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">arches</span><span class="p">}</span>
+        <span class="n">disabled</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;-&#39;</span> <span class="o">+</span> <span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">chain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">arches</span><span class="p">,</span> <span class="n">unstable</span><span class="p">)}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">valid</span> <span class="o">=</span> <span class="n">special</span> <span class="o">|</span> <span class="bp">self</span><span class="o">.</span><span class="n">arches</span> <span class="o">|</span> <span class="n">unstable</span> <span class="o">|</span> <span class="n">disabled</span>
+        <span class="c1"># Note: &#39;*&#39; and &#39;~*&#39; are portage-only, i.e. not in the spec, so they</span>
+        <span class="c1"># don&#39;t belong in the main tree.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">portage</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;*&#39;</span><span class="p">,</span> <span class="s1">&#39;~*&#39;</span><span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="StableArchesAddon"><a class="viewcode-back" href="../../api/pkgcheck.addons.html#pkgcheck.addons.StableArchesAddon">[docs]</a><span class="k">class</span> <span class="nc">StableArchesAddon</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">Addon</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Addon supporting stable architectures.&quot;&quot;&quot;</span>
+
+    <span class="n">required_addons</span> <span class="o">=</span> <span class="p">(</span><span class="n">ArchesAddon</span><span class="p">,)</span>
+
+<div class="viewcode-block" id="StableArchesAddon.mangle_argparser"><a class="viewcode-back" href="../../api/pkgcheck.addons.html#pkgcheck.addons.StableArchesAddon.mangle_argparser">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">mangle_argparser</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">parser</span><span class="p">):</span>
+        <span class="n">parser</span><span class="o">.</span><span class="n">bind_delayed_default</span><span class="p">(</span><span class="mi">1001</span><span class="p">,</span> <span class="s1">&#39;stable_arches&#39;</span><span class="p">)(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_default_stable_arches</span><span class="p">)</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_default_stable_arches</span><span class="p">(</span><span class="n">namespace</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Determine set of stable arches to use.&quot;&quot;&quot;</span>
+        <span class="n">target_repo</span> <span class="o">=</span> <span class="n">namespace</span><span class="o">.</span><span class="n">target_repo</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">namespace</span><span class="o">.</span><span class="n">selected_arches</span><span class="p">:</span>
+            <span class="c1"># use known stable arches (GLEP 72) if arches aren&#39;t specified</span>
+            <span class="n">stable_arches</span> <span class="o">=</span> <span class="n">target_repo</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">arches_desc</span><span class="p">[</span><span class="s1">&#39;stable&#39;</span><span class="p">]</span>
+            <span class="c1"># fallback to determining stable arches from profiles.desc if arches.desc doesn&#39;t exist</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">stable_arches</span><span class="p">:</span>
+                <span class="n">stable_arches</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="o">*</span><span class="p">(</span>
+                    <span class="n">repo</span><span class="o">.</span><span class="n">profiles</span><span class="o">.</span><span class="n">arches</span><span class="p">(</span><span class="s1">&#39;stable&#39;</span><span class="p">)</span> <span class="k">for</span> <span class="n">repo</span> <span class="ow">in</span> <span class="n">target_repo</span><span class="o">.</span><span class="n">trees</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">stable_arches</span> <span class="o">=</span> <span class="n">namespace</span><span class="o">.</span><span class="n">arches</span>
+
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">namespace</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">stable_arches</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="UnstatedIuse"><a class="viewcode-back" href="../../api/pkgcheck.addons.html#pkgcheck.addons.UnstatedIuse">[docs]</a><span class="k">class</span> <span class="nc">UnstatedIuse</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">VersionResult</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">Error</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Package is reliant on conditionals that aren&#39;t in IUSE.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">flags</span><span class="p">,</span> <span class="n">profile</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">num_profiles</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attr</span> <span class="o">=</span> <span class="n">attr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">flags</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">flags</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">profile</span> <span class="o">=</span> <span class="n">profile</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_profiles</span> <span class="o">=</span> <span class="n">num_profiles</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">desc</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;attr(</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">attr</span><span class="si">}</span><span class="s1">)&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">profile</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_profiles</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">num_profiles</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39; (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">num_profiles</span><span class="si">}</span><span class="s1"> total)&#39;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">num_profiles</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+            <span class="n">msg</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;profile </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">profile</span><span class="si">!r}{</span><span class="n">num_profiles</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+        <span class="n">flags</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flags</span><span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pluralism</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">flags</span><span class="p">)</span>
+        <span class="n">msg</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="sa">f</span><span class="s1">&#39;unstated flag</span><span class="si">{</span><span class="n">s</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;[ </span><span class="si">{</span><span class="n">flags</span><span class="si">}</span><span class="s1"> ]&#39;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="s1">&#39;: &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="UseAddon"><a class="viewcode-back" href="../../api/pkgcheck.addons.html#pkgcheck.addons.UseAddon">[docs]</a><span class="k">class</span> <span class="nc">UseAddon</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">Addon</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Addon supporting USE flag functionality.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">target_repo</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">target_repo</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">profiles</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">target_repo</span><span class="o">.</span><span class="n">profiles</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">profiles</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">target_repo</span><span class="o">.</span><span class="n">profiles</span><span class="o">.</span><span class="n">create_profile</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">load_profile_base</span><span class="o">=</span><span class="kc">False</span><span class="p">))</span>
+            <span class="k">except</span> <span class="n">profiles_mod</span><span class="o">.</span><span class="n">ProfileError</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+        <span class="c1"># TODO: Figure out if there is a more efficient method to determine a</span>
+        <span class="c1"># repo&#39;s global implicit iuse while avoiding profiles cache usage. The</span>
+        <span class="c1"># cache shouldn&#39;t be used in order to avoid cache regens when</span>
+        <span class="c1"># performing scanning actions on specific profile files since the</span>
+        <span class="c1"># current ProfilesCheck uses this addon.</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">profiles</span><span class="p">:</span>
+            <span class="n">c_implicit_iuse</span> <span class="o">=</span> <span class="nb">set</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="o">*</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">iuse_effective</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">profiles</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">c_implicit_iuse</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="n">known_iuse</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">known_iuse_expand</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">repo</span> <span class="ow">in</span> <span class="n">target_repo</span><span class="o">.</span><span class="n">trees</span><span class="p">:</span>
+            <span class="n">known_iuse</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">flag</span> <span class="k">for</span> <span class="n">matcher</span><span class="p">,</span> <span class="p">(</span><span class="n">flag</span><span class="p">,</span> <span class="n">desc</span><span class="p">)</span> <span class="ow">in</span> <span class="n">repo</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">use_desc</span><span class="p">)</span>
+            <span class="n">known_iuse_expand</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+                <span class="n">flag</span> <span class="k">for</span> <span class="n">flags</span> <span class="ow">in</span> <span class="n">repo</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">use_expand_desc</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">flag</span><span class="p">,</span> <span class="n">desc</span> <span class="ow">in</span> <span class="n">flags</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">collapsed_iuse</span> <span class="o">=</span> <span class="n">misc</span><span class="o">.</span><span class="n">non_incremental_collapsed_restrict_to_data</span><span class="p">(</span>
+            <span class="p">((</span><span class="n">packages</span><span class="o">.</span><span class="n">AlwaysTrue</span><span class="p">,</span> <span class="n">known_iuse</span><span class="p">),),</span>
+            <span class="p">((</span><span class="n">packages</span><span class="o">.</span><span class="n">AlwaysTrue</span><span class="p">,</span> <span class="n">known_iuse_expand</span><span class="p">),),</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">global_iuse</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">known_iuse</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">global_iuse_expand</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">known_iuse_expand</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">global_iuse_implicit</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">c_implicit_iuse</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ignore</span> <span class="o">=</span> <span class="ow">not</span> <span class="p">(</span><span class="n">c_implicit_iuse</span> <span class="ow">or</span> <span class="n">known_iuse</span> <span class="ow">or</span> <span class="n">known_iuse_expand</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ignore</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s1">&#39;disabling use/iuse validity checks since no usable &#39;</span>
+                <span class="s1">&#39;use.desc and use.local.desc were found&#39;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="UseAddon.allowed_iuse"><a class="viewcode-back" href="../../api/pkgcheck.addons.html#pkgcheck.addons.UseAddon.allowed_iuse">[docs]</a>    <span class="k">def</span> <span class="nf">allowed_iuse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">collapsed_iuse</span><span class="o">.</span><span class="n">pull_data</span><span class="p">(</span><span class="n">pkg</span><span class="p">)</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">pkg</span><span class="o">.</span><span class="n">local_use</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="UseAddon.get_filter"><a class="viewcode-back" href="../../api/pkgcheck.addons.html#pkgcheck.addons.UseAddon.get_filter">[docs]</a>    <span class="k">def</span> <span class="nf">get_filter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">ignore</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fake_use_validate</span>
+        <span class="k">if</span> <span class="n">attr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">use_validate</span><span class="p">,</span> <span class="n">attr</span><span class="o">=</span><span class="n">attr</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_validate</span></div>
+
+<div class="viewcode-block" id="UseAddon.fake_use_validate"><a class="viewcode-back" href="../../api/pkgcheck.addons.html#pkgcheck.addons.UseAddon.fake_use_validate">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">fake_use_validate</span><span class="p">(</span><span class="n">klasses</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">seq</span><span class="p">,</span> <span class="n">attr</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="p">()</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">iflatten_instance</span><span class="p">(</span><span class="n">seq</span><span class="p">,</span> <span class="n">klasses</span><span class="p">)},</span> <span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">_flatten_restricts</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">,</span> <span class="n">skip_filter</span><span class="p">,</span> <span class="n">stated</span><span class="p">,</span> <span class="n">unstated</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">restricts</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="n">node</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">restricts</span> <span class="k">if</span> <span class="n">restricts</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">packages</span><span class="o">.</span><span class="n">Conditional</span><span class="p">):</span>
+                <span class="c1"># invert it; get only whats not in pkg.iuse</span>
+                <span class="n">unstated</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">filterfalse</span><span class="p">(</span><span class="n">stated</span><span class="o">.</span><span class="fm">__contains__</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">restriction</span><span class="o">.</span><span class="n">vals</span><span class="p">))</span>
+                <span class="n">v</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">restriction</span><span class="p">)</span>
+                <span class="k">yield from</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flatten_restricts</span><span class="p">(</span>
+                    <span class="n">iflatten_instance</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">payload</span><span class="p">,</span> <span class="n">skip_filter</span><span class="p">),</span>
+                    <span class="n">skip_filter</span><span class="p">,</span> <span class="n">stated</span><span class="p">,</span> <span class="n">unstated</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="k">elif</span> <span class="n">attr</span> <span class="o">==</span> <span class="s1">&#39;required_use&#39;</span><span class="p">:</span>
+                <span class="n">unstated</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">filterfalse</span><span class="p">(</span><span class="n">stated</span><span class="o">.</span><span class="fm">__contains__</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">vals</span><span class="p">))</span>
+            <span class="k">yield</span> <span class="n">k</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_unstated_iuse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">unstated_iuse</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Determine if packages use unstated IUSE for a given attribute.&quot;&quot;&quot;</span>
+        <span class="c1"># determine profiles lacking USE flags</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">profiles</span><span class="p">:</span>
+            <span class="n">profiles_unstated</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">attr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">profiles</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">profile_unstated</span> <span class="o">:=</span> <span class="n">unstated_iuse</span> <span class="o">-</span> <span class="n">p</span><span class="o">.</span><span class="n">iuse_effective</span><span class="p">:</span>
+                        <span class="n">profiles_unstated</span><span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">profile_unstated</span><span class="p">))]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">unstated</span><span class="p">,</span> <span class="n">profiles</span> <span class="ow">in</span> <span class="n">profiles_unstated</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">profiles</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">profiles</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">verbosity</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">profiles</span><span class="p">:</span>
+                        <span class="k">yield</span> <span class="n">UnstatedIuse</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">unstated</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">num_profiles</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">profiles</span><span class="p">)</span>
+                    <span class="k">yield</span> <span class="n">UnstatedIuse</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">unstated</span><span class="p">,</span> <span class="n">profiles</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">num_profiles</span><span class="p">,</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">unstated_iuse</span><span class="p">:</span>
+            <span class="c1"># Remove global defined implicit USE flags, note that standalone</span>
+            <span class="c1"># repos without profiles will currently lack any implicit IUSE.</span>
+            <span class="n">unstated_iuse</span> <span class="o">-=</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_iuse_implicit</span>
+            <span class="k">if</span> <span class="n">unstated_iuse</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">UnstatedIuse</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">unstated_iuse</span><span class="p">),</span> <span class="n">pkg</span><span class="o">=</span><span class="n">pkg</span><span class="p">)</span>
+
+<div class="viewcode-block" id="UseAddon.use_validate"><a class="viewcode-back" href="../../api/pkgcheck.addons.html#pkgcheck.addons.UseAddon.use_validate">[docs]</a>    <span class="k">def</span> <span class="nf">use_validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">klasses</span><span class="p">,</span> <span class="n">pkg</span><span class="p">,</span> <span class="n">seq</span><span class="p">,</span> <span class="n">attr</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">skip_filter</span> <span class="o">=</span> <span class="p">(</span><span class="n">packages</span><span class="o">.</span><span class="n">Conditional</span><span class="p">,)</span> <span class="o">+</span> <span class="n">klasses</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="n">iflatten_instance</span><span class="p">(</span><span class="n">seq</span><span class="p">,</span> <span class="n">skip_filter</span><span class="p">)</span>
+        <span class="n">unstated</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_flatten_restricts</span><span class="p">(</span>
+            <span class="n">nodes</span><span class="p">,</span> <span class="n">skip_filter</span><span class="p">,</span> <span class="n">stated</span><span class="o">=</span><span class="n">pkg</span><span class="o">.</span><span class="n">iuse_stripped</span><span class="p">,</span> <span class="n">unstated</span><span class="o">=</span><span class="n">unstated</span><span class="p">,</span> <span class="n">attr</span><span class="o">=</span><span class="n">attr</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">vals</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unstated_iuse</span><span class="p">(</span><span class="n">pkg</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="n">unstated</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="NetAddon"><a class="viewcode-back" href="../../api/pkgcheck.addons.html#pkgcheck.addons.NetAddon">[docs]</a><span class="k">class</span> <span class="nc">NetAddon</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">Addon</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Addon supporting network functionality.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="NetAddon.mangle_argparser"><a class="viewcode-back" href="../../api/pkgcheck.addons.html#pkgcheck.addons.NetAddon.mangle_argparser">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">mangle_argparser</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">parser</span><span class="p">):</span>
+        <span class="n">group</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_argument_group</span><span class="p">(</span><span class="s1">&#39;network&#39;</span><span class="p">)</span>
+        <span class="n">group</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+            <span class="s1">&#39;--timeout&#39;</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;5&#39;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s1">&#39;timeout used for network checks&#39;</span><span class="p">)</span>
+        <span class="n">group</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+            <span class="s1">&#39;--user-agent&#39;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">&#39;Wget/1.20.3 (linux-gnu)&#39;</span><span class="p">,</span>
+            <span class="n">help</span><span class="o">=</span><span class="s1">&#39;custom user agent spoofing&#39;</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">session</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span> <span class="nn">.net</span> <span class="kn">import</span> <span class="n">Session</span>
+            <span class="k">return</span> <span class="n">Session</span><span class="p">(</span>
+                <span class="n">concurrent</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">tasks</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">timeout</span><span class="p">,</span>
+                <span class="n">user_agent</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">user_agent</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;requests&#39;</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">PkgcheckUserException</span><span class="p">(</span><span class="s1">&#39;network checks require requests to be installed&#39;</span><span class="p">)</span>
+            <span class="k">raise</span></div>
+
+
+<div class="viewcode-block" id="BashAddon"><a class="viewcode-back" href="../../api/pkgcheck.addons.html#pkgcheck.addons.BashAddon">[docs]</a><span class="k">class</span> <span class="nc">BashAddon</span><span class="p">(</span><span class="n">base</span><span class="o">.</span><span class="n">Addon</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Addon supporting parsing bash code.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">lib_path</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">),</span> <span class="s1">&#39;_bash-lang.so&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">lib_path</span><span class="p">):</span>  <span class="c1"># pragma: no cover</span>
+            <span class="c1"># dynamically build lib when running in git repo</span>
+            <span class="n">bash_lib</span> <span class="o">=</span> <span class="n">pjoin</span><span class="p">(</span><span class="n">const</span><span class="o">.</span><span class="n">REPO_PATH</span><span class="p">,</span> <span class="s1">&#39;tree-sitter-bash&#39;</span><span class="p">)</span>
+            <span class="n">build_library</span><span class="p">(</span><span class="n">lib_path</span><span class="p">,</span> <span class="p">[</span><span class="n">bash_lib</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">bash</span> <span class="o">=</span> <span class="n">Language</span><span class="p">(</span><span class="n">lib_path</span><span class="p">,</span> <span class="s1">&#39;bash&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">query</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bash</span><span class="o">.</span><span class="n">query</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parser</span> <span class="o">=</span> <span class="n">Parser</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parser</span><span class="o">.</span><span class="n">set_language</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bash</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="init_addon"><a class="viewcode-back" href="../../api/pkgcheck.addons.html#pkgcheck.addons.init_addon">[docs]</a><span class="k">def</span> <span class="nf">init_addon</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">addons_map</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Initialize a given addon.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">addons_map</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">addons_map</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">addon</span> <span class="o">=</span> <span class="n">addons_map</span><span class="p">[</span><span class="bp">cls</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="c1"># initialize and inject all required addons for a given addon&#39;s inheritance</span>
+        <span class="c1"># tree as kwargs</span>
+        <span class="n">required_addons</span> <span class="o">=</span> <span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span>
+            <span class="n">x</span><span class="o">.</span><span class="n">required_addons</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__mro__</span> <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">Addon</span><span class="p">))</span>
+        <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span>
+            <span class="n">base</span><span class="o">.</span><span class="n">param_name</span><span class="p">(</span><span class="n">addon</span><span class="p">):</span> <span class="n">init_addon</span><span class="p">(</span><span class="n">addon</span><span class="p">,</span> <span class="n">options</span><span class="p">,</span> <span class="n">addons_map</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">addon</span> <span class="ow">in</span> <span class="n">required_addons</span><span class="p">})</span>
+
+        <span class="c1"># verify the cache type is enabled</span>
+        <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">caches</span><span class="o">.</span><span class="n">CachedAddon</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">options</span><span class="o">.</span><span class="n">cache</span><span class="p">[</span><span class="bp">cls</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">type</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="n">caches</span><span class="o">.</span><span class="n">CacheDisabled</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">cache</span><span class="p">)</span>
+
+        <span class="n">addon</span> <span class="o">=</span> <span class="n">addons_map</span><span class="p">[</span><span class="bp">cls</span><span class="p">]</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c1"># force cache updates</span>
+        <span class="n">force_cache</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">options</span><span class="p">,</span> <span class="s1">&#39;force_cache&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">addon</span><span class="p">,</span> <span class="n">caches</span><span class="o">.</span><span class="n">CachedAddon</span><span class="p">):</span>
+            <span class="n">addon</span><span class="o">.</span><span class="n">update_cache</span><span class="p">(</span><span class="n">force</span><span class="o">=</span><span class="n">force_cache</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">addon</span></div>
+</pre></div>
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcheck master documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">pkgcheck.addons</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

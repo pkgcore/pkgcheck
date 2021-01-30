@@ -1,0 +1,157 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reporters &#8212; pkgcheck master documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head><body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Reporters</a></li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="reporters">
+<h1>Reporters<a class="headerlink" href="#reporters" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="csvreporter">
+<h2>CsvReporter<a class="headerlink" href="#csvreporter" title="Permalink to this headline">¶</a></h2>
+<p>Comma-separated value reporter, convenient for shell processing.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">,,,</span><span class="s2">&quot;global USE flag &#39;big-endian&#39; is a potential local, used by 1 package: dev-java/icedtea-bin&quot;</span>
+<span class="n">sys</span><span class="o">-</span><span class="n">apps</span><span class="p">,</span><span class="n">portage</span><span class="p">,</span><span class="mf">2.1</span><span class="o">-</span><span class="n">r2</span><span class="p">,</span><span class="n">sys</span><span class="o">-</span><span class="n">apps</span><span class="o">/</span><span class="n">portage</span><span class="o">-</span><span class="mf">2.1</span><span class="o">-</span><span class="n">r2</span><span class="o">.</span><span class="n">ebuild</span> <span class="n">has</span> <span class="n">whitespace</span> <span class="ow">in</span> <span class="n">indentation</span> <span class="n">on</span> <span class="n">line</span> <span class="mi">169</span>
+<span class="n">sys</span><span class="o">-</span><span class="n">apps</span><span class="p">,</span><span class="n">portage</span><span class="p">,</span><span class="mf">2.1</span><span class="o">-</span><span class="n">r2</span><span class="p">,</span><span class="s2">&quot;rdepend  ppc-macos: unsolvable default-darwin/macos/10.4, solutions: [ &gt;=app-misc/pax-utils-0.1.13 ]&quot;</span>
+<span class="n">sys</span><span class="o">-</span><span class="n">apps</span><span class="p">,</span><span class="n">portage</span><span class="p">,</span><span class="mf">2.1</span><span class="o">-</span><span class="n">r2</span><span class="p">,</span><span class="s2">&quot;no change in 75 days, keywords [ ~x86-fbsd ]&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="fancyreporter">
+<h2>FancyReporter<a class="headerlink" href="#fancyreporter" title="Permalink to this headline">¶</a></h2>
+<p>Colored output grouped by result scope.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sys</span><span class="o">-</span><span class="n">apps</span><span class="o">/</span><span class="n">portage</span>
+  <span class="n">WrongIndentFound</span><span class="p">:</span> <span class="n">sys</span><span class="o">-</span><span class="n">apps</span><span class="o">/</span><span class="n">portage</span><span class="o">-</span><span class="mf">2.1</span><span class="o">-</span><span class="n">r2</span><span class="o">.</span><span class="n">ebuild</span> <span class="n">has</span> <span class="n">whitespace</span> <span class="ow">in</span> <span class="n">indentation</span> <span class="n">on</span> <span class="n">line</span> <span class="mi">169</span>
+  <span class="n">NonsolvableDeps</span><span class="p">:</span> <span class="n">sys</span><span class="o">-</span><span class="n">apps</span><span class="o">/</span><span class="n">portage</span><span class="o">-</span><span class="mf">2.1</span><span class="o">-</span><span class="n">r2</span><span class="p">:</span> <span class="n">rdepend</span>  <span class="n">ppc</span><span class="o">-</span><span class="n">macos</span><span class="p">:</span> <span class="n">unsolvable</span> <span class="n">default</span><span class="o">-</span><span class="n">darwin</span><span class="o">/</span><span class="n">macos</span><span class="o">/</span><span class="mf">10.4</span><span class="p">,</span> <span class="n">solutions</span><span class="p">:</span> <span class="p">[</span> <span class="o">&gt;=</span><span class="n">app</span><span class="o">-</span><span class="n">misc</span><span class="o">/</span><span class="n">pax</span><span class="o">-</span><span class="n">utils</span><span class="o">-</span><span class="mf">0.1</span><span class="o">.</span><span class="mi">13</span> <span class="p">]</span>
+  <span class="n">StableRequest</span><span class="p">:</span> <span class="n">sys</span><span class="o">-</span><span class="n">apps</span><span class="o">/</span><span class="n">portage</span><span class="o">-</span><span class="mf">2.1</span><span class="o">-</span><span class="n">r2</span><span class="p">:</span> <span class="n">no</span> <span class="n">change</span> <span class="ow">in</span> <span class="mi">75</span> <span class="n">days</span><span class="p">,</span> <span class="n">keywords</span> <span class="p">[</span> <span class="o">~</span><span class="n">x86</span> <span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="formatreporter">
+<h2>FormatReporter<a class="headerlink" href="#formatreporter" title="Permalink to this headline">¶</a></h2>
+<p>Custom format string reporter.</p>
+</div>
+<div class="section" id="jsonreporter">
+<h2>JsonReporter<a class="headerlink" href="#jsonreporter" title="Permalink to this headline">¶</a></h2>
+<p>Feed of newline-delimited JSON records.</p>
+<p>Note that the format is newline-delimited JSON with each line being related
+to a separate report. To merge the objects together a tool such as jq can
+be leveraged similar to the following:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">jq</span> <span class="o">-</span><span class="n">c</span> <span class="o">-</span><span class="n">s</span> <span class="s1">&#39;reduce.[]as$x(</span><span class="si">{}</span><span class="s1">;.*$x)&#39;</span> <span class="n">orig</span><span class="o">.</span><span class="n">json</span> <span class="o">&gt;</span> <span class="n">new</span><span class="o">.</span><span class="n">json</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="jsonstream">
+<h2>JsonStream<a class="headerlink" href="#jsonstream" title="Permalink to this headline">¶</a></h2>
+<p>Generate a stream of result objects serialized in JSON.</p>
+</div>
+<div class="section" id="strreporter">
+<h2>StrReporter<a class="headerlink" href="#strreporter" title="Permalink to this headline">¶</a></h2>
+<p>Simple string reporter, pkgcheck-0.1 behaviour.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sys</span><span class="o">-</span><span class="n">apps</span><span class="o">/</span><span class="n">portage</span><span class="o">-</span><span class="mf">2.1</span><span class="o">-</span><span class="n">r2</span><span class="p">:</span> <span class="n">sys</span><span class="o">-</span><span class="n">apps</span><span class="o">/</span><span class="n">portage</span><span class="o">-</span><span class="mf">2.1</span><span class="o">-</span><span class="n">r2</span><span class="o">.</span><span class="n">ebuild</span> <span class="n">has</span> <span class="n">whitespace</span> <span class="ow">in</span> <span class="n">indentation</span> <span class="n">on</span> <span class="n">line</span> <span class="mi">169</span>
+<span class="n">sys</span><span class="o">-</span><span class="n">apps</span><span class="o">/</span><span class="n">portage</span><span class="o">-</span><span class="mf">2.1</span><span class="o">-</span><span class="n">r2</span><span class="p">:</span> <span class="n">rdepend</span>  <span class="n">ppc</span><span class="o">-</span><span class="n">macos</span><span class="p">:</span> <span class="n">unsolvable</span> <span class="n">default</span><span class="o">-</span><span class="n">darwin</span><span class="o">/</span><span class="n">macos</span><span class="o">/</span><span class="mf">10.4</span><span class="p">,</span> <span class="n">solutions</span><span class="p">:</span> <span class="p">[</span> <span class="o">&gt;=</span><span class="n">app</span><span class="o">-</span><span class="n">misc</span><span class="o">/</span><span class="n">pax</span><span class="o">-</span><span class="n">utils</span><span class="o">-</span><span class="mf">0.1</span><span class="o">.</span><span class="mi">13</span> <span class="p">]</span>
+<span class="n">sys</span><span class="o">-</span><span class="n">apps</span><span class="o">/</span><span class="n">portage</span><span class="o">-</span><span class="mf">2.1</span><span class="o">-</span><span class="n">r2</span><span class="p">:</span> <span class="n">no</span> <span class="n">change</span> <span class="ow">in</span> <span class="mi">75</span> <span class="n">days</span><span class="p">,</span> <span class="n">keywords</span> <span class="p">[</span> <span class="o">~</span><span class="n">x86</span><span class="o">-</span><span class="n">fbsd</span> <span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="xmlreporter">
+<h2>XmlReporter<a class="headerlink" href="#xmlreporter" title="Permalink to this headline">¶</a></h2>
+<p>Feed of newline-delimited XML reports.</p>
+</div>
+</div>
+
+
+            <div class="clearer"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../../index.html">Table of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Reporters</a><ul>
+<li><a class="reference internal" href="#csvreporter">CsvReporter</a></li>
+<li><a class="reference internal" href="#fancyreporter">FancyReporter</a></li>
+<li><a class="reference internal" href="#formatreporter">FormatReporter</a></li>
+<li><a class="reference internal" href="#jsonreporter">JsonReporter</a></li>
+<li><a class="reference internal" href="#jsonstream">JsonStream</a></li>
+<li><a class="reference internal" href="#strreporter">StrReporter</a></li>
+<li><a class="reference internal" href="#xmlreporter">XmlReporter</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/man/pkgcheck/reporters.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">pkgcheck master documentation</a> &#187;</li>
+        <li class="nav-item nav-item-this"><a href="">Reporters</a></li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2006-2019, pkgcheck contributors.
+      Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 3.4.3.
+    </div>
+  </body>
+</html>

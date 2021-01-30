@@ -1,0 +1,7 @@
+pkgcheck.checks.git module
+==========================
+
+.. automodule:: pkgcheck.checks.git
+   :members:
+   :undoc-members:
+   :show-inheritance:
