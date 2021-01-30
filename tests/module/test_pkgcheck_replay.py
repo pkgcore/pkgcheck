@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pytest
 from pkgcheck import __title__ as project
-from pkgcheck import reporters
+from pkgcheck.reporters import JsonStream
 from pkgcheck.checks.profiles import ProfileWarning
 from pkgcheck.scripts import run
 from snakeoil.formatters import PlainTextFormatter
@@ -34,34 +34,32 @@ class TestPkgcheckReplay:
 
     def test_replay(self, capsys):
         result = ProfileWarning('profile warning: foo')
-        for reporter_cls in (reporters.BinaryPickleStream, reporters.JsonStream):
-            with tempfile.NamedTemporaryFile() as f:
-                out = PlainTextFormatter(f)
-                with reporter_cls(out) as reporter:
-                    reporter.report(result)
-                with patch('sys.argv', self.args + ['-R', 'StrReporter', f.name]):
-                    with pytest.raises(SystemExit) as excinfo:
-                        self.script()
-                    out, err = capsys.readouterr()
-                    assert not err
-                    assert out == 'profile warning: foo\n'
-                    assert excinfo.value.code == 0
+        with tempfile.NamedTemporaryFile() as f:
+            out = PlainTextFormatter(f)
+            with JsonStream(out) as reporter:
+                reporter.report(result)
+            with patch('sys.argv', self.args + ['-R', 'StrReporter', f.name]):
+                with pytest.raises(SystemExit) as excinfo:
+                    self.script()
+                out, err = capsys.readouterr()
+                assert not err
+                assert out == 'profile warning: foo\n'
+                assert excinfo.value.code == 0
 
     def test_corrupted_resuts(self, capsys):
         result = ProfileWarning('profile warning: foo')
-        for reporter_cls in (reporters.BinaryPickleStream, reporters.JsonStream):
-            with tempfile.NamedTemporaryFile() as f:
-                out = PlainTextFormatter(f)
-                with reporter_cls(out) as reporter:
-                    reporter.report(result)
-                f.write(b'corrupted')
-                f.seek(0)
-                with patch('sys.argv', self.args + ['-R', 'StrReporter', f.name]):
-                    with pytest.raises(SystemExit) as excinfo:
-                        self.script()
-                    out, err = capsys.readouterr()
-                    assert 'corrupted results file' in err
-                    assert excinfo.value.code == 2
+        with tempfile.NamedTemporaryFile() as f:
+            out = PlainTextFormatter(f)
+            with JsonStream(out) as reporter:
+                reporter.report(result)
+            f.write(b'corrupted')
+            f.seek(0)
+            with patch('sys.argv', self.args + ['-R', 'StrReporter', f.name]):
+                with pytest.raises(SystemExit) as excinfo:
+                    self.script()
+                out, err = capsys.readouterr()
+                assert 'corrupted results file' in err
+                assert excinfo.value.code == 2
 
     def test_invalid_file(self, capsys):
         with tempfile.NamedTemporaryFile(mode='wt') as f:
@@ -78,14 +76,13 @@ class TestPkgcheckReplay:
         repo_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
         script = os.path.join(repo_dir, 'bin', 'pkgcheck')
         result = ProfileWarning('profile warning: foo')
-        for reporter_cls in (reporters.BinaryPickleStream, reporters.JsonStream):
-            with tempfile.NamedTemporaryFile() as f:
-                out = PlainTextFormatter(f)
-                with reporter_cls(out) as reporter:
-                    reporter.report(result)
-                f.seek(0)
-                p = subprocess.run(
-                    [script, 'replay', '-R', 'StrReporter', '-'],
-                    stdin=f, stdout=subprocess.PIPE)
-                assert p.stdout.decode() == 'profile warning: foo\n'
-                assert p.returncode == 0
+        with tempfile.NamedTemporaryFile() as f:
+            out = PlainTextFormatter(f)
+            with JsonStream(out) as reporter:
+                reporter.report(result)
+            f.seek(0)
+            p = subprocess.run(
+                [script, 'replay', '-R', 'StrReporter', '-'],
+                stdin=f, stdout=subprocess.PIPE)
+            assert p.stdout.decode() == 'profile warning: foo\n'
+            assert p.returncode == 0

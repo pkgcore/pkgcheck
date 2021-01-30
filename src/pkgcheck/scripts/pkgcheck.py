@@ -604,9 +604,7 @@ replay = subparsers.add_parser(
     'replay', parents=(reporter_argparser,),
     description='replay result streams',
     docs="""
-        Replay previous result streams, feeding the results into a reporter.
-        Currently supports replaying streams from PickleStream or JsonStream
-        reporters.
+        Replay previous json result streams, feeding the results into a reporter.
 
         Useful if you need to delay acting on results until it can be done in
         one minimal window, e.g. updating a database, or want to generate
@@ -619,9 +617,8 @@ replay.add_argument(
 
 @replay.bind_main_func
 def _replay(options, out, err):
-    # assume JSON encoded file, fallback to pickle format
     processed = 0
-    exc = None
+
     with options.reporter(out) as reporter:
         try:
             for result in reporters.JsonStream.from_iter(options.results):
@@ -629,21 +626,9 @@ def _replay(options, out, err):
                 processed += 1
         except reporters.DeserializationError as e:
             if not processed:
-                options.results.seek(0)
-                try:
-                    for result in reporters.PickleStream.from_file(options.results):
-                        reporter.report(result)
-                        processed += 1
-                except reporters.DeserializationError as e:
-                    exc = e
-            else:
-                exc = e
-
-    if exc:
-        if not processed:
-            raise PkgcheckUserException('invalid or unsupported replay file')
-        raise PkgcheckUserException(
-            f'corrupted results file {options.results.name!r}: {exc}')
+                raise PkgcheckUserException('invalid or unsupported replay file')
+            raise PkgcheckUserException(
+                f'corrupted results file {options.results.name!r}: {e}')
 
     return 0
 
