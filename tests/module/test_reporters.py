@@ -1,12 +1,10 @@
-import io
 import json
-import pickle
 import sys
 from functools import partial
 from textwrap import dedent
 
 import pytest
-from pkgcheck import base, reporters, results
+from pkgcheck import base, reporters
 from pkgcheck.checks import git, metadata, metadata_xml, pkgdir, profiles
 from pkgcore.test.misc import FakePkg
 from snakeoil.formatters import PlainTextFormatter
@@ -137,55 +135,6 @@ class TestFormatReporter(BaseReporter):
             with pytest.raises(base.PkgcheckUserException) as excinfo:
                 reporter.report(self.versioned_result)
             assert 'integer indexes are not supported' in str(excinfo.value)
-
-
-class UnPickleableResult(results.Result):
-
-    def __init__(self):
-        self.func = lambda x: x
-
-
-class TestPickleStream(BaseReporter):
-
-    reporter_cls = reporters.PickleStream
-
-    def test_add_report(self, capsysbinary):
-        with self.mk_reporter() as reporter:
-            for result in (
-                    self.log_warning, self.log_error, self.commit_result,
-                    self.category_result, self.package_result, self.versioned_result):
-                reporter.report(result)
-                out, err = capsysbinary.readouterr()
-                assert not err
-                deserialized_result = next(reporter.from_file(io.BytesIO(out)))
-                assert str(deserialized_result) == str(result)
-
-    def test_unpickleable_result(self):
-        result = UnPickleableResult()
-        with self.mk_reporter() as reporter:
-            with pytest.raises(TypeError):
-                reporter.report(result)
-
-    def test_deserialize_error(self):
-        with self.mk_reporter() as reporter:
-            obj = pickle.dumps(object(), protocol=reporter.protocol)
-
-            # deserializing non-result objects raises exception
-            with pytest.raises(reporters.DeserializationError, match='invalid data type'):
-                next(reporter.from_file(io.BytesIO(obj)))
-
-            # pickle loading TypeError raises exception
-            with pytest.raises(reporters.DeserializationError, match='failed unpickling result'):
-                next(reporter.from_file(io.StringIO('result')))
-
-            # generic unpickling error raises exception
-            with pytest.raises(reporters.DeserializationError, match='failed unpickling result'):
-                next(reporter.from_file(io.BytesIO(b'result')))
-
-
-class TestBinaryPickleStream(TestPickleStream):
-
-    reporter_cls = reporters.BinaryPickleStream
 
 
 class TestJsonStream(BaseReporter):

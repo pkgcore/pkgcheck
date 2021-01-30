@@ -2,12 +2,10 @@
 
 import csv
 import json
-import pickle
 from collections import defaultdict
 from string import Formatter
 from xml.sax.saxutils import escape as xml_escape
 
-from snakeoil import pickling
 from snakeoil.decorators import coroutine
 
 from . import base
@@ -305,54 +303,3 @@ class JsonStream(Reporter):
         while True:
             result = (yield)
             self.out.write(json.dumps(result, default=self.to_json))
-
-
-class PickleStream(Reporter):
-    """Generate a stream of pickled objects using the original pickling protocol.
-
-    For each specific target for checks, a header is pickled detailing the
-    checks used, possible results, and search criteria.
-
-    This reporter uses the original "human-readable" protocol that is backwards
-    compatible with earlier versions of Python.
-    """
-    priority = -1001
-    protocol = 0
-
-    def _start(self):
-        self.out.wrap = False
-        self.out.autoline = False
-
-    @staticmethod
-    def from_file(f):
-        """Deserialize results from a given file handle."""
-        try:
-            for result in pickling.iter_stream(f):
-                if isinstance(result, Result):
-                    yield result
-                else:
-                    raise DeserializationError(f'invalid data type: {result!r}')
-        except (pickle.UnpicklingError, TypeError) as e:
-            raise DeserializationError('failed unpickling result') from e
-
-    @coroutine
-    def _process_report(self):
-        while True:
-            result = (yield)
-            try:
-                pickle.dump(result, self.out.stream, self.protocol)
-            except (AttributeError, TypeError) as e:
-                raise TypeError(result, str(e))
-
-
-class BinaryPickleStream(PickleStream):
-    """Dump a binary pickle stream using the highest pickling protocol.
-
-    Unlike `PickleStream`_ which uses the most compatible pickling protocol
-    available, this uses the newest version so it won't be compatible with
-    older versions of Python.
-
-    For more details of the stream, see `PickleStream`_.
-    """
-    priority = -1002
-    protocol = -1
