@@ -18,7 +18,7 @@ class Result:
     """Generic report result returned from a check."""
 
     # all results are shown by default
-    filtered = False
+    _filtered = False
     # default to repository level results
     scope = base.repo_scope
     # priority level, color, name, and profile type
@@ -199,7 +199,7 @@ class VersionResult(PackageResult):
 
     def __init__(self, pkg, **kwargs):
         if isinstance(pkg, FilteredPkg):
-            self.filtered = True
+            self._filtered = True
             pkg = pkg._pkg
         super().__init__(pkg, **kwargs)
         self.version = pkg.fullver
