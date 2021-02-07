@@ -8,7 +8,7 @@ from functools import partial
 from lxml import etree
 from pkgcore.fetch import fetchable
 
-from .. import addons, base, results, sources
+from .. import addons, results, sources
 from . import NetworkCheck
 
 
