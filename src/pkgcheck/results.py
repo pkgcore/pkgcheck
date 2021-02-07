@@ -47,15 +47,15 @@ class Result:
     @classmethod
     def _create(cls, **kwargs):
         """Create a new result object from a given attributes dict."""
+        category = kwargs.pop('category', None)
+        package = kwargs.pop('package', None)
+        version = kwargs.pop('version', None)
         if 'pkg' not in kwargs and issubclass(cls, CategoryResult):
             # recreate pkg param from related, separated attributes
-            category = kwargs.pop('category', None)
             if category is None:
                 raise InvalidResult('missing category')
-            package = kwargs.pop('package', None)
             if issubclass(cls, PackageResult) and package is None:
                 raise InvalidResult('missing package')
-            version = kwargs.pop('version', None)
             if issubclass(cls, VersionResult) and version is None:
                 raise InvalidResult('missing version')
             kwargs['pkg'] = RawCPV(category, package, version)
