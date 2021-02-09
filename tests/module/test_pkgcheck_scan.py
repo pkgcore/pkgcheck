@@ -216,23 +216,6 @@ class TestPkgcheckScanParseArgs:
             options, _ = tool.parse_args(['scan'])
             assert options.cwd == const.DATA_PATH
 
-    def test_conflicting_scan_scopes(self, capsys, fakerepo, tool):
-        """Multiple targets can't specify different scopes."""
-        with pytest.raises(SystemExit) as excinfo:
-            tool.parse_args(['scan', fakerepo, 'cat/pkg'])
-        assert excinfo.value.code == 2
-        out, err = capsys.readouterr()
-        err = err.strip().split('\n')
-        assert err[-1].startswith(
-            "pkgcheck scan: error: targets specify multiple scan scope levels: package, repo")
-
-    def test_collapsed_restrictions(self, tool):
-        """Multiple targets get collapsed into one restriction to run in parallel."""
-        options, _ = tool.parse_args(['scan', 'cat/pkg1', 'cat/pkg2'])
-        scope, restrict = list(options.restrictions)[0]
-        assert scope == base.package_scope
-        assert restrict.restrictions == (atom.atom('cat/pkg1'), atom.atom('cat/pkg2'))
-
     def test_eclass_target(self, fakerepo, tool):
         os.makedirs(pjoin(fakerepo, 'eclass'))
         eclass_path = pjoin(fakerepo, 'eclass', 'foo.eclass')
