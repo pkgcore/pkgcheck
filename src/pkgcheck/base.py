@@ -18,7 +18,6 @@ from dataclasses import dataclass
 from functools import partial
 from itertools import chain
 
-from pkgcore.restrictions import values
 from snakeoil.cli.exceptions import UserException
 from snakeoil.contexts import patch
 from snakeoil.mappings import ImmutableDict
@@ -190,20 +189,6 @@ def param_name(cls):
     For example, GitAddon -> git_addon and GitCache -> git_cache.
     """
     return re.sub(r'([a-z])([A-Z])', r'\1_\2', cls.__name__).lower()
-
-
-def contains(obj_set, obj):
-    """Stub method for matching objects against a given set.
-
-    Used to create pickleable scanning restrictions.
-    """
-    return obj in obj_set
-
-
-def contains_restriction(objs):
-    """Generate a restriction for a given iterable of hashable objects."""
-    func = partial(contains, frozenset(objs))
-    return values.AnyMatch(values.FunctionRestriction(func))
 
 
 @dataclass(frozen=True)
