@@ -15,7 +15,7 @@ from operator import attrgetter
 from pkgcore import const as pkgcore_const
 from pkgcore.repository import errors as repo_errors
 from pkgcore.repository import multiplex
-from pkgcore.restrictions import boolean, packages
+from pkgcore.restrictions import packages
 from pkgcore.restrictions.util import collect_package_restrictions
 from pkgcore.util import commandline, parserestrict
 from snakeoil.cli import arghparse
@@ -485,18 +485,6 @@ def _determine_restrictions(namespace, attr):
         restrictions = list(generate_restricts(namespace.target_repo, namespace.targets))
         if not restrictions:
             raise PkgcheckUserException('no targets')
-
-        # collapse restrictions in order to run them in parallel
-        if len(restrictions) > 1:
-            # multiple targets are restricted to a single scanning scope
-            scopes = {scope for scope, restrict in restrictions}
-            if len(scopes) > 1:
-                scan_scopes = ', '.join(sorted(s.desc for s in scopes))
-                raise PkgcheckUserException(
-                    f'targets specify multiple scan scope levels: {scan_scopes}')
-
-            combined_restrict = boolean.OrRestriction(*(r for s, r in restrictions))
-            restrictions = [(scopes.pop(), combined_restrict)]
     else:
         if namespace.cwd in namespace.target_repo:
             scope, restrict = _path_restrict(namespace.cwd, namespace.target_repo)
