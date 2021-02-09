@@ -480,23 +480,23 @@ def _default_filtered_keywords(namespace, attr):
 def _determine_restrictions(namespace, attr):
     """Determine restrictions for untargeted scans and generate collapsed restriction for targeted scans."""
     if namespace.targets:
-        # Collapse restrictions for passed in targets while keeping the
-        # generator intact for piped in targets.
-        restrictions = generate_restricts(namespace.target_repo, namespace.targets)
-        if isinstance(namespace.targets, list):
-            restrictions = list(restrictions)
+        # Generate restrictions for all targets. Note that this blocks scanning
+        # until piped-in targets are read.
+        restrictions = list(generate_restricts(namespace.target_repo, namespace.targets))
+        if not restrictions:
+            raise PkgcheckUserException('no targets')
 
-            # collapse restrictions in order to run them in parallel
-            if len(restrictions) > 1:
-                # multiple targets are restricted to a single scanning scope
-                scopes = {scope for scope, restrict in restrictions}
-                if len(scopes) > 1:
-                    scan_scopes = ', '.join(sorted(s.desc for s in scopes))
-                    raise PkgcheckUserException(
-                        f'targets specify multiple scan scope levels: {scan_scopes}')
+        # collapse restrictions in order to run them in parallel
+        if len(restrictions) > 1:
+            # multiple targets are restricted to a single scanning scope
+            scopes = {scope for scope, restrict in restrictions}
+            if len(scopes) > 1:
+                scan_scopes = ', '.join(sorted(s.desc for s in scopes))
+                raise PkgcheckUserException(
+                    f'targets specify multiple scan scope levels: {scan_scopes}')
 
-                combined_restrict = boolean.OrRestriction(*(r for s, r in restrictions))
-                restrictions = [(scopes.pop(), combined_restrict)]
+            combined_restrict = boolean.OrRestriction(*(r for s, r in restrictions))
+            restrictions = [(scopes.pop(), combined_restrict)]
     else:
         if namespace.cwd in namespace.target_repo:
             scope, restrict = _path_restrict(namespace.cwd, namespace.target_repo)
@@ -515,7 +515,7 @@ def _scan(options, out, err):
         reporter = options.reporter(out)
         for c in options.pop('contexts') + [reporter]:
             stack.enter_context(c)
-        pipe = Pipeline(options, options.restrictions)
+        pipe = Pipeline(options)
         for result in pipe:
             reporter.report(result)
     return int(bool(pipe.errors))

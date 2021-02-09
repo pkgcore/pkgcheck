@@ -28,22 +28,17 @@ class Pipeline:
     group to end when an exception is raised.
     """
 
-    def __init__(self, options, restrictions):
+    def __init__(self, options):
         self.options = options
         # number of error results encountered (used with --exit option)
         self.errors = 0
-
-        # Note that this blocks scanning until piped-in targets are read.
-        restrictions = list(restrictions)
-        if not restrictions:
-            raise base.PkgcheckUserException('no targets piped in')
 
         # pkgcheck currently requires the fork start method (#254)
         self._mp_ctx = multiprocessing.get_context('fork')
         self._results_q = self._mp_ctx.SimpleQueue()
 
         # create checkrunners
-        self._pipes = self._create_runners(restrictions)
+        self._pipes = self._create_runners()
 
         # initialize settings used by iterator support
         self._pid = None
@@ -85,7 +80,7 @@ class Pipeline:
                 # package level.
                 yield check
 
-    def _create_runners(self, restrictions):
+    def _create_runners(self):
         """Initialize and categorize checkrunners for results pipeline."""
         runner_cls = {'async': AsyncCheckRunner, 'sync': SyncCheckRunner}
         pipes = {'async': [], 'sync': []}
@@ -94,7 +89,7 @@ class Pipeline:
         addons_map = {}
         source_map = {}
 
-        for scope, restriction in restrictions:
+        for scope, restriction in self.options.restrictions:
             # initialize enabled checks
             addons = list(base.get_addons(self._filter_checks(scope)))
             if not addons:
