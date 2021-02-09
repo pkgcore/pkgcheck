@@ -87,13 +87,10 @@ class Pipeline:
 
     def _create_runners(self, restrictions):
         """Initialize and categorize checkrunners for results pipeline."""
-        # Initialize checkrunners per source type using separate runner for
-        # async checks and categorize them for parallelization based on the
-        # scan and source scope.
         runner_cls = {'async': AsyncCheckRunner, 'sync': SyncCheckRunner}
         pipes = {'async': [], 'sync': []}
 
-        # addon and source cache to avoid re-initializing objects
+        # use addon/source caches to avoid re-initializing objects
         addons_map = {}
         source_map = {}
 
@@ -107,6 +104,9 @@ class Pipeline:
                 addons, self.options, self._results_q,
                 addons_map=addons_map, source_map=source_map)
 
+            # Initialize checkrunners per source type using separate runner for
+            # async checks and categorize them for parallelization based on the
+            # scan and source scope.
             runners = {'sync': defaultdict(list), 'async': defaultdict(list)}
             for (source, exec_type), check_objs in checks.items():
                 runner = runner_cls[exec_type](self.options, source, check_objs)
