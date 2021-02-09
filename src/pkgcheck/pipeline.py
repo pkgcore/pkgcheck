@@ -34,8 +34,8 @@ class Pipeline:
         self.errors = 0
 
         # Note that this blocks scanning until piped-in targets are read.
-        self._restrictions = list(restrictions)
-        if not self._restrictions:
+        restrictions = list(restrictions)
+        if not restrictions:
             raise base.PkgcheckUserException('no targets piped in')
 
         # pkgcheck currently requires the fork start method (#254)
@@ -43,7 +43,7 @@ class Pipeline:
         self._results_q = self._mp_ctx.SimpleQueue()
 
         # create checkrunners
-        self._pipes = self._create_runners()
+        self._pipes = self._create_runners(restrictions)
 
         # initialize settings used by iterator support
         self._pid = None
@@ -85,7 +85,7 @@ class Pipeline:
                 # package level.
                 yield check
 
-    def _create_runners(self):
+    def _create_runners(self, restrictions):
         """Initialize and categorize checkrunners for results pipeline."""
         # Initialize checkrunners per source type using separate runner for
         # async checks and categorize them for parallelization based on the
@@ -97,7 +97,7 @@ class Pipeline:
         addons_map = {}
         source_map = {}
 
-        for scope, restriction in self._restrictions:
+        for scope, restriction in restrictions:
             # initialize enabled checks
             addons = list(base.get_addons(self._filter_checks(scope)))
             if not addons:
@@ -117,7 +117,7 @@ class Pipeline:
 
             for exec_type in pipes.keys():
                 if runners[exec_type]:
-                    pipes[exec_type].append(runners[exec_type])
+                    pipes[exec_type].append((restriction, runners[exec_type]))
 
         return pipes
 
@@ -171,8 +171,8 @@ class Pipeline:
 
     def _queue_work(self, sync_pipes, work_q):
         """Producer that queues scanning tasks against granular scope restrictions."""
-        for i, (_restrict_scope, restriction) in enumerate(self._restrictions):
-            for scope, runners in sync_pipes[i].items():
+        for i, (restriction, pipes) in enumerate(sync_pipes):
+            for scope, runners in pipes.items():
                 if scope == base.version_scope:
                     versioned_source = VersionedSource(self.options)
                     for restrict in versioned_source.itermatch(restriction):
@@ -197,12 +197,12 @@ class Pipeline:
                 results = []
 
                 if scope == base.version_scope:
-                    results.extend(pipes[pipe_idx][scope][runner_idx].run(restrict))
+                    results.extend(pipes[pipe_idx][1][scope][runner_idx].run(restrict))
                 elif scope in (base.package_scope, base.category_scope):
-                    for pipe in pipes[pipe_idx][scope]:
+                    for pipe in pipes[pipe_idx][1][scope]:
                         results.extend(pipe.run(restrict))
                 else:
-                    pipe = pipes[pipe_idx][scope][runner_idx]
+                    pipe = pipes[pipe_idx][1][scope][runner_idx]
                     pipe.start()
                     results.extend(pipe.run(restrict))
                     results.extend(pipe.finish())
@@ -220,8 +220,8 @@ class Pipeline:
             with ThreadPoolExecutor(max_workers=self.options.tasks) as executor:
                 # schedule any existing async checks
                 futures = {}
-                for i, (_restrict_scope, restriction) in enumerate(self._restrictions):
-                    for runner in chain.from_iterable(async_pipes[i].values()):
+                for restriction, pipes in async_pipes:
+                    for runner in chain.from_iterable(pipes.values()):
                         runner.schedule(executor, futures, restriction)
         except Exception:  # pragma: no cover
             # traceback can't be pickled so serialize it
