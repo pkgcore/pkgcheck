@@ -427,7 +427,7 @@ class TestPkgcheckScan:
 
     @pytest.mark.parametrize(
         'action, module',
-        (('run', 'tee'), ('producer', 'UnversionedSource'), ('consumer', 'SyncCheckRunner.run')))
+        (('producer', 'UnversionedSource'), ('consumer', 'SyncCheckRunner.run')))
     def test_pipeline_exceptions(self, action, module):
         """Test checkrunner pipeline against unhandled exceptions."""
         with patch(f'pkgcheck.pipeline.{module}') as faked:

@@ -354,6 +354,7 @@ def _setup_scan_defaults(parser, namespace):
     """Re-initialize default namespace settings per arg parsing run."""
     namespace.config_checksets = {}
     namespace.contexts = []
+    namespace.pkg_scan = False
 
 
 @scan.bind_pre_parse
@@ -499,6 +500,8 @@ def _determine_restrictions(namespace, attr):
     else:
         if namespace.cwd in namespace.target_repo:
             scope, restrict = _path_restrict(namespace.cwd, namespace.target_repo)
+            if scope == base.package_scope:
+                namespace.pkg_scan = True
         else:
             scope, restrict = base.repo_scope, packages.AlwaysTrue
         restrictions = [(scope, restrict)]
