@@ -31,4 +31,4 @@ def scan(args=None, /, *, base_args=None):
 
     with patch('argparse.ArgumentParser.exit', parser_exit):
         options = pkgcheck.argparser.parse_args(base_args + ['scan'] + args)
-    return Pipeline(options, options.restrictions)
+    return Pipeline(options)

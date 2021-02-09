@@ -362,7 +362,7 @@ class TestPkgcheckScan:
 
     def test_stdin_targets_with_no_args(self):
         with patch('sys.stdin', StringIO()):
-            with pytest.raises(base.PkgcheckUserException, match='no targets piped in'):
+            with pytest.raises(base.PkgcheckUserException, match='no targets'):
                 self.scan(self.scan_args + ['-'])
 
     def test_exit_status(self, repo):
