@@ -187,8 +187,8 @@ main_options.add_argument(
         arguments are the set of error level keywords.
 
         To specify disabled keywords prefix them with ``-``. Also, the special
-        arguments of ``error``, ``warning``, and ``info`` correspond to all
-        error, warning, and info keywords, respectively.
+        arguments of ``error``, ``warning``, ``style``, and ``info`` correspond
+        to the related keyword groups.
     """)
 
 
@@ -257,9 +257,9 @@ check_options.add_argument(
         be used, e.g. ``-k=-keyword``, otherwise the disabled keyword argument is
         treated as an option.
 
-        The special arguments of ``error``, ``warning``, and ``info``
-        correspond to the lists of error, warning, and info keywords,
-        respectively. For example, to only scan for errors use ``-k error``.
+        The special arguments of ``error``, ``warning``, ``style``, and
+        ``info`` correspond to the related keyword groups. For example, to only
+        scan for errors use ``-k error``.
 
         Use ``pkgcheck show --keywords`` to see available options.
     """)
