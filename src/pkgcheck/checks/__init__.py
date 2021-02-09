@@ -155,13 +155,16 @@ class SkipCheck(base.PkgcheckUserException):
         super().__init__(f'{check_name}: {msg}')
 
 
-def init_checks(enabled_addons, options, results_q):
+def init_checks(enabled_addons, options, results_q, *, addons_map=None, source_map=None):
     """Initialize selected checks."""
+    if addons_map is None:
+        addons_map = {}
+    if source_map is None:
+        source_map = {}
+
     enabled = defaultdict(list)
     # mapping of check skip overrides
     options.override_skip = defaultdict(list)
-    addons_map = {}
-    source_map = {}
 
     # initialize required caches before other addons
     enabled_addons = sorted(enabled_addons, key=lambda x: not issubclass(x, CachedAddon))
