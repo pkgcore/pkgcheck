@@ -3,6 +3,14 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.8.2 (2021-02-09)
+---------------------------
+
+- Generate checkrunners per target restriction (#279).
+
+- Fix result object re-creation issues (#276).
+
+---------------------------
 pkgcheck 0.8.1 (2021-01-28)
 ---------------------------
 
