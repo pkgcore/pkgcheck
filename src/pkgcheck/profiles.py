@@ -157,14 +157,14 @@ class ProfileAddon(caches.CachedAddon):
         self.profile_evaluate_dict = {}
 
         self.arch_profiles = defaultdict(list)
-        target_repo = self.options.target_repo
+        self.target_repo = self.options.target_repo
         ignore_deprecated = getattr(self.options, 'ignore_deprecated_profiles', True)
 
         for p in sorted(self.options.profiles):
             if p.deprecated and ignore_deprecated:
                 continue
             try:
-                profile = target_repo.profiles.create_profile(p, load_profile_base=False)
+                profile = self.target_repo.profiles.create_profile(p, load_profile_base=False)
             except profiles_mod.ProfileError as e:
                 # Only throw errors if the profile was selected by the user, bad
                 # repo profiles will be caught during repo metadata scans.
@@ -212,10 +212,10 @@ class ProfileAddon(caches.CachedAddon):
     def update_cache(self, force=False):
         """Update related cache and push updates to disk."""
         cached_profiles = defaultdict(dict)
-        official_arches = self.options.target_repo.known_arches
+        official_arches = self.target_repo.known_arches
 
         with base.ProgressManager(verbosity=self.options.verbosity) as progress:
-            for repo in self.options.target_repo.trees:
+            for repo in self.target_repo.trees:
                 cache_file = self.cache_file(repo)
                 # add profiles-base -> repo mapping to ease storage procedure
                 cached_profiles[repo.config.profiles_base]['repo'] = repo
@@ -321,7 +321,7 @@ class ProfileAddon(caches.CachedAddon):
                         # note that the cache/insoluble are inversly paired;
                         # stable cache is usable for unstable, but not vice versa.
                         # unstable insoluble is usable for stable, but not vice versa
-                        vfilter = domain.generate_filter(repo.pkg_masks | masks, unmasks)
+                        vfilter = domain.generate_filter(self.target_repo.pkg_masks | masks, unmasks)
                         self.profile_filters.setdefault(stable_key, []).append(ProfileData(
                             profile.path, stable_key,
                             provides_repo,
