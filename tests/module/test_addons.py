@@ -112,7 +112,7 @@ class Test_profile_data:
                       required_forced, cpv="dev-util/diffball-0.1",
                       key_override=None, data_override=None):
         profile_data = ProfileData(
-            "test-profile", key_override,
+            "test-repo", "test-profile", key_override,
             profile.provides_repo,
             packages.AlwaysFalse, profile.iuse_effective,
             profile.use, profile.pkg_use, profile.masked_use, profile.forced_use, {}, set(),

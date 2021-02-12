@@ -22,11 +22,12 @@ from .base import PkgcheckUserException
 
 class ProfileData:
 
-    def __init__(self, profile_name, key, provides, vfilter,
+    def __init__(self, repo, profile_name, key, provides, vfilter,
                  iuse_effective, use, pkg_use, masked_use, forced_use, lookup_cache, insoluble,
                  status, deprecated):
-        self.key = key
+        self.repo = repo
         self.name = profile_name
+        self.key = key
         self.provides_repo = provides
         self.provides_has_match = getattr(provides, 'has_match', provides.match)
         self.iuse_effective = iuse_effective
@@ -323,6 +324,7 @@ class ProfileAddon(caches.CachedAddon):
                         # unstable insoluble is usable for stable, but not vice versa
                         vfilter = domain.generate_filter(self.target_repo.pkg_masks | masks, unmasks)
                         self.profile_filters.setdefault(stable_key, []).append(ProfileData(
+                            repo.repo_id,
                             profile.path, stable_key,
                             provides_repo,
                             packages.AndRestriction(vfilter, stable_r),
@@ -336,6 +338,7 @@ class ProfileAddon(caches.CachedAddon):
                             profile.deprecated))
 
                         self.profile_filters.setdefault(unstable_key, []).append(ProfileData(
+                            repo.repo_id,
                             profile.path, unstable_key,
                             provides_repo,
                             packages.AndRestriction(vfilter, unstable_r),
