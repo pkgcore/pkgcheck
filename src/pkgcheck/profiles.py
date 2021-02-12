@@ -373,8 +373,8 @@ class ProfileAddon(caches.CachedAddon):
         # the use processing across each of 'em.
         groups = []
         keywords = pkg.keywords
-        unstable_keywords = tuple(f'~{x}' for x in keywords if x[0] != '~')
-        for key in keywords + unstable_keywords:
+        unstable_keywords = (f'~{x}' for x in keywords if x[0] != '~')
+        for key in chain(keywords, unstable_keywords):
             if profile_grps := self.profile_evaluate_dict.get(key):
                 for profiles in profile_grps:
                     if group := [x for x in profiles if x.visible(pkg)]:
