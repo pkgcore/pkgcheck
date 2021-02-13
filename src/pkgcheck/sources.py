@@ -162,8 +162,9 @@ class EclassRepoSource(RepoSource):
         self.eclass_dir = pjoin(self.repo.location, 'eclass')
 
     def itermatch(self, restrict, **kwargs):
-        if isinstance(restrict, Set):
-            # --commits or path restriction
+        if isinstance(restrict, str):
+            eclasses = {restrict}.intersection(self.eclasses)
+        elif isinstance(restrict, Set):
             eclasses = sorted(restrict.intersection(self.eclasses))
         else:
             # matching all eclasses
@@ -193,8 +194,10 @@ class ProfilesRepoSource(RepoSource):
         self._prefix_len = len(self.repo.location.rstrip(os.sep)) + 1
 
     def itermatch(self, restrict, **kwargs):
-        if isinstance(restrict, Set):
-            # --commits or path restriction
+        if isinstance(restrict, str):
+            root = pjoin(self.repo.location, os.path.dirname(restrict))
+            yield Profile(ProfileNode(root), {os.path.basename(restrict)})
+        elif isinstance(restrict, Set):
             paths = defaultdict(list)
             for x in restrict:
                 paths[pjoin(self.repo.location, os.path.dirname(x))].append(os.path.basename(x))
