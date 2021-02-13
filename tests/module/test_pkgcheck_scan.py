@@ -221,8 +221,7 @@ class TestPkgcheckScanParseArgs:
         eclass_path = pjoin(fakerepo, 'eclass', 'foo.eclass')
         touch(eclass_path)
         options, _ = tool.parse_args(['scan', eclass_path])
-        scope, restrict = list(options.restrictions)[0]
-        assert scope == base.eclass_scope
+        assert list(options.restrictions) == [(base.eclass_scope, frozenset(['foo']))]
 
     def test_profiles_target(self, fakerepo, tool):
         profiles_path = pjoin(fakerepo, 'profiles')
