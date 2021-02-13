@@ -3,6 +3,24 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.9.0 (2021-??-??)
+---------------------------
+
+- Drop metadata.xml indentation and empty element results from
+  warning to style level.
+
+- Drop BadDescription and RedundantLongDescription result levels
+  from warning to style.
+
+- Restrict UnknownCategoryDirs result to the gentoo repo.
+
+- Drop pickle-based reporter support -- use the scan API call to
+  create and access result objects.
+
+- pkgcheck replay: Drop pickle stream support, use JSON support
+  instead from the JsonStream reporter.
+
+---------------------------
 pkgcheck 0.8.2 (2021-02-09)
 ---------------------------
 
@@ -14,7 +32,7 @@ pkgcheck 0.8.2 (2021-02-09)
 pkgcheck 0.8.1 (2021-01-28)
 ---------------------------
 
-- Include tree-sitter-bash files in dist tarball. 
+- Include tree-sitter-bash files in dist tarball.
 
 ---------------------------
 pkgcheck 0.8.0 (2021-01-27)
