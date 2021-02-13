@@ -337,9 +337,9 @@ class _ScanCommits(argparse.Action):
             restrict = packages.OrRestriction(*sorted(pkgs))
             restrictions.append((base.package_scope, restrict))
         if eclasses:
-            restrictions.append((base.eclass_scope, frozenset(eclasses)))
+            restrictions.append((base.eclass_scope, set(eclasses)))
         if profiles:
-            restrictions.append((base.profile_node_scope, frozenset(profiles)))
+            restrictions.append((base.profile_node_scope, set(profiles)))
 
         # no relevant targets, exit early
         if not restrictions:
