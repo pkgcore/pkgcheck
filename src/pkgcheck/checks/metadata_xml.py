@@ -259,7 +259,7 @@ class PkgMetadataXmlEmptyElement(_MetadataXmlEmptyElement, results.PackageResult
     """Empty element in package metadata.xml file."""
 
 
-class RedundantLongDescription(results.PackageResult, results.Warning):
+class RedundantLongDescription(results.PackageResult, results.Style):
     """Package's longdescription element in metadata.xml and DESCRIPTION are interchangeable.
 
     The longdescription element is for providing extended information that

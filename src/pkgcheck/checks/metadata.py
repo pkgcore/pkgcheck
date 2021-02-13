@@ -1170,7 +1170,7 @@ class SrcUriCheck(Check):
             yield TarballAvailable(sorted(tarball_available), pkg=pkg)
 
 
-class BadDescription(results.VersionResult, results.Warning):
+class BadDescription(results.VersionResult, results.Style):
     """Package's description is bad for some reason."""
 
     def __init__(self, msg, pkg_desc=None, **kwargs):
