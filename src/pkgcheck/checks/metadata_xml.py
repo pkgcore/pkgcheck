@@ -205,7 +205,7 @@ class CatMetadataXmlInvalidCatRef(_MetadataXmlInvalidCatRef, results.CategoryRes
     """Invalid category reference in category metadata.xml."""
 
 
-class _MetadataXmlIndentation(results.Warning):
+class _MetadataXmlIndentation(results.Style):
     """Inconsistent indentation in metadata.xml file.
 
     Either all tabs or all spaces should be used, not a mixture of both.
@@ -237,7 +237,7 @@ class PkgMetadataXmlIndentation(_MetadataXmlIndentation, results.PackageResult):
     """
 
 
-class _MetadataXmlEmptyElement(results.Warning):
+class _MetadataXmlEmptyElement(results.Style):
     """Empty element in metadata.xml file."""
 
     def __init__(self, filename, element, line, **kwargs):
