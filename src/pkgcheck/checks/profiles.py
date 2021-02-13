@@ -351,11 +351,11 @@ class RepoProfilesCheck(Check):
         self.non_profile_dirs = profile_addon.non_profile_dirs
 
     def finish(self):
-        if unknown_category_dirs := set(self.repo.category_dirs).difference(self.repo.categories):
-            yield UnknownCategoryDirs(sorted(unknown_category_dirs))
+        if self.options.gentoo_repo:
+            if unknown_category_dirs := set(self.repo.category_dirs).difference(self.repo.categories):
+                yield UnknownCategoryDirs(sorted(unknown_category_dirs))
         if nonexistent_categories := set(self.repo.config.categories).difference(self.repo.category_dirs):
             yield NonexistentCategories(sorted(nonexistent_categories))
-
         if arches_without_profiles := set(self.arches) - set(self.repo.profiles.arches()):
             yield ArchesWithoutProfiles(sorted(arches_without_profiles))
 
