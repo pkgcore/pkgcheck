@@ -228,6 +228,22 @@ class TestPkgcheckScanParseArgs:
         options, _ = tool.parse_args(['scan', profiles_path])
         assert list(options.restrictions) == [(base.profiles_scope, packages.AlwaysTrue)]
 
+    def test_profiles_path_target_file(self, fakerepo, tool):
+        pkg_mask_path = pjoin(fakerepo, 'profiles', 'package.mask')
+        touch(pkg_mask_path)
+        options, _ = tool.parse_args(['scan', pkg_mask_path])
+        assert list(options.restrictions) == [(base.profile_node_scope, pkg_mask_path)]
+
+    def test_profiles_path_target_dir(self, fakerepo, tool):
+        profile_dir = pjoin(fakerepo, 'profiles', 'default')
+        os.makedirs(profile_dir)
+        pkg_mask_path = pjoin(profile_dir, 'package.mask')
+        pkg_use_path = pjoin(profile_dir, 'package.use')
+        touch(pkg_mask_path)
+        touch(pkg_use_path)
+        options, _ = tool.parse_args(['scan', profile_dir])
+        assert list(options.restrictions) == [(base.profile_node_scope, {pkg_mask_path, pkg_use_path})]
+
     def test_no_default_repo(self, tool, stubconfig, capsys):
         with pytest.raises(SystemExit) as excinfo:
             tool.parse_args(['--config', stubconfig, 'scan'])
