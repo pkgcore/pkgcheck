@@ -63,7 +63,7 @@ master_doc = 'index'
 # General information about the project.
 project = pkgdist.MODULE_NAME
 authors = ''
-copyright = '2006-2019, pkgcheck contributors'
+copyright = '2006-2021, pkgcheck contributors'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
