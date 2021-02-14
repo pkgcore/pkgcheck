@@ -9,7 +9,6 @@ Contents:
 
     news
     api
-    dev
     man/pkgcheck
 
 Indices and tables
