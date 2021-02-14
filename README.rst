@@ -42,7 +42,9 @@ target ebuild repos. See the docs_ or the man page for more information on
 running pkgcheck.
 
 It's also possible to run pkgcheck natively from python. For example, to output
-the results for a given ebuild repo::
+the results for a given ebuild repo:
+
+.. code-block:: python
 
     from pkgcheck import scan
 
