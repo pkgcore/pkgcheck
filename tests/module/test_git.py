@@ -294,7 +294,7 @@ class TestGitChangedRepo:
 
     def test_pkg_history(self, repo, make_git_repo):
         git_repo = make_git_repo(repo.location, commit=True)
-        pkg_history = partial(git.GitAddon.pkg_history, git_repo.path)
+        pkg_history = partial(git.GitAddon.pkg_history, repo)
 
         # initialize the dict cache
         data = pkg_history('HEAD')

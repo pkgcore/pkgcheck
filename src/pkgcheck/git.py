@@ -491,13 +491,13 @@ class GitAddon(caches.CachedAddon):
         return p.stdout.strip()
 
     @staticmethod
-    def pkg_history(path, commit_range, data=None, local=False, verbosity=-1):
+    def pkg_history(repo, commit_range, data=None, local=False, verbosity=-1):
         """Create or update historical package data for a given commit range."""
         if data is None:
             data = {}
         seen = set()
         with base.ProgressManager(verbosity=verbosity) as progress:
-            for pkg in GitRepoPkgs(path, commit_range, local=local):
+            for pkg in GitRepoPkgs(repo.location, commit_range, local=local):
                 atom = pkg.atom
                 key = (atom, pkg.status)
                 if key not in seen:
@@ -505,7 +505,7 @@ class GitAddon(caches.CachedAddon):
                     if local:
                         commit = (atom.fullver, pkg.commit_date, pkg.commit, pkg.old)
                     else:
-                        progress(f'updating git cache: commit date: {pkg.commit_date}')
+                        progress(f'{repo} -- updating git cache: commit date: {pkg.commit_date}')
                         commit = (atom.fullver, pkg.commit_date, pkg.commit)
                     data.setdefault(atom.category, {}).setdefault(
                         atom.package, {}).setdefault(pkg.status, []).append(commit)
@@ -537,7 +537,7 @@ class GitAddon(caches.CachedAddon):
                     commit_range = f'{git_cache.commit}..origin/HEAD'
                 try:
                     self.pkg_history(
-                        repo.location, commit_range, data=data,
+                        repo, commit_range, data=data,
                         verbosity=self.options.verbosity)
                 except GitError as e:
                     raise PkgcheckUserException(str(e))
@@ -569,7 +569,7 @@ class GitAddon(caches.CachedAddon):
             origin = self._get_commit_hash(target_repo.location)
             master = self._get_commit_hash(target_repo.location, commit='master')
             if origin != master:
-                data = self.pkg_history(target_repo.location, 'origin/HEAD..master', local=True)
+                data = self.pkg_history(target_repo, 'origin/HEAD..master', local=True)
         except GitError as e:
             raise PkgcheckUserException(str(e))
 

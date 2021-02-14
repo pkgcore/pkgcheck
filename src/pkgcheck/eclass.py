@@ -113,7 +113,7 @@ class EclassAddon(caches.CachedAddon):
                                 raise KeyError
                         except (KeyError, AttributeError):
                             try:
-                                progress(f'updating eclass cache: {name:<{padding}}')
+                                progress(f'{repo} -- updating eclass cache: {name:<{padding}}')
                                 eclasses[name] = EclassDoc(path, sourced=True)
                                 cache_eclasses = True
                             except IOError:
