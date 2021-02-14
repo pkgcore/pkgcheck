@@ -38,7 +38,7 @@ Usage
 =====
 
 Most users will use pkgcheck on the command line via ``pkgcheck scan`` to
-target ebuild repos. See the docs_ or the man page for more inforation on
+target ebuild repos. See the docs_ or the man page for more information on
 running pkgcheck.
 
 It's also possible to run pkgcheck natively from python. For example, to output
