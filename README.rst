@@ -27,12 +27,30 @@ Installing latest pypi release::
     pip install pkgcheck
 
 Installing from git::
-    
+
     pip install https://github.com/pkgcore/pkgcheck/archive/master.tar.gz
 
 Installing from a tarball::
 
     python setup.py install
+
+Usage
+=====
+
+Most users will use pkgcheck on the command line via ``pkgcheck scan`` to
+target ebuild repos. See the docs_ or the man page for more inforation on
+running pkgcheck.
+
+It's also possible to run pkgcheck natively from python. For example, to output
+the results for a given ebuild repo::
+
+    from pkgcheck import scan
+
+    for result in scan(['-r', '/path/to/ebuild/repo']):
+        print(result)
+
+This allows third party tools written in python to leverage pkgcheck's scanning
+functionality for purposes such as CI or VCS commit support.
 
 Tests
 =====
@@ -50,13 +68,13 @@ the following::
     tox -e py39
 
 
-.. _`Installing python modules`: http://docs.python.org/inst/
 .. _pkgcore: https://github.com/pkgcore/pkgcore
 .. _snakeoil: https://github.com/pkgcore/snakeoil
 .. _dependencies: https://github.com/pkgcore/pkgcheck/blob/master/requirements/install.txt
 .. _git: https://git-scm.com/
 .. _requests: https://pypi.org/project/requests/
 .. _Gentoo-PerlMod-version: https://metacpan.org/release/Gentoo-PerlMod-Version
+.. _docs: https://pkgcore.github.io/pkgcheck/man/pkgcheck.html
 
 .. |pypi| image:: https://img.shields.io/pypi/v/pkgcheck.svg
     :target: https://pypi.python.org/pypi/pkgcheck
