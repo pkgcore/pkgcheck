@@ -4,6 +4,7 @@ Welcome to pkgchecks's documentation!
 Contents:
 
 .. toctree::
+    :titlesonly:
     :maxdepth: 4
 
     news
