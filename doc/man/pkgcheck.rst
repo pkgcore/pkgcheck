@@ -11,7 +11,7 @@ pkgcheck
 .. include:: pkgcheck/checks.rst
 .. include:: pkgcheck/reporters.rst
 
-.. include:: ../config.rst
+.. include:: config.rst
 
 Reporting Bugs
 ==============
