@@ -13,6 +13,10 @@ class InvalidResult(Exception):
     """Creating a result object failed in some fashion."""
 
 
+class AliasResult:
+    """Classes directly inheriting this class can be targeted as scannable keywords."""
+
+
 @total_ordering
 class Result:
     """Generic report result returned from a check."""

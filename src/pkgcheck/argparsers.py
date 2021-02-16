@@ -282,13 +282,9 @@ class KeywordArgs(arghparse.CommaSeparatedNegations):
             s = pluralism(unknown_keywords)
             raise argparse.ArgumentError(self, f'unknown keyword{s}: {unknown}')
 
+        # create keyword instance sets
         disabled_keywords = {objects.KEYWORDS[k] for k in disabled}
         enabled_keywords = {objects.KEYWORDS[k] for k in enabled}
-        # allow keyword args to be filtered by output name in addition to class name
-        disabled_keywords.update(
-            k for k in objects.KEYWORDS.values() if k.name in disabled)
-        enabled_keywords.update(
-            k for k in objects.KEYWORDS.values() if k.name in enabled)
 
         # determine keywords to filter
         if not enabled_keywords:

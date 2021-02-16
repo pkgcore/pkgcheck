@@ -17,7 +17,7 @@ class _FileHeaderResult(results.Result):
         self.line = line
 
 
-class InvalidCopyright(_FileHeaderResult, results.Error):
+class InvalidCopyright(_FileHeaderResult, results.AliasResult, results.Error):
     """File with invalid copyright.
 
     The file does not start with a valid copyright line. Each ebuild or eclass
@@ -37,7 +37,7 @@ class InvalidCopyright(_FileHeaderResult, results.Error):
         return f'invalid copyright: {self.line!r}'
 
 
-class OldGentooCopyright(_FileHeaderResult, results.Warning):
+class OldGentooCopyright(_FileHeaderResult, results.AliasResult, results.Warning):
     """File with old Gentoo Foundation copyright.
 
     The file still assigns copyright to the Gentoo Foundation even though
@@ -56,7 +56,7 @@ class OldGentooCopyright(_FileHeaderResult, results.Warning):
         return f'old copyright, update to "Gentoo Authors": {self.line!r}'
 
 
-class NonGentooAuthorsCopyright(_FileHeaderResult, results.Error):
+class NonGentooAuthorsCopyright(_FileHeaderResult, results.AliasResult, results.Error):
     """File with copyright stating owner other than "Gentoo Authors".
 
     The file specifies explicit copyright owner, while the Gentoo repository
@@ -72,7 +72,7 @@ class NonGentooAuthorsCopyright(_FileHeaderResult, results.Error):
         return f'copyright line must state "Gentoo Authors": {self.line!r}'
 
 
-class InvalidLicenseHeader(_FileHeaderResult, results.Error):
+class InvalidLicenseHeader(_FileHeaderResult, results.AliasResult, results.Error):
     """File with invalid license header.
 
     The file does not have with a valid license header.

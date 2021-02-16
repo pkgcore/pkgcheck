@@ -51,7 +51,7 @@ class GitCommitsSource(sources.Source):
         super().__init__(*args, source=git_addon.commits())
 
 
-class IncorrectCopyright(results.Warning):
+class IncorrectCopyright(results.AliasResult, results.Warning):
     """Changed file with incorrect copyright date."""
 
     _name = 'IncorrectCopyright'

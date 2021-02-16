@@ -135,7 +135,13 @@ class _KeywordsLazyDict(_LazyDict):
     @property
     def aliases(self):
         """Mapping of aliases to their respective mappings."""
-        return {x: getattr(self, x) for x in self._aliases}
+        from . import results
+        alias_map = {x: getattr(self, x) for x in self._aliases}
+        # support class-based aliasing
+        for k, v in self._dict.items():
+            if results.AliasResult in v.__bases__:
+                alias_map[k] = self.select(v)
+        return alias_map
 
     @_keyword_alias()
     def error(self):
