@@ -145,7 +145,7 @@ class UncheckableDep(results.VersionResult, results.Warning):
         return f"depset {self.attr}: could not be checked due to pkgcore limitation"
 
 
-class NonsolvableDeps(results.VersionResult, results.Error):
+class NonsolvableDeps(results.VersionResult, results.AliasResult, results.Error):
     """No potential solution for a depset attribute."""
 
     def __init__(self, attr, keyword, profile, deps, profile_status,
