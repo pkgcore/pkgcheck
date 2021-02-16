@@ -2,7 +2,7 @@
 
 import re
 
-from .. import base, results, sources
+from .. import results, sources
 from . import GentooRepoCheck
 
 copyright_regex = re.compile(
