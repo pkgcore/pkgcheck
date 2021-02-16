@@ -145,7 +145,7 @@ class UncheckableDep(results.VersionResult, results.Warning):
         return f"depset {self.attr}: could not be checked due to pkgcore limitation"
 
 
-class _NonsolvableDeps(results.VersionResult, results.Error):
+class NonsolvableDeps(results.VersionResult, results.Error):
     """No potential solution for a depset attribute."""
 
     def __init__(self, attr, keyword, profile, deps, profile_status,
@@ -175,15 +175,15 @@ class _NonsolvableDeps(results.VersionResult, results.Error):
         )
 
 
-class NonsolvableDepsInStable(_NonsolvableDeps):
+class NonsolvableDepsInStable(NonsolvableDeps):
     """No potential solution for dependency on stable profile."""
 
 
-class NonsolvableDepsInDev(_NonsolvableDeps):
+class NonsolvableDepsInDev(NonsolvableDeps):
     """No potential solution for dependency on dev profile."""
 
 
-class NonsolvableDepsInExp(_NonsolvableDeps):
+class NonsolvableDepsInExp(NonsolvableDeps):
     """No potential solution for dependency on exp profile."""
 
     # results require experimental profiles to be enabled
