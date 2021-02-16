@@ -10,8 +10,6 @@ from importlib import import_module
 from snakeoil import klass
 from snakeoil.mappings import ImmutableDict
 
-from . import __title__ as _pkg
-
 try:
     # This is a file written during installation;
     # if it exists, we defer to it. If it doesn't, then we're
@@ -46,9 +44,9 @@ def _find_classes(module, matching_cls, skip=()):
 
 def _find_obj_classes(module_name, target_cls):
     """Determine mapping of object class names to class objects."""
-    module = import_module(f'.{module_name}', _pkg)
+    module = import_module(f'.{module_name}', 'pkgcheck')
     cls_module, cls_name = target_cls.rsplit('.', 1)
-    matching_cls = getattr(import_module(f'.{cls_module}', _pkg), cls_name)
+    matching_cls = getattr(import_module(f'.{cls_module}', 'pkgcheck'), cls_name)
 
     # skip top-level, base classes
     base_classes = {matching_cls}
