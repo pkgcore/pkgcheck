@@ -10,7 +10,7 @@ from ..caches import CachedAddon
 
 
 cache = arghparse.ArgumentParser(
-    description='perform cache operations',
+    prog='pkgcheck cache', description='perform cache operations',
     parents=(repo_argparser,),
     docs="""
         Various types of caches are used by pkgcheck. This command supports

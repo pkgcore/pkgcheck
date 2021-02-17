@@ -19,8 +19,8 @@ from ..pipeline import Pipeline
 
 
 scan = arghparse.ArgumentParser(
-    parents=(config_argparser, repo_argparser, reporter_argparser,),
-    description='scan targets for QA issues')
+    prog='pkgcheck scan', description='scan targets for QA issues',
+    parents=(config_argparser, repo_argparser, reporter_argparser))
 scan.add_argument(
     'targets', metavar='TARGET', nargs='*', action=arghparse.ParseNonblockingStdin,
     help='optional targets')

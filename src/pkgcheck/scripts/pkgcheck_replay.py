@@ -6,7 +6,7 @@ from ..base import PkgcheckUserException
 
 
 replay = arghparse.ArgumentParser(
-    description='replay result streams',
+    prog='pkgcheck replay', description='replay result streams',
     parents=(reporter_argparser,),
     docs="""
         Replay previous json result streams, feeding the results into a reporter.

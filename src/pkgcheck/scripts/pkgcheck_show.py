@@ -9,7 +9,8 @@ from .. import base, objects
 from ..caches import CachedAddon
 
 
-show = arghparse.ArgumentParser(description='show various pkgcheck info')
+show = arghparse.ArgumentParser(
+    prog='pkgcheck show', description='show various pkgcheck info')
 list_options = show.add_argument_group('list options')
 output_types = list_options.add_mutually_exclusive_group()
 output_types.add_argument(
