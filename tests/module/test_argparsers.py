@@ -372,15 +372,15 @@ class TestExitArgs:
 
     def test_enabled(self):
         keyword = list(objects.KEYWORDS)[random.randrange(len(objects.KEYWORDS))]
-        cls = objects.KEYWORDS[keyword]
+        objs = list(objects.KEYWORDS.aliases.get(keyword, [objects.KEYWORDS[keyword]]))
         options, _ = self.tool.parse_args(self.args + ['--exit', keyword])
-        assert options.exit_keywords == frozenset([cls])
+        assert options.exit_keywords == frozenset(objs)
 
     def test_disabled(self):
         keyword = list(objects.KEYWORDS)[random.randrange(len(objects.KEYWORDS))]
-        cls = objects.KEYWORDS[keyword]
+        objs = list(objects.KEYWORDS.aliases.get(keyword, [objects.KEYWORDS[keyword]]))
         options, _ = self.tool.parse_args(self.args + [f'--exit=-{keyword}'])
-        assert options.exit_keywords == frozenset(objects.KEYWORDS.error.values()) - frozenset([cls])
+        assert options.exit_keywords == frozenset(objects.KEYWORDS.error.values()) - frozenset(objs)
 
     def test_aliases(self):
         for alias in ('error', 'warning', 'info'):
