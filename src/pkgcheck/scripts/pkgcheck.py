@@ -8,6 +8,7 @@ from functools import partial
 from operator import attrgetter
 
 from pkgcore.util import commandline
+from snakeoil.cli import arghparse
 
 from .. import argparsers, objects, reporters
 
@@ -15,7 +16,7 @@ from .. import argparsers, objects, reporters
 argparser = commandline.ArgumentParser(
     description=__doc__, script=(__file__, __name__))
 
-reporter_argparser = commandline.ArgumentParser(suppress=True)
+reporter_argparser = arghparse.ArgumentParser(suppress=True)
 reporter_options = reporter_argparser.add_argument_group('reporter options')
 reporter_options.add_argument(
     '-R', '--reporter', action='store', default=None,
@@ -68,7 +69,7 @@ def _setup_reporter(parser, namespace):
         parser.error('--format option is only valid when using FormatReporter')
 
 
-config_argparser = commandline.ArgumentParser(suppress=True)
+config_argparser = arghparse.ArgumentParser(suppress=True)
 config_options = config_argparser.add_argument_group('config options')
 config_options.add_argument(
     '--config', action=argparsers.ConfigArg, dest='config_file',
@@ -83,7 +84,7 @@ config_options.add_argument(
         specifying an argument of 'false' or 'no'.
     """)
 
-repo_argparser = commandline.ArgumentParser(suppress=True)
+repo_argparser = arghparse.ArgumentParser(suppress=True)
 repo_options = repo_argparser.add_argument_group('repo options')
 repo_options.add_argument(
     '-r', '--repo', metavar='REPO', dest='target_repo',
