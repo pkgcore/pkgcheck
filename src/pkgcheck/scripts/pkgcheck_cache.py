@@ -3,7 +3,7 @@ import os
 from snakeoil.cli import arghparse
 from snakeoil.osutils import pjoin
 
-from .pkgcheck import repo_argparser
+from .argparsers import repo_argparser
 from .. import argparsers, base, const
 from ..addons import init_addon
 from ..caches import CachedAddon

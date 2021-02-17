@@ -11,7 +11,7 @@ from pkgcore.util import parserestrict
 from snakeoil.cli import arghparse
 from snakeoil.osutils import pjoin
 
-from .pkgcheck import repo_argparser, reporter_argparser
+from .argparsers import repo_argparser, reporter_argparser
 from .. import argparsers, base, const, objects
 from ..base import PkgcheckUserException
 from ..cli import ConfigFileParser

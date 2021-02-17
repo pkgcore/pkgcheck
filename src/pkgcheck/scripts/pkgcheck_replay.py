@@ -1,6 +1,6 @@
 from snakeoil.cli import arghparse
 
-from .pkgcheck import reporter_argparser
+from .argparsers import reporter_argparser
 from .. import reporters
 from ..base import PkgcheckUserException
 
