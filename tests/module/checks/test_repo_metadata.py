@@ -4,7 +4,6 @@ from pkgcheck.checks import repo_metadata
 from pkgcore.ebuild.repository import UnconfiguredTree
 from pkgcore.test.misc import FakePkg
 from snakeoil.cli import arghparse
-from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
 
 from .. import misc
@@ -36,7 +35,8 @@ class TestPackageUpdatesCheck(misc.Tmpdir, misc.ReportTestCase):
             with open(pkg_path, 'w') as f:
                 f.write('SLOT=0\n')
 
-        options = arghparse.Namespace(target_repo=UnconfiguredTree(repo_dir))
+        repo = UnconfiguredTree(repo_dir)
+        options = arghparse.Namespace(target_repo=repo, search_repo=repo)
         return self.check_kls(options)
 
     def test_no_updates(self):

@@ -88,6 +88,7 @@ class PackageUpdatesCheck(Check):
     def __init__(self, *args):
         super().__init__(*args)
         self.repo = self.options.target_repo
+        self.search_repo = self.options.search_repo
 
     def finish(self):
         logmap = (
@@ -117,7 +118,7 @@ class PackageUpdatesCheck(Check):
                 # scan updates for old entries with removed packages
                 for x in move_updates:
                     _, old, new = x
-                    if not self.repo.match(new):
+                    if not self.search_repo.match(new):
                         old_move_updates[new] = x
                     if old == new:
                         yield RedundantPackageUpdate(map(str, x))
@@ -126,7 +127,7 @@ class PackageUpdatesCheck(Check):
             for x in slotmove_updates:
                 _, pkg, newslot = x
                 orig_line = ('slotmove', str(pkg)[:-(len(pkg.slot) + 1)], pkg.slot, newslot)
-                if not self.repo.match(pkg.unversioned_atom):
+                if not self.search_repo.match(pkg.unversioned_atom):
                     # reproduce updates file line data for result output
                     old_slotmove_updates[pkg.key] = orig_line
                 if pkg.slot == newslot:
@@ -136,7 +137,7 @@ class PackageUpdatesCheck(Check):
             orig_pkg, moves = v
             # check for multi-move chains ending in removed packages
             moves = [str(orig_pkg)] + list(map(str, moves))
-            if not self.repo.match(pkg):
+            if not self.search_repo.match(pkg):
                 yield OldMultiMovePackageUpdate(str(moves[-1]), moves)
                 # don't generate duplicate old report
                 old_move_updates.pop(pkg, None)
