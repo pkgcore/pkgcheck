@@ -119,7 +119,7 @@ def _keyword_alias(alias=None):
 
         def __set_name__(self, cls, name):
             key = alias if alias is not None else name
-            cls._aliases.add(key)
+            cls._alias_keywords.add(key)
             jit_attr = klass.jit_attr_named(f'_{self.func.__name__}')
             func = jit_attr(partial(self.func))
             setattr(cls, name, func)
@@ -130,18 +130,18 @@ def _keyword_alias(alias=None):
 class _KeywordsLazyDict(_LazyDict):
     """Lazy dictionary of keyword mappings with added filtered attributes."""
 
-    _aliases = set()
+    _alias_keywords = set()
 
-    @property
+    @klass.jit_attr
     def aliases(self):
         """Mapping of aliases to their respective mappings."""
         from . import results
-        alias_map = {x: getattr(self, x) for x in self._aliases}
+        alias_map = {x: getattr(self, x) for x in self._alias_keywords}
         # support class-based aliasing
         for k, v in self._dict.items():
             if results.AliasResult in v.__bases__:
                 alias_map[k] = self.select(v)
-        return alias_map
+        return ImmutableDict(alias_map)
 
     @_keyword_alias()
     def error(self):
