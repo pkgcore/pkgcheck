@@ -299,7 +299,7 @@ class KeywordArgs(arghparse.CommaSeparatedNegations):
         # restrict enabled checks if none have been selected
         if not namespace.selected_checks:
             namespace.enabled_checks = set()
-            for check in objects.CHECKS.default.values():
+            for check in objects.CHECKS.values():
                 if namespace.filtered_keywords.intersection(check.known_results):
                     namespace.enabled_checks.add(check)
 
