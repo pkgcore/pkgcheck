@@ -69,21 +69,6 @@ def _setup_reporter(parser, namespace):
         parser.error('--format option is only valid when using FormatReporter')
 
 
-config_argparser = arghparse.ArgumentParser(suppress=True)
-config_options = config_argparser.add_argument_group('config options')
-config_options.add_argument(
-    '--config', action=argparsers.ConfigArg, dest='config_file',
-    help='use custom pkgcheck scan settings file',
-    docs="""
-        Load custom pkgcheck scan settings from a given file.
-
-        Note that custom user settings override all other system and repo-level
-        settings.
-
-        It's also possible to disable all types of settings loading by
-        specifying an argument of 'false' or 'no'.
-    """)
-
 repo_argparser = arghparse.ArgumentParser(suppress=True)
 repo_options = repo_argparser.add_argument_group('repo options')
 repo_options.add_argument(

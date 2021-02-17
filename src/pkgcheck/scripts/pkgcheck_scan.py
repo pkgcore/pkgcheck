@@ -11,11 +11,27 @@ from pkgcore.util import parserestrict
 from snakeoil.cli import arghparse
 from snakeoil.osutils import pjoin
 
-from .pkgcheck import config_argparser, repo_argparser, reporter_argparser
+from .pkgcheck import repo_argparser, reporter_argparser
 from .. import argparsers, base, const, objects
 from ..base import PkgcheckUserException
 from ..cli import ConfigFileParser
 from ..pipeline import Pipeline
+
+
+config_argparser = arghparse.ArgumentParser(suppress=True)
+config_options = config_argparser.add_argument_group('config options')
+config_options.add_argument(
+    '--config', action=argparsers.ConfigArg, dest='config_file',
+    help='use custom pkgcheck scan settings file',
+    docs="""
+        Load custom pkgcheck scan settings from a given file.
+
+        Note that custom user settings override all other system and repo-level
+        settings.
+
+        It's also possible to disable all types of settings loading by
+        specifying an argument of 'false' or 'no'.
+    """)
 
 
 scan = arghparse.ArgumentParser(
