@@ -19,6 +19,7 @@ from pkgcore.repository.util import SimpleTree
 from pkgcore.restrictions import packages
 from snakeoil.cli import arghparse
 from snakeoil.klass import jit_attr
+from snakeoil.mappings import OrderedSet
 from snakeoil.osutils import pjoin
 from snakeoil.process import CommandNotFound, find_binary
 from snakeoil.strings import pluralism
@@ -319,27 +320,27 @@ class _ScanCommits(argparse.Action):
             parser.exit()
 
         eclass_re = re.compile(r'^eclass/(?P<eclass>\S+)\.eclass$')
-        eclasses, profiles, pkgs = [], [], []
+        eclasses, profiles, pkgs = OrderedSet(), OrderedSet(), OrderedSet()
 
         for path in p.stdout.strip('\x00').split('\x00'):
             if mo := eclass_re.match(path):
-                eclasses.append(mo.group('eclass'))
+                eclasses.add(mo.group('eclass'))
             elif path.startswith('profiles/'):
-                profiles.append(path)
+                profiles.add(path)
             else:
                 try:
-                    pkgs.append(atom_cls(os.sep.join(path.split(os.sep, 2)[:2])))
+                    pkgs.add(atom_cls(os.sep.join(path.split(os.sep, 2)[:2])))
                 except MalformedAtom:
                     continue
 
         restrictions = []
         if pkgs:
-            restrict = packages.OrRestriction(*sorted(pkgs))
+            restrict = packages.OrRestriction(*pkgs)
             restrictions.append((base.package_scope, restrict))
         if eclasses:
-            restrictions.append((base.eclass_scope, set(eclasses)))
+            restrictions.append((base.eclass_scope, eclasses))
         if profiles:
-            restrictions.append((base.profile_node_scope, set(profiles)))
+            restrictions.append((base.profile_node_scope, profiles))
 
         # no relevant targets, exit early
         if not restrictions:
