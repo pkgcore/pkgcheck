@@ -103,9 +103,9 @@ main_options.add_argument(
 main_options.add_argument(
     '--exit', metavar='ITEM', dest='exit_keywords',
     action=argparsers.ExitArgs, nargs='?', default=(),
-    help='checksets, checks, or keywords that trigger an error exit status (comma-separated list)',
+    help='checksets, checks, or keywords that trigger an error exit status',
     docs="""
-        Comma separated list of checksets, checks, or keywords to enable and
+        Comma-separated list of checksets, checks, or keywords to enable and
         disable that trigger an exit status failure. Checkset and check
         arguments expand into their respective keyword sets.
 
@@ -127,7 +127,7 @@ check_options.add_argument(
     '-C', '--checksets', metavar='CHECKSET', action=argparsers.ChecksetArgs,
     help='scan using a configured set of check/keyword args',
     docs="""
-        Comma separated list of checksets to enable and disable for
+        Comma-separated list of checksets to enable and disable for
         scanning.
 
         The special argument of ``all`` corresponds to the list of all checks.
@@ -140,9 +140,9 @@ check_options.add_argument(
 check_options.add_argument(
     '-s', '--scopes', metavar='SCOPE', dest='selected_scopes', default=(),
     action=arghparse.Delayed, target=argparsers.ScopeArgs, priority=51,
-    help='limit checks to run by scope (comma-separated list)',
+    help='limit checks to run by scope',
     docs="""
-        Comma separated list of scopes to enable and disable for scanning. Any
+        Comma-separated list of scopes to enable and disable for scanning. Any
         scopes specified in this fashion will affect the checks that get
         run. For example, running pkgcheck with only the repo scope
         enabled will cause only repo-level checks to run.
@@ -152,9 +152,9 @@ check_options.add_argument(
 check_options.add_argument(
     '-c', '--checks', metavar='CHECK', dest='selected_checks', default=(),
     action=arghparse.Delayed, target=argparsers.CheckArgs, priority=52,
-    help='limit checks to run (comma-separated list)',
+    help='limit checks to run',
     docs="""
-        Comma separated list of checks to enable and disable for
+        Comma-separated list of checks to enable and disable for
         scanning. Any checks specified in this fashion will be the
         only checks that get run, skipping any disabled checks.
 
@@ -172,9 +172,9 @@ check_options.add_argument(
 check_options.add_argument(
     '-k', '--keywords', metavar='KEYWORD', dest='selected_keywords', default=(),
     action=arghparse.Delayed, target=argparsers.KeywordArgs, priority=53,
-    help='limit keywords to scan for (comma-separated list)',
+    help='limit keywords to scan for',
     docs="""
-        Comma separated list of keywords to enable and disable for
+        Comma-separated list of keywords to enable and disable for
         scanning. Any keywords specified in this fashion will be the
         only keywords that get reported, skipping any disabled keywords.
 
