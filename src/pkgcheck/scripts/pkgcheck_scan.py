@@ -355,10 +355,9 @@ def generate_restricts(repo, targets):
             elif path.startswith(profiles_base) and path[len(profiles_base):]:
                 if os.path.isdir(path):
                     # descend into profiles dir targets
-                    paths = []
                     for root, _dirs, files in os.walk(path):
-                        paths.extend(pjoin(root, x) for x in files)
-                    yield base.profile_node_scope, set(paths)
+                        paths = {pjoin(root, x) for x in files}
+                        yield base.profile_node_scope, paths
                 else:
                     # direct profiles file targets
                     yield base.profile_node_scope, path
