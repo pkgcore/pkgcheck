@@ -312,7 +312,7 @@ class KeywordArgs(arghparse.CommaSeparatedNegations):
         setattr(namespace, self.dest, frozenset(enabled))
 
 
-class ExitArgs(arghparse.CommaSeparatedNegations):
+class ExitArgs(arghparse.CommaSeparatedElements):
     """Filter enabled keywords by selected keywords."""
 
     def args_to_keywords(self, namespace, args):
@@ -333,14 +333,15 @@ class ExitArgs(arghparse.CommaSeparatedNegations):
         if values is None:
             values = 'error'
 
-        disabled, enabled = self.parse_values(values)
+        subtractive, neutral, additive = self.parse_values(values)
 
-        # if only disabled arguments are passed, enable error results as exit failures
-        if not enabled:
-            enabled.append('error')
+        # default to using error results if no neutral keywords are selected
+        if not neutral:
+            neutral.append('error')
 
         # expand args to keyword objects
-        disabled = {objects.KEYWORDS[x] for x in self.args_to_keywords(namespace, disabled)}
-        enabled = {objects.KEYWORDS[x] for x in self.args_to_keywords(namespace, enabled)}
+        keywords = {objects.KEYWORDS[x] for x in self.args_to_keywords(namespace, neutral)}
+        keywords.update(objects.KEYWORDS[x] for x in self.args_to_keywords(namespace, additive))
+        keywords.difference_update(objects.KEYWORDS[x] for x in self.args_to_keywords(namespace, subtractive))
 
-        setattr(namespace, self.dest, frozenset(enabled - disabled))
+        setattr(namespace, self.dest, frozenset(keywords))
