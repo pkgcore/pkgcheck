@@ -30,8 +30,8 @@ class Pipeline:
 
     def __init__(self, options):
         self.options = options
-        # number of error results encountered (used with --exit option)
-        self.errors = 0
+        # results flagged as errors by the --exit option
+        self.errors = []
 
         # pkgcheck currently requires the fork start method (#254)
         self._mp_ctx = multiprocessing.get_context('fork')
@@ -138,7 +138,7 @@ class Pipeline:
                 result = self._results.popleft()
                 if not result._filtered and result.__class__ in self.options.filtered_keywords:
                     if result.__class__ in self.options.exit_keywords:
-                        self.errors += 1
+                        self.errors.append(result)
                     return result
             except IndexError:
                 try:
