@@ -15,9 +15,9 @@ For releases, see the required runtime dependencies_.
 There are also several optional runtime dependencies that add or extend check
 support in various ways if found on the host system including the following:
 
-- git_: supports historical queries for git-based repos
+- git_: supports historical queries for git-based repos and commit-related checks
 - requests_: supports various network-related checks
-- Gentoo-PerlMod-Version_: supports Perl version checks
+- Gentoo-PerlMod-Version_: supports Perl package version checks
 
 Installing
 ==========
