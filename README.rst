@@ -48,7 +48,7 @@ the results for a given ebuild repo:
 
     from pkgcheck import scan
 
-    for result in scan(['-r', '/path/to/ebuild/repo']):
+    for result in scan(['/path/to/ebuild/repo']):
         print(result)
 
 This allows third party tools written in python to leverage pkgcheck's scanning
