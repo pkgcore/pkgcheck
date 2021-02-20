@@ -47,16 +47,9 @@ class RepoSource(Source):
     scope = base.version_scope
 
     def __init__(self, options, source=None):
-        self.options = options
         self.repo = options.target_repo
-        self._source = source
-
-    @property
-    def source(self):
-        """Source that packages are pulled from."""
-        if self._source is not None:
-            return self._source
-        return self.repo
+        source = source if source is not None else self.repo
+        super().__init__(options, source)
 
     def itermatch(self, restrict, sorter=sorted, **kwargs):
         """Yield packages matching the given restriction from the selected source."""
@@ -238,8 +231,11 @@ class _RawRepo(UnconfiguredTree):
 class RawRepoSource(RepoSource):
     """Ebuild repository source returning raw CPV objects."""
 
+    def __init__(self, options):
+        source = _RawRepo(options.target_repo)
+        super().__init__(options, source)
+
     def itermatch(self, restrict, **kwargs):
-        self.repo = _RawRepo(self.repo)
         yield from super().itermatch(restrict, raw_pkg_cls=RawCPV, **kwargs)
 
 
