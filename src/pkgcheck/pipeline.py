@@ -112,7 +112,7 @@ class Pipeline:
 
             for exec_type in pipes.keys():
                 if runners[exec_type]:
-                    pipes[exec_type].append((restriction, runners[exec_type]))
+                    pipes[exec_type].append((scope, restriction, runners[exec_type]))
 
         return pipes
 
@@ -166,20 +166,20 @@ class Pipeline:
 
     def _queue_work(self, sync_pipes, work_q):
         """Producer that queues scanning tasks against granular scope restrictions."""
-        for i, (restriction, pipes) in enumerate(sync_pipes):
-            for scope, runners in pipes.items():
-                if scope == base.version_scope:
+        for i, (scan_scope, restriction, pipes) in enumerate(sync_pipes):
+            for source_scope, runners in pipes.items():
+                if base.version_scope in (source_scope, scan_scope):
                     versioned_source = VersionedSource(self.options)
                     for restrict in versioned_source.itermatch(restriction):
                         for j in range(len(runners)):
-                            work_q.put((scope, restrict, i, j))
-                elif scope == base.package_scope:
+                            work_q.put((base.version_scope, source_scope, restrict, i, j))
+                elif source_scope == base.package_scope:
                     unversioned_source = UnversionedSource(self.options)
                     for restrict in unversioned_source.itermatch(restriction):
-                        work_q.put((scope, restrict, i, 0))
+                        work_q.put((base.package_scope, source_scope, restrict, i, 0))
                 else:
                     for j in range(len(runners)):
-                        work_q.put((scope, restriction, i, j))
+                        work_q.put((scan_scope, source_scope, restriction, i, j))
 
         # notify consumers that no more work exists
         for i in range(self.options.jobs):
@@ -188,16 +188,16 @@ class Pipeline:
     def _run_checks(self, pipes, work_q):
         """Consumer that runs scanning tasks, queuing results for output."""
         try:
-            for scope, restrict, pipe_idx, runner_idx in iter(work_q.get, None):
+            for scope, source_scope, restrict, pipe_idx, runner_idx in iter(work_q.get, None):
                 results = []
 
                 if scope == base.version_scope:
-                    results.extend(pipes[pipe_idx][1][scope][runner_idx].run(restrict))
+                    results.extend(pipes[pipe_idx][-1][source_scope][runner_idx].run(restrict))
                 elif scope in (base.package_scope, base.category_scope):
-                    for pipe in pipes[pipe_idx][1][scope]:
+                    for pipe in pipes[pipe_idx][-1][source_scope]:
                         results.extend(pipe.run(restrict))
                 else:
-                    pipe = pipes[pipe_idx][1][scope][runner_idx]
+                    pipe = pipes[pipe_idx][-1][source_scope][runner_idx]
                     pipe.start()
                     results.extend(pipe.run(restrict))
                     results.extend(pipe.finish())
@@ -215,7 +215,7 @@ class Pipeline:
             with ThreadPoolExecutor(max_workers=self.options.tasks) as executor:
                 # schedule any existing async checks
                 futures = {}
-                for restriction, pipes in async_pipes:
+                for _scope, restriction, pipes in async_pipes:
                     for runner in chain.from_iterable(pipes.values()):
                         runner.schedule(executor, futures, restriction)
         except Exception:  # pragma: no cover
