@@ -410,6 +410,24 @@ class TestPkgcheckScan:
             for arg in ('latest', 'latest:KeywordsCheck', 'latest:UnknownKeywords'):
                 assert not list(self.scan(self.scan_args + args + [opt, arg]))
 
+    def test_scan_restrictions(self, repo):
+        # create two ebuilds with bad EAPIs
+        repo.create_ebuild('newcat/pkg-0', eapi='-1')
+        repo.create_ebuild('newcat/pkg-1', eapi='-1')
+
+        # matching version restriction returns a single result
+        results = list(self.scan(self.scan_args + ['-r', repo.location, '=newcat/pkg-0']))
+        assert len(results) == 1
+        assert results[0].version == '0'
+
+        # unmatching version restriction returns no results
+        results = list(self.scan(self.scan_args + ['-r', repo.location, '=newcat/pkg-2']))
+        assert not results
+
+        # matching package restriction returns two sorted results
+        results = list(self.scan(self.scan_args + ['-r', repo.location, 'newcat/pkg']))
+        assert [x.version for x in results] == ['0', '1']
+
     def test_explict_skip_check(self, capsys):
         """SkipCheck exceptions are raised when triggered for explicitly enabled checks."""
         error = 'network checks not enabled'
