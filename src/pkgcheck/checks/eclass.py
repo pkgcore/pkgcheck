@@ -210,7 +210,8 @@ class EclassCheck(Check):
         # check for eclass bash syntax errors
         p = subprocess.run(
             ['bash', '-n', shlex.quote(eclass.path)],
-            stderr=subprocess.PIPE, stdout=subprocess.DEVNULL, encoding='utf8')
+            stderr=subprocess.PIPE, stdout=subprocess.DEVNULL,
+            env={'LC_ALL': 'C'}, encoding='utf8')
         if p.returncode != 0 and p.stderr:
             lineno = 0
             error = []
