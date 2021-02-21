@@ -2,6 +2,7 @@
 requires = [
 	"wheel", "setuptools",
 	"chardet",
+	"lazy-object-proxy",
 	"lxml",
 	"pathspec",
 	"tree-sitter",
