@@ -13,5 +13,6 @@ argparser = commandline.ArgumentParser(
 subparsers = argparser.add_subparsers()
 subparsers.add_command('scan')
 subparsers.add_command('cache')
+subparsers.add_command('ci')
 subparsers.add_command('replay')
 subparsers.add_command('show')
