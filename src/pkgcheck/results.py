@@ -190,7 +190,7 @@ class PackageResult(CategoryResult):
 
     def __lt__(self, other):
         try:
-            if self.package != other.package:
+            if self.category == other.category and self.package != other.package:
                 return self.package < other.package
         except AttributeError:
             pass
@@ -218,12 +218,13 @@ class VersionResult(PackageResult):
 
     def __lt__(self, other, cmp=None):
         try:
-            if cmp is None:
-                cmp = cpv.ver_cmp(*(self.ver_rev + other.ver_rev))
-            if cmp < 0:
-                return True
-            elif cmp > 0:
-                return False
+            if self.category == other.category and self.package == other.package:
+                if cmp is None:
+                    cmp = cpv.ver_cmp(*(self.ver_rev + other.ver_rev))
+                if cmp < 0:
+                    return True
+                elif cmp > 0:
+                    return False
         except AttributeError:
             pass
         return super().__lt__(other)
@@ -240,13 +241,14 @@ class LineResult(VersionResult):
     def __lt__(self, other):
         cmp = None
         try:
-            # sort by line number for matching versions
-            cmp = cpv.ver_cmp(*(self.ver_rev + other.ver_rev))
-            if cmp == 0:
-                if self.lineno < other.lineno:
-                    return True
-                elif self.lineno > other.lineno:
-                    return False
+            if self.category == other.category and self.package == other.package:
+                # sort by line number for matching versions
+                cmp = cpv.ver_cmp(*(self.ver_rev + other.ver_rev))
+                if cmp == 0:
+                    if self.lineno < other.lineno:
+                        return True
+                    elif self.lineno > other.lineno:
+                        return False
         except AttributeError:
             pass
         return super().__lt__(other, cmp=cmp)
