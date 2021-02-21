@@ -83,7 +83,7 @@ class _LazyDict(Mapping):
             result = getattr(_defaults, self._attr)
         except AttributeError:
             result = _find_obj_classes(*self._func_args)
-        return dict(result)
+        return ImmutableDict(result)
 
     def __iter__(self):
         return iter(self._dict.keys())
