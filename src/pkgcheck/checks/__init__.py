@@ -9,8 +9,8 @@ from snakeoil.strings import pluralism
 
 from .. import addons, base, feeds, sources
 from ..caches import CachedAddon, CacheDisabled
-from ..results import MetadataError
 from ..log import logger
+from ..results import MetadataError
 
 
 @total_ordering

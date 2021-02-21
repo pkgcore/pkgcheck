@@ -1,6 +1,6 @@
 import pytest
-from pkgcheck import objects, results
 from pkgcheck import checks as checks_mod
+from pkgcheck import objects, results
 
 from ..misc import init_check
 

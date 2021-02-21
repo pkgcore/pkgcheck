@@ -348,6 +348,7 @@ class _ScanCommits(argparse.Action):
 
         # avoid circular import issues
         from . import objects
+
         # enable git checks
         namespace.enabled_checks.update(objects.CHECKS.select(GitCheck).values())
 

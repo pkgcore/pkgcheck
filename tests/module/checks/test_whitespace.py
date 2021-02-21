@@ -1,6 +1,7 @@
 import re
 import sys
 import unicodedata
+
 from pkgcheck.checks import whitespace
 
 from .. import misc

@@ -6,7 +6,6 @@ from snakeoil.cli import arghparse
 
 from .. import objects, reporters
 
-
 reporter_argparser = arghparse.ArgumentParser(suppress=True)
 reporter_options = reporter_argparser.add_argument_group('reporter options')
 reporter_options.add_argument(

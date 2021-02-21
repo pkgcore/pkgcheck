@@ -1,9 +1,8 @@
 from snakeoil.cli import arghparse
 
-from .argparsers import reporter_argparser
 from .. import reporters
 from ..base import PkgcheckUserException
-
+from .argparsers import reporter_argparser
 
 replay = arghparse.ArgumentParser(
     prog='pkgcheck replay', description='replay result streams',

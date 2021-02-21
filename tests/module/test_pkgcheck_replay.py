@@ -6,8 +6,8 @@ from unittest.mock import patch
 
 import pytest
 from pkgcheck import __title__ as project
-from pkgcheck.reporters import JsonStream
 from pkgcheck.checks.profiles import ProfileWarning
+from pkgcheck.reporters import JsonStream
 from pkgcheck.scripts import run
 from snakeoil.formatters import PlainTextFormatter
 

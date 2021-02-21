@@ -4,17 +4,16 @@ from functools import partial
 from unittest.mock import Mock, patch
 
 import pytest
-from pkgcore.ebuild.atom import MalformedAtom
-from pkgcore.ebuild.atom import atom as atom_cls
-from pkgcore.restrictions import packages
 from pkgcheck import base, git
 from pkgcheck.addons import init_addon
 from pkgcheck.base import PkgcheckUserException
 from pkgcheck.caches import CacheDisabled
+from pkgcore.ebuild.atom import MalformedAtom
+from pkgcore.ebuild.atom import atom as atom_cls
+from pkgcore.restrictions import packages
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
 from snakeoil.process import CommandNotFound, find_binary
-
 
 # skip testing module if git isn't installed
 try:

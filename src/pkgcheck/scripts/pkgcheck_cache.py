@@ -3,11 +3,10 @@ import os
 from snakeoil.cli import arghparse
 from snakeoil.osutils import pjoin
 
-from .argparsers import repo_argparser
 from .. import argparsers, base, const
 from ..addons import init_addon
 from ..caches import CachedAddon
-
+from .argparsers import repo_argparser
 
 cache = arghparse.ArgumentParser(
     prog='pkgcheck cache', description='perform cache operations',

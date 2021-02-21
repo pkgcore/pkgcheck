@@ -1,8 +1,8 @@
 """Various command-line specific support."""
 
+import configparser
 import logging
 import os
-import configparser
 
 from pkgcore.util import commandline
 from snakeoil.contexts import patch

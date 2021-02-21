@@ -8,7 +8,6 @@ from snakeoil.formatters import decorate_forced_wrapping
 from .. import base, objects
 from ..caches import CachedAddon
 
-
 show = arghparse.ArgumentParser(
     prog='pkgcheck show', description='show various pkgcheck info')
 list_options = show.add_argument_group('list options')

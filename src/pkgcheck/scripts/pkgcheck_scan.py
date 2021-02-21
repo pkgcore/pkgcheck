@@ -11,12 +11,11 @@ from pkgcore.util import parserestrict
 from snakeoil.cli import arghparse
 from snakeoil.osutils import pjoin
 
-from .argparsers import repo_argparser, reporter_argparser
 from .. import argparsers, base, const, objects
 from ..base import PkgcheckUserException
 from ..cli import ConfigFileParser
 from ..pipeline import Pipeline
-
+from .argparsers import repo_argparser, reporter_argparser
 
 config_argparser = arghparse.ArgumentParser(suppress=True)
 config_options = config_argparser.add_argument_group('config options')

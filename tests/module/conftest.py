@@ -7,16 +7,16 @@ from datetime import datetime
 from unittest.mock import patch
 
 import pytest
-from pkgcheck.scripts import pkgcheck
 from pkgcheck.reporters import StrReporter
 from pkgcheck.results import Result
+from pkgcheck.scripts import pkgcheck
 from pkgcore import const as pkgcore_const
 from pkgcore.ebuild import cpv as cpv_mod
 from pkgcore.ebuild import repo_objs, repository
 from pkgcore.util.commandline import Tool
 from snakeoil import klass
-from snakeoil.formatters import PlainTextFormatter
 from snakeoil.fileutils import touch
+from snakeoil.formatters import PlainTextFormatter
 from snakeoil.osutils import pjoin
 
 

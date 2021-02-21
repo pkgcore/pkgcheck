@@ -1,8 +1,8 @@
 import os
 
 import pytest
-from pkgcore.ebuild import repo_objs, repository
 from pkgcheck.checks import SkipCheck, glsa
+from pkgcore.ebuild import repo_objs, repository
 from pkgcore.test.misc import mk_glsa
 from snakeoil.cli import arghparse
 from snakeoil.osutils import pjoin

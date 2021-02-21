@@ -3,8 +3,8 @@
 from functools import partial
 
 import lazy_object_proxy
-from snakeoil.mappings import AttrAccessible
 from snakeoil.contexts import patch
+from snakeoil.mappings import AttrAccessible
 
 from . import objects
 from .base import PkgcheckException

@@ -1,10 +1,9 @@
 import argparse
 
-from snakeoil.formatters import PlainTextFormatter
 from snakeoil.cli import arghparse
+from snakeoil.formatters import PlainTextFormatter
 
-from .. import scan
-from .. import reporters
+from .. import reporters, scan
 
 
 class ArgumentParser(arghparse.ArgumentParser):
