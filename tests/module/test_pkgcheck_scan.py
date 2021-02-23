@@ -343,8 +343,7 @@ class TestPkgcheckScan:
         self.args = [project] + base_args + ['scan'] + self.scan_args
 
     def test_empty_repo(self, capsys, repo):
-        # no reports should be generated since the stub repo is empty
-        with patch('sys.argv', self.args + ['stubrepo']):
+        with patch('sys.argv', self.args + [repo.location]):
             with pytest.raises(SystemExit) as excinfo:
                 self.script()
             assert excinfo.value.code == 0
