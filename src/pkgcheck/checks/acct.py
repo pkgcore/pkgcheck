@@ -8,7 +8,7 @@ from itertools import chain
 from pkgcore.ebuild import restricts
 from pkgcore.restrictions import packages
 
-from .. import base, results, sources
+from .. import results, sources
 from . import Check
 
 

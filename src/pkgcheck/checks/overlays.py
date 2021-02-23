@@ -1,7 +1,7 @@
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
-from .. import base, results, sources
+from .. import results, sources
 from . import MirrorsCheck, OptionalCheck, OverlayRepoCheck
 
 

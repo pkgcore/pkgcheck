@@ -3,7 +3,7 @@ from datetime import datetime
 
 from snakeoil.strings import pluralism
 
-from .. import base, git, results, sources
+from .. import git, results, sources
 from . import GentooRepoCheck
 
 

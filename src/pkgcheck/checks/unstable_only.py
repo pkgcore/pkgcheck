@@ -4,7 +4,7 @@ from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.restrictions import packages, values
 from snakeoil.strings import pluralism
 
-from .. import addons, base, results, sources
+from .. import addons, results, sources
 from . import GentooRepoCheck
 
 

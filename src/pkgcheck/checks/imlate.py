@@ -3,7 +3,7 @@ from collections import defaultdict
 from pkgcore.restrictions import packages, values
 from snakeoil.strings import pluralism
 
-from .. import addons, base, results, sources
+from .. import addons, results, sources
 from . import Check
 
 

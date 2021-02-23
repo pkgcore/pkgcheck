@@ -9,7 +9,7 @@ from snakeoil.chksum import get_chksums
 from snakeoil.osutils import listdir, pjoin, sizeof_fmt
 from snakeoil.strings import pluralism
 
-from .. import base, git, results, sources
+from .. import git, results, sources
 from . import Check, GentooRepoCheck
 
 allowed_filename_chars = "a-zA-Z0-9._-+:"

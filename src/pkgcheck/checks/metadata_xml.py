@@ -7,7 +7,7 @@ from pkgcore.ebuild.atom import MalformedAtom, atom
 from snakeoil.osutils import pjoin
 from snakeoil.strings import pluralism
 
-from .. import base, results, sources
+from .. import results, sources
 from . import Check
 
 

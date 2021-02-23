@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from .. import addons, base, results, sources
+from .. import addons, results, sources
 from . import Check
 
 
