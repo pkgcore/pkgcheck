@@ -3,8 +3,29 @@ Release Notes
 =============
 
 ---------------------------
-pkgcheck 0.9.0 (2021-??-??)
+pkgcheck 0.9.0 (2021-02-23)
 ---------------------------
+
+- pkgcheck ci: Add initial subcommand for CI-specific usage (e.g. used by
+  pkgcheck-action).
+
+- EclassCheck: force bash error output to use the C locale.
+
+- Officially export Result class in addition to all specific result
+  keywords/classes for API usage which can be useful for type
+  hinting purposes.
+
+- pkgcheck scan: Respect version-level scan scope targets (#293).
+
+- pkgcheck scan: Allow additive args for --exit. This allows adding
+  keywords to the default set (via '+Keyword') that trigger exit
+  failures without having to explicitly specify the 'error' set as
+  well.
+
+- PackageUpdatesCheck: Use search repo to find old packages to fix
+  checking for OldPackageUpdate results in overlays.
+
+- Make 'NonsolvableDeps' a scannable keyword alias.
 
 - Drop metadata.xml indentation and empty element results from
   warning to style level.
@@ -13,6 +34,9 @@ pkgcheck 0.9.0 (2021-??-??)
   from warning to style.
 
 - Restrict UnknownCategoryDirs result to the gentoo repo.
+
+- Apply target repo base profile masks across all scan profiles
+  (#281).
 
 - Drop pickle-based reporter support -- use the scan API call to
   create and access result objects.
