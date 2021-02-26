@@ -8,7 +8,6 @@ import pytest
 from pkgcheck import addons, base, sources
 from pkgcheck.caches import CachedAddon, CacheDisabled
 from pkgcheck.checks import AsyncCheck, SkipCheck
-from pkgcheck.pipeline import SyncCheckRunner
 from pkgcore.ebuild import domain, repo_objs
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import VersionedCPV
@@ -116,10 +115,8 @@ class ReportTestCase:
             source = sources.Source(options, data)
 
         results = []
-        runner = SyncCheckRunner(options, source, [check])
-        runner.start()
+        runner = check.runner_cls(options, source, [check])
         results.extend(runner.run())
-        results.extend(runner.finish())
         return results
 
     def assertNoReport(self, check, data, msg=""):

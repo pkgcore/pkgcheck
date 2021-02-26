@@ -13,7 +13,7 @@ from snakeoil.strings import pluralism
 
 from .. import addons, base, results, sources
 from ..profiles import ProfileAddon, ProfileNode
-from . import Check
+from . import Check, RepoCheck
 
 
 class UnknownProfilePackage(results.ProfilesResult, results.Warning):
@@ -325,7 +325,7 @@ def dir_parents(path):
         path = dirname.rstrip('/')
 
 
-class RepoProfilesCheck(Check):
+class RepoProfilesCheck(RepoCheck):
     """Scan repo for various profiles directory issues.
 
     Including unknown arches in profiles, arches without profiles, and unknown

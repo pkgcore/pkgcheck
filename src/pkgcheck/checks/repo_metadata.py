@@ -8,7 +8,7 @@ from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
 from .. import addons, base, results, sources
-from . import Check, MirrorsCheck
+from . import Check, MirrorsCheck, RepoCheck
 
 
 class MultiMovePackageUpdate(results.ProfilesResult, results.Warning):
@@ -75,7 +75,7 @@ class BadPackageUpdate(results.ProfilesResult, results.LogError):
     """Badly formatted package update in profiles/updates files."""
 
 
-class PackageUpdatesCheck(Check):
+class PackageUpdatesCheck(RepoCheck):
     """Scan profiles/updates/* for outdated entries and other issues."""
 
     _source = (sources.EmptySource, (base.profiles_scope,))
@@ -164,7 +164,7 @@ class UnusedLicenses(results.Warning):
         return f'unused license{s}: {licenses}'
 
 
-class UnusedLicensesCheck(Check):
+class UnusedLicensesCheck(RepoCheck):
     """Check for unused license files."""
 
     _source = sources.RepositoryRepoSource
@@ -203,7 +203,7 @@ class UnusedMirrors(results.Warning):
         return f'unused mirror{s}: {mirrors}'
 
 
-class UnusedMirrorsCheck(MirrorsCheck):
+class UnusedMirrorsCheck(MirrorsCheck, RepoCheck):
     """Check for unused mirrors."""
 
     _source = sources.RepositoryRepoSource
@@ -239,7 +239,7 @@ class UnusedEclasses(results.Warning):
         return f'unused eclass{es}: {eclasses}'
 
 
-class UnusedEclassesCheck(Check):
+class UnusedEclassesCheck(RepoCheck):
     """Check for unused eclasses."""
 
     _source = sources.RepositoryRepoSource
@@ -280,7 +280,7 @@ class UnknownLicenses(results.Warning):
         return f'license group {self.group!r} has unknown license{s}: [ {licenses} ]'
 
 
-class LicenseGroupsCheck(Check):
+class LicenseGroupsCheck(RepoCheck):
     """Scan license groups for unknown licenses."""
 
     _source = (sources.EmptySource, (base.repo_scope,))
@@ -366,7 +366,7 @@ def _dfs(graph, start, visited=None):
     return visited
 
 
-class GlobalUseCheck(Check):
+class GlobalUseCheck(RepoCheck):
     """Check global USE and USE_EXPAND flags for various issues."""
 
     _source = (sources.RepositoryRepoSource, (), (('source', sources.PackageRepoSource),))
@@ -719,7 +719,7 @@ class EmptyProject(results.Warning):
         return f"Project has no members: {self.project}"
 
 
-class ProjectMetadataCheck(Check):
+class ProjectMetadataCheck(RepoCheck):
     """Check projects.xml for issues."""
 
     _source = (sources.EmptySource, (base.repo_scope,))

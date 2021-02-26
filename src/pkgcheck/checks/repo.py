@@ -5,7 +5,7 @@ from snakeoil.osutils import pjoin
 from .. import base, git, results, sources
 from ..packages import RawCPV
 from ..utils import is_binary
-from . import GentooRepoCheck
+from . import GentooRepoCheck, RepoCheck
 
 
 class BinaryFile(results.Error):
@@ -20,7 +20,7 @@ class BinaryFile(results.Error):
         return f"binary file found in repository: {self.path!r}"
 
 
-class RepoDirCheck(GentooRepoCheck):
+class RepoDirCheck(GentooRepoCheck, RepoCheck):
     """Scan all files in the repository for issues."""
 
     _source = (sources.EmptySource, (base.repo_scope,))
@@ -71,7 +71,7 @@ class EmptyPackageDir(results.PackageResult, results.Warning):
         return f'empty package directory: {self.category}/{self.package}'
 
 
-class EmptyDirsCheck(GentooRepoCheck):
+class EmptyDirsCheck(GentooRepoCheck, RepoCheck):
     """Scan for empty category or package directories."""
 
     _source = (sources.EmptySource, (base.repo_scope,))

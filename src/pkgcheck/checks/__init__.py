@@ -7,7 +7,7 @@ from pkgcore import fetch
 from snakeoil import klass
 from snakeoil.strings import pluralism
 
-from .. import addons, base, feeds, sources
+from .. import addons, base, feeds, runners, sources
 from ..caches import CachedAddon, CacheDisabled
 from ..log import logger
 from ..results import MetadataError
@@ -23,6 +23,8 @@ class Check(feeds.Feed):
     """
 
     known_results = frozenset()
+    # checkrunner class used to execute this check
+    runner_cls = runners.SyncCheckRunner
 
     @klass.jit_attr
     def priority(self):
@@ -50,17 +52,23 @@ class Check(feeds.Feed):
                 )
         return self._source
 
+    def __lt__(self, other):
+        if self.priority == other.priority:
+            return self.__class__.__name__ < other.__class__.__name__
+        return self.priority < other.priority
+
+
+class RepoCheck(Check):
+    """Check that requires running at a repo level."""
+
+    runner_cls = runners.RepoCheckRunner
+
     def start(self):
         """Do startup here."""
 
     def finish(self):
         """Do cleanup and yield final results here."""
         yield from ()
-
-    def __lt__(self, other):
-        if self.priority == other.priority:
-            return self.__class__.__name__ < other.__class__.__name__
-        return self.priority < other.priority
 
 
 class GentooRepoCheck(Check):
@@ -100,6 +108,8 @@ class GitCheck(OptionalCheck):
 
 class AsyncCheck(Check):
     """Check that schedules tasks to be run asynchronously."""
+
+    runner_cls = runners.AsyncCheckRunner
 
     def __init__(self, *args, results_q):
         super().__init__(*args)
@@ -181,8 +191,7 @@ def init_checks(enabled_addons, options, results_q, *, addons_map=None, source_m
                 if source is None:
                     source = sources.init_source(addon.source, options, addons_map)
                     source_map[addon.source] = source
-                exec_type = 'async' if isinstance(addon, AsyncCheck) else 'sync'
-                enabled[(source, exec_type)].append(addon)
+                enabled[(source, addon.runner_cls)].append(addon)
         except (CacheDisabled, SkipCheck) as e:
             # Raise exception if the related check was explicitly selected,
             # otherwise it gets transparently skipped.

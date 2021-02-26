@@ -444,11 +444,13 @@ class TestPkgcheckScan:
             self.scan(self.scan_args + args)
 
     @pytest.mark.parametrize(
-        'action, module',
-        (('producer', 'UnversionedSource'), ('consumer', 'SyncCheckRunner.run')))
+        'action, module', (
+            ('producer', 'pkgcheck.pipeline.UnversionedSource'),
+            ('consumer', 'pkgcheck.runners.SyncCheckRunner.run'),
+        ))
     def test_pipeline_exceptions(self, action, module):
         """Test checkrunner pipeline against unhandled exceptions."""
-        with patch(f'pkgcheck.pipeline.{module}') as faked:
+        with patch(module) as faked:
             faked.side_effect = Exception('pipeline failed')
             with pytest.raises(base.PkgcheckException, match='Exception: pipeline failed'):
                 list(self.scan(self.scan_args))
