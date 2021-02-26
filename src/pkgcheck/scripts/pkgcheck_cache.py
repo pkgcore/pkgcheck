@@ -5,7 +5,7 @@ from snakeoil.osutils import pjoin
 
 from .. import base, const
 from ..addons import init_addon
-from ..caches import CachedAddon
+from ..addons.caches import CachedAddon
 from .argparse_actions import CacheNegations
 from .argparsers import repo_argparser
 

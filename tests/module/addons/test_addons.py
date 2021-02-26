@@ -4,11 +4,10 @@ from unittest.mock import patch
 import pytest
 from pkgcheck import addons
 from pkgcheck.base import PkgcheckUserException
-from pkgcheck.profiles import ProfileAddon, ProfileData
 from pkgcore.restrictions import packages
 from snakeoil.osutils import pjoin
 
-from .misc import FakePkg, FakeProfile, Profile
+from ..misc import FakePkg, FakeProfile, Profile
 
 
 class TestArchesAddon:
@@ -111,7 +110,7 @@ class Test_profile_data:
     def assertResults(self, profile, known_flags, required_immutable,
                       required_forced, cpv="dev-util/diffball-0.1",
                       key_override=None, data_override=None):
-        profile_data = ProfileData(
+        profile_data = addons.profiles.ProfileData(
             "test-repo", "test-profile", key_override,
             profile.provides_repo,
             packages.AlwaysFalse, profile.iuse_effective,
@@ -157,7 +156,7 @@ class Test_profile_data:
 
 class TestProfileAddon:
 
-    addon_kls = ProfileAddon
+    addon_kls = addons.profiles.ProfileAddon
 
     @pytest.fixture(autouse=True)
     def _setup(self, tool, repo, tmp_path):
@@ -361,7 +360,7 @@ class TestNetAddon:
     def test_failed_import(self, tool):
         options, _ = tool.parse_args(['scan'])
         addon = addons.NetAddon(options)
-        with patch('pkgcheck.net.Session') as net:
+        with patch('pkgcheck.addons.net.Session') as net:
             net.side_effect = ImportError('import failed', name='foo')
             with pytest.raises(ImportError):
                 addon.session
@@ -384,6 +383,6 @@ class TestNetAddon:
         options, _ = tool.parse_args(
             ['scan', '--timeout', '10', '--tasks', '50', '--user-agent', 'firefox'])
         addon = addons.NetAddon(options)
-        with patch('pkgcheck.net.Session') as net:
+        with patch('pkgcheck.addons.net.Session') as net:
             addon.session
         net.assert_called_once_with(concurrent=50, timeout=10, user_agent='firefox')

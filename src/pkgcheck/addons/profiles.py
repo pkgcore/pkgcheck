@@ -16,8 +16,9 @@ from snakeoil.klass import jit_attr
 from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
 
-from . import addons, base, caches
-from .base import PkgcheckUserException
+from .. import base
+from ..base import PkgcheckUserException
+from . import ArchesAddon, caches
 
 
 class ProfileData:
@@ -99,7 +100,7 @@ class ProfilesArgs(arghparse.CommaSeparatedNegations):
 class ProfileAddon(caches.CachedAddon):
     """Addon supporting ebuild repository profiles."""
 
-    required_addons = (addons.ArchesAddon,)
+    required_addons = (ArchesAddon,)
 
     # non-profile dirs found in the profiles directory, generally only in
     # the gentoo repo, but could be in overlays as well

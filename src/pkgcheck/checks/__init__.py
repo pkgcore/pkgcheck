@@ -8,7 +8,7 @@ from snakeoil import klass
 from snakeoil.strings import pluralism
 
 from .. import addons, base, feeds, runners, sources
-from ..caches import CachedAddon, CacheDisabled
+from ..addons.caches import CachedAddon, CacheDisabled
 from ..log import logger
 from ..results import MetadataError
 

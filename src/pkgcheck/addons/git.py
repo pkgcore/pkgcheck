@@ -24,10 +24,11 @@ from snakeoil.osutils import pjoin
 from snakeoil.process import CommandNotFound, find_binary
 from snakeoil.strings import pluralism
 
-from . import base, caches
-from .base import PkgcheckUserException
-from .checks import GitCheck
-from .log import logger
+from .. import base
+from ..base import PkgcheckUserException
+from ..checks import GitCheck
+from ..log import logger
+from . import caches
 
 
 @dataclass(frozen=True)
@@ -347,7 +348,7 @@ class _ScanCommits(argparse.Action):
             parser.exit()
 
         # avoid circular import issues
-        from . import objects
+        from .. import objects
 
         # enable git checks
         namespace.enabled_checks.update(objects.CHECKS.select(GitCheck).values())

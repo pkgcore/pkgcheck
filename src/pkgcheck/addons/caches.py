@@ -15,8 +15,8 @@ from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
 
-from .base import Addon, PkgcheckException, PkgcheckUserException
-from .log import logger
+from ..base import Addon, PkgcheckException, PkgcheckUserException
+from ..log import logger
 
 
 @dataclass(frozen=True)

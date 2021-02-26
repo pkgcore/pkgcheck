@@ -5,7 +5,7 @@ import os
 
 import requests
 
-from .checks.network import RequestError, SSLError
+from ..checks.network import RequestError, SSLError
 
 # suppress all urllib3 log messages
 logging.getLogger('urllib3').propagate = False

@@ -9,7 +9,7 @@ from snakeoil.chksum import get_chksums
 from snakeoil.osutils import listdir, pjoin, sizeof_fmt
 from snakeoil.strings import pluralism
 
-from .. import git, results, sources
+from .. import addons, results, sources
 from . import Check, GentooRepoCheck
 
 allowed_filename_chars = "a-zA-Z0-9._-+:"
@@ -172,7 +172,7 @@ class PkgDirCheck(Check):
     _source = (sources.PackageRepoSource, (), (('source', sources.RawRepoSource),))
 
     ignore_dirs = frozenset(["cvs", ".svn", ".bzr"])
-    required_addons = (git.GitAddon,)
+    required_addons = (addons.git.GitAddon,)
     known_results = frozenset([
         DuplicateFiles, EmptyFile, ExecutableFile, UnknownPkgDirEntry, SizeViolation,
         BannedCharacter, InvalidUTF8, MismatchedPN, InvalidPN,
@@ -310,13 +310,13 @@ class LiveOnlyCheck(GentooRepoCheck):
     """Scan for packages with only live versions."""
 
     _source = sources.PackageRepoSource
-    required_addons = (git.GitAddon,)
+    required_addons = (addons.git.GitAddon,)
     known_results = frozenset([LiveOnlyPackage])
 
     def __init__(self, *args, git_addon):
         super().__init__(*args)
         self.today = datetime.today()
-        self.added_repo = git_addon.cached_repo(git.GitAddedRepo)
+        self.added_repo = git_addon.cached_repo(addons.git.GitAddedRepo)
 
     def feed(self, pkgset):
         if all(pkg.live for pkg in pkgset):

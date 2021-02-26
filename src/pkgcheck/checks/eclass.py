@@ -8,7 +8,6 @@ from snakeoil.strings import pluralism
 
 from .. import addons, results, sources
 from ..base import LogMap, LogReports
-from ..eclass import EclassAddon
 from . import Check
 
 
@@ -70,7 +69,7 @@ class EclassUsageCheck(Check):
     known_results = frozenset([
         DeprecatedEclass, DuplicateEclassInherit, MisplacedEclassVar,
     ])
-    required_addons = (addons.BashAddon, EclassAddon)
+    required_addons = (addons.BashAddon, addons.eclass.EclassAddon)
 
     def __init__(self, *args, bash_addon, eclass_addon):
         super().__init__(*args)

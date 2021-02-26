@@ -1,6 +1,5 @@
 import pytest
 from pkgcheck import addons, feeds
-from pkgcheck.profiles import ProfileAddon
 from snakeoil.osutils import pjoin
 
 from .misc import FakePkg, Profile
@@ -55,7 +54,7 @@ class TestEvaluateDepSet:
             f.write('dev-util/diffball bar foo')
 
         options, _ = self.tool.parse_args(self.args + ['--profiles=1,2,3'])
-        profile_addon = addons.init_addon(ProfileAddon, options)
+        profile_addon = addons.init_addon(addons.profiles.ProfileAddon, options)
         self.addon = feeds.EvaluateDepSet(options, profile_addon=profile_addon)
 
     def test_it(self):

@@ -17,7 +17,8 @@ from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
 from snakeoil.strings import pluralism
 
-from .. import base, git, results, sources
+from .. import base, results, sources
+from ..addons import git
 from ..base import PkgcheckUserException
 from . import GentooRepoCheck, GitCheck
 from .header import copyright_regex

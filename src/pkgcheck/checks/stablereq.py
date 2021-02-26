@@ -3,7 +3,7 @@ from datetime import datetime
 
 from snakeoil.strings import pluralism
 
-from .. import git, results, sources
+from .. import addons, results, sources
 from . import GentooRepoCheck
 
 
@@ -37,13 +37,13 @@ class StableRequestCheck(GentooRepoCheck):
     Instead they'll be caught by the UnstableOnly check.
     """
     _source = (sources.PackageRepoSource, (), (('source', sources.UnmaskedRepoSource),))
-    required_addons = (git.GitAddon,)
+    required_addons = (addons.git.GitAddon,)
     known_results = frozenset([StableRequest])
 
     def __init__(self, *args, git_addon):
         super().__init__(*args)
         self.today = datetime.today()
-        self.modified_repo = git_addon.cached_repo(git.GitModifiedRepo)
+        self.modified_repo = git_addon.cached_repo(addons.git.GitModifiedRepo)
 
     def feed(self, pkgset):
         pkg_slotted = defaultdict(list)

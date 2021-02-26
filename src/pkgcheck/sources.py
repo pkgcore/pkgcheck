@@ -11,9 +11,9 @@ from pkgcore.restrictions import packages
 from snakeoil.osutils import listdir_files, pjoin
 
 from . import addons, base
-from .eclass import Eclass, EclassAddon
+from .addons.eclass import Eclass, EclassAddon
+from .addons.profiles import ProfileAddon, ProfileNode
 from .packages import FilteredPkg, RawCPV, WrappedPkg
-from .profiles import ProfileAddon, ProfileNode
 
 
 class Source:

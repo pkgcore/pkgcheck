@@ -74,7 +74,7 @@ class TestNetworkChecks:
 
             results = []
             args = ['-c', check_name, '-k', keyword, f'{check_name}/{ebuild_name}']
-            with patch('pkgcheck.net.requests.Session.send') as send:
+            with patch('pkgcheck.addons.net.requests.Session.send') as send:
                 send.side_effect = responses_mod.responses
 
                 # load expected results if they exist

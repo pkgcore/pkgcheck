@@ -6,7 +6,7 @@ from typing import List
 
 import pytest
 from pkgcheck import addons, base, sources
-from pkgcheck.caches import CachedAddon, CacheDisabled
+from pkgcheck.addons.caches import CachedAddon, CacheDisabled
 from pkgcheck.checks import AsyncCheck, SkipCheck
 from pkgcore.ebuild import domain, repo_objs
 from pkgcore.ebuild.atom import atom

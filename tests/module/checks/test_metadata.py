@@ -7,7 +7,7 @@ from itertools import combinations
 from operator import attrgetter
 
 import pytest
-from pkgcheck import addons, eclass, git
+from pkgcheck import addons
 from pkgcheck.checks import metadata
 from pkgcore.ebuild import eapi, repo_objs, repository
 from pkgcore.ebuild.cpv import VersionedCPV as CPV
@@ -347,7 +347,7 @@ class TestEapiCheck(misc.ReportTestCase, misc.Tmpdir):
         repo_config = repo_objs.RepoConfig(location=self.dir)
         self.repo = repository.UnconfiguredTree(repo_config.location, repo_config=repo_config)
         options = arghparse.Namespace(target_repo=self.repo, verbosity=False)
-        return self.check_kls(options, eclass_addon=eclass.EclassAddon(options))
+        return self.check_kls(options, eclass_addon=addons.eclass.EclassAddon(options))
 
     def mk_pkg(self, eapi):
         return misc.FakePkg('dev-util/diffball-2.7.1', data={'EAPI': eapi})

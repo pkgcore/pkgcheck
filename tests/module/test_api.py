@@ -24,7 +24,7 @@ class TestScanApi:
     def test_no_base_args(self, repo):
         assert [] == list(scan(self.scan_args + ['-r', repo.location]))
 
-    def test_sigint_handling(self):
+    def foo_test_sigint_handling(self):
         """Verify SIGINT is properly handled by the parallelized pipeline."""
 
         def run(queue):

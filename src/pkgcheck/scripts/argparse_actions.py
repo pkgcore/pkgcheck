@@ -8,7 +8,7 @@ from snakeoil.mappings import ImmutableDict
 from snakeoil.strings import pluralism
 
 from .. import base, objects
-from ..caches import CachedAddon
+from ..addons.caches import CachedAddon
 from ..checks import NetworkCheck
 
 

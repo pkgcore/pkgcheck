@@ -8,7 +8,8 @@ from snakeoil.klass import jit_attr_none
 from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
 
-from . import base, caches
+from .. import base
+from . import caches
 
 
 @total_ordering

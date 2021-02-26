@@ -1,7 +1,7 @@
 import os
 from unittest import mock
 
-from pkgcheck import git
+from pkgcheck import addons
 from pkgcheck.checks import repo
 from pkgcore.ebuild import atom
 from pkgcore.test.misc import FakeRepo
@@ -20,7 +20,7 @@ class TestRepoDirCheck(misc.Tmpdir, misc.ReportTestCase):
         self.repo = FakeRepo(repo_id='repo', location=self.dir)
         options = arghparse.Namespace(
             target_repo=self.repo, cache={'git': False}, gentoo_repo=True)
-        git_addon = git.GitAddon(options)
+        git_addon = addons.git.GitAddon(options)
         return repo.RepoDirCheck(options, git_addon=git_addon)
 
     def mk_pkg(self, cpvstr):

@@ -9,7 +9,6 @@ from snakeoil.sequences import stable_unique
 from snakeoil.strings import pluralism
 
 from .. import addons
-from .. import eclass as eclass_mod
 from .. import results, sources
 from . import Check, OptionalCheck
 
@@ -540,7 +539,7 @@ class InheritsCheck(OptionalCheck):
     _source = sources.EbuildParseRepoSource
     known_results = frozenset([
         MissingInherits, IndirectInherits, UnusedInherits, InternalEclassUsage])
-    required_addons = (addons.BashAddon, eclass_mod.EclassAddon)
+    required_addons = (addons.BashAddon, addons.eclass.EclassAddon)
 
     def __init__(self, *args, bash_addon, eclass_addon):
         super().__init__(*args)

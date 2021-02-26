@@ -4,9 +4,9 @@ from unittest.mock import patch
 
 import pytest
 from pkgcheck.addons import init_addon
+from pkgcheck.addons.eclass import Eclass, EclassAddon
 from pkgcheck.base import PkgcheckUserException
-from pkgcheck.caches import CacheDisabled
-from pkgcheck.eclass import Eclass, EclassAddon
+from pkgcheck.addons.caches import CacheDisabled
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
 
@@ -83,7 +83,7 @@ class TestEclassAddon:
         self.addon.update_cache()
         assert list(self.addon.eclasses) == ['foo']
 
-        with patch('pkgcheck.caches.CachedAddon.save_cache') as save_cache:
+        with patch('pkgcheck.addons.caches.CachedAddon.save_cache') as save_cache:
             self.addon.update_cache()
             # verify the cache was loaded and not regenerated
             save_cache.assert_not_called()
@@ -102,7 +102,7 @@ class TestEclassAddon:
         self.addon.save_cache(cache, self.cache_file)
 
         # verify cache load causes regen
-        with patch('pkgcheck.caches.CachedAddon.save_cache') as save_cache:
+        with patch('pkgcheck.addons.caches.CachedAddon.save_cache') as save_cache:
             self.addon.update_cache()
             save_cache.assert_called_once()
 
@@ -114,7 +114,7 @@ class TestEclassAddon:
         assert list(self.addon.eclasses) == ['foo']
         with open(eclass_path, 'w') as f:
             f.write('# changed eclass\n')
-        with patch('pkgcheck.caches.CachedAddon.save_cache') as save_cache:
+        with patch('pkgcheck.addons.caches.CachedAddon.save_cache') as save_cache:
             self.addon.update_cache()
             save_cache.assert_called_once()
 
@@ -123,7 +123,7 @@ class TestEclassAddon:
         self.addon.update_cache()
         assert list(self.addon.eclasses) == ['foo']
 
-        with patch('pkgcheck.caches.pickle.load') as pickle_load:
+        with patch('pkgcheck.addons.caches.pickle.load') as pickle_load:
             # catastrophic errors are raised
             pickle_load.side_effect = MemoryError('unpickling failed')
             with pytest.raises(MemoryError, match='unpickling failed'):
@@ -131,14 +131,14 @@ class TestEclassAddon:
 
             # but various load failure exceptions cause cache regen
             pickle_load.side_effect = Exception('unpickling failed')
-            with patch('pkgcheck.caches.CachedAddon.save_cache') as save_cache:
+            with patch('pkgcheck.addons.caches.CachedAddon.save_cache') as save_cache:
                 self.addon.update_cache()
                 save_cache.assert_called_once()
 
     def test_error_dumping_cache(self):
         touch(pjoin(self.eclass_dir, 'foo.eclass'))
         # verify IO related dump failures are raised
-        with patch('pkgcheck.caches.pickle.dump') as pickle_dump:
+        with patch('pkgcheck.addons.caches.pickle.dump') as pickle_dump:
             pickle_dump.side_effect = IOError('unpickling failed')
             with pytest.raises(PkgcheckUserException, match='failed dumping eclass cache'):
                 self.addon.update_cache()

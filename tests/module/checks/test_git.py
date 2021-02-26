@@ -6,7 +6,7 @@ from unittest.mock import patch
 import pytest
 from pkgcheck.base import PkgcheckUserException
 from pkgcheck.checks import git as git_mod
-from pkgcheck.git import GitCommit
+from pkgcheck.addons.git import GitCommit
 from pkgcore.ebuild.cpv import VersionedCPV as CPV
 from pkgcore.test.misc import FakeRepo
 from snakeoil.cli import arghparse

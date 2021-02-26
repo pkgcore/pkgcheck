@@ -2,7 +2,7 @@ import os
 from datetime import datetime, timedelta
 
 import pytest
-from pkgcheck import git
+from pkgcheck import addons
 from pkgcheck.checks import SkipCheck, pkgdir
 from pkgcore.ebuild.cpv import UnversionedCPV
 from pkgcore.test.misc import FakeRepo
@@ -27,8 +27,8 @@ class PkgDirCheckBase(misc.ReportTestCase):
         options = arghparse.Namespace(
             target_repo=self.repo, cache={'git': False}, gentoo_repo=gentoo)
         kwargs = {}
-        if git.GitAddon in self.check_kls.required_addons:
-            kwargs['git_addon'] = git.GitAddon(options)
+        if addons.git.GitAddon in self.check_kls.required_addons:
+            kwargs['git_addon'] = addons.git.GitAddon(options)
         return self.check_kls(options, **kwargs)
 
     def mk_pkg(self, files={}, category=None, package=None, version='0.7.1', revision=''):

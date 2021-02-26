@@ -14,10 +14,11 @@ from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 from tree_sitter import Language, Parser
 
-from . import base, caches, const, results
-from .base import PkgcheckUserException
-from .log import logger
-from .utils import build_library
+from .. import base, const, results
+from ..base import PkgcheckUserException
+from ..log import logger
+from ..utils import build_library
+from . import caches
 
 
 class ArchesArgs(arghparse.CommaSeparatedNegations):
@@ -287,7 +288,7 @@ class BashAddon(base.Addon):
 
     def __init__(self, *args):
         super().__init__(*args)
-        lib_path = pjoin(os.path.dirname(__file__), '_bash-lang.so')
+        lib_path = pjoin(os.path.dirname(base.__file__), '_bash-lang.so')
         if not os.path.exists(lib_path):  # pragma: no cover
             # dynamically build lib when running in git repo
             bash_lib = pjoin(const.REPO_PATH, 'tree-sitter-bash')

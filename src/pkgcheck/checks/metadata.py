@@ -17,11 +17,9 @@ from snakeoil.mappings import ImmutableDict
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
-from .. import addons, git, results, sources
+from .. import addons, results, sources
 from ..addons import UnstatedIuse
 from ..base import LogMap, LogReports
-from ..eclass import EclassAddon
-from ..profiles import ProfileAddon
 from . import Check
 from .visibility import FakeConfigurable
 
@@ -244,7 +242,7 @@ class EapiCheck(Check):
     """Scan for packages with banned or deprecated EAPIs."""
 
     known_results = frozenset([DeprecatedEapi, BannedEapi, UnsupportedEclassEapi])
-    required_addons = (EclassAddon,)
+    required_addons = (addons.eclass.EclassAddon,)
 
     def __init__(self, *args, eclass_addon):
         super().__init__(*args)
@@ -343,7 +341,7 @@ class RequiredUseCheck(Check):
     _source = (sources.RestrictionRepoSource, (
         packages.PackageRestriction('eapi', values.GetAttrRestriction(
             'options.has_required_use', values.FunctionRestriction(bool))),))
-    required_addons = (addons.UseAddon, ProfileAddon)
+    required_addons = (addons.UseAddon, addons.profiles.ProfileAddon)
     known_results = frozenset([InvalidRequiredUse, RequiredUseDefaults, UnstatedIuse])
 
     def __init__(self, *args, use_addon, profile_addon):
@@ -801,13 +799,13 @@ class NonexistentBlocker(results.VersionResult, results.Warning):
 class OutdatedBlockersCheck(Check):
     """Check for outdated and nonexistent blocker dependencies."""
 
-    required_addons = (git.GitAddon,)
+    required_addons = (addons.git.GitAddon,)
     known_results = frozenset([OutdatedBlocker, NonexistentBlocker])
 
     def __init__(self, *args, git_addon):
         super().__init__(*args)
         self.today = datetime.today()
-        self.existence_repo = git_addon.cached_repo(git.GitRemovedRepo)
+        self.existence_repo = git_addon.cached_repo(addons.git.GitRemovedRepo)
 
     def feed(self, pkg):
         outdated_blockers = defaultdict(set)

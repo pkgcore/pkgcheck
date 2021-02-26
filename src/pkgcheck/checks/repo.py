@@ -2,7 +2,7 @@ import os
 
 from snakeoil.osutils import pjoin
 
-from .. import base, git, results, sources
+from .. import addons, base, results, sources
 from ..packages import RawCPV
 from ..utils import is_binary
 from . import GentooRepoCheck, RepoCheck
@@ -24,7 +24,7 @@ class RepoDirCheck(GentooRepoCheck, RepoCheck):
     """Scan all files in the repository for issues."""
 
     _source = (sources.EmptySource, (base.repo_scope,))
-    required_addons = (git.GitAddon,)
+    required_addons = (addons.git.GitAddon,)
     known_results = frozenset([BinaryFile])
 
     # repo root level directories that are ignored
