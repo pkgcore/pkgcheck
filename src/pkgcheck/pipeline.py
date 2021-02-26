@@ -1,4 +1,4 @@
-"""Pipeline building support for connecting sources and checks."""
+"""Pipeline that parallelizes check running."""
 
 import multiprocessing
 import os
