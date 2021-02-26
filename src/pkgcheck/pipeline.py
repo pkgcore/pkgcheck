@@ -164,18 +164,18 @@ class Pipeline:
         unversioned_source = UnversionedSource(self.options)
 
         for i, (scan_scope, restriction, pipes) in enumerate(sync_pipes):
-            for source_scope, runners in pipes.items():
+            for scope, runners in pipes.items():
                 num_runners = len(runners)
-                if base.version_scope in (source_scope, scan_scope):
+                if base.version_scope in (scope, scan_scope):
                     for restrict in versioned_source.itermatch(restriction):
                         for j in range(num_runners):
-                            work_q.put((source_scope, restrict, i, [j]))
-                elif source_scope == base.package_scope:
+                            work_q.put((scope, restrict, i, [j]))
+                elif scope == base.package_scope:
                     for restrict in unversioned_source.itermatch(restriction):
-                        work_q.put((source_scope, restrict, i, range(num_runners)))
+                        work_q.put((scope, restrict, i, range(num_runners)))
                 else:
                     for j in range(num_runners):
-                        work_q.put((source_scope, restriction, i, [j]))
+                        work_q.put((scope, restriction, i, [j]))
 
         # notify consumers that no more work exists
         for i in range(self.options.jobs):
@@ -184,10 +184,9 @@ class Pipeline:
     def _run_checks(self, pipes, work_q):
         """Consumer that runs scanning tasks, queuing results for output."""
         try:
-            for source_scope, restrict, pipe_idx, runners in iter(work_q.get, None):
+            for scope, restrict, i, runners in iter(work_q.get, None):
                 if results := sorted(chain.from_iterable(
-                        pipes[pipe_idx][-1][source_scope][i].run(restrict)
-                        for i in runners)):
+                        pipes[i][-1][scope][j].run(restrict) for j in runners)):
                     self._results_q.put(results)
         except Exception:  # pragma: no cover
             # traceback can't be pickled so serialize it
