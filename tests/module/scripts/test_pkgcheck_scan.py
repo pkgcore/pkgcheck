@@ -23,7 +23,7 @@ from snakeoil.fileutils import touch
 from snakeoil.formatters import PlainTextFormatter
 from snakeoil.osutils import pjoin
 
-from .misc import Profile
+from ..misc import Profile
 
 
 class TestPkgcheckScanParseArgs:
@@ -321,7 +321,7 @@ class TestPkgcheckScan:
 
     script = partial(run, project)
 
-    testdir = os.path.dirname(os.path.dirname(__file__))
+    testdir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
     repos_data = pjoin(testdir, 'data', 'repos')
     repos_dir = pjoin(testdir, 'repos')
     repos = tuple(x for x in sorted(os.listdir(repos_data)) if x != 'network')
