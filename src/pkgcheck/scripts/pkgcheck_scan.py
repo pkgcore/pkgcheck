@@ -399,8 +399,10 @@ def _default_filtered_keywords(namespace, attr):
 def _determine_restrictions(namespace, attr):
     """Determine restrictions for untargeted scans and generate collapsed restriction for targeted scans."""
     if namespace.targets:
-        # Generate restrictions for all targets. Note that this blocks scanning
-        # until piped-in targets are read.
+        # Generate restrictions for all targets, blocking scanning until
+        # piped-in targets are read. This avoids pickling overhead and having
+        # to support pickleable check instances under the parallelized check
+        # running pipeline.
         restrictions = list(generate_restricts(namespace.target_repo, namespace.targets))
         if not restrictions:
             raise PkgcheckUserException('no targets')
