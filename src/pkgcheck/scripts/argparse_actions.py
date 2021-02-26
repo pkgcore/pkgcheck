@@ -7,9 +7,9 @@ from snakeoil.cli import arghparse
 from snakeoil.mappings import ImmutableDict
 from snakeoil.strings import pluralism
 
-from . import base, objects
-from .caches import CachedAddon
-from .checks import NetworkCheck
+from .. import base, objects
+from ..caches import CachedAddon
+from ..checks import NetworkCheck
 
 
 class ConfigArg(argparse._StoreAction):

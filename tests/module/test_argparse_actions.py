@@ -4,7 +4,8 @@ import textwrap
 from unittest.mock import patch
 
 import pytest
-from pkgcheck import argparsers, base, checks, objects
+from pkgcheck import base, checks, objects
+from pkgcheck.scripts import argparse_actions
 from pkgcheck.caches import CachedAddon
 from snakeoil.cli import arghparse
 
@@ -14,7 +15,7 @@ class TestConfigArg:
     @pytest.fixture(autouse=True)
     def _create_argparser(self):
         self.parser = arghparse.ArgumentParser()
-        self.parser.add_argument('--config', action=argparsers.ConfigArg)
+        self.parser.add_argument('--config', action=argparse_actions.ConfigArg)
 
     def test_none(self):
         options = self.parser.parse_args([])
@@ -37,7 +38,7 @@ class TestFilterArgs:
     def _create_argparser(self):
         self.parser = arghparse.ArgumentParser()
         self.parser.set_defaults(config_checksets={'cset': ['StableRequestCheck']})
-        self.parser.add_argument('--filter', action=argparsers.FilterArgs)
+        self.parser.add_argument('--filter', action=argparse_actions.FilterArgs)
 
     def test_none(self):
         options = self.parser.parse_args([])
@@ -76,12 +77,12 @@ class TestCacheNegations:
     @pytest.fixture(autouse=True)
     def _create_argparser(self):
         self.parser = arghparse.ArgumentParser()
-        self.parser.add_argument('--cache', action=argparsers.CacheNegations)
+        self.parser.add_argument('--cache', action=argparse_actions.CacheNegations)
         self.caches = [x.type for x in CachedAddon.caches.values()]
 
     def test_defaults(self):
         options = self.parser.parse_args([])
-        assert options.cache == dict(argparsers.CacheNegations.caches)
+        assert options.cache == dict(argparse_actions.CacheNegations.caches)
 
     def test_unknown(self, capsys):
         with pytest.raises(SystemExit) as excinfo:

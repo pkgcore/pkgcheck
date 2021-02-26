@@ -3,9 +3,10 @@ import os
 from snakeoil.cli import arghparse
 from snakeoil.osutils import pjoin
 
-from .. import argparsers, base, const
+from .. import base, const
 from ..addons import init_addon
 from ..caches import CachedAddon
+from .argparse_actions import CacheNegations
 from .argparsers import repo_argparser
 
 cache = arghparse.ArgumentParser(
@@ -35,7 +36,7 @@ cache.add_argument(
     '-n', '--dry-run', action='store_true',
     help='dry run without performing any changes')
 cache.add_argument(
-    '-t', '--type', dest='cache', action=argparsers.CacheNegations,
+    '-t', '--type', dest='cache', action=CacheNegations,
     help='target cache types')
 
 

@@ -11,16 +11,17 @@ from pkgcore.util import parserestrict
 from snakeoil.cli import arghparse
 from snakeoil.osutils import pjoin
 
-from .. import argparsers, base, const, objects
+from .. import base, const, objects
 from ..base import PkgcheckUserException
 from ..cli import ConfigFileParser
 from ..pipeline import Pipeline
+from . import argparse_actions
 from .argparsers import repo_argparser, reporter_argparser
 
 config_argparser = arghparse.ArgumentParser(suppress=True)
 config_options = config_argparser.add_argument_group('config options')
 config_options.add_argument(
-    '--config', action=argparsers.ConfigArg, dest='config_file',
+    '--config', action=argparse_actions.ConfigArg, dest='config_file',
     help='use custom pkgcheck scan settings file',
     docs="""
         Load custom pkgcheck scan settings from a given file.
@@ -43,7 +44,7 @@ scan.add_argument(
 main_options = scan.add_argument_group('main options')
 main_options.add_argument(
     '-f', '--filter',
-    action=arghparse.Delayed, target=argparsers.FilterArgs, priority=99,
+    action=arghparse.Delayed, target=argparse_actions.FilterArgs, priority=99,
     help='limit targeted packages for scanning',
     docs="""
         Support limiting targeted packages for scanning using a chosen filter.
@@ -75,7 +76,7 @@ main_options.add_argument(
         Number of asynchronous tasks to run concurrently (defaults to 5 * CPU count).
     """)
 main_options.add_argument(
-    '--cache', action=argparsers.CacheNegations,
+    '--cache', action=argparse_actions.CacheNegations,
     help='forcibly enable/disable caches',
     docs="""
         All cache types are enabled by default, this option explicitly sets
@@ -101,7 +102,7 @@ main_options.add_argument(
     help='directory to use for storing cache files')
 main_options.add_argument(
     '--exit', metavar='ITEM', dest='exit_keywords',
-    action=argparsers.ExitArgs, nargs='?', default=(),
+    action=argparse_actions.ExitArgs, nargs='?', default=(),
     help='checksets, checks, or keywords that trigger an error exit status',
     docs="""
         Comma-separated list of checksets, checks, or keywords to enable and
@@ -120,10 +121,10 @@ main_options.add_argument(
 check_options = scan.add_argument_group('check selection')
 check_options.add_argument(
     '--net', nargs=0,
-    action=arghparse.Delayed, target=argparsers.EnableNet, priority=-1,
+    action=arghparse.Delayed, target=argparse_actions.EnableNet, priority=-1,
     help='enable checks that require network access')
 check_options.add_argument(
-    '-C', '--checksets', metavar='CHECKSET', action=argparsers.ChecksetArgs,
+    '-C', '--checksets', metavar='CHECKSET', action=argparse_actions.ChecksetArgs,
     help='scan using a configured set of check/keyword args',
     docs="""
         Comma-separated list of checksets to enable and disable for
@@ -138,7 +139,7 @@ check_options.add_argument(
     """)
 check_options.add_argument(
     '-s', '--scopes', metavar='SCOPE', dest='selected_scopes', default=(),
-    action=arghparse.Delayed, target=argparsers.ScopeArgs, priority=51,
+    action=arghparse.Delayed, target=argparse_actions.ScopeArgs, priority=51,
     help='limit checks to run by scope',
     docs="""
         Comma-separated list of scopes to enable and disable for scanning. Any
@@ -150,7 +151,7 @@ check_options.add_argument(
     """ % (', '.join(base.scopes)))
 check_options.add_argument(
     '-c', '--checks', metavar='CHECK', dest='selected_checks', default=(),
-    action=arghparse.Delayed, target=argparsers.CheckArgs, priority=52,
+    action=arghparse.Delayed, target=argparse_actions.CheckArgs, priority=52,
     help='limit checks to run',
     docs="""
         Comma-separated list of checks to enable and disable for
@@ -170,7 +171,7 @@ check_options.add_argument(
     """)
 check_options.add_argument(
     '-k', '--keywords', metavar='KEYWORD', dest='selected_keywords', default=(),
-    action=arghparse.Delayed, target=argparsers.KeywordArgs, priority=53,
+    action=arghparse.Delayed, target=argparse_actions.KeywordArgs, priority=53,
     help='limit keywords to scan for',
     docs="""
         Comma-separated list of keywords to enable and disable for
