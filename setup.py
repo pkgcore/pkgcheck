@@ -123,7 +123,8 @@ class install_data(dst_install_data.install_data):
 
     def _generate_files(self):
         with pkgdist.syspath(pkgdist.PACKAGEDIR):
-            from pkgcheck import base, caches, objects
+            from pkgcheck import base, objects
+            from pkgcheck.addons import caches
 
         os.makedirs(os.path.join(pkgdist.REPODIR, '.generated'), exist_ok=True)
         files = []
