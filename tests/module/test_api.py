@@ -24,7 +24,7 @@ class TestScanApi:
     def test_no_base_args(self, repo):
         assert [] == list(scan(self.scan_args + ['-r', repo.location]))
 
-    def foo_test_sigint_handling(self):
+    def test_sigint_handling(self, repo):
         """Verify SIGINT is properly handled by the parallelized pipeline."""
 
         def run(queue):
@@ -44,7 +44,7 @@ class TestScanApi:
             with patch('pkgcheck.pipeline.Pipeline.__iter__') as fake_iter:
                 fake_iter.side_effect = partial(sleep)
                 try:
-                    iter(scan())
+                    iter(scan([repo.location]))
                 except KeyboardInterrupt:
                     queue.put(None)
                     sys.exit(0)
