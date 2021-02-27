@@ -298,7 +298,12 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
         """Check for issues due to package modifications."""
         pkg = pkgs[0]
 
-        new_pkg = self.repo.match(pkg.versioned_atom)[0]
+        try:
+            new_pkg = self.repo.match(pkg.versioned_atom)[0]
+        except IndexError:
+            # ignore broken ebuild caught by other checks
+            return
+
         # ignore live ebuilds
         if new_pkg.live:
             return
@@ -362,7 +367,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
                 pkg = next(self.repo.itermatch(git_pkg.versioned_atom))
                 line = next(pkg.ebuild.text_fileobj())
             except StopIteration:
-                # ignore probable broken ebuild
+                # ignore broken ebuild caught by other checks
                 continue
 
             # check copyright on new/modified ebuilds
