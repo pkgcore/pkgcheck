@@ -4,4 +4,4 @@ lxml
 pathspec
 tree-sitter
 snakeoil~=0.9.2
-pkgcore~=0.11.0
+pkgcore~=0.11.4
