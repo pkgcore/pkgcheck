@@ -80,7 +80,7 @@ the following::
 
 .. |pypi| image:: https://img.shields.io/pypi/v/pkgcheck.svg
     :target: https://pypi.python.org/pypi/pkgcheck
-.. |test| image:: https://github.com/pkgcore/pkgcheck/workflows/Run%20tests/badge.svg
-    :target: https://github.com/pkgcore/pkgcheck/actions?query=workflow%3A%22Run+tests%22
+.. |test| image:: https://github.com/pkgcore/pkgcheck/workflows/test/badge.svg
+    :target: https://github.com/pkgcore/pkgcheck/actions?query=workflow%3A%22test%22
 .. |coverage| image:: https://codecov.io/gh/pkgcore/pkgcheck/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/pkgcore/pkgcheck
