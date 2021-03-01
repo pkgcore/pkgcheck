@@ -300,14 +300,10 @@ class _ScanCommits(argparse.Action):
 
         # generate restrictions based on git commit changes
         repo = namespace.target_repo
-        targets = sorted(repo.category_dirs)
-        for d in ('eclass', 'profiles'):
-            if os.path.isdir(pjoin(repo.location, d)):
-                targets.append(d)
         diff_cmd = ['git', 'diff-tree', '-r', '--name-only', '-z', ref]
         try:
             p = subprocess.run(
-                diff_cmd + targets,
+                diff_cmd,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                 cwd=repo.location, check=True, encoding='utf8')
         except FileNotFoundError:
@@ -324,13 +320,14 @@ class _ScanCommits(argparse.Action):
         eclasses, profiles, pkgs = OrderedSet(), OrderedSet(), OrderedSet()
 
         for path in p.stdout.strip('\x00').split('\x00'):
+            path_components = path.split(os.sep)
             if mo := eclass_re.match(path):
                 eclasses.add(mo.group('eclass'))
-            elif path.startswith('profiles/'):
+            elif path_components[0] == 'profiles':
                 profiles.add(path)
-            else:
+            elif path_components[0] in repo.categories:
                 try:
-                    pkgs.add(atom_cls(os.sep.join(path.split(os.sep, 2)[:2])))
+                    pkgs.add(atom_cls(os.sep.join(path_components[:2])))
                 except MalformedAtom:
                     continue
 

@@ -60,58 +60,134 @@ class TestPkgcheckScanCommitsParseArgs:
             err = err.strip().split('\n')
             assert err[-1].startswith('pkgcheck scan: error: failed running git: ')
 
-    def test_commits_nonexistent(self):
-        with patch('subprocess.run') as git_diff:
-            git_diff.return_value.stdout = ''
-            with pytest.raises(SystemExit) as excinfo:
-                options, _func = self.tool.parse_args(self.args + ['--commits'])
-            assert excinfo.value.code == 0
+    def test_commits_nonexistent(self, make_repo, make_git_repo, tmp_path):
+        parent = make_repo()
+        origin = make_git_repo(parent.location, commit=True)
+        local = make_git_repo(str(tmp_path), commit=False)
+        local.run(['git', 'remote', 'add', 'origin', origin.path])
+        local.run(['git', 'pull', 'origin', 'master'])
+        local.run(['git', 'remote', 'set-head', 'origin', 'master'])
 
-    def test_commits_existing(self):
-        output = 'dev-libs/foo/metadata.xml\x00media-libs/bar/bar-0.ebuild\x00'
-        with patch('subprocess.run') as git_diff:
-            git_diff.return_value.stdout = ''.join(output)
-            options, _func = self.tool.parse_args(self.args + ['--commits'])
-            atom_restricts = [atom_cls('dev-libs/foo'), atom_cls('media-libs/bar')]
-            assert list(options.restrictions) == \
-                [(base.package_scope, packages.OrRestriction(*atom_restricts))]
+        with pytest.raises(SystemExit) as excinfo:
+            options, _func = self.tool.parse_args(self.args + ['-r', local.path, '--commits'])
+        assert excinfo.value.code == 0
 
-    def test_commits_eclasses(self):
-        output = 'dev-libs/foo/metadata.xml\x00virtual/bar/bar-0.ebuild\x00eclass/foo.eclass\x00'
-        with patch('subprocess.run') as git_diff:
-            git_diff.return_value.stdout = ''.join(output)
-            options, _func = self.tool.parse_args(self.args + ['--commits'])
-            atom_restricts = [atom_cls('dev-libs/foo'), atom_cls('virtual/bar')]
-            restrictions = list(options.restrictions)
-            assert len(restrictions) == 2
-            assert restrictions[0] == \
-                (base.package_scope, packages.OrRestriction(*atom_restricts))
-            assert restrictions[1][0] == base.eclass_scope
-            assert restrictions[1][1] == frozenset(['foo'])
+    def test_commits_existing(self, make_repo, make_git_repo, tmp_path):
+        # create parent repo
+        parent = make_repo()
+        origin = make_git_repo(parent.location, commit=True)
+        parent.create_ebuild('cat/pkg-0')
+        origin.add_all('cat/pkg-0')
 
-    def test_commits_profiles(self):
-        output = 'dev-libs/foo/metadata.xml\x00media-libs/bar/bar-0.ebuild\x00profiles/package.mask\x00'
-        with patch('subprocess.run') as git_diff:
-            git_diff.return_value.stdout = ''.join(output)
-            options, _func = self.tool.parse_args(self.args + ['--commits'])
-            atom_restricts = [atom_cls('dev-libs/foo'), atom_cls('media-libs/bar')]
-            restrictions = list(options.restrictions)
-            assert len(restrictions) == 2
-            assert restrictions[0] == \
-                (base.package_scope, packages.OrRestriction(*atom_restricts))
-            assert restrictions[1][0] == base.profile_node_scope
-            assert restrictions[1][1] == frozenset(['profiles/package.mask'])
+        # create child repo and pull from parent
+        local = make_git_repo(str(tmp_path), commit=False)
+        local.run(['git', 'remote', 'add', 'origin', origin.path])
+        local.run(['git', 'pull', 'origin', 'master'])
+        local.run(['git', 'remote', 'set-head', 'origin', 'master'])
+        child = make_repo(local.path)
 
-    def test_commits_ignored_changes(self):
-        output = [
-            'foo/bar.txt\n',
-            'eclass/tests/check.sh\n',
+        # create local commits on child repo
+        child.create_ebuild('cat/pkg-1')
+        local.add_all('cat/pkg-1')
+        child.create_ebuild('newcat/pkg-1')
+        local.add_all('newcat/pkg-1')
+
+        options, _func = self.tool.parse_args(self.args + ['-r', local.path, '--commits'])
+        atom_restricts = [atom_cls('cat/pkg'), atom_cls('newcat/pkg')]
+        assert list(options.restrictions) == \
+            [(base.package_scope, packages.OrRestriction(*atom_restricts))]
+
+    def test_commits_eclasses(self, make_repo, make_git_repo, tmp_path):
+        # create parent repo
+        parent = make_repo()
+        origin = make_git_repo(parent.location, commit=True)
+        parent.create_ebuild('cat/pkg-0')
+        origin.add_all('cat/pkg-0')
+
+        # create child repo and pull from parent
+        local = make_git_repo(str(tmp_path), commit=False)
+        local.run(['git', 'remote', 'add', 'origin', origin.path])
+        local.run(['git', 'pull', 'origin', 'master'])
+        local.run(['git', 'remote', 'set-head', 'origin', 'master'])
+        child = make_repo(local.path)
+
+        # create local commits on child repo
+        with open(pjoin(local.path, 'cat', 'pkg', 'metadata.xml'), 'w') as f:
+            f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+        local.add_all('cat/pkg: metadata')
+        child.create_ebuild('foo/bar-1')
+        local.add_all('foo/bar-1')
+        os.makedirs(pjoin(local.path, 'eclass'))
+        with open(pjoin(local.path, 'eclass', 'foo.eclass'), 'w') as f:
+            f.write('data\n')
+        local.add_all('foo.eclass')
+
+        options, _func = self.tool.parse_args(self.args + ['-r', local.path, '--commits'])
+        atom_restricts = [atom_cls('cat/pkg'), atom_cls('foo/bar')]
+        restrictions = list(options.restrictions)
+        assert len(restrictions) == 2
+        assert restrictions[0] == \
+            (base.package_scope, packages.OrRestriction(*atom_restricts))
+        assert restrictions[1][0] == base.eclass_scope
+        assert restrictions[1][1] == frozenset(['foo'])
+
+    def test_commits_profiles(self, make_repo, make_git_repo, tmp_path):
+        # create parent repo
+        parent = make_repo()
+        origin = make_git_repo(parent.location, commit=True)
+        parent.create_ebuild('cat/pkg-0')
+        origin.add_all('cat/pkg-0')
+
+        # create child repo and pull from parent
+        local = make_git_repo(str(tmp_path), commit=False)
+        local.run(['git', 'remote', 'add', 'origin', origin.path])
+        local.run(['git', 'pull', 'origin', 'master'])
+        local.run(['git', 'remote', 'set-head', 'origin', 'master'])
+        child = make_repo(local.path)
+
+        # create local commits on child repo
+        with open(pjoin(local.path, 'cat', 'pkg', 'metadata.xml'), 'w') as f:
+            f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+        local.add_all('cat/pkg: metadata')
+        child.create_ebuild('foo/bar-1')
+        local.add_all('foo/bar-1')
+        with open(pjoin(local.path, 'profiles', 'package.mask'), 'w') as f:
+            f.write('data\n')
+        local.add_all('package.mask')
+
+        options, _func = self.tool.parse_args(self.args + ['-r', local.path, '--commits'])
+        atom_restricts = [atom_cls('cat/pkg'), atom_cls('foo/bar')]
+        restrictions = [
+            (base.package_scope, packages.OrRestriction(*atom_restricts)),
+            (base.profile_node_scope, frozenset(['profiles/package.mask'])),
         ]
-        with patch('subprocess.run') as git_diff:
-            git_diff.return_value.stdout = ''.join(output)
-            with pytest.raises(SystemExit) as excinfo:
-                self.tool.parse_args(self.args + ['--commits'])
-            assert excinfo.value.code == 0
+        assert restrictions == options.restrictions
+
+    def test_commits_ignored_changes(self, make_repo, make_git_repo, tmp_path):
+        # create parent repo
+        parent = make_repo()
+        origin = make_git_repo(parent.location, commit=True)
+        parent.create_ebuild('cat/pkg-0')
+        origin.add_all('cat/pkg-0')
+
+        # create child repo and pull from parent
+        local = make_git_repo(str(tmp_path), commit=False)
+        local.run(['git', 'remote', 'add', 'origin', origin.path])
+        local.run(['git', 'pull', 'origin', 'master'])
+        local.run(['git', 'remote', 'set-head', 'origin', 'master'])
+
+        # create local commits on child repo
+        os.makedirs(pjoin(local.path, 'foo'))
+        with open(pjoin(local.path, 'foo', 'bar.txt'), 'w') as f:
+            f.write('data\n')
+        os.makedirs(pjoin(local.path, 'eclass', 'tests'))
+        with open(pjoin(local.path, 'eclass', 'tests', 'test.sh'), 'w') as f:
+            f.write('data\n')
+        local.add_all('add files')
+
+        with pytest.raises(SystemExit) as excinfo:
+            self.tool.parse_args(self.args + ['-r', local.path, '--commits'])
+        assert excinfo.value.code == 0
 
 
 class TestGitStash:
