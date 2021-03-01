@@ -34,20 +34,17 @@ class TestPkgcheckScanCommitsParseArgs:
             options, _func = self.tool.parse_args(self.args + ['--commits', 'ref', 'dev-util/foo'])
         assert excinfo.value.code == 2
         out, err = capsys.readouterr()
-        err = err.strip().split('\n')
-        assert err[-1].startswith(
-            "pkgcheck scan: error: --commits is mutually exclusive with target: dev-util/foo")
+        assert err.strip() == \
+            "pkgcheck scan: error: --commits is mutually exclusive with target: dev-util/foo"
 
     def test_commits_git_unavailable(self, capsys):
         with patch('subprocess.run') as git_diff:
-            git_diff.side_effect = FileNotFoundError
+            git_diff.side_effect = FileNotFoundError("no such file 'git'")
             with pytest.raises(SystemExit) as excinfo:
                 options, _func = self.tool.parse_args(self.args + ['--commits'])
             assert excinfo.value.code == 2
             out, err = capsys.readouterr()
-            err = err.strip().split('\n')
-            assert err[-1].startswith(
-                "pkgcheck scan: error: git not available to determine targets for --commits")
+            assert err.strip() == "pkgcheck scan: error: no such file 'git'"
 
     def test_git_error(self, capsys):
         with patch('subprocess.run') as git_diff:

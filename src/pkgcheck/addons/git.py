@@ -22,6 +22,7 @@ from snakeoil.klass import jit_attr
 from snakeoil.mappings import OrderedSet
 from snakeoil.osutils import pjoin
 from snakeoil.process import CommandNotFound, find_binary
+from snakeoil.sequences import predicate_split
 from snakeoil.strings import pluralism
 
 from .. import base
@@ -287,27 +288,17 @@ class GitRemovedRepo(GitChangedRepo):
 
 
 class _ScanCommits(argparse.Action):
-    """Argparse action that enables git commit checks."""
+    """Argparse action that enables scannings against git commits."""
 
-    def __call__(self, parser, namespace, value, option_string=None):
-        if namespace.targets:
-            targets = ' '.join(namespace.targets)
-            s = pluralism(namespace.targets)
-            parser.error(f'--commits is mutually exclusive with target{s}: {targets}')
-
-        ref = value if value is not None else 'origin..HEAD'
-        setattr(namespace, self.dest, ref)
-
-        # generate restrictions based on git commit changes
-        repo = namespace.target_repo
-        diff_cmd = ['git', 'diff-tree', '-r', '--name-only', '-z', ref]
+    def generate_restrictions(self, parser, namespace, diff_cmd):
+        """Generate restrictions for a given diff command."""
         try:
             p = subprocess.run(
                 diff_cmd,
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                cwd=repo.location, check=True, encoding='utf8')
-        except FileNotFoundError:
-            parser.error('git not available to determine targets for --commits')
+                cwd=namespace.target_repo.location, check=True, encoding='utf8')
+        except FileNotFoundError as e:
+            parser.error(str(e))
         except subprocess.CalledProcessError as e:
             error = e.stderr.splitlines()[0]
             parser.error(f'failed running git: {error}')
@@ -325,7 +316,7 @@ class _ScanCommits(argparse.Action):
                 eclasses.add(mo.group('eclass'))
             elif path_components[0] == 'profiles':
                 profiles.add(path)
-            elif path_components[0] in repo.categories:
+            elif path_components[0] in namespace.target_repo.categories:
                 try:
                     pkgs.add(atom_cls(os.sep.join(path_components[:2])))
                 except MalformedAtom:
@@ -344,15 +335,50 @@ class _ScanCommits(argparse.Action):
         if not restrictions:
             parser.exit()
 
+        return restrictions
+
+    def __call__(self, parser, namespace, value, option_string=None):
+        if namespace.targets:
+            targets = ' '.join(namespace.targets)
+            s = pluralism(namespace.targets)
+            parser.error(f'{option_string} is mutually exclusive with target{s}: {targets}')
+
+        # determine target git ref
+        ref = value if value is not None else 'origin..HEAD'
+        setattr(namespace, self.dest, ref)
+
+        # generate scanning restrictions
+        diff_cmd = ['git', 'diff-tree', '-r', '--name-only', '-z', ref]
+        namespace.restrictions = self.generate_restrictions(parser, namespace, diff_cmd)
+
         # avoid circular import issues
         from .. import objects
-
         # enable git checks
         namespace.enabled_checks.update(objects.CHECKS.select(GitCommitsCheck).values())
 
         # ignore uncommitted changes during scan
-        namespace.contexts.append(GitStash(repo.location))
-        namespace.restrictions = restrictions
+        namespace.contexts.append(GitStash(namespace.target_repo.location))
+
+
+class _ScanStaged(_ScanCommits):
+    """Argparse action that enables scanning against staged changes."""
+
+    def __call__(self, parser, namespace, value, option_string=None):
+        if namespace.targets:
+            targets = ' '.join(namespace.targets)
+            s = pluralism(namespace.targets)
+            parser.error(f'{option_string} is mutually exclusive with target{s}: {targets}')
+
+        # determine target git ref
+        ref = value if value is not None else 'HEAD'
+        setattr(namespace, self.dest, ref)
+
+        # generate scanning restrictions
+        diff_cmd = ['git', 'diff-index', '--name-only', '--cached', '-z', ref]
+        namespace.restrictions = self.generate_restrictions(parser, namespace, diff_cmd)
+
+        # ignore uncommitted changes during scan
+        namespace.contexts.append(GitStash(namespace.target_repo.location, staged=True))
 
 
 class GitStash(AbstractContextManager):
@@ -362,8 +388,9 @@ class GitStash(AbstractContextManager):
     underway otherwise `git stash` usage may cause issues.
     """
 
-    def __init__(self, path):
+    def __init__(self, path, staged=False):
         self.path = path
+        self._staged = ['--keep-index'] if staged else []
         self._stashed = False
 
     def __enter__(self):
@@ -371,19 +398,23 @@ class GitStash(AbstractContextManager):
         # check for untracked or modified/uncommitted files
         try:
             p = subprocess.run(
-                ['git', 'status', '--porcelain', '-u'],
+                ['git', 'status', '--porcelain=1', '-u'],
                 stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                 cwd=self.path, encoding='utf8', check=True)
         except subprocess.CalledProcessError:
             raise ValueError(f'not a git repo: {self.path}')
 
-        if not p.stdout:
+        # split file changes into unstaged vs staged
+        unstaged, staged = predicate_split(lambda x: x[1] == ' ', p.stdout.splitlines())
+
+        # don't stash when no relevant changes exist
+        if (self._staged and not unstaged) or not (self._staged or p.stdout):
             return
 
         # stash all existing untracked or modified/uncommitted files
         try:
             subprocess.run(
-                ['git', 'stash', 'push', '-u', '-m', 'pkgcheck scan --commits'],
+                ['git', 'stash', 'push', '-u', '-m', 'pkgcheck scan --commits'] + self._staged,
                 stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
                 cwd=self.path, check=True, encoding='utf8')
         except subprocess.CalledProcessError as e:
@@ -427,22 +458,28 @@ class GitAddon(caches.CachedAddon):
     @classmethod
     def mangle_argparser(cls, parser):
         group = parser.add_argument_group('git', docs=cls.__doc__)
-        group.add_argument(
-            '--commits', nargs='?', metavar='COMMIT',
+        git_opts = group.add_mutually_exclusive_group()
+        git_opts.add_argument(
+            '--commits', nargs='?', default=False, metavar='tree-ish',
             action=arghparse.Delayed, target=_ScanCommits, priority=10,
-            help="determine scan targets from local git repo commits",
+            help='determine scan targets from unpushed commits',
             docs="""
-                For a local git repo, pkgcheck will determine targets to scan
-                from the committed changes compared to a given reference that
-                defaults to the repo's origin.
+                Targets are determined from the committed changes compared to a
+                given reference that defaults to the repo's origin.
 
                 For example, to scan all the packages that have been changed in
                 the current branch compared to the branch named 'old' use
                 ``pkgcheck scan --commits old``. For two separate branches
                 named 'old' and 'new' use ``pkgcheck scan --commits old..new``.
-
-                Note that will also enable eclass-specific checks if it
-                determines any commits have been made to eclasses.
+            """)
+        git_opts.add_argument(
+            '--staged', nargs='?', default=False, metavar='tree-ish',
+            action=arghparse.Delayed, target=_ScanStaged, priority=10,
+            help='determine scan targets from staged changes',
+            docs="""
+                Targets are determined using all staged changes for the git
+                repo. Unstaged changes and untracked files are ignored by
+                temporarily stashing them during the scanning process.
             """)
 
     def __init__(self, *args):
