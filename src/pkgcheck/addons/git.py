@@ -26,7 +26,7 @@ from snakeoil.strings import pluralism
 
 from .. import base
 from ..base import PkgcheckUserException
-from ..checks import GitCheck
+from ..checks import GitCommitsCheck
 from ..log import logger
 from . import caches
 
@@ -348,7 +348,7 @@ class _ScanCommits(argparse.Action):
         from .. import objects
 
         # enable git checks
-        namespace.enabled_checks.update(objects.CHECKS.select(GitCheck).values())
+        namespace.enabled_checks.update(objects.CHECKS.select(GitCommitsCheck).values())
 
         # ignore uncommitted changes during scan
         namespace.contexts.append(GitStash(repo.location))

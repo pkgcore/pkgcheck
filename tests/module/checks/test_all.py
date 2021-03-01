@@ -61,7 +61,7 @@ class TestOverlayCheck:
         assert init_check(checks_mod.OverlayRepoCheck, options)
 
 
-class TestGitCheck:
+class TestGitCommitsCheck:
 
     @pytest.fixture(autouse=True)
     def _setup(self, tool, make_repo, make_git_repo):
@@ -82,14 +82,14 @@ class TestGitCheck:
         options, _ = tool.parse_args(
             ['scan', '--repo', self.child_repo.location])
         with pytest.raises(checks_mod.SkipCheck, match='not scanning against git commits'):
-            init_check(checks_mod.GitCheck, options)
+            init_check(checks_mod.GitCommitsCheck, options)
 
     def test_commits_option(self, tool, make_repo):
         self.child_repo.create_ebuild('cat/pkg-1')
         self.child_git_repo.add_all('cat/pkg-1')
         options, _ = tool.parse_args(
             ['scan', '--repo', self.child_repo.location, '--commits'])
-        assert init_check(checks_mod.GitCheck, options)
+        assert init_check(checks_mod.GitCommitsCheck, options)
 
     def test_no_local_commits(self, tool):
         with pytest.raises(SystemExit) as excinfo:

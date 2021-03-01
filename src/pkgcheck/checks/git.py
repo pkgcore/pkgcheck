@@ -20,7 +20,7 @@ from snakeoil.strings import pluralism
 from .. import base, results, sources
 from ..addons import git
 from ..base import PkgcheckUserException
-from . import GentooRepoCheck, GitCheck
+from . import GentooRepoCheck, GitCommitsCheck
 from .header import copyright_regex
 
 
@@ -218,7 +218,7 @@ class _RemovalRepo(UnconfiguredTree):
             tar.extractall(path=self.location)
 
 
-class GitPkgCommitsCheck(GentooRepoCheck, GitCheck):
+class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
     """Check unpushed git package commits for various issues."""
 
     _source = (sources.PackageRepoSource, (), (('source', GitCommitsRepoSource),))
@@ -480,8 +480,8 @@ def verify_tags(*tags, required=False):
     return decorator
 
 
-class GitCommitsCheck(GentooRepoCheck, GitCheck):
-    """Check unpushed git commits for various issues."""
+class GitCommitMessageCheck(GentooRepoCheck, GitCommitsCheck):
+    """Check unpushed git commit messages for various issues."""
 
     _source = GitCommitsSource
     known_results = frozenset([
@@ -640,7 +640,7 @@ class EclassIncorrectCopyright(IncorrectCopyright, results.EclassResult):
         return f'{self.eclass}: {super().desc}'
 
 
-class GitEclassCommitsCheck(GentooRepoCheck, GitCheck):
+class GitEclassCommitsCheck(GentooRepoCheck, GitCommitsCheck):
     """Check unpushed git eclass commits for various issues."""
 
     _source = sources.EclassRepoSource

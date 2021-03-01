@@ -97,7 +97,7 @@ class OptionalCheck(Check):
     """Check that is only run when explicitly enabled."""
 
 
-class GitCheck(OptionalCheck):
+class GitCommitsCheck(OptionalCheck):
     """Check that is only run when explicitly enabled via the --commits git option."""
 
     def __init__(self, *args):

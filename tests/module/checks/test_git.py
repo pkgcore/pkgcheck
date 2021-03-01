@@ -31,11 +31,11 @@ class FakeCommit(GitCommit):
         super().__init__(**commit_data)
 
 
-class TestGitCheck(ReportTestCase):
-    check_kls = git_mod.GitCommitsCheck
+class TestGitCommitMessageCheck(ReportTestCase):
+    check_kls = git_mod.GitCommitMessageCheck
     options = arghparse.Namespace(
         target_repo=FakeRepo(), commits='origin', gentoo_repo=True)
-    check = git_mod.GitCommitsCheck(options)
+    check = git_mod.GitCommitMessageCheck(options)
 
     def test_sign_offs(self):
         # assert that it checks for both author and comitter
@@ -228,9 +228,9 @@ class TestGitCheck(ReportTestCase):
         assert 'non-tag in footer, line 5' in str(r)
 
 
-class TestGitCommitsCheck(ReportTestCase):
+class TestGitCommitMessageRepoCheck(ReportTestCase):
 
-    check_kls = git_mod.GitCommitsCheck
+    check_kls = git_mod.GitCommitMessageCheck
 
     @pytest.fixture(autouse=True)
     def _setup(self, tmp_path, tool, make_repo, make_git_repo):
