@@ -5,11 +5,11 @@ from contextlib import ExitStack
 from unittest.mock import patch
 
 import pytest
+from pkgcheck.cli import Tool
 from pkgcheck.reporters import StrReporter
 from pkgcheck.results import Result
 from pkgcheck.scripts import pkgcheck
 from pkgcore import const as pkgcore_const
-from pkgcore.util.commandline import Tool
 from snakeoil.formatters import PlainTextFormatter
 from snakeoil.osutils import pjoin
 
