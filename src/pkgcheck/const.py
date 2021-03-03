@@ -17,14 +17,10 @@ except ImportError:
     _defaults = object()
 
 
-def _GET_CONST(attr, default_value, allow_environment_override=False):
+def _GET_CONST(attr, default_value):
     consts = mappings.ProxiedAttrs(_module)
     default_value %= consts
-
-    result = getattr(_defaults, attr, default_value)
-    if allow_environment_override:
-        result = os.environ.get(f'PKGCHECK_OVERRIDE_{attr}', result)
-    return result
+    return getattr(_defaults, attr, default_value)
 
 
 # determine XDG compatible paths
@@ -40,5 +36,5 @@ USER_CACHE_DIR = getattr(_module, 'USER_CACHE_PATH')
 USER_CONF_FILE = os.path.join(getattr(_module, 'USER_CONFIG_PATH'), 'pkgcheck.conf')
 SYSTEM_CONF_FILE = '/etc/pkgcheck/pkgcheck.conf'
 
-REPO_PATH = _GET_CONST('REPO_PATH', _reporoot, allow_environment_override=True)
+REPO_PATH = _GET_CONST('REPO_PATH', _reporoot)
 DATA_PATH = _GET_CONST('DATA_PATH', '%(REPO_PATH)s/data')

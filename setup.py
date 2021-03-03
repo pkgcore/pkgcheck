@@ -52,6 +52,11 @@ def write_obj_lists(python_base, install_prefix):
     os.makedirs(os.path.dirname(objects_path), exist_ok=True)
     log.info(f'writing config to {objects_path!r}')
 
+    wheel_install = (
+        install_prefix != os.path.abspath(sys.prefix)
+        and not install_prefix.startswith(pkgdist.REPODIR)
+    )
+
     # hack to drop quotes on modules in generated files
     class _kls:
 
@@ -90,7 +95,7 @@ def write_obj_lists(python_base, install_prefix):
     with open(const_path, 'w') as f:
         os.chmod(const_path, 0o644)
         # write install path constants to config
-        if install_prefix != os.path.abspath(sys.prefix):
+        if wheel_install:
             # write more dynamic _const file for wheel installs
             f.write(dedent("""\
                 import os.path as osp
@@ -102,13 +107,13 @@ def write_obj_lists(python_base, install_prefix):
             f.write("INSTALL_PREFIX=%r\n" % install_prefix)
             f.write("DATA_PATH=%r\n" %
                     os.path.join(install_prefix, DATA_INSTALL_OFFSET))
+            f.close()
 
-    # only optimize during install, skip during wheel builds
-    if install_prefix == os.path.abspath(sys.prefix):
-        for path in (const_path, objects_path):
-            byte_compile([path], prefix=python_base)
-            byte_compile([path], optimize=1, prefix=python_base)
-            byte_compile([path], optimize=2, prefix=python_base)
+            # byte compile generated modules
+            for path in (const_path, objects_path):
+                byte_compile([path], prefix=python_base)
+                byte_compile([path], optimize=1, prefix=python_base)
+                byte_compile([path], optimize=2, prefix=python_base)
 
 
 class install_data(dst_install_data.install_data):
@@ -152,24 +157,6 @@ class install_data(dst_install_data.install_data):
         self.data_files.append(('share/pkgcheck', files))
 
 
-class test(pkgdist.pytest):
-    """Wrapper to enforce testing against built version."""
-
-    def run(self):
-        # This is fairly hacky, but is done to ensure that the tests
-        # are ran purely from what's in build, reflecting back to the source config data.
-        key = 'PKGCHECK_OVERRIDE_REPO_PATH'
-        original = os.environ.get(key)
-        try:
-            os.environ[key] = os.path.dirname(os.path.realpath(__file__))
-            super().run()
-        finally:
-            if original is not None:
-                os.environ[key] = original
-            else:
-                os.environ.pop(key, None)
-
-
 setup(**dict(
     pkgdist_setup,
     license='BSD',
@@ -183,7 +170,6 @@ setup(**dict(
     )),
     cmdclass=dict(
         pkgdist_cmds,
-        test=test,
         build_py=build_py,
         install_data=install_data,
         install=install,
