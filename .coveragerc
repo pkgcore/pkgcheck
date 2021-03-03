@@ -9,9 +9,8 @@ omit =
 [paths]
 source =
 	src/pkgcheck
-	build/lib/pkgcheck
+	build/install/lib/python*/site-packages/pkgcheck
 	.tox/*/lib/python*/site-packages/pkgcheck
-	.tox/pypy*/site-packages/pkgcheck
 
 [report]
 show_missing = True
