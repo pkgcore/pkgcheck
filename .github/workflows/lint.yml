@@ -1,4 +1,4 @@
-name: Run linting
+name: lint
 
 on:
   push:
