@@ -36,7 +36,7 @@ class Pipeline:
         self._pipes = self._create_runners()
 
         # initialize settings used by iterator support
-        self._pid = None
+        self._runner = None
         signal.signal(signal.SIGINT, self._kill_pipe)
         self._results_iter = iter(self._results_q.get, None)
         self._results = deque()
@@ -112,8 +112,8 @@ class Pipeline:
 
     def _kill_pipe(self, *args, error=None):
         """Handle terminating the pipeline process group."""
-        if self._pid is not None:
-            os.killpg(self._pid, signal.SIGKILL)
+        if self._runner is not None:
+            os.killpg(self._runner.pid, signal.SIGKILL)
         if error is not None:
             # propagate exception raised during parallel scan
             raise base.PkgcheckUserException(error)
@@ -121,9 +121,8 @@ class Pipeline:
 
     def __iter__(self):
         # start running the check pipeline
-        p = self._mp_ctx.Process(target=self._run)
-        p.start()
-        self._pid = p.pid
+        self._runner = self._mp_ctx.Process(target=self._run)
+        self._runner.start()
         return self
 
     def __next__(self):
@@ -140,7 +139,7 @@ class Pipeline:
                 except StopIteration:
                     if self._ordered_results is None:
                         raise
-                    self._pid = None
+                    self._runner.join()
                     # output cached results in registered order
                     results = chain.from_iterable(map(sorted, self._ordered_results.values()))
                     self._results.extend(results)
