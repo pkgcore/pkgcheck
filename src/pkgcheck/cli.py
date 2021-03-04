@@ -20,6 +20,13 @@ class Tool(commandline.Tool):
         return super().main()
 
 
+class ConfigParser(configparser.ConfigParser):
+    """ConfigParser with case-sensitive keys (default forces lowercase)."""
+
+    def optionxform(self, option):
+        return option
+
+
 class ConfigFileParser:
     """Argument parser that supports loading settings from specified config files."""
 
@@ -37,7 +44,7 @@ class ConfigFileParser:
     def parse_config(self, configs=()):
         """Parse given config files."""
         configs = configs if configs else self.configs
-        config = configparser.ConfigParser(default_section=None)
+        config = ConfigParser(default_section=None)
         try:
             for f in configs:
                 config.read(f)
