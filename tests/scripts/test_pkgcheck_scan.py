@@ -321,9 +321,8 @@ class TestPkgcheckScan:
 
     script = partial(run, project)
 
-    testdir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    repos_data = pjoin(testdir, 'data', 'repos')
-    repos_dir = pjoin(testdir, 'repos')
+    repos_data = pjoin(pytest.REPO_ROOT, 'testdata', 'data', 'repos')
+    repos_dir = pjoin(pytest.REPO_ROOT, 'testdata', 'repos')
     repos = tuple(x for x in sorted(os.listdir(repos_data)) if x != 'network')
 
     _all_results = []

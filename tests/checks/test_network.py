@@ -23,9 +23,8 @@ requests = pytest.importorskip('requests')
 
 class TestNetworkChecks:
 
-    testdir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    repos_data = pjoin(testdir, 'data', 'repos')
-    repos_dir = pjoin(testdir, 'repos')
+    repos_data = pjoin(pytest.REPO_ROOT, 'testdata', 'data', 'repos')
+    repos_dir = pjoin(pytest.REPO_ROOT, 'testdata', 'repos')
 
     @pytest.fixture(autouse=True)
     def _setup(self, testconfig, tmp_path):

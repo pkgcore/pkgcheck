@@ -14,6 +14,12 @@ from snakeoil.formatters import PlainTextFormatter
 from snakeoil.osutils import pjoin
 
 pytest_plugins = ['pkgcore']
+REPO_ROOT = os.path.dirname(os.path.dirname(__file__))
+
+
+def pytest_configure():
+    # export repo root for test modules to use
+    pytest.REPO_ROOT = REPO_ROOT
 
 
 def pytest_assertrepr_compare(op, left, right):
@@ -56,7 +62,7 @@ def testconfig(tmp_path_factory):
     config = tmp_path_factory.mktemp('testconfig')
     repos_conf = config / 'repos.conf'
     stubrepo = pjoin(pkgcore_const.DATA_PATH, 'stubrepo')
-    testdir = pjoin(os.path.dirname(os.path.dirname(__file__)), 'repos')
+    testdir = pjoin(REPO_ROOT, 'testdata', 'repos')
     with open(repos_conf, 'w') as f:
         f.write(textwrap.dedent(f"""\
             [DEFAULT]

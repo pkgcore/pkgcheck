@@ -20,7 +20,7 @@ from pkgcheck.scripts import run
 
 with tempfile.TemporaryDirectory(prefix='pkgcheck-test-config-') as tempdir:
     stubrepo = pjoin(pkgcore_const.DATA_PATH, 'stubrepo')
-    repo_dir = pjoin(main_dir, 'tests', 'repos')
+    repo_dir = pjoin(main_dir, 'testdata', 'repos')
     with open(pjoin(tempdir, 'repos.conf'), 'w') as f:
         f.write(textwrap.dedent(f"""\
             [DEFAULT]
