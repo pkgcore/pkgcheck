@@ -297,6 +297,9 @@ def _setup_scan(parser, namespace, args):
 
     # parser supporting config file options
     config_parser = ConfigFileParser(parser)
+    # always load settings from bundled config
+    namespace = config_parser.parse_config_options(
+        namespace, configs=[const.BUNDLED_CONF_FILE])
 
     # load default args from system/user configs if config-loading is allowed
     if namespace.config_file is None:
