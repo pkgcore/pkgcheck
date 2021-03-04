@@ -3,6 +3,7 @@
 import configparser
 import logging
 import os
+import re
 
 from pkgcore.util import commandline
 from snakeoil.contexts import patch
@@ -79,7 +80,7 @@ class ConfigFileParser:
         if 'CHECKSETS' in self.config:
             for k, v in self.config.items('CHECKSETS'):
                 if v:
-                    namespace.config_checksets[k] = v.split(',')
+                    namespace.config_checksets[k] = re.split('[,\n]', v.strip())
 
         return namespace
 
