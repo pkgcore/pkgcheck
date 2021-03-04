@@ -1,9 +1,7 @@
 [run]
 source = pkgcheck
 branch = True
-omit =
-	src/*
-	tests/*
+omit = src/*, tests/*
 
 [paths]
 source = **/site-packages/pkgcheck
