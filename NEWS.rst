@@ -3,6 +3,22 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.9.1 (2021-03-05)
+---------------------------
+
+- Support newline-separated values for lists in addition to comma-separated in
+  pkgcheck configs.
+
+- pkgcheck scan: Bundle and load a config defining a GentooCI checkset matching
+  Gentoo CI error keywords.
+
+- pkgcheck scan: Add --staged support for targeting staged git changes to
+  generate restrictions.
+
+- pkgcheck: Suppress pkgcore-specific help options that should generally be
+  avoided by users but is required internally.
+
+---------------------------
 pkgcheck 0.9.0 (2021-02-23)
 ---------------------------
 
