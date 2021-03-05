@@ -6,6 +6,7 @@ from collections.abc import Set
 from dataclasses import dataclass
 from operator import attrgetter
 
+from pkgcore.ebuild.profiles import ProfileError
 from pkgcore.ebuild.repository import UnconfiguredTree
 from pkgcore.restrictions import packages
 from snakeoil.osutils import listdir_files, pjoin
@@ -189,13 +190,21 @@ class ProfilesRepoSource(RepoSource):
     def itermatch(self, restrict, **kwargs):
         if isinstance(restrict, str):
             root = pjoin(self.repo.location, os.path.dirname(restrict))
-            yield Profile(ProfileNode(root), {os.path.basename(restrict)})
+            try:
+                yield Profile(ProfileNode(root), {os.path.basename(restrict)})
+            except ProfileError:
+                # probably a removed profile directory
+                pass
         elif isinstance(restrict, Set):
             paths = defaultdict(list)
             for x in restrict:
                 paths[pjoin(self.repo.location, os.path.dirname(x))].append(os.path.basename(x))
             for root, files in sorted(paths.items()):
-                yield Profile(ProfileNode(root), set(files))
+                try:
+                    yield Profile(ProfileNode(root), set(files))
+                except ProfileError:
+                    # probably a removed profile directory
+                    continue
         else:
             # matching all profiles
             for root, _dirs, files in os.walk(self.profiles_dir):
