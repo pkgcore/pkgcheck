@@ -3,6 +3,13 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.9.2 (2021-03-05)
+---------------------------
+
+- Update tree-sitter-bash to language version 13 to work with
+  >=tree-sitter-0.19.0.
+
+---------------------------
 pkgcheck 0.9.1 (2021-03-05)
 ---------------------------
 
