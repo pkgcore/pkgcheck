@@ -150,6 +150,9 @@ def build_library(output_path, repo_paths):
             compiler.add_library("stdc++")
         elif find_library("c++"):
             compiler.add_library("c++")
+        else:
+            # fallback to assuming libstdc++ exists (#299)
+            compiler.add_library("stdc++")
 
     if max(source_mtimes) <= output_mtime:
         return False
