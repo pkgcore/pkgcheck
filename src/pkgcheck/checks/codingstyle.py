@@ -676,6 +676,52 @@ class InheritsCheck(OptionalCheck):
             yield UnusedInherits(sorted(unused), pkg=pkg)
 
 
+class ReadonlyVariable(results.LineResult, results.Warning):
+    """Ebuild globally assigning value to a readonly variable."""
+
+    def __init__(self, variable, **kwargs):
+        super().__init__(**kwargs)
+        self.variable = variable
+
+    @property
+    def desc(self):
+        return f"read-only variable {self.variable!r} assigned, line {self.lineno}: {self.line}"
+
+
+class ReadonlyVariableCheck(Check):
+    """Scan for read-only variables that are globally assigned in an ebuild."""
+
+    _source = sources.EbuildParseRepoSource
+    known_results = frozenset([ReadonlyVariable])
+    required_addons = (addons.BashAddon,)
+
+    # https://devmanual.gentoo.org/ebuild-writing/variables/#predefined-read-only-variables
+    readonly_vars = frozenset([
+        'P', 'PN', 'PV', 'PR', 'PVR', 'PF', 'A', 'CATEGORY', 'FILESDIR', 'WORKDIR',
+        'T', 'D', 'HOME', 'ROOT', 'DISTDIR', 'EPREFIX', 'ED', 'EROOT', 'SYSROOT',
+        'ESYSROOT', 'BROOT', 'MERGE_TYPE', 'REPLACING_VERSIONS', 'REPLACED_BY_VERSION',
+    ])
+
+    def __init__(self, *args, bash_addon):
+        super().__init__(*args)
+        self.var_assign_query = bash_addon.query('(variable_assignment) @assign')
+
+    def feed(self, pkg):
+        for node, _ in self.var_assign_query.captures(pkg.tree.root_node):
+            name = pkg.node_str(node.child_by_field_name('name'))
+            if name in self.readonly_vars:
+                node_parent = node.parent
+                # skip variables defined in functions
+                while node_parent is not None:
+                    if node_parent.type == 'function_definition':
+                        break
+                    node_parent = node_parent.parent
+                else:
+                    call = pkg.node_str(node)
+                    lineno, colno = node.start_point
+                    yield ReadonlyVariable(name, line=call, lineno=lineno + 1, pkg=pkg)
+
+
 class RedundantDodir(results.LineResult, results.Style):
     """Ebuild using a redundant dodir call."""
 
