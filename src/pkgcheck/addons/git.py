@@ -447,9 +447,9 @@ class GitAddon(caches.CachedAddon):
     Specifically, pkgcheck assumes that the origin branch exists and tracks
     upstream.
 
-    Additionally, the origin/HEAD and HEAD refs must exist. If it doesn't,
-    running ``git fetch origin`` should create it. Otherwise, using ``git
-    remote set-head origin master`` or similar will also create the reference.
+    Additionally, the origin/HEAD ref must exist. If it doesn't, running ``git
+    fetch origin`` should create it. Otherwise, using ``git remote set-head
+    origin master`` or similar will also create the reference.
     """
 
     # cache registry
