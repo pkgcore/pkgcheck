@@ -2,6 +2,7 @@
 
 import re
 from collections import defaultdict
+from functools import partial
 
 from pkgcore.ebuild.eapi import EAPI
 from snakeoil.mappings import ImmutableDict
@@ -720,6 +721,57 @@ class ReadonlyVariableCheck(Check):
                     call = pkg.node_str(node)
                     lineno, colno = node.start_point
                     yield ReadonlyVariable(name, line=call, lineno=lineno + 1, pkg=pkg)
+
+
+class MisplacedVariable(results.LineResult, results.Warning):
+    """Ebuild using variable outside its defined scope."""
+
+    def __init__(self, variable, func, **kwargs):
+        super().__init__(**kwargs)
+        self.variable = variable
+        self.func = func
+
+    @property
+    def desc(self):
+        return f'variable {self.variable!r} used in {self.func!r}, line {self.lineno}'
+
+
+class VariableScopeCheck(Check):
+    """Scan for variables that are only allowed in certain scopes."""
+
+    _source = sources.EbuildParseRepoSource
+    known_results = frozenset([MisplacedVariable])
+    required_addons = (addons.BashAddon,)
+
+    # see https://projects.gentoo.org/pms/7/pms.html#x1-10900011.1
+    variable_map = ImmutableDict({
+        'src_': {'S', 'PORTDIR', 'ECLASSDIR', 'SYSROOT', 'ESYSROOT', 'BROOT'},
+        'pkg_': {'ROOT', 'EROOT', 'MERGE_TYPE', 'REPLACING_VERSIONS'},
+    })
+
+    def __init__(self, *args, bash_addon):
+        super().__init__(*args)
+        self.scoped_vars = defaultdict(partial(defaultdict, set))
+        for eapi in EAPI.known_eapis.values():
+            for phase in eapi.phases_rev:
+                for prefix, variables in self.variable_map.items():
+                    if not phase.startswith(prefix):
+                        self.scoped_vars[eapi][phase].update(variables)
+
+        # various bash parse tree queries
+        self.func_query = bash_addon.query('(function_definition) @func')
+        self.var_query = bash_addon.query('(variable_name) @var')
+
+    def feed(self, pkg):
+        for func_node, _ in self.func_query.captures(pkg.tree.root_node):
+            func_name = pkg.node_str(func_node.child_by_field_name('name'))
+            if variables := self.scoped_vars[pkg.eapi].get(func_name):
+                for var_node, _ in self.var_query.captures(func_node):
+                    var_name = pkg.node_str(var_node)
+                    if var_name in variables:
+                        lineno, colno = var_node.start_point
+                        yield MisplacedVariable(
+                            var_name, func_name, line=var_name, lineno=lineno + 1, pkg=pkg)
 
 
 class RedundantDodir(results.LineResult, results.Style):
