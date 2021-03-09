@@ -745,18 +745,19 @@ class VariableScopeCheck(Check):
 
     # see https://projects.gentoo.org/pms/7/pms.html#x1-10900011.1
     variable_map = ImmutableDict({
-        'src_': {'S', 'PORTDIR', 'ECLASSDIR', 'SYSROOT', 'ESYSROOT', 'BROOT'},
-        'pkg_': {'ROOT', 'EROOT', 'MERGE_TYPE', 'REPLACING_VERSIONS'},
+        'S': 'src_', 'PORTDIR': 'src_', 'ECLASSDIR': 'src_', 'ROOT': 'pkg_',
+        'EROOT': 'pkg_', 'SYSROOT': ('src_', 'pkg_setup'), 'ESYSROOT': ('src_', 'pkg_setup'),
+        'BROOT': ('src_', 'pkg_setup'), 'MERGE_TYPE': 'pkg_', 'REPLACING_VERSIONS': 'pkg_',
     })
 
     def __init__(self, *args, bash_addon):
         super().__init__(*args)
         self.scoped_vars = defaultdict(partial(defaultdict, set))
         for eapi in EAPI.known_eapis.values():
-            for phase in eapi.phases_rev:
-                for prefix, variables in self.variable_map.items():
-                    if not phase.startswith(prefix):
-                        self.scoped_vars[eapi][phase].update(variables)
+            for variable, allowed_scopes in self.variable_map.items():
+                for phase in eapi.phases_rev:
+                    if not phase.startswith(allowed_scopes):
+                        self.scoped_vars[eapi][phase].add(variable)
 
         # various bash parse tree queries
         self.func_query = bash_addon.query('(function_definition) @func')
