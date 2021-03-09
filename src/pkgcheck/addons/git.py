@@ -444,12 +444,12 @@ class GitAddon(caches.CachedAddon):
     updated every run if new commits are detected.
 
     Git repos must have a supported config in order to work properly.
-    Specifically, pkgcheck assumes that both origin and master branches exist
-    and relate to the upstream and local development states, respectively.
+    Specifically, pkgcheck assumes that the origin branch exists and tracks
+    upstream.
 
-    Additionally, the origin/HEAD ref must exist. If it doesn't, running ``git
-    fetch origin`` should create it. Otherwise, using ``git remote set-head
-    origin master`` or similar will also create the reference.
+    Additionally, the origin/HEAD and HEAD refs must exist. If it doesn't,
+    running ``git fetch origin`` should create it. Otherwise, using ``git
+    remote set-head origin master`` or similar will also create the reference.
     """
 
     # cache registry
@@ -604,9 +604,9 @@ class GitAddon(caches.CachedAddon):
 
         try:
             origin = self._get_commit_hash(target_repo.location)
-            master = self._get_commit_hash(target_repo.location, commit='master')
-            if origin != master:
-                data = self.pkg_history(target_repo, 'origin/HEAD..master', local=True)
+            head = self._get_commit_hash(target_repo.location, commit='HEAD')
+            if origin != head:
+                data = self.pkg_history(target_repo, 'origin/HEAD..HEAD', local=True)
         except GitError as e:
             raise PkgcheckUserException(str(e))
 
@@ -619,9 +619,9 @@ class GitAddon(caches.CachedAddon):
 
         try:
             origin = self._get_commit_hash(target_repo.location)
-            master = self._get_commit_hash(target_repo.location, commit='master')
-            if origin != master:
-                commits = GitRepoCommits(target_repo.location, 'origin/HEAD..master')
+            head = self._get_commit_hash(target_repo.location, commit='HEAD')
+            if origin != head:
+                commits = GitRepoCommits(target_repo.location, 'origin/HEAD..HEAD')
         except GitError as e:
             raise PkgcheckUserException(str(e))
 
