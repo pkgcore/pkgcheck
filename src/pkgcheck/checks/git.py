@@ -301,7 +301,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
         try:
             new_pkg = self.repo.match(pkg.versioned_atom)[0]
         except IndexError:
-            # ignore broken ebuild caught by other checks
+            # ignore broken ebuild
             return
 
         # ignore live ebuilds
@@ -309,7 +309,11 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
             return
 
         modified_repo = self.modified_repo(pkgs)
-        old_pkg = modified_repo.match(pkg.versioned_atom)[0]
+        try:
+            old_pkg = modified_repo.match(pkg.versioned_atom)[0]
+        except IndexError:
+            # ignore broken ebuild
+            return
 
         if old_pkg.rdepend != new_pkg.rdepend:
             yield RdependChange(pkg=new_pkg)
