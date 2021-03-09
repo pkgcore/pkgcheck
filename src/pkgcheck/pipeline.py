@@ -36,7 +36,7 @@ class Pipeline:
         self._pipes = self._create_runners()
 
         # initialize settings used by iterator support
-        self._runner = None
+        self._runner = self._mp_ctx.Process(target=self._run)
         signal.signal(signal.SIGINT, self._kill_pipe)
         self._results_iter = iter(self._results_q.get, None)
         self._results = deque()
@@ -112,7 +112,7 @@ class Pipeline:
 
     def _kill_pipe(self, *args, error=None):
         """Handle terminating the pipeline process group."""
-        if self._runner is not None:
+        if self._runner.is_alive():
             os.killpg(self._runner.pid, signal.SIGKILL)
         if error is not None:
             # propagate exception raised during parallel scan
@@ -121,7 +121,6 @@ class Pipeline:
 
     def __iter__(self):
         # start running the check pipeline
-        self._runner = self._mp_ctx.Process(target=self._run)
         self._runner.start()
         return self
 
