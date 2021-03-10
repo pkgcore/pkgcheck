@@ -305,6 +305,17 @@ class _ParsedPkg(WrappedPkg):
         """Return the ebuild string associated with a given parse tree node."""
         return self.data[node.start_byte:node.end_byte].decode('utf8')
 
+    def global_query(self, query):
+        """Run a given parse tree query returning only those nodes in global scope."""
+        for node, _ in query.captures(self.tree.root_node):
+            orig_node = node
+            # skip nodes in function scope
+            while node := node.parent:
+                if node.type == 'function_definition':
+                    break
+            else:
+                yield orig_node
+
 
 class EbuildParseRepoSource(RepoSource):
     """Ebuild repository source yielding package objects and their file contents."""

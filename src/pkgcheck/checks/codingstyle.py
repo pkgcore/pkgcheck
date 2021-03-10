@@ -704,19 +704,12 @@ class ReadonlyVariableCheck(Check):
         self.bash_addon = bash_addon
 
     def feed(self, pkg):
-        for node, _ in self.bash_addon.var_assign_query.captures(pkg.tree.root_node):
+        for node in pkg.global_query(self.bash_addon.var_assign_query):
             name = pkg.node_str(node.child_by_field_name('name'))
             if name in self.readonly_vars:
-                node_parent = node.parent
-                # skip variables defined in functions
-                while node_parent is not None:
-                    if node_parent.type == 'function_definition':
-                        break
-                    node_parent = node_parent.parent
-                else:
-                    call = pkg.node_str(node)
-                    lineno, colno = node.start_point
-                    yield ReadonlyVariable(name, line=call, lineno=lineno + 1, pkg=pkg)
+                call = pkg.node_str(node)
+                lineno, colno = node.start_point
+                yield ReadonlyVariable(name, line=call, lineno=lineno + 1, pkg=pkg)
 
 
 class MisplacedVariable(results.VersionResult, results.Warning):
