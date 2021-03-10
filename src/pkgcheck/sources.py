@@ -316,6 +316,16 @@ class _ParsedPkg(WrappedPkg):
             else:
                 yield orig_node
 
+    def func_query(self, query):
+        """Run a given parse tree query returning only those nodes in function scope."""
+        for node, _ in query.captures(self.tree.root_node):
+            orig_node = node
+            # skip nodes in function scope
+            while node := node.parent:
+                if node.type == 'function_definition':
+                    yield orig_node
+                    break
+
 
 class EbuildParseRepoSource(RepoSource):
     """Ebuild repository source yielding package objects and their file contents."""
