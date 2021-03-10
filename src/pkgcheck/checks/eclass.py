@@ -73,10 +73,9 @@ class EclassUsageCheck(Check):
 
     def __init__(self, *args, bash_addon, eclass_addon):
         super().__init__(*args)
+        self.bash_addon = bash_addon
         self.deprecated_eclasses = eclass_addon.deprecated
         self.eclass_cache = eclass_addon.eclasses
-        self.cmd_query = bash_addon.query('(command) @call')
-        self.var_assign_query = bash_addon.query('(variable_assignment) @assign')
 
     def check_pre_inherits(self, pkg, inherit_lineno):
         """Check for invalid @PRE_INHERIT variable placement."""
@@ -91,7 +90,7 @@ class EclassUsageCheck(Check):
 
         # scan for any misplaced @PRE_INHERIT variables
         if pre_inherits:
-            for node, _ in self.var_assign_query.captures(pkg.tree.root_node):
+            for node, _ in self.bash_addon.var_assign_query.captures(pkg.tree.root_node):
                 var_name = pkg.node_str(node.child_by_field_name('name'))
                 lineno, _colno = node.start_point
                 if var_name in pre_inherits and lineno > inherit_lineno:
@@ -102,7 +101,7 @@ class EclassUsageCheck(Check):
     def feed(self, pkg):
         if pkg.inherit:
             inherited = set()
-            for node, _ in self.cmd_query.captures(pkg.tree.root_node):
+            for node, _ in self.bash_addon.cmd_query.captures(pkg.tree.root_node):
                 name = pkg.node_str(node.child_by_field_name('name'))
                 if name == 'inherit':
                     call = pkg.node_str(node)

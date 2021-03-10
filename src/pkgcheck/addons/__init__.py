@@ -299,6 +299,12 @@ class BashAddon(base.Addon):
         self.parser = Parser()
         self.parser.set_language(self.bash)
 
+        # various bash parse tree queries
+        self.cmd_query = self.query('(command) @call')
+        self.func_query = self.query('(function_definition) @func')
+        self.var_assign_query = self.query('(variable_assignment) @assign')
+        self.var_query = self.query('(variable_name) @var')
+
 
 def init_addon(cls, options, addons_map=None, **kwargs):
     """Initialize a given addon."""

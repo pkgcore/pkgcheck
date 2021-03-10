@@ -71,10 +71,10 @@ class BadCommandsCheck(Check):
 
     def __init__(self, *args, bash_addon):
         super().__init__(*args)
-        self.cmd_query = bash_addon.query('(command) @call')
+        self.bash_addon = bash_addon
 
     def feed(self, pkg):
-        for node, _ in self.cmd_query.captures(pkg.tree.root_node):
+        for node, _ in self.bash_addon.cmd_query.captures(pkg.tree.root_node):
             call = pkg.node_str(node)
             name = pkg.node_str(node.child_by_field_name('name'))
             lineno, colno = node.start_point
@@ -544,6 +544,7 @@ class InheritsCheck(OptionalCheck):
 
     def __init__(self, *args, bash_addon, eclass_addon):
         super().__init__(*args)
+        self.bash_addon = bash_addon
         self.eclass_cache = eclass_addon.eclasses
         self.internals = {}
         self.exported = {}
@@ -576,11 +577,6 @@ class InheritsCheck(OptionalCheck):
             s = set(eapi.eclass_keys)
             self.eapi_vars[eapi] = frozenset(s)
 
-        # various bash parse tree queries
-        self.cmd_query = bash_addon.query('(command) @call')
-        self.var_query = bash_addon.query('(variable_name) @var')
-        self.var_assign_query = bash_addon.query('(variable_assignment) @assign')
-
     def get_eclass(self, export, pkg):
         """Return the eclass related to a given exported variable or function name."""
         try:
@@ -603,14 +599,14 @@ class InheritsCheck(OptionalCheck):
 
         # register variables assigned in ebuilds
         assigned_vars = dict()
-        for node, _ in self.var_assign_query.captures(pkg.tree.root_node):
+        for node, _ in self.bash_addon.var_assign_query.captures(pkg.tree.root_node):
             name = pkg.node_str(node.child_by_field_name('name'))
             if eclass := self.get_eclass(name, pkg):
                 assigned_vars[name] = eclass
 
         # match captured commands with eclasses
         used = defaultdict(list)
-        for node, _ in self.cmd_query.captures(pkg.tree.root_node):
+        for node, _ in self.bash_addon.cmd_query.captures(pkg.tree.root_node):
             call = pkg.node_str(node)
             name = pkg.node_str(node.child_by_field_name('name'))
             if name == 'inherit':
@@ -626,7 +622,7 @@ class InheritsCheck(OptionalCheck):
                     used[eclass].append((lineno + 1, name, call.split('\n', 1)[0]))
 
         # match captured variables with eclasses
-        for node, _ in self.var_query.captures(pkg.tree.root_node):
+        for node, _ in self.bash_addon.var_query.captures(pkg.tree.root_node):
             name = pkg.node_str(node)
             if name not in self.eapi_vars[pkg.eapi] | assigned_vars.keys():
                 lineno, colno = node.start_point
@@ -705,10 +701,10 @@ class ReadonlyVariableCheck(Check):
 
     def __init__(self, *args, bash_addon):
         super().__init__(*args)
-        self.var_assign_query = bash_addon.query('(variable_assignment) @assign')
+        self.bash_addon = bash_addon
 
     def feed(self, pkg):
-        for node, _ in self.var_assign_query.captures(pkg.tree.root_node):
+        for node, _ in self.bash_addon.var_assign_query.captures(pkg.tree.root_node):
             name = pkg.node_str(node.child_by_field_name('name'))
             if name in self.readonly_vars:
                 node_parent = node.parent
@@ -759,6 +755,8 @@ class VariableScopeCheck(Check):
 
     def __init__(self, *args, bash_addon):
         super().__init__(*args)
+        self.bash_addon = bash_addon
+
         self.scoped_vars = defaultdict(partial(defaultdict, set))
         for eapi in EAPI.known_eapis.values():
             for variable, allowed_scopes in self.variable_map.items():
@@ -766,15 +764,11 @@ class VariableScopeCheck(Check):
                     if not phase.startswith(allowed_scopes):
                         self.scoped_vars[eapi][phase].add(variable)
 
-        # various bash parse tree queries
-        self.func_query = bash_addon.query('(function_definition) @func')
-        self.var_query = bash_addon.query('(variable_name) @var')
-
     def feed(self, pkg):
-        for func_node, _ in self.func_query.captures(pkg.tree.root_node):
+        for func_node, _ in self.bash_addon.func_query.captures(pkg.tree.root_node):
             func_name = pkg.node_str(func_node.child_by_field_name('name'))
             if variables := self.scoped_vars[pkg.eapi].get(func_name):
-                for var_node, _ in self.var_query.captures(func_node):
+                for var_node, _ in self.bash_addon.var_query.captures(func_node):
                     var_name = pkg.node_str(var_node)
                     if var_name in variables:
                         lineno, colno = var_node.start_point
