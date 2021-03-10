@@ -745,9 +745,16 @@ class VariableScopeCheck(Check):
 
     # see https://projects.gentoo.org/pms/7/pms.html#x1-10900011.1
     variable_map = ImmutableDict({
-        'S': 'src_', 'PORTDIR': 'src_', 'ECLASSDIR': 'src_', 'ROOT': 'pkg_',
-        'EROOT': 'pkg_', 'SYSROOT': ('src_', 'pkg_setup'), 'ESYSROOT': ('src_', 'pkg_setup'),
-        'BROOT': ('src_', 'pkg_setup'), 'MERGE_TYPE': 'pkg_', 'REPLACING_VERSIONS': 'pkg_',
+        'A': ('src_', 'pkg_nofetch'), 'AA': ('src_', 'pkg_nofetch'),
+        'FILESDIR': 'src_', 'DISTDIR': 'src_', 'WORKDIR': 'src_', 'S': 'src_',
+        'PORTDIR': 'src_', 'ECLASSDIR': 'src_', 'ROOT': 'pkg_',
+        'EROOT': 'pkg_', 'SYSROOT': ('src_', 'pkg_setup'),
+        'ESYSROOT': ('src_', 'pkg_setup'), 'BROOT': ('src_', 'pkg_setup'),
+        'D': ('src_install', 'pkg_preinst', 'pkg_postint'),
+        'ED': ('src_install', 'pkg_preinst', 'pkg_postint'),
+        'DESTTREE': 'src_install', 'INSDESTTREE': 'src_install',
+        'MERGE_TYPE': 'pkg_', 'REPLACING_VERSIONS': 'pkg_',
+        'REPLACED_BY_VERSION': ('pkg_prerm', 'pkg_postrm'),
     })
 
     def __init__(self, *args, bash_addon):
