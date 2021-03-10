@@ -719,17 +719,20 @@ class ReadonlyVariableCheck(Check):
                     yield ReadonlyVariable(name, line=call, lineno=lineno + 1, pkg=pkg)
 
 
-class MisplacedVariable(results.LineResult, results.Warning):
+class MisplacedVariable(results.VersionResult, results.Warning):
     """Ebuild using variable outside its defined scope."""
 
-    def __init__(self, variable, func, **kwargs):
+    def __init__(self, variable, func, lines, **kwargs):
         super().__init__(**kwargs)
         self.variable = variable
         self.func = func
+        self.lines = tuple(lines)
 
     @property
     def desc(self):
-        return f'variable {self.variable!r} used in {self.func!r}, line {self.lineno}'
+        s = pluralism(self.lines)
+        lines = ', '.join(map(str, self.lines))
+        return f'variable {self.variable!r} used in {self.func!r}, line{s} {lines}'
 
 
 class VariableScopeCheck(Check):
@@ -768,12 +771,14 @@ class VariableScopeCheck(Check):
         for func_node, _ in self.bash_addon.func_query.captures(pkg.tree.root_node):
             func_name = pkg.node_str(func_node.child_by_field_name('name'))
             if variables := self.scoped_vars[pkg.eapi].get(func_name):
+                usage = defaultdict(set)
                 for var_node, _ in self.bash_addon.var_query.captures(func_node):
                     var_name = pkg.node_str(var_node)
                     if var_name in variables:
                         lineno, colno = var_node.start_point
-                        yield MisplacedVariable(
-                            var_name, func_name, line=var_name, lineno=lineno + 1, pkg=pkg)
+                        usage[var_name].add(lineno + 1)
+                for var, lines in sorted(usage.items()):
+                    yield MisplacedVariable(var, func_name, lines=sorted(lines), pkg=pkg)
 
 
 class RedundantDodir(results.LineResult, results.Style):
