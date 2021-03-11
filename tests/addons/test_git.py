@@ -11,6 +11,7 @@ from pkgcheck.addons.caches import CacheDisabled
 from pkgcore.ebuild.atom import MalformedAtom
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.restrictions import packages
+from snakeoil.cli.exceptions import UserException
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
 from snakeoil.process import CommandNotFound, find_binary
@@ -214,7 +215,7 @@ class TestGitStash:
             err = subprocess.CalledProcessError(1, 'git stash')
             err.stderr = 'git stash failed'
             run.side_effect = [Mock(stdout='foo'), err]
-            with pytest.raises(PkgcheckUserException, match='git failed stashing files'):
+            with pytest.raises(UserException, match='git failed stashing files'):
                 with git.GitStash(git_repo.path):
                     pass
 
@@ -222,7 +223,7 @@ class TestGitStash:
         path = pjoin(git_repo.path, 'foo')
         touch(path)
         assert os.path.exists(path)
-        with pytest.raises(PkgcheckUserException, match='git failed applying stash'):
+        with pytest.raises(UserException, match='git failed applying stash'):
             with git.GitStash(git_repo.path):
                 assert not os.path.exists(path)
                 touch(path)

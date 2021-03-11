@@ -6,7 +6,6 @@ import re
 import shlex
 import subprocess
 from collections import deque
-from contextlib import AbstractContextManager
 from dataclasses import dataclass
 from itertools import chain, takewhile
 
@@ -18,11 +17,11 @@ from pkgcore.repository import multiplex
 from pkgcore.repository.util import SimpleTree
 from pkgcore.restrictions import packages
 from snakeoil.cli import arghparse
+from snakeoil.contexts import GitStash
 from snakeoil.klass import jit_attr
 from snakeoil.mappings import OrderedSet
 from snakeoil.osutils import pjoin
 from snakeoil.process import CommandNotFound, find_binary
-from snakeoil.sequences import predicate_split
 from snakeoil.strings import pluralism
 
 from .. import base
@@ -379,60 +378,6 @@ class _ScanStaged(_ScanCommits):
 
         # ignore uncommitted changes during scan
         namespace.contexts.append(GitStash(namespace.target_repo.location, staged=True))
-
-
-class GitStash(AbstractContextManager):
-    """Context manager for stashing untracked or modified/uncommitted files.
-
-    This assumes that no git actions are performed on the repo while a scan is
-    underway otherwise `git stash` usage may cause issues.
-    """
-
-    def __init__(self, path, staged=False):
-        self.path = path
-        self._staged = ['--keep-index'] if staged else []
-        self._stashed = False
-
-    def __enter__(self):
-        """Stash all untracked or modified files in working tree."""
-        # check for untracked or modified/uncommitted files
-        try:
-            p = subprocess.run(
-                ['git', 'status', '--porcelain=1', '-u'],
-                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                cwd=self.path, encoding='utf8', check=True)
-        except subprocess.CalledProcessError:
-            raise ValueError(f'not a git repo: {self.path}')
-
-        # split file changes into unstaged vs staged
-        unstaged, staged = predicate_split(lambda x: x[1] == ' ', p.stdout.splitlines())
-
-        # don't stash when no relevant changes exist
-        if (self._staged and not unstaged) or not (self._staged or p.stdout):
-            return
-
-        # stash all existing untracked or modified/uncommitted files
-        try:
-            subprocess.run(
-                ['git', 'stash', 'push', '-u', '-m', 'pkgcheck scan --commits'] + self._staged,
-                stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
-                cwd=self.path, check=True, encoding='utf8')
-        except subprocess.CalledProcessError as e:
-            error = e.stderr.splitlines()[0]
-            raise PkgcheckUserException(f'git failed stashing files: {error}')
-        self._stashed = True
-
-    def __exit__(self, _exc_type, _exc_value, _traceback):
-        """Apply any previously stashed files back to the working tree."""
-        if self._stashed:
-            try:
-                subprocess.run(
-                    ['git', 'stash', 'pop'],
-                    stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
-                    cwd=self.path, check=True, encoding='utf8')
-            except subprocess.CalledProcessError as e:
-                error = e.stderr.splitlines()[0]
-                raise PkgcheckUserException(f'git failed applying stash: {error}')
 
 
 class GitAddon(caches.CachedAddon):
