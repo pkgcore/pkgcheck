@@ -3,6 +3,19 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.9.3 (2021-03-12)
+---------------------------
+
+- MisplacedVariable: New keyword flagging variables used outside their defined
+  scope.
+
+- ReadonlyVariable: New keyword flagging read-only variables that are globally
+  assigned (#300).
+
+- pkgcheck.utils: Fallback to assuming libstdc++ exists for build_library()
+  (#299).
+
+---------------------------
 pkgcheck 0.9.2 (2021-03-05)
 ---------------------------
 
