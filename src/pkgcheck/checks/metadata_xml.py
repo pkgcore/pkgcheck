@@ -118,12 +118,12 @@ class MaintainerWithoutProxy(results.PackageResult, results.Warning):
         return f'{self.filename}: proxied maintainer{s} missing proxy dev/project: {maintainers}'
 
 
-class StaleProxyMaintProject(results.PackageResult, results.Warning):
-    """Package lists proxy-maint project but has no proxied maintainers.
+class ProxyWithoutProxied(results.PackageResult, results.Warning):
+    """Package lists a proxy but no proxied maintainers.
 
-    The package explicitly lists proxy-maint@g.o as the only maintainer.
+    The package explicitly lists a proxy but no proxied maintainers.
     Most likely, this means that the proxied maintainer has been removed
-    but proxy-maint was left over.
+    but the proxy was accidenally left.
     """
 
     def __init__(self, filename, **kwargs):
@@ -132,7 +132,7 @@ class StaleProxyMaintProject(results.PackageResult, results.Warning):
 
     @property
     def desc(self):
-        return f'{self.filename}: proxy-maint maintainer with no proxies'
+        return f'{self.filename}: proxy with no proxied maintainer'
 
 
 class NonexistentProjectMaintainer(results.PackageResult, results.Warning):
@@ -398,9 +398,18 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
         PkgBadlyFormedXml, PkgInvalidXml, PkgMissingMetadataXml,
         PkgMetadataXmlInvalidPkgRef, PkgMetadataXmlInvalidCatRef,
         PkgMetadataXmlIndentation, PkgMetadataXmlEmptyElement, MaintainerNeeded,
-        MaintainerWithoutProxy, StaleProxyMaintProject, RedundantLongDescription,
+        MaintainerWithoutProxy, ProxyWithoutProxied, RedundantLongDescription,
         NonexistentProjectMaintainer, WrongMaintainerType,
     ])
+
+    @staticmethod
+    def _maintainer_proxied_key(m):
+        if m.email == 'proxy-maint@gentoo.org':
+            return 'proxy'
+        elif m.email.endswith('@gentoo.org'):
+            return 'no'
+        else:
+            return 'yes'
 
     def _check_maintainers(self, pkg, loc, doc):
         """Validate maintainers in package metadata for the gentoo repo."""
@@ -412,13 +421,18 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
                 if maintainer_needed:
                     yield MaintainerNeeded(os.path.basename(loc), maintainer_needed, pkg=pkg)
                 # check proxy maintainers
-                if not any(m.email.endswith('@gentoo.org') for m in pkg.maintainers):
+                proxied = [m for m in pkg.maintainers
+                           if self._maintainer_proxied_key(m) == 'yes']
+                devs = [m for m in pkg.maintainers
+                        if self._maintainer_proxied_key(m) == 'no']
+                proxies = [m for m in pkg.maintainers
+                           if self._maintainer_proxied_key(m) == 'proxy']
+                if not devs and not proxies:
                     maintainers = sorted(map(str, pkg.maintainers))
                     yield MaintainerWithoutProxy(
                         os.path.basename(loc), maintainers, pkg=pkg)
-                elif (all(m.email.endswith('@gentoo.org') for m in pkg.maintainers) and
-                      'proxy-maint@gentoo.org' in pkg.maintainers):
-                    yield StaleProxyMaintProject(os.path.basename(loc), pkg=pkg)
+                elif not proxied and proxies:
+                    yield ProxyWithoutProxied(os.path.basename(loc), pkg=pkg)
             elif not maintainer_needed:
                 # check for missing maintainer-needed comment
                 yield MaintainerNeeded(os.path.basename(loc), maintainer_needed, pkg=pkg)
