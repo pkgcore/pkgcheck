@@ -404,6 +404,8 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
 
     @staticmethod
     def _maintainer_proxied_key(m):
+        if m.proxied is not None:
+            return m.proxied
         if m.email == 'proxy-maint@gentoo.org':
             return 'proxy'
         elif m.email.endswith('@gentoo.org'):

@@ -1,1 +1,3 @@
 {"__class__": "ProxyWithoutProxied", "category": "PackageMetadataXmlCheck", "package": "ProxyWithoutProxied", "filename": "metadata.xml"}
+{"__class__": "ProxyWithoutProxied", "category": "PackageMetadataXmlCheck", "package": "ProxyWithoutProxied2", "filename": "metadata.xml"}
+{"__class__": "ProxyWithoutProxied", "category": "PackageMetadataXmlCheck", "package": "ProxyWithoutProxied3", "filename": "metadata.xml"}

@@ -10,3 +10,27 @@ diff -Naur gentoo/PackageMetadataXmlCheck/ProxyWithoutProxied/metadata.xml fixed
 -	</maintainer>
 +<!-- maintainer-needed -->
  </pkgmetadata>
+diff -Naur gentoo/PackageMetadataXmlCheck/ProxyWithoutProxied2/metadata.xml fixed/PackageMetadataXmlCheck/ProxyWithoutProxied2/metadata.xml
+--- gentoo/PackageMetadataXmlCheck/ProxyWithoutProxied2/metadata.xml	2021-03-14 23:08:01.981223876 +0100
++++ fixed/PackageMetadataXmlCheck/ProxyWithoutProxied2/metadata.xml	2021-03-14 23:31:49.099021402 +0100
+@@ -1,6 +1,9 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+ <pkgmetadata>
++	<maintainer type="person" proxied="proxied">
++		<email>barnor@gentoo.org</email>
++	</maintainer>
+ 	<maintainer type="person" proxied="proxy">
+ 		<email>frobnor@gentoo.org</email>
+ 	</maintainer>
+diff -Naur gentoo/PackageMetadataXmlCheck/ProxyWithoutProxied3/metadata.xml fixed/PackageMetadataXmlCheck/ProxyWithoutProxied3/metadata.xml
+--- gentoo/PackageMetadataXmlCheck/ProxyWithoutProxied3/metadata.xml	2021-03-14 23:33:04.430478764 +0100
++++ fixed/PackageMetadataXmlCheck/ProxyWithoutProxied3/metadata.xml	2021-03-14 23:34:09.501737375 +0100
+@@ -4,7 +4,4 @@
+ 	<maintainer type="person" proxied="no">
+ 		<email>barnor@gentoo.org</email>
+ 	</maintainer>
+-	<maintainer type="person" proxied="proxy">
+-		<email>frobnor@gentoo.org</email>
+-	</maintainer>
+ </pkgmetadata>
