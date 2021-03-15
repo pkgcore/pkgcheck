@@ -119,11 +119,11 @@ class MaintainerWithoutProxy(results.PackageResult, results.Warning):
 
 
 class ProxyWithoutProxied(results.PackageResult, results.Warning):
-    """Package lists a proxy but no proxied maintainers.
+    """Package lists a proxy with no proxied maintainers.
 
-    The package explicitly lists a proxy but no proxied maintainers.
+    The package explicitly lists a proxy with no proxied maintainers.
     Most likely, this means that the proxied maintainer has been removed
-    but the proxy was accidenally left.
+    but the proxy was accidentally left.
     """
 
     def __init__(self, filename, **kwargs):
@@ -408,10 +408,9 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
             return m.proxied
         if m.email == 'proxy-maint@gentoo.org':
             return 'proxy'
-        elif m.email.endswith('@gentoo.org'):
+        if m.email.endswith('@gentoo.org'):
             return 'no'
-        else:
-            return 'yes'
+        return 'yes'
 
     def _check_maintainers(self, pkg, loc, doc):
         """Validate maintainers in package metadata for the gentoo repo."""
@@ -422,13 +421,14 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
                 # check for invalid maintainer-needed comment
                 if maintainer_needed:
                     yield MaintainerNeeded(os.path.basename(loc), maintainer_needed, pkg=pkg)
+
+                # determine proxy maintainer status
+                proxied, devs, proxies = [], [], []
+                proxy_map = {'yes': proxied, 'no': devs, 'proxy': proxies}
+                for m in pkg.maintainers:
+                    proxy_map[self._maintainer_proxied_key(m)].append(m)
+
                 # check proxy maintainers
-                proxied = [m for m in pkg.maintainers
-                           if self._maintainer_proxied_key(m) == 'yes']
-                devs = [m for m in pkg.maintainers
-                        if self._maintainer_proxied_key(m) == 'no']
-                proxies = [m for m in pkg.maintainers
-                           if self._maintainer_proxied_key(m) == 'proxy']
                 if not devs and not proxies:
                     maintainers = sorted(map(str, pkg.maintainers))
                     yield MaintainerWithoutProxy(
