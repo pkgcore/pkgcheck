@@ -228,6 +228,9 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
         DroppedStableKeywords, DroppedUnstableKeywords, MissingSlotmove, MissingMove,
     ])
 
+    # package categories that are committed with stable keywords
+    allowed_direct_stable = frozenset(['acct-user', 'acct-group'])
+
     def __init__(self, *args, git_addon):
         super().__init__(*args)
         self.today = datetime.today()
@@ -382,10 +385,10 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
 
             # checks for newly added ebuilds
             if git_pkg.status == 'A':
-                # check for stable keywords
-                stable_keywords = sorted(x for x in pkg.keywords if x[0] not in '~-')
-                if stable_keywords:
-                    yield DirectStableKeywords(stable_keywords, pkg=pkg)
+                # check for directly added stable ebuilds
+                if pkg.category not in self.allowed_direct_stable:
+                    if stable_keywords := sorted(x for x in pkg.keywords if x[0] not in '~-'):
+                        yield DirectStableKeywords(stable_keywords, pkg=pkg)
 
                 # pkg was just added to the tree
                 newly_added = not self.added_repo.match(git_pkg.unversioned_atom)
