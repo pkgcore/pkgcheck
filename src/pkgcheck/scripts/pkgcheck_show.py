@@ -63,14 +63,13 @@ def dump_docstring(out, obj, prefix=None):
         out.later_prefix.append(prefix)
     try:
         if obj.__doc__ is None:
-            raise ValueError('no docs for {obj!r}')
+            raise ValueError(f'no docs for {obj!r}')
 
-        # Docstrings start with an unindented line. Everything
-        # else is consistently indented.
+        # Docstrings start with an unindented line, everything else is
+        # consistently indented.
         lines = obj.__doc__.split('\n')
-        firstline = lines[0].strip()
-        # Some docstrings actually start on the second line.
-        if firstline:
+        # some docstrings start on the second line
+        if firstline := lines[0].strip():
             out.write(firstline)
         if len(lines) > 1:
             for line in textwrap.dedent('\n'.join(lines[1:])).split('\n'):
