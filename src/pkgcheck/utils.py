@@ -109,7 +109,7 @@ def is_binary(path, blocksize=1024):
 # copied from tree-sitter with the following changes:
 # - prefer stdc++ over c++ when linking
 # - perform platform-specific compiler customizations
-def build_library(output_path, repo_paths):
+def build_library(output_path, repo_paths):  # pragma: no cover
     """
     Build a dynamic library at the given path, based on the parser
     repositories at the given paths.
