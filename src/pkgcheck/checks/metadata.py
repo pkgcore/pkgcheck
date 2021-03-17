@@ -400,7 +400,7 @@ class UnusedLocalUse(results.PackageResult, results.Warning):
     def desc(self):
         s = pluralism(self.flags)
         flags = ', '.join(self.flags)
-        return f'metadata.xml unused local USE flag{s}: [ {flags} ]'
+        return f'unused local USE flag{s}: [ {flags} ]'
 
 
 class MatchingGlobalUse(results.PackageResult, results.Warning):
