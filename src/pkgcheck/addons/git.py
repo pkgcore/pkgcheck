@@ -31,7 +31,7 @@ from ..log import logger
 from . import caches
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class GitCommit:
     """Git commit objects."""
     hash: str

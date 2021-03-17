@@ -8,7 +8,7 @@ from snakeoil import klass
 
 
 @total_ordering
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class RawCPV:
     """Raw CPV objects supporting basic restrictions/sorting."""
     category: str
