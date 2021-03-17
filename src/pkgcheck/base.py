@@ -160,12 +160,6 @@ class Addon:
         :param parser: an C{argparse.ArgumentParser} instance.
         """
 
-    def __hash__(self):
-        return hash(self.__class__)
-
-    def __eq__(self, other):
-        return self.__class__ == other.__class__
-
 
 def get_addons(objects):
     """Return tuple of addons for a given sequence of objects."""
