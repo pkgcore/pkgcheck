@@ -13,7 +13,7 @@ try:
     # if it exists, we defer to it. If it doesn't, then we're
     # running from a git checkout or a tarball.
     from . import _const as _defaults
-except ImportError:
+except ImportError:  # pragma: no cover
     _defaults = object()
 
 
