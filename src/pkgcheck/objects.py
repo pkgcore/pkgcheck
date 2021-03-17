@@ -15,11 +15,11 @@ try:
     # if it exists, we defer to it. If it doesn't, then we're
     # running from a git checkout or a tarball.
     from . import _objects as _defaults
-except ImportError:
+except ImportError:  # pragma: no cover
     _defaults = klass.sentinel
 
 
-def _find_modules(module):
+def _find_modules(module):  # pragma: no cover
     """Generator of all public modules under a given module."""
     if getattr(module, '__path__', False):
         for _imp, name, _ in pkgutil.walk_packages(module.__path__, module.__name__ + '.'):
@@ -34,7 +34,7 @@ def _find_modules(module):
         yield module
 
 
-def _find_classes(module, matching_cls, skip=()):
+def _find_classes(module, matching_cls, skip=()):  # pragma: no cover
     """Generator of all subclasses of a selected class under a given module."""
     for _name, cls in inspect.getmembers(module):
         if (inspect.isclass(cls) and issubclass(cls, matching_cls)
@@ -42,7 +42,7 @@ def _find_classes(module, matching_cls, skip=()):
             yield cls
 
 
-def _find_obj_classes(module_name, target_cls):
+def _find_obj_classes(module_name, target_cls):  # pragma: no cover
     """Determine mapping of object class names to class objects."""
     module = import_module(f'.{module_name}', 'pkgcheck')
     cls_module, cls_name = target_cls.rsplit('.', 1)
@@ -74,14 +74,14 @@ class _LazyDict(Mapping):
 
         # Forcibly collapse mapping when running from the git repo, used to
         # force cache registration to occur as related modules are imported.
-        if _defaults is klass.sentinel:
+        if _defaults is klass.sentinel:  # pragma: no cover
             self._dict
 
     @klass.jit_attr
     def _dict(self):
         try:
             result = getattr(_defaults, self._attr)
-        except AttributeError:
+        except AttributeError:  # pragma: no cover
             result = _find_obj_classes(*self._func_args)
         return ImmutableDict(result)
 
