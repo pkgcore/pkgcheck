@@ -481,7 +481,7 @@ class MissingLocalUseDesc(results.PackageResult, results.Warning):
     def desc(self):
         s = pluralism(self.flags)
         flags = ', '.join(self.flags)
-        return f'local USE flag{s} missing description: [ {flags} ]'
+        return f'local USE flag{s} missing description{s}: [ {flags} ]'
 
 
 class LocalUseCheck(Check):

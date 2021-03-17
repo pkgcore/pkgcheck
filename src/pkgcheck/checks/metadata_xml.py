@@ -309,10 +309,12 @@ class _XmlBaseCheck(Check):
 
     def _check_doc(self, pkg, loc, doc):
         """Perform additional document structure checks."""
-        # find all root descendant elements that are empty
+        # Find all root descendant elements that are empty except
+        # 'stabilize-allarches' which is allowed to be empty and 'flag' which
+        # is caught by MissingLocalUseDesc.
         for el in doc.getroot().iterdescendants():
             if (not el.getchildren() and (el.text is None or not el.text.strip())
-                    and not el.tag == 'stabilize-allarches'):
+                    and el.tag not in ('flag', 'stabilize-allarches')):
                 yield self.empty_element(os.path.basename(loc), el.tag, el.sourceline, pkg=pkg)
 
         for el in doc.findall('.//cat'):
