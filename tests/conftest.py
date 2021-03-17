@@ -10,6 +10,7 @@ from pkgcheck.reporters import StrReporter
 from pkgcheck.results import Result
 from pkgcheck.scripts import pkgcheck
 from pkgcore import const as pkgcore_const
+from snakeoil.cli.arghparse import ArgumentParser
 from snakeoil.formatters import PlainTextFormatter
 from snakeoil.osutils import pjoin
 
@@ -108,5 +109,5 @@ def tool(testconfig):
 
 @pytest.fixture
 def parser():
-    """Return a shallow copy of the main pkgcheck argparser."""
-    return pkgcheck.argparser.copy()
+    """Return a copy of the main pkgcheck argparser."""
+    return ArgumentParser(suppress=True, parents=(pkgcheck.argparser,))
