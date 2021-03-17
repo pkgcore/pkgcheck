@@ -1,0 +1,9 @@
+diff -Naur standalone/ReadonlyVariableCheck/ReadonlyVariable/ReadonlyVariable-0.ebuild fixed/ReadonlyVariableCheck/ReadonlyVariable/ReadonlyVariable-0.ebuild
+--- standalone/ReadonlyVariableCheck/ReadonlyVariable/ReadonlyVariable-0.ebuild	2021-03-17 00:53:28.492690175 -0600
++++ fixed/ReadonlyVariableCheck/ReadonlyVariable/ReadonlyVariable-0.ebuild	2021-03-17 00:56:13.093297393 -0600
+@@ -1,5 +1,4 @@
+ EAPI=7
+-PV="5"
+ DESCRIPTION="Ebuild that assigns read-only variable in global scope"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
