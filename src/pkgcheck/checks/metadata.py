@@ -470,6 +470,20 @@ class UnderscoreInUseFlag(results.PackageResult, results.Style):
         return f"USE flag {self.flag!r} uses reserved underscore character"
 
 
+class MissingLocalUseDesc(results.PackageResult, results.Warning):
+    """Local USE flag(s) missing descriptions."""
+
+    def __init__(self, flags, **kwargs):
+        super().__init__(**kwargs)
+        self.flags = tuple(flags)
+
+    @property
+    def desc(self):
+        s = pluralism(self.flags)
+        flags = ', '.join(self.flags)
+        return f'local USE flag{s} missing description: [ {flags} ]'
+
+
 class LocalUseCheck(Check):
     """Check local USE flags in metadata.xml for various issues."""
 
@@ -478,6 +492,7 @@ class LocalUseCheck(Check):
     known_results = frozenset([
         UnusedLocalUse, MatchingGlobalUse, ProbableGlobalUse,
         ProbableUseExpand, UnderscoreInUseFlag, UnstatedIuse,
+        MissingLocalUseDesc,
     ])
 
     def __init__(self, *args, use_addon):
@@ -495,8 +510,12 @@ class LocalUseCheck(Check):
     def feed(self, pkgs):
         pkg = pkgs[0]
         local_use = pkg.local_use
+        missing_desc = []
 
         for flag, desc in local_use.items():
+            if not desc:
+                missing_desc.append(flag)
+
             if flag in self.global_use:
                 ratio = SequenceMatcher(None, desc, self.global_use[flag]).ratio()
                 if ratio == 1.0:
@@ -517,6 +536,8 @@ class LocalUseCheck(Check):
             unused.difference_update(pkg.iuse_stripped)
         if unused:
             yield UnusedLocalUse(sorted(unused), pkg=pkg)
+        if missing_desc:
+            yield MissingLocalUseDesc(sorted(missing_desc), pkg=pkg)
 
 
 class MissingSlotDep(results.VersionResult, results.Warning):
