@@ -1,0 +1,13 @@
+diff -Naur standalone/LocalUseCheck/MissingLocalUseDesc/metadata.xml fixed/LocalUseCheck/MissingLocalUseDesc/metadata.xml
+--- standalone/LocalUseCheck/MissingLocalUseDesc/metadata.xml	2021-03-17 15:38:21.742443082 -0600
++++ fixed/LocalUseCheck/MissingLocalUseDesc/metadata.xml	2021-03-17 15:39:23.871805055 -0600
+@@ -5,7 +5,7 @@
+ 		<email>maintainer@random.email</email>
+ 	</maintainer>
+ 	<use>
+-		<flag name="empty"></flag>
+-		<flag name="whitespace"> 	 </flag>
++		<flag name="empty">content</flag>
++		<flag name="whitespace">content</flag>
+ 	</use>
+ </pkgmetadata>

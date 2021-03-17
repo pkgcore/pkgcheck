@@ -1,0 +1,5 @@
+DESCRIPTION="Ebuild with local USE flags missing descriptions in metadata.xml"
+HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+SLOT="0"
+LICENSE="BSD"
+IUSE="empty whitespace"
