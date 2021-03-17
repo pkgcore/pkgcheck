@@ -1,0 +1,10 @@
+diff -Naur standalone/MetadataVarCheck/StaticSrcUri/StaticSrcUri-0.ebuild fixed/MetadataVarCheck/StaticSrcUri/StaticSrcUri-0.ebuild
+--- standalone/MetadataVarCheck/StaticSrcUri/StaticSrcUri-0.ebuild	2019-11-14 00:51:17.006124071 -0700
++++ fixed/MetadataVarCheck/StaticSrcUri/StaticSrcUri-0.ebuild	2019-11-14 00:54:46.320918465 -0700
+@@ -1,5 +1,5 @@
+ DESCRIPTION="Ebuild with static values of dynamica variables in SRC_URI"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+-SRC_URI="https://github.com/pkgcore/pkgcheck/StaticSrcUri-0.tar.gz"
++SRC_URI="https://github.com/pkgcore/pkgcheck/${P}.tar.gz"
+ SLOT="0"
+ LICENSE="BSD"

@@ -433,41 +433,66 @@ class VariableInHomepage(results.VersionResult, results.Style):
         return f'HOMEPAGE includes variable{s}: {variables}'
 
 
-class RawEbuildCheck(Check):
-    """Scan raw ebuild content for various issues."""
+def verify_vars(*variables):
+    """Decorator to register raw variable verification methods."""
 
-    _source = sources.EbuildFileRepoSource
+    class decorator:
+        """Decorator with access to the class of a decorated function."""
+
+        def __init__(self, func):
+            self.func = func
+
+        def __set_name__(self, owner, name):
+            for v in variables:
+                owner.known_variables[v] = self.func
+            setattr(owner, name, self.func)
+
+    return decorator
+
+
+class MetadataVarCheck(Check):
+    """Scan various globally assigned metadata variables for issues."""
+
+    _source = sources.EbuildParseRepoSource
     known_results = frozenset([HomepageInSrcUri, StaticSrcUri, VariableInHomepage])
+    required_addons = (addons.BashAddon,)
 
-    def __init__(self, *args):
+    # mapping between registered variables and verification methods
+    known_variables = {}
+
+    def __init__(self, *args, bash_addon):
         super().__init__(*args)
-        attr_vars = ('HOMEPAGE', 'SRC_URI')
-        self.attr_regex = re.compile(
-            r'|'.join(rf'^\s*(?P<{x.lower()}>{x}="[^"]*")' for x in attr_vars), re.MULTILINE)
-        self.var_regex = re.compile(r'\${[^}]+}')
+        self.bash_addon = bash_addon
 
-    def check_homepage(self, pkg, s):
-        matches = self.var_regex.findall(s)
+    @verify_vars('HOMEPAGE')
+    def _homepage(self, pkg, node, value):
+        matches = []
+        for var_node, _ in self.bash_addon.var_query.captures(node):
+            matches.append(pkg.node_str(var_node.parent))
         if matches:
             yield VariableInHomepage(stable_unique(matches), pkg=pkg)
 
-    def check_src_uri(self, pkg, s):
-        if '${HOMEPAGE}' in s:
+    @verify_vars('SRC_URI')
+    def _src_uri(self, pkg, node, value):
+        if '${HOMEPAGE}' in value:
             yield HomepageInSrcUri(pkg=pkg)
 
         exts = pkg.eapi.archive_exts_regex_pattern
         P = re.escape(pkg.P)
         PV = re.escape(pkg.PV)
         static_src_uri_re = rf'/(?P<static_str>({P}{exts}(?="|\n)|{PV}(?=/)))'
-        for match in re.finditer(static_src_uri_re, s):
+        for match in re.finditer(static_src_uri_re, value):
             static_str = match.group('static_str')
             yield StaticSrcUri(static_str, pkg=pkg)
 
     def feed(self, pkg):
-        for mo in self.attr_regex.finditer(''.join(pkg.lines)):
-            attr = mo.lastgroup
-            func = getattr(self, f'check_{attr}')
-            yield from func(pkg, mo.group(attr))
+        for node in pkg.global_query(self.bash_addon.var_assign_query):
+            name = pkg.node_str(node.child_by_field_name('name'))
+            if name in self.known_variables:
+                # RHS value node should be last
+                val_node = node.children[-1]
+                val_str = pkg.node_str(val_node)
+                yield from self.known_variables[name](self, pkg, val_node, val_str)
 
 
 class MissingInherits(results.VersionResult, results.Warning):

@@ -1,0 +1,10 @@
+diff -Naur standalone/MetadataVarCheck/HomepageInSrcUri/HomepageInSrcUri-0.ebuild fixed/MetadataVarCheck/HomepageInSrcUri/HomepageInSrcUri-0.ebuild
+--- standalone/MetadataVarCheck/HomepageInSrcUri/HomepageInSrcUri-0.ebuild	2019-11-14 00:47:23.610238294 -0700
++++ fixed/MetadataVarCheck/HomepageInSrcUri/HomepageInSrcUri-0.ebuild	2019-11-14 00:54:02.776753207 -0700
+@@ -1,5 +1,5 @@
+ DESCRIPTION="Ebuild with HOMEPAGE variable in SRC_URI"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+-SRC_URI="${HOMEPAGE}/${P}.tar.gz"
++SRC_URI="https://github.com/pkgcore/pkgcheck/${P}.tar.gz"
+ SLOT="0"
+ LICENSE="BSD"
