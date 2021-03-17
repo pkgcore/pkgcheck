@@ -307,24 +307,19 @@ class _ParsedPkg(WrappedPkg):
 
     def global_query(self, query):
         """Run a given parse tree query returning only those nodes in global scope."""
-        for node, _ in query.captures(self.tree.root_node):
-            orig_node = node
+        for x in self.tree.root_node.children:
             # skip nodes in function scope
-            while node := node.parent:
-                if node.type == 'function_definition':
-                    break
-            else:
-                yield orig_node
+            if x.type != 'function_definition':
+                for node, _ in query.captures(x):
+                    yield node
 
     def func_query(self, query):
         """Run a given parse tree query returning only those nodes in function scope."""
-        for node, _ in query.captures(self.tree.root_node):
-            orig_node = node
-            # skip nodes in function scope
-            while node := node.parent:
-                if node.type == 'function_definition':
-                    yield orig_node
-                    break
+        for x in self.tree.root_node.children:
+            # only return nodes in function scope
+            if x.type == 'function_definition':
+                for node, _ in query.captures(x):
+                    yield node
 
 
 class EbuildParseRepoSource(RepoSource):
