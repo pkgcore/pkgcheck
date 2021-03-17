@@ -23,7 +23,7 @@ from snakeoil.contexts import patch
 from snakeoil.mappings import ImmutableDict
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class Scope:
     """Generic scope for scans, checks, and results."""
     desc: str
@@ -72,18 +72,18 @@ class Scope:
         return chain([self], self._children)
 
 
-@dataclass(repr=False, frozen=True)
+@dataclass(repr=False, frozen=True, eq=False)
 class PackageScope(Scope):
     """Scope for package-specific checks."""
 
 
-@dataclass(repr=False, frozen=True)
+@dataclass(repr=False, frozen=True, eq=False)
 class ConditionalScope(Scope):
     """Scope for checks run only in certain circumstances."""
     level: int = -99
 
 
-@dataclass(repr=False, frozen=True)
+@dataclass(repr=False, frozen=True, eq=False)
 class LocationScope(Scope):
     """Scope for location-specific checks."""
     level: int = 0
