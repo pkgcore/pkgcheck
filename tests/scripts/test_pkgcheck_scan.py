@@ -468,8 +468,11 @@ class TestPkgcheckScan:
 
     @staticmethod
     def _script(fix, repo_path):
-        p = subprocess.run([fix], cwd=repo_path)
-        p.check_returncode()
+        try:
+            subprocess.run([fix], cwd=repo_path, capture_output=True, check=True, text=True)
+        except subprocess.CalledProcessError as e:
+            error = e.stderr if e.stderr else e.stdout
+            pytest.fail(error)
 
     # mapping of repos to scanned results
     _results = {}
@@ -586,9 +589,13 @@ class TestPkgcheckScan:
     @staticmethod
     def _patch(fix, repo_path):
         with open(fix) as f:
-            p = subprocess.run(
-                ['patch', '-p1'], cwd=repo_path, stdout=subprocess.DEVNULL, stdin=f)
-            p.check_returncode()
+            try:
+                subprocess.run(
+                    ['patch', '-p1'], cwd=repo_path, stdin=f,
+                    capture_output=True, check=True, text=True)
+            except subprocess.CalledProcessError as e:
+                error = e.stderr if e.stderr else e.stdout
+                pytest.fail(error)
 
     @pytest.mark.parametrize('check, result', _all_results)
     def test_fix(self, check, result, tmp_path):
