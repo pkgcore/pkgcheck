@@ -1,0 +1,23 @@
+diff -Naur standalone/MetadataVarCheck/MultipleKeywordsLines/MultipleKeywordsLines-0.ebuild fixed/MetadataVarCheck/MultipleKeywordsLines/MultipleKeywordsLines-0.ebuild
+--- standalone/MetadataVarCheck/MultipleKeywordsLines/MultipleKeywordsLines-0.ebuild	2021-03-18 16:17:37.587269457 -0600
++++ fixed/MetadataVarCheck/MultipleKeywordsLines/MultipleKeywordsLines-0.ebuild	2021-03-18 16:18:48.507820372 -0600
+@@ -5,7 +5,6 @@
+ 
+ if [[ ${PV} == "9999" ]] ; then
+ 	inherit vcs
+-	KEYWORDS=""
+ else
+ 	KEYWORDS="amd64 x86"
+ fi
+diff -Naur standalone/MetadataVarCheck/MultipleKeywordsLines/MultipleKeywordsLines-1.ebuild fixed/MetadataVarCheck/MultipleKeywordsLines/MultipleKeywordsLines-1.ebuild
+--- standalone/MetadataVarCheck/MultipleKeywordsLines/MultipleKeywordsLines-1.ebuild	2021-03-18 16:13:44.019161740 -0600
++++ fixed/MetadataVarCheck/MultipleKeywordsLines/MultipleKeywordsLines-1.ebuild	2021-03-18 16:18:57.268011946 -0600
+@@ -2,7 +2,4 @@
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+-KEYWORDS="
+-~amd64
+-~x86
+-"
++KEYWORDS="~amd64 ~x86"
