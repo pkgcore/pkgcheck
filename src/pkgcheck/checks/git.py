@@ -176,7 +176,6 @@ class _RemovalRepo(UnconfiguredTree):
 
     def __init__(self, repo):
         self.__parent_repo = repo
-        self._eclasses = os.path.exists(pjoin(repo.location, 'eclass'))
         self.__tmpdir = TemporaryDirectory()
         self.__created = False
         repo_dir = self.__tmpdir.name
@@ -184,7 +183,7 @@ class _RemovalRepo(UnconfiguredTree):
         # set up some basic repo files so pkgcore doesn't complain
         os.makedirs(pjoin(repo_dir, 'metadata'))
         with open(pjoin(repo_dir, 'metadata', 'layout.conf'), 'w') as f:
-            f.write('masters =\n')
+            f.write(f"masters = {' '.join(x.repo_id for x in repo.trees)}\n")
         os.makedirs(pjoin(repo_dir, 'profiles'))
         with open(pjoin(repo_dir, 'profiles', 'repo_name'), 'w') as f:
             f.write('old-repo\n')
@@ -204,9 +203,6 @@ class _RemovalRepo(UnconfiguredTree):
         """Populate the repo with a given sequence of historical packages."""
         pkg = pkgs[0]
         paths = [pjoin(pkg.category, pkg.package)]
-        if not self.__created and self._eclasses:
-            paths.append('eclass')
-
         old_files = subprocess.Popen(
             ['git', 'archive', f'{pkg.commit}~1'] + paths,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
