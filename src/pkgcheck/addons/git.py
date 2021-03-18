@@ -7,6 +7,7 @@ import shlex
 import subprocess
 from collections import deque
 from dataclasses import dataclass
+from datetime import datetime
 from itertools import chain, takewhile
 
 from pathspec import PathSpec
@@ -35,7 +36,7 @@ from . import caches
 class GitCommit:
     """Git commit objects."""
     hash: str
-    commit_date: str
+    commit_time: int
     author: str
     committer: str
     message: tuple
@@ -57,7 +58,7 @@ class GitPkgChange:
     atom: atom_cls
     status: str
     commit: str
-    commit_date: str
+    commit_time: int
     old: atom_cls = None
 
 
@@ -107,7 +108,7 @@ class _ParseGitRepo:
     """Generic iterator for custom git log output parsing support."""
 
     # git command to run on the targeted repo
-    _git_cmd = 'git log --name-status --date=short --diff-filter=ARMD -z'
+    _git_cmd = 'git log --name-status --diff-filter=ARMD -z'
 
     # custom git log format lines, see the "PRETTY FORMATS" section of
     # the git log man page for details
@@ -166,7 +167,7 @@ class GitRepoCommits(_ParseGitRepo):
 
     _format = (
         '%h',  # abbreviated commit hash
-        '%cd',  # commit date
+        '%ct',  # commit timestamp
         '%an <%ae>',  # Author Name <author@email.com>
         '%cn <%ce>',  # Committer Name <committer@email.com>
         '%B',  # commit message
@@ -174,12 +175,12 @@ class GitRepoCommits(_ParseGitRepo):
 
     def __next__(self):
         commit_hash = next(self.git_log)
-        commit_date = next(self.git_log)
+        commit_time = int(next(self.git_log))
         author = next(self.git_log)
         committer = next(self.git_log)
         message = list(takewhile(lambda x: x != '\x00', self.git_log))
         pkgs = list(chain.from_iterable(pkgs for _, pkgs in self.changes))
-        return GitCommit(commit_hash, commit_date, author, committer, message, pkgs)
+        return GitCommit(commit_hash, commit_time, author, committer, message, pkgs)
 
 
 class GitRepoPkgs(_ParseGitRepo):
@@ -187,7 +188,7 @@ class GitRepoPkgs(_ParseGitRepo):
 
     _format = (
         '%h',  # abbreviated commit hash
-        '%cd',  # commit date
+        '%ct',  # commit time
     )
 
     def __init__(self, *args, local=False):
@@ -201,37 +202,37 @@ class GitRepoPkgs(_ParseGitRepo):
                 return self._pkgs.popleft()
             except IndexError:
                 commit_hash = next(self.git_log)
-                commit_date = next(self.git_log).rstrip('\x00')
-                self._pkg_changes(commit_hash, commit_date)
+                commit_time = int(next(self.git_log).rstrip('\x00'))
+                self._pkg_changes(commit_hash, commit_time)
 
-    def _pkg_changes(self, commit_hash, commit_date):
+    def _pkg_changes(self, commit_hash, commit_time):
         """Queue package change objects from git log file changes."""
         for status, pkgs in self.changes:
             if status == 'R':
                 old, new = pkgs
                 if not self.local:  # treat rename as addition and removal
                     self._pkgs.append(
-                        GitPkgChange(new, 'A', commit_hash, commit_date))
+                        GitPkgChange(new, 'A', commit_hash, commit_time))
                     self._pkgs.append(
-                        GitPkgChange(old, 'D', commit_hash, commit_date))
+                        GitPkgChange(old, 'D', commit_hash, commit_time))
                 else:
                     # renames are split into add/remove ops at
                     # the check level for the local commits repo
                     self._pkgs.append(GitPkgChange(
-                        new, 'R', commit_hash, commit_date, old))
+                        new, 'R', commit_hash, commit_time, old))
             else:
-                self._pkgs.append(GitPkgChange(pkgs[0], status, commit_hash, commit_date))
+                self._pkgs.append(GitPkgChange(pkgs[0], status, commit_hash, commit_time))
 
 
 class _GitCommitPkg(cpv.VersionedCPV):
     """Fake packages encapsulating commits parsed from git log."""
 
-    def __init__(self, category, package, status, version, date, commit, old=None):
+    def __init__(self, category, package, status, version, time, commit, old=None):
         super().__init__(category, package, version)
 
         # add additional attrs
         sf = object.__setattr__
-        sf(self, 'date', date)
+        sf(self, 'time', time)
         sf(self, 'status', status)
         sf(self, 'commit', commit)
         sf(self, 'old', old)
@@ -240,7 +241,7 @@ class _GitCommitPkg(cpv.VersionedCPV):
         """Create a new object from a rename commit's old atom."""
         return self.__class__(
             self.old.category, self.old.package, self.status, self.old.version,
-            self.date, self.commit)
+            self.time, self.commit)
 
 
 class GitChangedRepo(SimpleTree):
@@ -398,7 +399,7 @@ class GitAddon(caches.CachedAddon):
     """
 
     # cache registry
-    cache = caches.CacheData(type='git', file='git.pickle', version=4)
+    cache = caches.CacheData(type='git', file='git.pickle', version=5)
 
     @classmethod
     def mangle_argparser(cls, parser):
@@ -485,10 +486,11 @@ class GitAddon(caches.CachedAddon):
                 if key not in seen:
                     seen.add(key)
                     if local:
-                        commit = (atom.fullver, pkg.commit_date, pkg.commit, pkg.old)
+                        commit = (atom.fullver, pkg.commit_time, pkg.commit, pkg.old)
                     else:
-                        progress(f'{repo} -- updating git cache: commit date: {pkg.commit_date}')
-                        commit = (atom.fullver, pkg.commit_date, pkg.commit)
+                        date = datetime.fromtimestamp(pkg.commit_time).strftime('%Y-%m-%d')
+                        progress(f'{repo} -- updating git cache: commit date: {date}')
+                        commit = (atom.fullver, pkg.commit_time, pkg.commit)
                     data.setdefault(atom.category, {}).setdefault(
                         atom.package, {}).setdefault(pkg.status, []).append(commit)
         return data

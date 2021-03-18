@@ -327,6 +327,6 @@ class LiveOnlyCheck(GentooRepoCheck):
             except StopIteration:
                 # probably an uncommitted package
                 return
-            added = datetime.strptime(match.date, '%Y-%m-%d')
+            added = datetime.fromtimestamp(match.time)
             days_old = (self.today - added).days
             yield LiveOnlyPackage(days_old, pkg=pkg)

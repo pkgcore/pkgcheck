@@ -68,7 +68,7 @@ class StableRequestCheck(GentooRepoCheck):
                         # probably an uncommitted, local ebuild... skipping
                         continue
 
-                    added = datetime.strptime(match.date, '%Y-%m-%d')
+                    added = datetime.fromtimestamp(match.time)
                     days_old = (self.today - added).days
                     if days_old >= 30:
                         pkg_stable_keywords = {x.lstrip('~') for x in pkg.keywords}

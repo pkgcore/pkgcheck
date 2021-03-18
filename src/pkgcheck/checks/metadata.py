@@ -842,8 +842,8 @@ class OutdatedBlockersCheck(Check):
                 unblocked = atom_cls(atom_str)
                 if not self.options.search_repo.match(unblocked):
                     if matches := self.existence_repo.match(unblocked):
-                        removal = max(x.date for x in matches)
-                        removal = datetime.strptime(removal, '%Y-%m-%d')
+                        removal = max(x.time for x in matches)
+                        removal = datetime.fromtimestamp(removal)
                         years = (self.today - removal).days / 365
                         if years >= 2:
                             outdated_blockers[attr].add((atom, round(years, 2)))
