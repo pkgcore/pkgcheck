@@ -1,1 +1,2 @@
 {"__class__": "ReferenceInMetadataVar", "category": "MetadataVarCheck", "package": "ReferenceInMetadataVar", "version": "0", "variable": "HOMEPAGE", "refs": ["${PN}"]}
+{"__class__": "ReferenceInMetadataVar", "category": "MetadataVarCheck", "package": "ReferenceInMetadataVar", "version": "1", "variable": "KEYWORDS", "refs": ["${ARCH}"]}
