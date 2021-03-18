@@ -413,24 +413,46 @@ class StaticSrcUri(results.VersionResult, results.Style):
         return f'{self.static_str!r} in SRC_URI'
 
 
-class VariableInHomepage(results.VersionResult, results.Style):
-    """HOMEPAGE includes a variable.
+class ReferenceInMetadataVar(results.VersionResult, results.Style):
+    """Metadata variable limited to raw text includes variable reference.
 
     The HOMEPAGE ebuild variable entry in the devmanual [#]_ states only raw
     text should be used.
 
+    KEYWORDS must be a simple string with literal content as stated by the QA
+    policy guide [#]_.
+
     .. [#] https://devmanual.gentoo.org/ebuild-writing/variables/#ebuild-defined-variables
+    .. [#] https://projects.gentoo.org/qa/policy-guide/ebuild-format.html#pg0105
     """
 
-    def __init__(self, variables, **kwargs):
+    def __init__(self, variable, refs, **kwargs):
         super().__init__(**kwargs)
-        self.variables = tuple(variables)
+        self.variable = variable
+        self.refs = tuple(refs)
 
     @property
     def desc(self):
-        s = pluralism(self.variables)
-        variables = ', '.join(self.variables)
-        return f'HOMEPAGE includes variable{s}: {variables}'
+        s = pluralism(self.refs)
+        refs = ', '.join(self.refs)
+        return f'{self.variable} includes variable{s}: {refs}'
+
+
+class MultipleKeywordsLines(results.VersionResult, results.Style):
+    """KEYWORDS is specified across multiple lines in global scope.
+
+    Due to limitations of ekeyword it's advised to specify KEYWORDS once on a
+    single line in global scope.
+    """
+
+    def __init__(self, lines, **kwargs):
+        super().__init__(**kwargs)
+        self.lines = tuple(lines)
+
+    @property
+    def desc(self):
+        lines = ', '.join(map(str, self.lines))
+        return f"KEYWORDS specified on lines {lines}"
 
 
 def verify_vars(*variables):
@@ -454,7 +476,8 @@ class MetadataVarCheck(Check):
     """Scan various globally assigned metadata variables for issues."""
 
     _source = sources.EbuildParseRepoSource
-    known_results = frozenset([HomepageInSrcUri, StaticSrcUri, VariableInHomepage])
+    known_results = frozenset([
+        HomepageInSrcUri, StaticSrcUri, ReferenceInMetadataVar, MultipleKeywordsLines])
     required_addons = (addons.BashAddon,)
 
     # mapping between registered variables and verification methods
@@ -464,16 +487,16 @@ class MetadataVarCheck(Check):
         super().__init__(*args)
         self.bash_addon = bash_addon
 
-    @verify_vars('HOMEPAGE')
-    def _homepage(self, pkg, node, value):
+    @verify_vars('HOMEPAGE', 'KEYWORDS')
+    def _raw_text(self, var, node, value, pkg):
         matches = []
         for var_node, _ in self.bash_addon.var_query.captures(node):
             matches.append(pkg.node_str(var_node.parent))
         if matches:
-            yield VariableInHomepage(stable_unique(matches), pkg=pkg)
+            yield ReferenceInMetadataVar(var, stable_unique(matches), pkg=pkg)
 
     @verify_vars('SRC_URI')
-    def _src_uri(self, pkg, node, value):
+    def _src_uri(self, var, node, value, pkg):
         if '${HOMEPAGE}' in value:
             yield HomepageInSrcUri(pkg=pkg)
 
@@ -486,13 +509,20 @@ class MetadataVarCheck(Check):
             yield StaticSrcUri(static_str, pkg=pkg)
 
     def feed(self, pkg):
+        keywords_lines = set()
         for node in pkg.global_query(self.bash_addon.var_assign_query):
             name = pkg.node_str(node.child_by_field_name('name'))
             if name in self.known_variables:
                 # RHS value node should be last
                 val_node = node.children[-1]
                 val_str = pkg.node_str(val_node)
-                yield from self.known_variables[name](self, pkg, val_node, val_str)
+                if name == 'KEYWORDS':
+                    keywords_lines.add(node.start_point[0] + 1)
+                    keywords_lines.add(node.end_point[0] + 1)
+                yield from self.known_variables[name](self, name, val_node, val_str, pkg)
+
+        if len(keywords_lines) > 1:
+            yield MultipleKeywordsLines(sorted(keywords_lines), pkg=pkg)
 
 
 class MissingInherits(results.VersionResult, results.Warning):

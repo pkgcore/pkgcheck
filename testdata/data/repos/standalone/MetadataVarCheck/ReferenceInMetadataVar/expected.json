@@ -1,0 +1,1 @@
+{"__class__": "ReferenceInMetadataVar", "category": "MetadataVarCheck", "package": "ReferenceInMetadataVar", "version": "0", "variable": "HOMEPAGE", "refs": ["${PN}"]}
