@@ -442,7 +442,9 @@ class MultipleKeywordsLines(results.VersionResult, results.Style):
     """KEYWORDS is specified across multiple lines in global scope.
 
     Due to limitations of ekeyword it's advised to specify KEYWORDS once on a
-    single line in global scope.
+    single line in global scope [#]_.
+
+    .. [#] https://projects.gentoo.org/qa/policy-guide/ebuild-format.html#pg0105
     """
 
     def __init__(self, lines, **kwargs):
