@@ -22,11 +22,11 @@ class build_py(pkgdist.build_py):
 
     def run(self):
         super().run()
-        # create tree-sitter bash-parsing library
+        # build bash parsing library
         with pkgdist.syspath(pkgdist.PACKAGEDIR):
-            from pkgcheck.utils import build_library
-        lib_path = os.path.join(self.build_lib, pkgdist.MODULE_NAME, '_bash-lang.so')
-        build_library(lib_path, ['tree-sitter-bash'])
+            from pkgcheck.bash import build_library
+        path = os.path.join(self.build_lib, pkgdist.MODULE_NAME, 'bash', 'lang.so')
+        build_library(path, ['tree-sitter-bash'])
 
 
 class install(pkgdist.install):
