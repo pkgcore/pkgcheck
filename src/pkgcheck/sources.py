@@ -339,6 +339,26 @@ class EbuildParseRepoSource(RepoSource):
             yield _ParsedPkg(self.parser, data, pkg=pkg)
 
 
+class _ParsedEclass(ParseTree, Eclass):
+    """Parsed eclass object.."""
+
+
+class EclassParseRepoSource(EclassRepoSource):
+    """Eclass repository source yielding parsed eclass objects."""
+
+    required_addons = (addons.BashAddon,)
+
+    def __init__(self, *args, bash_addon, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.parser = bash_addon.parser
+
+    def itermatch(self, restrict, **kwargs):
+        for eclass in super().itermatch(restrict, **kwargs):
+            with open(eclass.path, 'rb') as f:
+                data = f.read()
+            yield _ParsedEclass(self.parser, data, eclass=eclass)
+
+
 class _CombinedSource(RepoSource):
     """Generic source combining packages into similar chunks."""
 
