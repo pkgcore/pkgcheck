@@ -44,7 +44,7 @@ class TestEvaluateDepSet:
             Profile('3', 'ppc'),
         ]
         self.repo.create_profiles(profiles)
-        self.repo.add_arches(['amd64', 'ppc', 'x86'])
+        self.repo.arches.update(['amd64', 'ppc', 'x86'])
 
         with open(pjoin(self.repo.path, 'profiles', '1', 'package.use.stable.mask'), 'w') as f:
             f.write('dev-util/diffball foo')

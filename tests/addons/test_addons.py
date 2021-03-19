@@ -175,7 +175,7 @@ class TestProfileAddon:
             Profile('profile1/2', 'x86'),
         ]
         self.repo.create_profiles(profiles)
-        self.repo.add_arches(['x86'])
+        self.repo.arches.add('x86')
         options, _ = self.tool.parse_args(self.args)
         addon = addons.init_addon(self.addon_kls, options)
         assert sorted(addon.profile_evaluate_dict) == ['x86', '~x86']
@@ -188,7 +188,7 @@ class TestProfileAddon:
             Profile('default-linux/x86', 'x86'),
         ]
         self.repo.create_profiles(profiles)
-        self.repo.add_arches(['x86'])
+        self.repo.arches.add('x86')
         options, _ = self.tool.parse_args(self.args)
         addon = addons.init_addon(self.addon_kls, options)
         self.assertProfiles(addon, 'x86', 'default-linux', 'default-linux/x86')
@@ -212,7 +212,7 @@ class TestProfileAddon:
             Profile('default-linux', 'x86'),
         ]
         self.repo.create_profiles(profiles)
-        self.repo.add_arches(['x86'])
+        self.repo.arches.add('x86')
 
         # enable stable
         options, _ = self.tool.parse_args(self.args + ['--profiles=stable'])
@@ -273,7 +273,7 @@ class TestProfileAddon:
             Profile('default-linux', 'x86'),
         ]
         self.repo.create_profiles(profiles)
-        self.repo.add_arches(['amd64', 'x86'])
+        self.repo.arches.update(['amd64', 'x86'])
 
         # experimental profiles aren't enabled by default
         options, _ = self.tool.parse_args(self.args)
@@ -298,7 +298,7 @@ class TestProfileAddon:
             Profile('linux/ppc', 'ppc'),
         ]
         self.repo.create_profiles(profiles)
-        self.repo.add_arches(['x86', 'ppc'])
+        self.repo.arches.update(['x86', 'ppc'])
         options, _ = self.tool.parse_args(self.args)
         addon = addons.init_addon(self.addon_kls, options)
 
@@ -316,7 +316,7 @@ class TestProfileAddon:
             Profile('default-linux/ppc', 'ppc'),
         ]
         self.repo.create_profiles(profiles)
-        self.repo.add_arches(['x86', 'ppc'])
+        self.repo.arches.update(['x86', 'ppc'])
         options, _ = self.tool.parse_args(self.args)
         addon = addons.init_addon(self.addon_kls, options)
 
