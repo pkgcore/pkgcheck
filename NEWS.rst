@@ -3,6 +3,21 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.9.4 (2021-03-19)
+---------------------------
+
+- MetadataVarCheck: Add KEYWORDS verification (#303).
+
+- GitAddon: Store commit timestamp instead of date string.
+
+- MissingLocalUseDesc: Add explicit result for local use flags missing
+  descriptions.
+
+- DirectStableKeywords: Skip acct-group and acct-user categories (#308).
+
+- PackageMetadataXmlCheck: Support proxied metadata.xml attribute.
+
+---------------------------
 pkgcheck 0.9.3 (2021-03-12)
 ---------------------------
 
