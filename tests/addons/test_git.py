@@ -87,11 +87,11 @@ class TestPkgcheckScanCommitsParseArgs:
         # create local commits on child repo
         child.create_ebuild('cat/pkg-1')
         local.add_all('cat/pkg-1')
-        child.create_ebuild('newcat/pkg-1')
-        local.add_all('newcat/pkg-1')
+        child.create_ebuild('cat/pkg-2')
+        local.add_all('cat/pkg-2')
 
         options, _func = self.tool.parse_args(self.args + ['-r', local.path, '--commits'])
-        atom_restricts = [atom_cls('cat/pkg'), atom_cls('newcat/pkg')]
+        atom_restricts = [atom_cls('cat/pkg')]
         assert list(options.restrictions) == \
             [(base.package_scope, packages.OrRestriction(*atom_restricts))]
 
@@ -113,15 +113,15 @@ class TestPkgcheckScanCommitsParseArgs:
         with open(pjoin(local.path, 'cat', 'pkg', 'metadata.xml'), 'w') as f:
             f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         local.add_all('cat/pkg: metadata')
-        child.create_ebuild('foo/bar-1')
-        local.add_all('foo/bar-1')
+        child.create_ebuild('cat/pkg-1')
+        local.add_all('cat/pkg-1')
         os.makedirs(pjoin(local.path, 'eclass'))
         with open(pjoin(local.path, 'eclass', 'foo.eclass'), 'w') as f:
             f.write('data\n')
         local.add_all('foo.eclass')
 
         options, _func = self.tool.parse_args(self.args + ['-r', local.path, '--commits'])
-        atom_restricts = [atom_cls('cat/pkg'), atom_cls('foo/bar')]
+        atom_restricts = [atom_cls('cat/pkg')]
         restrictions = list(options.restrictions)
         assert len(restrictions) == 2
         assert restrictions[0] == \
@@ -147,14 +147,14 @@ class TestPkgcheckScanCommitsParseArgs:
         with open(pjoin(local.path, 'cat', 'pkg', 'metadata.xml'), 'w') as f:
             f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         local.add_all('cat/pkg: metadata')
-        child.create_ebuild('foo/bar-1')
-        local.add_all('foo/bar-1')
+        child.create_ebuild('cat/pkg-1')
+        local.add_all('cat/pkg-1')
         with open(pjoin(local.path, 'profiles', 'package.mask'), 'w') as f:
             f.write('data\n')
         local.add_all('package.mask')
 
         options, _func = self.tool.parse_args(self.args + ['-r', local.path, '--commits'])
-        atom_restricts = [atom_cls('cat/pkg'), atom_cls('foo/bar')]
+        atom_restricts = [atom_cls('cat/pkg')]
         restrictions = [
             (base.package_scope, packages.OrRestriction(*atom_restricts)),
             (base.profile_node_scope, frozenset(['profiles/package.mask'])),
