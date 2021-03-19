@@ -1,6 +1,5 @@
 """Addon functionality shared by multiple checkers."""
 
-import os
 from collections import defaultdict
 from functools import partial
 from itertools import chain, filterfalse
@@ -9,15 +8,12 @@ from pkgcore.ebuild import misc
 from pkgcore.ebuild import profiles as profiles_mod
 from pkgcore.restrictions import packages
 from snakeoil.cli import arghparse
-from snakeoil.osutils import pjoin
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
-from tree_sitter import Language, Parser
 
-from .. import base, const, results
+from .. import base, results
 from ..base import PkgcheckUserException
 from ..log import logger
-from ..utils import build_library
 from . import caches
 
 
@@ -281,29 +277,6 @@ class NetAddon(base.Addon):
             if e.name == 'requests':
                 raise PkgcheckUserException('network checks require requests to be installed')
             raise
-
-
-class BashAddon(base.Addon):
-    """Addon supporting parsing bash code."""
-
-    def __init__(self, *args):
-        super().__init__(*args)
-        lib_path = pjoin(os.path.dirname(base.__file__), '_bash-lang.so')
-        if not os.path.exists(lib_path):  # pragma: no cover
-            # dynamically build lib when running in git repo
-            bash_lib = pjoin(const.REPO_PATH, 'tree-sitter-bash')
-            build_library(lib_path, [bash_lib])
-
-        self.bash = Language(lib_path, 'bash')
-        self.query = partial(self.bash.query)
-        self.parser = Parser()
-        self.parser.set_language(self.bash)
-
-        # various bash parse tree queries
-        self.cmd_query = self.query('(command) @call')
-        self.func_query = self.query('(function_definition) @func')
-        self.var_assign_query = self.query('(variable_assignment) @assign')
-        self.var_query = self.query('(variable_name) @var')
 
 
 def init_addon(cls, options, addons_map=None, **kwargs):

@@ -11,7 +11,7 @@ from pkgcore.ebuild.repository import UnconfiguredTree
 from pkgcore.restrictions import packages
 from snakeoil.osutils import listdir_files, pjoin
 
-from . import addons, base
+from . import addons, base, bash
 from .addons.eclass import Eclass, EclassAddon
 from .addons.profiles import ProfileAddon, ProfileNode
 from .packages import FilteredPkg, RawCPV, WrappedPkg
@@ -294,10 +294,10 @@ class EbuildFileRepoSource(RepoSource):
 class ParseTree:
     """Bash parse tree object and support."""
 
-    def __init__(self, parser, data, **kwargs):
+    def __init__(self, data, **kwargs):
         super().__init__(**kwargs)
         self.data = data
-        self.tree = parser.parse(data)
+        self.tree = bash.parser.parse(data)
 
     def node_str(self, node):
         """Return the ebuild string associated with a given parse tree node."""
@@ -327,16 +327,10 @@ class _ParsedPkg(ParseTree, WrappedPkg):
 class EbuildParseRepoSource(RepoSource):
     """Ebuild repository source yielding parsed packages."""
 
-    required_addons = (addons.BashAddon,)
-
-    def __init__(self, *args, bash_addon, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.parser = bash_addon.parser
-
     def itermatch(self, restrict, **kwargs):
         for pkg in super().itermatch(restrict, **kwargs):
             data = pkg.ebuild.bytes_fileobj().read()
-            yield _ParsedPkg(self.parser, data, pkg=pkg)
+            yield _ParsedPkg(data, pkg=pkg)
 
 
 class _ParsedEclass(ParseTree, Eclass):
@@ -346,17 +340,11 @@ class _ParsedEclass(ParseTree, Eclass):
 class EclassParseRepoSource(EclassRepoSource):
     """Eclass repository source yielding parsed eclass objects."""
 
-    required_addons = (addons.BashAddon,)
-
-    def __init__(self, *args, bash_addon, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.parser = bash_addon.parser
-
     def itermatch(self, restrict, **kwargs):
         for eclass in super().itermatch(restrict, **kwargs):
             with open(eclass.path, 'rb') as f:
                 data = f.read()
-            yield _ParsedEclass(self.parser, data, eclass=eclass)
+            yield _ParsedEclass(data, eclass=eclass)
 
 
 class _CombinedSource(RepoSource):

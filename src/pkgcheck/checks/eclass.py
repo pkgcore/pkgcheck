@@ -6,7 +6,7 @@ from pkgcore.ebuild.eapi import EAPI
 from pkgcore.ebuild.eclass import EclassDoc
 from snakeoil.strings import pluralism
 
-from .. import addons, results, sources
+from .. import addons, bash, results, sources
 from ..base import LogMap, LogReports
 from . import Check
 
@@ -69,11 +69,10 @@ class EclassUsageCheck(Check):
     known_results = frozenset([
         DeprecatedEclass, DuplicateEclassInherit, MisplacedEclassVar,
     ])
-    required_addons = (addons.BashAddon, addons.eclass.EclassAddon)
+    required_addons = (addons.eclass.EclassAddon,)
 
-    def __init__(self, *args, bash_addon, eclass_addon):
+    def __init__(self, *args, eclass_addon):
         super().__init__(*args)
-        self.bash_addon = bash_addon
         self.deprecated_eclasses = eclass_addon.deprecated
         self.eclass_cache = eclass_addon.eclasses
 
@@ -90,7 +89,7 @@ class EclassUsageCheck(Check):
 
         # scan for any misplaced @PRE_INHERIT variables
         if pre_inherits:
-            for node, _ in self.bash_addon.var_assign_query.captures(pkg.tree.root_node):
+            for node, _ in bash.var_assign_query.captures(pkg.tree.root_node):
                 var_name = pkg.node_str(node.child_by_field_name('name'))
                 lineno, _colno = node.start_point
                 if var_name in pre_inherits and lineno > inherit_lineno:
@@ -101,7 +100,7 @@ class EclassUsageCheck(Check):
     def feed(self, pkg):
         if pkg.inherit:
             inherited = set()
-            for node, _ in self.bash_addon.cmd_query.captures(pkg.tree.root_node):
+            for node, _ in bash.cmd_query.captures(pkg.tree.root_node):
                 name = pkg.node_str(node.child_by_field_name('name'))
                 if name == 'inherit':
                     call = pkg.node_str(node)

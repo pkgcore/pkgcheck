@@ -9,7 +9,7 @@ from snakeoil.mappings import ImmutableDict
 from snakeoil.sequences import stable_unique
 from snakeoil.strings import pluralism
 
-from .. import addons
+from .. import addons, bash
 from .. import results, sources
 from . import Check, OptionalCheck
 
@@ -67,14 +67,9 @@ class BadCommandsCheck(Check):
 
     _source = sources.EbuildParseRepoSource
     known_results = frozenset([DeprecatedEapiCommand, BannedEapiCommand])
-    required_addons = (addons.BashAddon,)
-
-    def __init__(self, *args, bash_addon):
-        super().__init__(*args)
-        self.bash_addon = bash_addon
 
     def feed(self, pkg):
-        for node, _ in self.bash_addon.cmd_query.captures(pkg.tree.root_node):
+        for node, _ in bash.cmd_query.captures(pkg.tree.root_node):
             call = pkg.node_str(node)
             name = pkg.node_str(node.child_by_field_name('name'))
             lineno, colno = node.start_point
@@ -480,19 +475,14 @@ class MetadataVarCheck(Check):
     _source = sources.EbuildParseRepoSource
     known_results = frozenset([
         HomepageInSrcUri, StaticSrcUri, ReferenceInMetadataVar, MultipleKeywordsLines])
-    required_addons = (addons.BashAddon,)
 
     # mapping between registered variables and verification methods
     known_variables = {}
 
-    def __init__(self, *args, bash_addon):
-        super().__init__(*args)
-        self.bash_addon = bash_addon
-
     @verify_vars('HOMEPAGE', 'KEYWORDS')
     def _raw_text(self, var, node, value, pkg):
         matches = []
-        for var_node, _ in self.bash_addon.var_query.captures(node):
+        for var_node, _ in bash.var_query.captures(node):
             matches.append(pkg.node_str(var_node.parent))
         if matches:
             yield ReferenceInMetadataVar(var, stable_unique(matches), pkg=pkg)
@@ -512,7 +502,7 @@ class MetadataVarCheck(Check):
 
     def feed(self, pkg):
         keywords_lines = set()
-        for node in pkg.global_query(self.bash_addon.var_assign_query):
+        for node in pkg.global_query(bash.var_assign_query):
             name = pkg.node_str(node.child_by_field_name('name'))
             if name in self.known_variables:
                 # RHS value node should be last
@@ -597,11 +587,10 @@ class InheritsCheck(OptionalCheck):
     _source = sources.EbuildParseRepoSource
     known_results = frozenset([
         MissingInherits, IndirectInherits, UnusedInherits, InternalEclassUsage])
-    required_addons = (addons.BashAddon, addons.eclass.EclassAddon)
+    required_addons = (addons.eclass.EclassAddon,)
 
-    def __init__(self, *args, bash_addon, eclass_addon):
+    def __init__(self, *args, eclass_addon):
         super().__init__(*args)
-        self.bash_addon = bash_addon
         self.eclass_cache = eclass_addon.eclasses
         self.internals = {}
         self.exported = {}
@@ -656,14 +645,14 @@ class InheritsCheck(OptionalCheck):
 
         # register variables assigned in ebuilds
         assigned_vars = dict()
-        for node, _ in self.bash_addon.var_assign_query.captures(pkg.tree.root_node):
+        for node, _ in bash.var_assign_query.captures(pkg.tree.root_node):
             name = pkg.node_str(node.child_by_field_name('name'))
             if eclass := self.get_eclass(name, pkg):
                 assigned_vars[name] = eclass
 
         # match captured commands with eclasses
         used = defaultdict(list)
-        for node, _ in self.bash_addon.cmd_query.captures(pkg.tree.root_node):
+        for node, _ in bash.cmd_query.captures(pkg.tree.root_node):
             call = pkg.node_str(node)
             name = pkg.node_str(node.child_by_field_name('name'))
             if name == 'inherit':
@@ -679,7 +668,7 @@ class InheritsCheck(OptionalCheck):
                     used[eclass].append((lineno + 1, name, call.split('\n', 1)[0]))
 
         # match captured variables with eclasses
-        for node, _ in self.bash_addon.var_query.captures(pkg.tree.root_node):
+        for node, _ in bash.var_query.captures(pkg.tree.root_node):
             name = pkg.node_str(node)
             if name not in self.eapi_vars[pkg.eapi] | assigned_vars.keys():
                 lineno, colno = node.start_point
@@ -747,7 +736,6 @@ class ReadonlyVariableCheck(Check):
 
     _source = sources.EbuildParseRepoSource
     known_results = frozenset([ReadonlyVariable])
-    required_addons = (addons.BashAddon,)
 
     # https://devmanual.gentoo.org/ebuild-writing/variables/#predefined-read-only-variables
     readonly_vars = frozenset([
@@ -756,12 +744,8 @@ class ReadonlyVariableCheck(Check):
         'ESYSROOT', 'BROOT', 'MERGE_TYPE', 'REPLACING_VERSIONS', 'REPLACED_BY_VERSION',
     ])
 
-    def __init__(self, *args, bash_addon):
-        super().__init__(*args)
-        self.bash_addon = bash_addon
-
     def feed(self, pkg):
-        for node in pkg.global_query(self.bash_addon.var_assign_query):
+        for node in pkg.global_query(bash.var_assign_query):
             name = pkg.node_str(node.child_by_field_name('name'))
             if name in self.readonly_vars:
                 call = pkg.node_str(node)
@@ -790,7 +774,6 @@ class VariableScopeCheck(Check):
 
     _source = sources.EbuildParseRepoSource
     known_results = frozenset([MisplacedVariable])
-    required_addons = (addons.BashAddon,)
 
     # see https://projects.gentoo.org/pms/7/pms.html#x1-10900011.1
     variable_map = ImmutableDict({
@@ -816,10 +799,8 @@ class VariableScopeCheck(Check):
         'REPLACED_BY_VERSION': ('pkg_prerm', 'pkg_postrm'),
     })
 
-    def __init__(self, *args, bash_addon):
+    def __init__(self, *args):
         super().__init__(*args)
-        self.bash_addon = bash_addon
-
         self.scoped_vars = defaultdict(partial(defaultdict, set))
         for eapi in EAPI.known_eapis.values():
             for variable, allowed_scopes in self.variable_map.items():
@@ -828,11 +809,11 @@ class VariableScopeCheck(Check):
                         self.scoped_vars[eapi][phase].add(variable)
 
     def feed(self, pkg):
-        for func_node, _ in self.bash_addon.func_query.captures(pkg.tree.root_node):
+        for func_node, _ in bash.func_query.captures(pkg.tree.root_node):
             func_name = pkg.node_str(func_node.child_by_field_name('name'))
             if variables := self.scoped_vars[pkg.eapi].get(func_name):
                 usage = defaultdict(set)
-                for var_node, _ in self.bash_addon.var_query.captures(func_node):
+                for var_node, _ in bash.var_query.captures(func_node):
                     var_name = pkg.node_str(var_node)
                     if var_name in variables:
                         lineno, colno = var_node.start_point
