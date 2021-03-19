@@ -291,15 +291,13 @@ class EbuildFileRepoSource(RepoSource):
             yield _SourcePkg(pkg)
 
 
-class _ParsedPkg(WrappedPkg):
-    """Package object with parse tree and raw bytes data injected as attributes."""
+class ParseTree:
+    """Bash parse tree object and support."""
 
-    __slots__ = ('data', 'tree')
-
-    def __init__(self, pkg, data, tree):
-        super().__init__(pkg)
+    def __init__(self, parser, data, **kwargs):
+        super().__init__(**kwargs)
         self.data = data
-        self.tree = tree
+        self.tree = parser.parse(data)
 
     def node_str(self, node):
         """Return the ebuild string associated with a given parse tree node."""
@@ -322,8 +320,12 @@ class _ParsedPkg(WrappedPkg):
                     yield node
 
 
+class _ParsedPkg(ParseTree, WrappedPkg):
+    """Parsed package object."""
+
+
 class EbuildParseRepoSource(RepoSource):
-    """Ebuild repository source yielding package objects and their file contents."""
+    """Ebuild repository source yielding parsed packages."""
 
     required_addons = (addons.BashAddon,)
 
@@ -334,8 +336,7 @@ class EbuildParseRepoSource(RepoSource):
     def itermatch(self, restrict, **kwargs):
         for pkg in super().itermatch(restrict, **kwargs):
             data = pkg.ebuild.bytes_fileobj().read()
-            tree = self.parser.parse(data)
-            yield _ParsedPkg(pkg, data, tree)
+            yield _ParsedPkg(self.parser, data, pkg=pkg)
 
 
 class _CombinedSource(RepoSource):
