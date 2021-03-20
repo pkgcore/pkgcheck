@@ -4,7 +4,9 @@ import os
 import sys
 from collections import defaultdict
 from distutils import log
+from distutils.command import build_clib as dst_build_clib
 from distutils.command import install_data as dst_install_data
+from distutils.command import install_lib as dst_install_lib
 from distutils.util import byte_compile
 from itertools import chain
 from textwrap import dedent
@@ -17,20 +19,23 @@ pkgdist_setup, pkgdist_cmds = pkgdist.setup()
 DATA_INSTALL_OFFSET = 'share/pkgcheck'
 
 
-class build_py(pkgdist.build_py):
-    """Build wrapper to generate pkgcheck-related files."""
+class install_lib(dst_install_lib.install_lib):
+    """Wrapper to install bash parsing library."""
 
     def run(self):
         super().run()
-        # build bash parsing library
-        with pkgdist.syspath(pkgdist.PACKAGEDIR):
-            from pkgcheck.bash import build_library
-        path = os.path.join(self.build_lib, pkgdist.MODULE_NAME, 'bash', 'lang.so')
-        build_library(path, ['tree-sitter-bash'])
+        build_clib = self.reinitialize_command('build_clib')
+        build_clib.ensure_finalized()
+        self.copy_tree(build_clib.build_clib, self.install_dir)
 
 
 class install(pkgdist.install):
     """Install wrapper to generate and install pkgcheck-related files."""
+
+    def finalize_options(self):
+        """Force platlib install since non-python libraries are included."""
+        super().finalize_options()
+        self.install_lib = self.install_platlib
 
     def run(self):
         super().run()
@@ -43,7 +48,7 @@ class install(pkgdist.install):
         if not self.dry_run:
             # Install configuration data so the program can find its content,
             # rather than assuming it is running from a tarball/git repo.
-            write_obj_lists(self.install_purelib, target)
+            write_obj_lists(self.install_lib, target)
 
 
 def write_obj_lists(python_base, install_prefix):
@@ -157,6 +162,16 @@ class install_data(dst_install_data.install_data):
         self.data_files.append(('share/pkgcheck', files))
 
 
+class build_clib(dst_build_clib.build_clib):
+    """Build bash parsing library."""
+
+    def run(self):
+        with pkgdist.syspath(pkgdist.PACKAGEDIR):
+            from pkgcheck.bash import build_library
+        path = os.path.join(self.build_clib, 'pkgcheck', 'bash', 'lang.so')
+        build_library(path, ['tree-sitter-bash'])
+
+
 setup(**dict(
     pkgdist_setup,
     license='BSD',
@@ -168,11 +183,14 @@ setup(**dict(
         pkgdist.data_mapping('share/zsh/site-functions', 'completion/zsh'),
         pkgdist.data_mapping('share/pkgcheck', 'data'),
     )),
+    # fake library to force bash parsing library to build
+    libraries=[('bash', {'sources': ['fake.c']})],
     cmdclass=dict(
         pkgdist_cmds,
-        build_py=build_py,
         install_data=install_data,
+        install_lib=install_lib,
         install=install,
+        build_clib=build_clib,
     ),
     classifiers=[
         'License :: OSI Approved :: BSD License',
