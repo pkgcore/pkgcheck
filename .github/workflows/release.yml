@@ -57,6 +57,11 @@ jobs:
         tar -ztf dist/*.tar.gz | sort
         sha512sum dist/*
 
+    - name: Install twine and check files
+      run: |
+        pip install twine
+        twine check dist/*
+
     - name: Upload files for tagged releases
       env:
         TWINE_USERNAME: __token__
@@ -64,5 +69,4 @@ jobs:
       # only upload files for tagged releases
       if: startsWith(github.ref, 'refs/tags/')
       run: |
-        pip install twine
         twine upload dist/*
