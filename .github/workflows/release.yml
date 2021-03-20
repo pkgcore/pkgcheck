@@ -33,8 +33,6 @@ jobs:
     - name: Build sdist
       run: |
         git clean -fxd
-        # use release version of pyproject.toml
-        cp requirements/pyproject.toml ./pyproject.toml
         # build sdist
         python setup.py sdist
 
