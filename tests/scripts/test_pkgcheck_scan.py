@@ -16,6 +16,7 @@ from pkgcheck import base
 from pkgcheck import checks as checks_mod
 from pkgcheck import const, objects, reporters, scan
 from pkgcheck.scripts import run
+from pkgcore import const as pkgcore_const
 from pkgcore.ebuild import atom, restricts
 from pkgcore.restrictions import packages
 from snakeoil.contexts import chdir
@@ -244,7 +245,8 @@ class TestPkgcheckScanParseArgs:
         options, _ = tool.parse_args(['scan', profile_dir])
         assert list(options.restrictions) == [(base.profile_node_scope, {pkg_mask_path, pkg_use_path})]
 
-    def test_no_default_repo(self, tool, stubconfig, capsys):
+    def test_no_default_repo(self, tool, capsys):
+        stubconfig = pjoin(pkgcore_const.DATA_PATH, 'stubconfig')
         with pytest.raises(SystemExit) as excinfo:
             tool.parse_args(['--config', stubconfig, 'scan'])
         assert excinfo.value.code == 2

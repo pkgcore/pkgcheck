@@ -49,12 +49,6 @@ def default_session_fixture(request):
 
 
 @pytest.fixture(scope="session")
-def stubconfig():
-    """Generate a portage config that sets the default repo to pkgcore's stubrepo."""
-    return pjoin(pkgcore_const.DATA_PATH, 'stubconfig')
-
-
-@pytest.fixture(scope="session")
 def testconfig(tmp_path_factory):
     """Generate a portage config that sets the default repo to the bundled standalone repo.
 
