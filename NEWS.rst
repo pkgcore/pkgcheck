@@ -3,6 +3,13 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.9.5 (2021-03-20)
+---------------------------
+
+- Don't include bash parser shared library in tarball and build platform
+  dependent wheels with the library prebuilt.
+
+---------------------------
 pkgcheck 0.9.4 (2021-03-19)
 ---------------------------
 
