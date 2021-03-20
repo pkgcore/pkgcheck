@@ -88,18 +88,19 @@ try:
     from .. import _const
 except ImportError:  # pragma: no cover
     # build library when running from git repo or tarball
-    if not os.path.exists(lib):
+    if not os.path.exists(lib) and 'tree-sitter-bash' in os.listdir(const.REPO_PATH):
         bash_src = pjoin(const.REPO_PATH, 'tree-sitter-bash')
         build_library(lib, [bash_src])
 
 
-lang = Language(lib, 'bash')
-query = partial(lang.query)
-parser = Parser()
-parser.set_language(lang)
+if os.path.exists(lib):
+    lang = Language(lib, 'bash')
+    query = partial(lang.query)
+    parser = Parser()
+    parser.set_language(lang)
 
-# various parse tree queries
-cmd_query = query('(command) @call')
-func_query = query('(function_definition) @func')
-var_assign_query = query('(variable_assignment) @assign')
-var_query = query('(variable_name) @var')
+    # various parse tree queries
+    cmd_query = query('(command) @call')
+    func_query = query('(function_definition) @func')
+    var_assign_query = query('(variable_assignment) @assign')
+    var_query = query('(variable_name) @var')
