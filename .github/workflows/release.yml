@@ -41,6 +41,7 @@ jobs:
       with:
         output-dir: dist
       env:
+        BUILD_WHEEL: true
         CIBW_BUILD: cp38-* cp39-*
         CIBW_ARCHS_LINUX: x86_64 i686
         CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_24
@@ -51,9 +52,8 @@ jobs:
 
     - name: Output dist file info
       run: |
-        ls dist/
-        tar -ztf dist/*.tar.gz | sort
         sha512sum dist/*
+        tar -ztf dist/*.tar.gz | sort
 
     - name: Install twine and check files
       run: |
