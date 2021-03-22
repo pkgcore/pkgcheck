@@ -172,6 +172,13 @@ class build_clib(dst_build_clib.build_clib):
         build_library(path, ['tree-sitter-bash'])
 
 
+class build(pkgdist.build):
+    """Force build_clib to run to build bash parsing library."""
+
+    sub_commands = pkgdist.build.sub_commands[:]
+    sub_commands.append(('build_clib', None))
+
+
 setup(**dict(
     pkgdist_setup,
     license='BSD',
@@ -183,14 +190,13 @@ setup(**dict(
         pkgdist.data_mapping('share/zsh/site-functions', 'completion/zsh'),
         pkgdist.data_mapping('share/pkgcheck', 'data'),
     )),
-    # fake library to force bash parsing library to build
-    libraries=[('bash', {'sources': ['fake.c']})],
     cmdclass=dict(
         pkgdist_cmds,
         install_data=install_data,
         install_lib=install_lib,
         install=install,
         build_clib=build_clib,
+        build=build,
     ),
     classifiers=[
         'License :: OSI Approved :: BSD License',
