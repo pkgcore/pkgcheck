@@ -415,7 +415,7 @@ class MissingSignOff(results.CommitResult, results.Error):
         return f'commit {self.commit}, missing sign-off{s}: {sign_offs}'
 
 
-class InvalidCommitTag(results.CommitResult, results.Warning):
+class InvalidCommitTag(results.CommitResult, results.Style):
     """Local commit has a tag that is incompliant.
 
     Commit tags have restrictions as to the allowed format and data
@@ -433,7 +433,7 @@ class InvalidCommitTag(results.CommitResult, results.Warning):
         return f'commit {self.commit}, tag "{self.tag}: {self.value}": {self.error}'
 
 
-class InvalidCommitMessage(results.CommitResult, results.Warning):
+class InvalidCommitMessage(results.CommitResult, results.Style):
     """Local commit has issues with its commit message."""
 
     def __init__(self, error, **kwargs):
@@ -445,7 +445,7 @@ class InvalidCommitMessage(results.CommitResult, results.Warning):
         return f'commit {self.commit}: {self.error}'
 
 
-class BadCommitSummary(results.CommitResult, results.Warning):
+class BadCommitSummary(results.CommitResult, results.Style):
     """Local package commit with poorly formatted or unmatching commit summary.
 
     Git commit messages for packages should be formatted in the standardized
