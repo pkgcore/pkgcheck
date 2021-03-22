@@ -77,7 +77,7 @@ class TestJsonReporter(BaseReporter):
 
     reporter_cls = reporters.JsonReporter
     add_report_output = dedent("""\
-        {"_warning": {"InvalidCommitMessage": "commit 8d86269bb4c7: no commit message"}}
+        {"_style": {"InvalidCommitMessage": "commit 8d86269bb4c7: no commit message"}}
         {"_warning": {"ProfileWarning": "profile warning"}}
         {"dev-libs": {"_error": {"CatMissingMetadataXml": "category is missing metadata.xml"}}}
         {"dev-libs": {"foo": {"_error": {"InvalidPN": "invalid package names: [ bar, baz ]"}}}}
