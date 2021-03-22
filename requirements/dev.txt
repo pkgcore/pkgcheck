@@ -4,5 +4,5 @@ lazy-object-proxy
 lxml
 pathspec
 tree-sitter~=0.19.0
-snakeoil @ https://github.com/pkgcore/snakeoil/archive/master.tar.gz#egg=snakeoil
-pkgcore @ https://github.com/pkgcore/pkgcore/archive/master.tar.gz#egg=pkgcore
+snakeoil @ https://github.com/pkgcore/snakeoil/archive/master.tar.gz
+pkgcore @ https://github.com/pkgcore/pkgcore/archive/master.tar.gz
