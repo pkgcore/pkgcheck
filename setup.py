@@ -206,4 +206,5 @@ setup(**dict(
     extras_require={
         'network': ['requests'],
     },
+    distclass=pkgdist.BinaryDistribution,
 ))
