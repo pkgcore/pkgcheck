@@ -43,7 +43,6 @@ jobs:
       with:
         output-dir: dist
       env:
-        BUILD_WHEEL: true
         CIBW_BUILD: cp38-* cp39-*
         CIBW_ARCHS_LINUX: x86_64 i686
         CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_24
@@ -59,8 +58,9 @@ jobs:
 
     - name: Install twine and check files
       run: |
-        pip install twine
+        pip install twine wheel-inspect
         twine check dist/*
+        wheel2json dist/*.whl
 
     - name: Upload files for tagged releases
       env:
