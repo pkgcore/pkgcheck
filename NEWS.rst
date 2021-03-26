@@ -3,6 +3,12 @@ Release Notes
 =============
 
 ---------------------------
+pkgcheck 0.9.6 (2021-03-26)
+---------------------------
+
+- Add support for identifying misplaced eclass spec variables (#309).
+
+---------------------------
 pkgcheck 0.9.5 (2021-03-20)
 ---------------------------
 
