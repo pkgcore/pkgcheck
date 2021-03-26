@@ -2,7 +2,6 @@
 
 import re
 from collections import defaultdict
-from functools import partial
 
 from pkgcore.ebuild.eapi import EAPI
 from snakeoil.mappings import ImmutableDict
@@ -753,8 +752,10 @@ class ReadonlyVariableCheck(Check):
                 yield ReadonlyVariable(name, line=call, lineno=lineno + 1, pkg=pkg)
 
 
-class MisplacedVariable(results.VersionResult, results.Warning):
-    """Ebuild using variable outside its defined scope."""
+class VariableScope(results.AliasResult, results.Warning):
+    """Variable used outside its defined scope."""
+
+    _name = 'VariableScope'
 
     def __init__(self, variable, func, lines, **kwargs):
         super().__init__(**kwargs)
@@ -769,11 +770,15 @@ class MisplacedVariable(results.VersionResult, results.Warning):
         return f'variable {self.variable!r} used in {self.func!r}, line{s} {lines}'
 
 
+class EbuildVariableScope(VariableScope, results.VersionResult):
+    """Ebuild using variable outside its defined scope."""
+
+
 class VariableScopeCheck(Check):
-    """Scan for variables that are only allowed in certain scopes."""
+    """Scan ebuilds for variables that are only allowed in certain scopes."""
 
     _source = sources.EbuildParseRepoSource
-    known_results = frozenset([MisplacedVariable])
+    known_results = frozenset([EbuildVariableScope])
 
     # see https://projects.gentoo.org/pms/7/pms.html#x1-10900011.1
     variable_map = ImmutableDict({
@@ -799,14 +804,14 @@ class VariableScopeCheck(Check):
         'REPLACED_BY_VERSION': ('pkg_prerm', 'pkg_postrm'),
     })
 
-    def __init__(self, *args):
-        super().__init__(*args)
-        self.scoped_vars = defaultdict(partial(defaultdict, set))
-        for eapi in EAPI.known_eapis.values():
-            for variable, allowed_scopes in self.variable_map.items():
-                for phase in eapi.phases_rev:
-                    if not phase.startswith(allowed_scopes):
-                        self.scoped_vars[eapi][phase].add(variable)
+    # mapping of bad variables for each EAPI phase function
+    scoped_vars = {}
+    for eapi in EAPI.known_eapis.values():
+        for variable, allowed_scopes in variable_map.items():
+            for phase in eapi.phases_rev:
+                if not phase.startswith(allowed_scopes):
+                    scoped_vars.setdefault(eapi, {}).setdefault(phase, set()).add(variable)
+    scoped_vars = ImmutableDict(scoped_vars)
 
     def feed(self, pkg):
         for func_node, _ in bash.func_query.captures(pkg.tree.root_node):
@@ -819,7 +824,7 @@ class VariableScopeCheck(Check):
                         lineno, colno = var_node.start_point
                         usage[var_name].add(lineno + 1)
                 for var, lines in sorted(usage.items()):
-                    yield MisplacedVariable(var, func_name, lines=sorted(lines), pkg=pkg)
+                    yield EbuildVariableScope(var, func_name, lines=sorted(lines), pkg=pkg)
 
 
 class RedundantDodir(results.LineResult, results.Style):

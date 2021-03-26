@@ -1,0 +1,12 @@
+diff -Naur standalone/VariableScopeCheck/EbuildVariableScope/EbuildVariableScope-0.ebuild fixed/VariableScopeCheck/EbuildVariableScope/EbuildVariableScope-0.ebuild
+--- standalone/VariableScopeCheck/EbuildVariableScope/EbuildVariableScope-0.ebuild	2021-03-17 01:20:05.423678951 -0600
++++ fixed/VariableScopeCheck/EbuildVariableScope/EbuildVariableScope-0.ebuild	2021-03-17 01:21:57.421132212 -0600
+@@ -6,7 +6,7 @@
+ 
+ src_configure() {
+ 	# EROOT isn't allowed in src_* phases
+-	econf --sysconfdir="${EROOT}/etc/${PN}"
++	econf --sysconfdir="${EPREFIX}/etc/${PN}"
+ }
+ 
+ pkg_postinst() {

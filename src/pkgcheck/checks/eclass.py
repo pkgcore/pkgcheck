@@ -1,5 +1,6 @@
 import shlex
 import subprocess
+from collections import defaultdict
 from functools import partial
 
 from pkgcore.ebuild.eapi import EAPI
@@ -9,6 +10,7 @@ from snakeoil.strings import pluralism
 from .. import addons, bash, results, sources
 from ..base import LogMap, LogReports
 from . import Check
+from .codingstyle import VariableScope, VariableScopeCheck
 
 
 class DeprecatedEclass(results.VersionResult, results.Warning):
@@ -123,6 +125,53 @@ class EclassUsageCheck(Check):
                 if not isinstance(replacement, str):
                     replacement = None
                 yield DeprecatedEclass(eclass, replacement, pkg=pkg)
+
+
+class EclassVariableScope(VariableScope, results.EclassResult):
+    """Eclass using variable outside its defined scope."""
+
+    @property
+    def desc(self):
+        return f'{self.eclass}: {super().desc}'
+
+
+class EclassVariableScopeCheck(Check):
+    """Scan eclasses variables that are only allowed in certain scopes."""
+
+    _source = sources.EclassParseRepoSource
+    known_results = frozenset([EclassVariableScope])
+    required_addons = (addons.eclass.EclassAddon,)
+
+    def __init__(self, *args, eclass_addon):
+        super().__init__(*args)
+        self.eclass_cache = eclass_addon.eclasses
+
+    def eclass_phase_vars(self, eclass, phase):
+        """Return set of bad variables for a given eclass and potential phase function."""
+        eapis = map(EAPI.known_eapis.get, self.eclass_cache[eclass.name].supported_eapis)
+        if not eapis:
+            eapis = EAPI.known_eapis.values()
+        variables = set()
+        for eapi in eapis:
+            variables.update(VariableScopeCheck.scoped_vars[eapi].get(phase, ()))
+        return variables
+
+    def feed(self, eclass):
+        func_prefix = f'{eclass.name}_'
+        for func_node, _ in bash.func_query.captures(eclass.tree.root_node):
+            func_name = eclass.node_str(func_node.child_by_field_name('name'))
+            if not func_name.startswith(func_prefix):
+                continue
+            phase = func_name[len(func_prefix):]
+            if variables := self.eclass_phase_vars(eclass, phase):
+                usage = defaultdict(set)
+                for var_node, _ in bash.var_query.captures(func_node):
+                    var_name = eclass.node_str(var_node)
+                    if var_name in variables:
+                        lineno, colno = var_node.start_point
+                        usage[var_name].add(lineno + 1)
+                for var, lines in sorted(usage.items()):
+                    yield EclassVariableScope(var, func_name, lines=sorted(lines), eclass=eclass.name)
 
 
 class EclassBashSyntaxError(results.EclassResult, results.Error):

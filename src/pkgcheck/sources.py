@@ -9,6 +9,7 @@ from operator import attrgetter
 from pkgcore.ebuild.profiles import ProfileError
 from pkgcore.ebuild.repository import UnconfiguredTree
 from pkgcore.restrictions import packages
+from snakeoil import klass
 from snakeoil.osutils import listdir_files, pjoin
 
 from . import addons, base
@@ -305,8 +306,15 @@ class EbuildParseRepoSource(RepoSource):
             yield _ParsedPkg(data, pkg=pkg)
 
 
-class _ParsedEclass(ParseTree, Eclass):
-    """Parsed eclass object.."""
+class _ParsedEclass(ParseTree):
+    """Parsed eclass object."""
+
+    def __init__(self, data, eclass):
+        super().__init__(data)
+        self.eclass = eclass
+
+    __getattr__ = klass.GetAttrProxy('eclass')
+    __dir__ = klass.DirProxy('eclass')
 
 
 class EclassParseRepoSource(EclassRepoSource):

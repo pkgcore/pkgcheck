@@ -1,0 +1,1 @@
+{"__class__": "EbuildVariableScope", "category": "VariableScopeCheck", "package": "EbuildVariableScope", "version": "0", "variable": "EROOT", "func": "src_configure", "lines": [9]}

@@ -13,10 +13,6 @@ class InvalidResult(Exception):
     """Creating a result object failed in some fashion."""
 
 
-class AliasResult:
-    """Classes directly inheriting this class can be targeted as scannable keywords."""
-
-
 @total_ordering
 class Result:
     """Generic report result returned from a check."""
@@ -78,6 +74,10 @@ class Result:
                 return self.desc < other.desc
             return self.name < other.name
         return self.scope < other.scope
+
+
+class AliasResult(Result):
+    """Classes directly inheriting this class can be targeted as scannable keywords."""
 
 
 class Error(Result):
