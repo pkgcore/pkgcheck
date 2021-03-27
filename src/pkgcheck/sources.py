@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from operator import attrgetter
 
 from pkgcore.ebuild.profiles import ProfileError
-from pkgcore.ebuild.repository import UnconfiguredTree
+from pkgcore.ebuild.repository import UnconfiguredTree, tree
 from pkgcore.restrictions import packages
 from snakeoil import klass
 from snakeoil.osutils import listdir_files, pjoin
@@ -217,9 +217,6 @@ class ProfilesRepoSource(RepoSource):
 class _RawRepo(UnconfiguredTree):
     """Repository that allows matching against mismatched/invalid package names."""
 
-    def __init__(self, repo):
-        super().__init__(repo.location)
-
     def _get_versions(self, catpkg):
         """Pass through all packages that end with ".ebuild" extension.
 
@@ -243,7 +240,7 @@ class RawRepoSource(RepoSource):
     """Ebuild repository source returning raw CPV objects."""
 
     def __init__(self, options):
-        source = _RawRepo(options.target_repo)
+        source = tree(options.config, options.target_repo.config, tree_cls=_RawRepo)
         super().__init__(options, source)
 
     def itermatch(self, restrict, **kwargs):
