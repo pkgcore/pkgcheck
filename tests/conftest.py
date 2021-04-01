@@ -97,7 +97,7 @@ def fakerepo(tmp_path_factory):
 def tool(testconfig):
     """Generate a tool utility for running pkgcheck."""
     tool = Tool(pkgcheck.argparser)
-    tool.parser.set_defaults(override_config=testconfig)
+    tool.parser.set_defaults(config_path=testconfig)
     return tool
 
 
