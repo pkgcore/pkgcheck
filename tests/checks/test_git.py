@@ -249,8 +249,8 @@ class TestGitCommitMessageRepoCheck(ReportTestCase):
         # initialize child repo
         self.child_git_repo = make_git_repo()
         self.child_git_repo.run(['git', 'remote', 'add', 'origin', self.parent_git_repo.path])
-        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
-        self.child_git_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'main'])
+        self.child_git_repo.run(['git', 'remote', 'set-head', 'origin', 'main'])
         self.child_repo = make_repo(self.child_git_repo.path)
 
     def init_check(self, options=None, future=0):
@@ -343,8 +343,8 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         # initialize child repo
         self.child_git_repo = make_git_repo()
         self.child_git_repo.run(['git', 'remote', 'add', 'origin', self.parent_git_repo.path])
-        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
-        self.child_git_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'main'])
+        self.child_git_repo.run(['git', 'remote', 'set-head', 'origin', 'main'])
         self.child_repo = make_repo(self.child_git_repo.path)
 
     def init_check(self, options=None, future=0):
@@ -417,7 +417,7 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         self.parent_repo.create_ebuild('cat/pkg-1', keywords=['amd64'])
         self.parent_git_repo.add_all('cat/pkg: version bump to 1')
         # pull changes and remove it from the child repo
-        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'main'])
         self.child_git_repo.remove('cat/pkg/pkg-1.ebuild', msg='cat/pkg: remove 1')
         commit = self.child_git_repo.HEAD
         self.init_check()
@@ -436,7 +436,7 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         self.parent_repo.create_ebuild('cat/pkg-1', keywords=['~amd64'])
         self.parent_git_repo.add_all('cat/pkg: version bump to 1')
         # pull changes and remove it from the child repo
-        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'main'])
         self.child_git_repo.remove('cat/pkg/pkg-1.ebuild', msg='cat/pkg: remove 1')
         commit = self.child_git_repo.HEAD
         self.init_check()
@@ -455,7 +455,7 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         self.parent_repo.create_ebuild('newcat/newpkg-2', rdepend="cat/dep1 cat/dep2")
         self.parent_git_repo.add_all('newcat/newpkg: version bump')
         # pull changes to child repo
-        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'main'])
         # change pkg RDEPEND and commit
         with open(pjoin(self.child_git_repo.path, 'cat/pkg/pkg-0.ebuild'), 'a') as f:
             f.write('RDEPEND="cat/dep1"\n')
@@ -480,7 +480,7 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         self.parent_repo.create_ebuild('cat/pkg-1', keywords=['~amd64'])
         self.parent_git_repo.add_all('cat/pkg: version bump to 1')
         # pull changes and modify its slot in the child repo
-        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'main'])
         self.child_repo.create_ebuild('cat/pkg-1', keywords=['~amd64'], slot='1')
         self.child_git_repo.add_all('cat/pkg: update SLOT to 1')
         self.init_check()
@@ -554,8 +554,8 @@ class TestGitEclassCommitsCheck(ReportTestCase):
         # initialize child repo
         self.child_git_repo = make_git_repo()
         self.child_git_repo.run(['git', 'remote', 'add', 'origin', self.parent_git_repo.path])
-        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
-        self.child_git_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'main'])
+        self.child_git_repo.run(['git', 'remote', 'set-head', 'origin', 'main'])
         self.child_repo = make_repo(self.child_git_repo.path)
 
     def init_check(self, options=None, future=0):

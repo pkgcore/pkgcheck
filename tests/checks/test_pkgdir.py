@@ -417,8 +417,8 @@ class TestLiveOnlyCheck(misc.ReportTestCase):
         # initialize child repo
         self.child_git_repo = make_git_repo()
         self.child_git_repo.run(['git', 'remote', 'add', 'origin', self.parent_git_repo.path])
-        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
-        self.child_git_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'main'])
+        self.child_git_repo.run(['git', 'remote', 'set-head', 'origin', 'main'])
         self.child_repo = make_repo(self.child_git_repo.path)
 
     def init_check(self, options=None, future=0):
@@ -446,14 +446,14 @@ class TestLiveOnlyCheck(misc.ReportTestCase):
     def test_keywords_exist(self):
         self.parent_repo.create_ebuild('cat/pkg-1', keywords=['~amd64'])
         self.parent_git_repo.add_all('cat/pkg-1')
-        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'main'])
         self.init_check()
         self.assertNoReport(self.check, self.source)
 
     def test_all_live_pkgs(self):
         self.parent_repo.create_ebuild('cat/pkg-1', properties='live')
         self.parent_git_repo.add_all('cat/pkg-1')
-        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'main'])
         self.init_check()
         # result will trigger for any package age
         expected = pkgdir.LiveOnlyPackage(0, pkg=UnversionedCPV('cat/pkg'))
@@ -469,7 +469,7 @@ class TestLiveOnlyCheck(misc.ReportTestCase):
     def test_uncommitted_local_ebuild(self):
         self.parent_repo.create_ebuild('cat/pkg-1', properties='live')
         self.parent_git_repo.add_all('cat/pkg-1')
-        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'main'])
         self.child_repo.create_ebuild('cat/pkg-2', properties='live')
         self.init_check(future=180)
         self.assertNoReport(self.check, self.source)

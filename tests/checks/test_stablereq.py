@@ -30,8 +30,8 @@ class TestStableRequestCheck(ReportTestCase):
         # initialize child repo
         self.child_git_repo = make_git_repo()
         self.child_git_repo.run(['git', 'remote', 'add', 'origin', self.parent_git_repo.path])
-        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
-        self.child_git_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'main'])
+        self.child_git_repo.run(['git', 'remote', 'set-head', 'origin', 'main'])
         self.child_repo = make_repo(self.child_git_repo.path)
 
     def init_check(self, options=None, future=0):
@@ -61,14 +61,14 @@ class TestStableRequestCheck(ReportTestCase):
         self.parent_git_repo.add_all('cat/pkg-1')
         self.parent_repo.create_ebuild('cat/pkg-2', keywords=['~amd64'])
         self.parent_git_repo.add_all('cat/pkg-2')
-        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'main'])
         self.init_check()
         self.assertNoReport(self.check, self.source)
 
     def test_uncommitted_local_ebuild(self):
         self.parent_repo.create_ebuild('cat/pkg-1', keywords=['amd64'])
         self.parent_git_repo.add_all('cat/pkg-1')
-        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'main'])
         self.child_repo.create_ebuild('cat/pkg-2', keywords=['~amd64'])
         self.init_check(future=30)
         self.assertNoReport(self.check, self.source)
@@ -78,7 +78,7 @@ class TestStableRequestCheck(ReportTestCase):
         self.parent_git_repo.add_all('cat/pkg-1')
         self.parent_repo.create_ebuild('cat/pkg-2', keywords=['~amd64'])
         self.parent_git_repo.add_all('cat/pkg-2')
-        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'main'])
 
         # packages are not old enough to trigger any results
         for days in (0, 1, 10, 20, 29):
@@ -96,7 +96,7 @@ class TestStableRequestCheck(ReportTestCase):
         self.parent_git_repo.add_all('cat/pkg-1')
         self.parent_repo.create_ebuild('cat/pkg-2', keywords=['~amd64'], slot='1')
         self.parent_git_repo.add_all('cat/pkg-2')
-        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'main'])
         self.init_check(future=30)
         r = self.assertReport(self.check, self.source)
         expected = StableRequest('1', ['~amd64'], 30, pkg=VersionedCPV('cat/pkg-2'))
@@ -108,7 +108,7 @@ class TestStableRequestCheck(ReportTestCase):
         self.parent_repo.create_ebuild('cat/pkg-2', keywords=['~amd64'])
         self.parent_git_repo.add_all('cat/pkg-2')
         self.parent_git_repo.move('cat', 'newcat')
-        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'main'])
         self.init_check(future=30)
         r = self.assertReport(self.check, self.source)
         expected = StableRequest('0', ['~amd64'], 30, pkg=VersionedCPV('newcat/pkg-2'))
@@ -127,7 +127,7 @@ class TestStableRequestCheck(ReportTestCase):
         for i, f in enumerate(sorted(os.listdir(new_pkg_dir))):
             os.rename(pjoin(new_pkg_dir, f), pjoin(new_pkg_dir, f'newpkg-{i}.ebuild'))
         self.parent_git_repo.add_all()
-        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'main'])
 
         self.init_check(future=30)
         r = self.assertReport(self.check, self.source)
@@ -140,7 +140,7 @@ class TestStableRequestCheck(ReportTestCase):
         self.parent_repo.create_ebuild('cat/pkg-2_rc1', keywords=['~amd64'])
         self.parent_git_repo.add_all('cat/pkg-2_rc1')
         self.parent_git_repo.move('cat/pkg/pkg-2_rc1.ebuild', 'cat/pkg/pkg-2.ebuild')
-        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'main'])
         self.init_check(future=30)
         r = self.assertReport(self.check, self.source)
         expected = StableRequest('0', ['~amd64'], 30, pkg=VersionedCPV('cat/pkg-2'))
@@ -154,7 +154,7 @@ class TestStableRequestCheck(ReportTestCase):
         with open(pjoin(self.parent_git_repo.path, 'cat/pkg/pkg-2.ebuild'), 'a') as f:
             f.write('# comment\n')
         self.parent_git_repo.add_all('cat/pkg-2: add comment')
-        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'main'])
         self.init_check(future=30)
         r = self.assertReport(self.check, self.source)
         expected = StableRequest('0', ['~amd64'], 30, pkg=VersionedCPV('cat/pkg-2'))

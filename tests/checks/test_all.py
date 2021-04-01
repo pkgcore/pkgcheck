@@ -74,8 +74,8 @@ class TestGitCommitsCheck:
         # initialize child repo
         self.child_git_repo = make_git_repo()
         self.child_git_repo.run(['git', 'remote', 'add', 'origin', self.parent_git_repo.path])
-        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
-        self.child_git_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'main'])
+        self.child_git_repo.run(['git', 'remote', 'set-head', 'origin', 'main'])
         self.child_repo = make_repo(self.child_git_repo.path)
 
     def test_no_commits_option(self, tool, make_git_repo):
@@ -99,7 +99,7 @@ class TestGitCommitsCheck:
         # parent repo has new commits
         self.parent_repo.create_ebuild('cat/pkg-1')
         self.parent_git_repo.add_all('cat/pkg-1')
-        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'main'])
         with pytest.raises(SystemExit) as excinfo:
             tool.parse_args(['scan', '--repo', self.child_repo.location, '--commits'])
         assert excinfo.value.code == 0

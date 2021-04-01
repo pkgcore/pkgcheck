@@ -994,8 +994,8 @@ class TestOutdatedBlockersCheck(misc.ReportTestCase):
         # initialize child repo
         self.child_git_repo = make_git_repo()
         self.child_git_repo.run(['git', 'remote', 'add', 'origin', self.parent_git_repo.path])
-        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
-        self.child_git_repo.run(['git', 'remote', 'set-head', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'main'])
+        self.child_git_repo.run(['git', 'remote', 'set-head', 'origin', 'main'])
         self.child_repo = make_repo(self.child_git_repo.path)
 
     def init_check(self, options=None, future=0):
@@ -1035,7 +1035,7 @@ class TestOutdatedBlockersCheck(misc.ReportTestCase):
 
     def test_outdated_blockers(self):
         self.parent_git_repo.remove_all('cat/pkg')
-        self.child_git_repo.run(['git', 'pull', 'origin', 'master'])
+        self.child_git_repo.run(['git', 'pull', 'origin', 'main'])
         self.child_repo.create_ebuild('cat/pkg-1', depend='!!=cat/pkg-0*')
         self.child_git_repo.add_all('cat/pkg: version bump to 1')
 
