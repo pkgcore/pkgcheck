@@ -4,7 +4,7 @@ diff -Naur python/PythonCompatCheck/PythonCompatUpdate/PythonCompatUpdate-0.ebui
 @@ -1,5 +1,5 @@
  EAPI=7
 -PYTHON_COMPAT=( python3_7 )
-+PYTHON_COMPAT=( python3_{7..9} )
++PYTHON_COMPAT=( python3_{7..10} )
  
  inherit python-r1
  
@@ -14,7 +14,7 @@ diff -Naur python/PythonCompatCheck/PythonCompatUpdate/PythonCompatUpdate-1.ebui
 @@ -1,5 +1,5 @@
  EAPI=7
 -PYTHON_COMPAT=( python3_{7,8} )
-+PYTHON_COMPAT=( python3_{7..9} )
++PYTHON_COMPAT=( python3_{7..10} )
  
  inherit python-single-r1
  
@@ -24,7 +24,7 @@ diff -Naur python/PythonCompatCheck/PythonCompatUpdate/PythonCompatUpdate-2.ebui
 @@ -1,5 +1,5 @@
  EAPI=7
 -PYTHON_COMPAT=( python3_{7,8} )
-+PYTHON_COMPAT=( python3_{7..9} )
++PYTHON_COMPAT=( python3_{7..10} )
  
  inherit python-any-r1
  
