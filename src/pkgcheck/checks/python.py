@@ -1,4 +1,5 @@
 import itertools
+import re
 
 from pkgcore.ebuild.atom import atom
 from pkgcore.restrictions import packages, values
@@ -27,6 +28,18 @@ CHECK_EXCLUDE = frozenset(['virtual/pypy', 'virtual/pypy3'])
 
 IUSE_PREFIX = 'python_targets_'
 IUSE_PREFIX_S = 'python_single_target_'
+
+TARGET_SPLIT_RE = re.compile(r'([0-9]+)')
+
+
+def target_sort_key(target):
+    def iter():
+        for x in TARGET_SPLIT_RE.split(target):
+            try:
+                yield int(x)
+            except ValueError:
+                yield x
+    return tuple(iter())
 
 
 def get_python_eclass(pkg):
@@ -281,14 +294,14 @@ class PythonCompatCheck(Check):
         for target, _desc in repo.config.use_expand_desc.get(IUSE_PREFIX[:-1], ()):
             if target[len(IUSE_PREFIX):].startswith('python'):
                 targets.append(target[len(IUSE_PREFIX):])
-        multi_targets = tuple(sorted(targets))
+        multi_targets = tuple(sorted(targets, key=target_sort_key))
 
         # determine available PYTHON_SINGLE_TARGET use flags
         targets = []
         for target, _desc in repo.config.use_expand_desc.get(IUSE_PREFIX_S[:-1], ()):
             if target[len(IUSE_PREFIX_S):].startswith('python'):
                 targets.append(target[len(IUSE_PREFIX_S):])
-        single_targets = tuple(sorted(targets))
+        single_targets = tuple(sorted(targets, key=target_sort_key))
 
         self.params = {
             'python-r1': (multi_targets, IUSE_PREFIX, None),
@@ -327,8 +340,9 @@ class PythonCompatCheck(Check):
         try:
             # determine the latest supported python version
             latest_target = sorted(
-                f"python{x.slot.replace('.', '_')}" for x in deps
-                if x.key == 'dev-lang/python' and x.slot is not None)[-1]
+                (f"python{x.slot.replace('.', '_')}" for x in deps
+                if x.key == 'dev-lang/python' and x.slot is not None),
+                key=target_sort_key)[-1]
         except IndexError:
             # should be flagged by PythonMissingDeps
             return
@@ -355,4 +369,5 @@ class PythonCompatCheck(Check):
             except IndexError:
                 return
 
-            yield PythonCompatUpdate(sorted(targets), pkg=pkg)
+            yield PythonCompatUpdate(sorted(targets, key=target_sort_key),
+                                     pkg=pkg)
