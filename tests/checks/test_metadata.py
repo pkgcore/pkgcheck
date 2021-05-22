@@ -841,8 +841,8 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
     check_kls = metadata.DependencyCheck
 
     def mk_pkg(self, attr, depset='', eapi='0', iuse=''):
-        if attr == 'BDEPEND':
-            eapi = '7'
+        eapi_attr_map = {'BDEPEND': '7', 'IDEPEND': '8'}
+        eapi = eapi_attr_map.get(attr, eapi)
         return misc.FakePkg(
             'dev-util/diffball-2.7.1',
             data={'EAPI': eapi, 'IUSE': iuse, attr: depset})

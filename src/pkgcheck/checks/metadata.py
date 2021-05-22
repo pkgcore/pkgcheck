@@ -688,14 +688,20 @@ class InvalidBdepend(results.MetadataError, results.VersionResult):
     attr = 'bdepend'
 
 
+class InvalidIdepend(results.MetadataError, results.VersionResult):
+    """Package has invalid IDEPEND."""
+
+    attr = 'idepend'
+
+
 class DependencyCheck(Check):
-    """Check BDEPEND, DEPEND, RDEPEND, and PDEPEND."""
+    """Verify dependency attributes (e.g. RDEPEND)."""
 
     required_addons = (addons.UseAddon,)
     known_results = frozenset([
         BadDependency, MissingPackageRevision, MissingUseDepDefault,
         UnstatedIuse, DeprecatedDep, InvalidDepend, InvalidRdepend,
-        InvalidPdepend, InvalidBdepend,
+        InvalidPdepend, InvalidBdepend, InvalidIdepend,
     ])
 
     def __init__(self, *args, use_addon):
