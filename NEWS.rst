@@ -2,6 +2,16 @@
 Release Notes
 =============
 
+----------------------------
+pkgcheck 0.10.0 (2021-05-22)
+----------------------------
+
+- Add initial EAPI 8 support.
+
+- DependencyCheck: Add InvalidIdepend result.
+
+- PythonCompatCheck: Fix treating python3.10 as newer than python3.9 (#320).
+
 ---------------------------
 pkgcheck 0.9.7 (2021-03-27)
 ---------------------------
