@@ -32,14 +32,15 @@ IUSE_PREFIX_S = 'python_single_target_'
 TARGET_SPLIT_RE = re.compile(r'([0-9]+)')
 
 
+# TODO: move to pkgcore for generic USE flag sorting?
 def target_sort_key(target):
-    def iter():
+    def targets():
         for x in TARGET_SPLIT_RE.split(target):
             try:
                 yield int(x)
             except ValueError:
                 yield x
-    return tuple(iter())
+    return tuple(targets())
 
 
 def get_python_eclass(pkg):
