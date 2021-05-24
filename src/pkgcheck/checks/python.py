@@ -299,7 +299,7 @@ class PythonCompatCheck(Check):
 
         self.params = {
             'python-r1': (multi_targets, IUSE_PREFIX, None),
-            'python-single-r1': (single_targets, IUSE_PREFIX_S, None),
+            'python-single-r1': (single_targets, (IUSE_PREFIX, IUSE_PREFIX_S), None),
             'python-any-r1': (multi_targets, (IUSE_PREFIX, IUSE_PREFIX_S), ('depend', 'bdepend')),
         }
 
