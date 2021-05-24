@@ -176,25 +176,35 @@ class UnknownUseFlags(_UseFlagsResult):
     flag_type = 'unknown'
 
 
+class BadDefaultUseFlags(_UseFlagsResult):
+    """Package IUSE contains bad default USE flags."""
+
+    flag_type = 'bad default'
+
+
 class IuseCheck(Check):
     """IUSE validity checks."""
 
     required_addons = (addons.UseAddon,)
-    known_results = frozenset([InvalidUseFlags, UnknownUseFlags])
+    known_results = frozenset([InvalidUseFlags, UnknownUseFlags, BadDefaultUseFlags])
+    use_expand_groups = ('cpu_flags',)
 
     def __init__(self, *args, use_addon):
         super().__init__(*args)
         self.iuse_handler = use_addon
+        self.valid_use = atom_mod.valid_use_flag.match
+        self.bad_defaults = tuple(f'+{x}_' for x in self.use_expand_groups)
 
     def feed(self, pkg):
-        invalid = sorted(x for x in pkg.iuse_stripped if not atom_mod.valid_use_flag.match(x))
-        if invalid:
+        if invalid := sorted(x for x in pkg.iuse_stripped if not self.valid_use(x)):
             yield InvalidUseFlags(invalid, pkg=pkg)
+
+        if bad_defaults := sorted(x for x in pkg.iuse if x.startswith(self.bad_defaults)):
+            yield BadDefaultUseFlags(bad_defaults, pkg=pkg)
 
         if not self.iuse_handler.ignore:
             unknown = pkg.iuse_stripped.difference(self.iuse_handler.allowed_iuse(pkg))
-            unknown = unknown.difference(invalid)
-            if unknown:
+            if unknown := unknown.difference(invalid):
                 yield UnknownUseFlags(sorted(unknown), pkg=pkg)
 
 
