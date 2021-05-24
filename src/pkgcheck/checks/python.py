@@ -277,7 +277,8 @@ class PythonCompatCheck(Check):
         repo = self.options.target_repo
         try:
             # sort python targets with USE_EXPAND flag ordering from repo
-            self.sorter = lambda k: repo.use_expand_sort['python_targets'][k]
+            sorted_targets = repo.use_expand_sort['python_targets']
+            self.sorter = lambda k: sorted_targets[k]
         except KeyError:
             # fallback to lexical ordering
             self.sorter = lambda k: k
