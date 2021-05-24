@@ -1,15 +1,13 @@
 diff -Naur eclass/EclassUsageCheck/MisplacedEclassVar/MisplacedEclassVar-0.ebuild fixed/EclassUsageCheck/MisplacedEclassVar/MisplacedEclassVar-0.ebuild
---- eclass/EclassUsageCheck/MisplacedEclassVar/MisplacedEclassVar-0.ebuild	2020-12-13 13:49:51.919809557 -0700
-+++ fixed/EclassUsageCheck/MisplacedEclassVar/MisplacedEclassVar-0.ebuild	2020-12-13 13:56:39.659723346 -0700
-@@ -1,10 +1,9 @@
- EAPI=7
+--- eclass/EclassUsageCheck/MisplacedEclassVar/MisplacedEclassVar-0.ebuild	2021-05-23 20:23:16.423009026 -0600
++++ fixed/EclassUsageCheck/MisplacedEclassVar/MisplacedEclassVar-0.ebuild	2021-05-23 20:23:43.734588313 -0600
+@@ -4,8 +4,8 @@
+ 	inherit vcs
+ fi
  
-+PRE_INHERIT_VAR="foo"
- inherit pre-inherit
+-inherit pre-inherit
+ PRE_INHERIT_VAR="foo"
++inherit pre-inherit
  
  DESCRIPTION="Ebuild with misplaced pre-inherit eclass variable"
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
- SLOT="0"
- LICENSE="BSD"
--
--PRE_INHERIT_VAR="foo"

@@ -78,12 +78,12 @@ class EclassUsageCheck(Check):
         self.deprecated_eclasses = eclass_addon.deprecated
         self.eclass_cache = eclass_addon.eclasses
 
-    def check_pre_inherits(self, pkg, inherit_lineno):
+    def check_pre_inherits(self, pkg, inherits, inherit_lineno):
         """Check for invalid @PRE_INHERIT variable placement."""
         pre_inherits = set()
 
         # determine if any inherited eclasses have @PRE_INHERIT variables
-        for eclass in pkg.inherited:
+        for eclass in inherits:
             pre_inherits.update(
                 var.name for var in self.eclass_cache[eclass].variables
                 if var.pre_inherit
@@ -111,7 +111,7 @@ class EclassUsageCheck(Check):
                         lineno, _colno = node.start_point
                         # verify any existing @PRE_INHERIT variable placement
                         if not inherited and inherits[0] == pkg.inherit[0]:
-                            yield from self.check_pre_inherits(pkg, lineno)
+                            yield from self.check_pre_inherits(pkg, inherits, lineno)
 
                         for eclass in inherits:
                             if eclass not in inherited:
