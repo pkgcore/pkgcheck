@@ -147,7 +147,7 @@ class LicenseCheck(Check):
                 yield UnnecessaryLicense(pkg=pkg)
 
 
-class _UseFlagsResult(results.VersionResult, results.Error):
+class _UseFlagsResult(results.VersionResult):
     """Generic USE flags result."""
 
     flag_type = None
@@ -163,19 +163,19 @@ class _UseFlagsResult(results.VersionResult, results.Error):
         return f'{self.flag_type} USE flag{s}: {flags}'
 
 
-class InvalidUseFlags(_UseFlagsResult):
+class InvalidUseFlags(_UseFlagsResult, results.Error):
     """Package IUSE contains invalid USE flags."""
 
     flag_type = 'invalid'
 
 
-class UnknownUseFlags(_UseFlagsResult):
+class UnknownUseFlags(_UseFlagsResult, results.Error):
     """Package IUSE contains unknown USE flags."""
 
     flag_type = 'unknown'
 
 
-class BadDefaultUseFlags(_UseFlagsResult):
+class BadDefaultUseFlags(_UseFlagsResult, results.Error):
     """Package IUSE contains bad default USE flags."""
 
     flag_type = 'bad default'
