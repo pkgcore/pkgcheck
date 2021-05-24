@@ -76,6 +76,21 @@ class UnknownProfilePackageKeywords(results.ProfilesResult, results.Warning):
         return f'{self.path!r}: unknown package keyword{s}: {self.atom}: {keywords}'
 
 
+class UnknownProfileUseExpand(results.ProfilesResult, results.Warning):
+    """Profile includes nonexistent USE_EXPAND group(s)."""
+
+    def __init__(self, path, groups):
+        super().__init__()
+        self.path = path
+        self.groups = tuple(groups)
+
+    @property
+    def desc(self):
+        s = pluralism(self.groups)
+        groups = ', '.join(self.groups)
+        return f'{self.path!r}: unknown USE_EXPAND group{s}: {groups}'
+
+
 class ProfileWarning(results.ProfilesResult, results.LogWarning):
     """Badly formatted data in various profile files."""
 
@@ -115,7 +130,8 @@ class ProfilesCheck(Check):
     required_addons = (addons.UseAddon, addons.KeywordsAddon)
     known_results = frozenset([
         UnknownProfilePackage, UnknownProfilePackageUse, UnknownProfileUse,
-        UnknownProfilePackageKeywords, ProfileWarning, ProfileError,
+        UnknownProfilePackageKeywords, UnknownProfileUseExpand,
+        ProfileWarning, ProfileError,
     ])
 
     # mapping between known files and verification methods
@@ -123,12 +139,13 @@ class ProfilesCheck(Check):
 
     def __init__(self, *args, use_addon, keywords_addon):
         super().__init__(*args)
-        target_repo = self.options.target_repo
+        repo = self.options.target_repo
         self.keywords = keywords_addon
         self.search_repo = self.options.search_repo
-        self.profiles_dir = target_repo.config.profiles_base
+        self.profiles_dir = repo.config.profiles_base
+        self.use_expand_groups = frozenset(x.upper() for x in repo.config.use_expand_desc)
 
-        local_iuse = {use for pkg, (use, desc) in target_repo.config.use_local_desc}
+        local_iuse = {use for pkg, (use, desc) in repo.config.use_local_desc}
         self.available_iuse = frozenset(
             local_iuse | use_addon.global_iuse |
             use_addon.global_iuse_expand | use_addon.global_iuse_implicit)
@@ -211,6 +228,12 @@ class ProfilesCheck(Check):
                 else:
                     yield UnknownProfilePackage(
                         pjoin(node.name, filename), a)
+
+    @verify_files(('make.defaults', 'make_defaults'))
+    def _make_defaults(self, filename, node, vals):
+        if defined := set(vals.get('USE_EXPAND', '').split()):
+            if unknown := defined - self.use_expand_groups:
+                yield UnknownProfileUseExpand(pjoin(node.name, filename), sorted(unknown))
 
     def feed(self, profile):
         for f in profile.files.intersection(self.known_files):
