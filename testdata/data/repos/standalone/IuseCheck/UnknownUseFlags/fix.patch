@@ -1,15 +1,6 @@
-diff -Naur standalone/IuseCheck/UnknownUseFlags/UnknownUseFlags-0.ebuild fixed/IuseCheck/UnknownUseFlags/UnknownUseFlags-0.ebuild
---- standalone/IuseCheck/UnknownUseFlags/UnknownUseFlags-0.ebuild	2019-09-18 22:05:56.510227607 -0600
-+++ fixed/IuseCheck/UnknownUseFlags/UnknownUseFlags-0.ebuild	2019-09-18 22:07:16.121549184 -0600
-@@ -3,4 +3,4 @@
- HOMEPAGE="https://github.com/pkgcore/pkgcheck"
- SLOT="0"
- LICENSE="BSD"
--IUSE="amd64 used flag1 +flag2 -flag3"
-+IUSE="used flag1 +flag2 -flag3"
 diff -Naur standalone/IuseCheck/UnknownUseFlags/metadata.xml fixed/IuseCheck/UnknownUseFlags/metadata.xml
---- standalone/IuseCheck/UnknownUseFlags/metadata.xml	2019-09-18 21:53:02.093097947 -0600
-+++ fixed/IuseCheck/UnknownUseFlags/metadata.xml	2019-09-18 22:07:31.287610443 -0600
+--- standalone/IuseCheck/UnknownUseFlags/metadata.xml	2021-03-24 15:23:53.617079961 -0600
++++ fixed/IuseCheck/UnknownUseFlags/metadata.xml	2021-05-24 04:22:38.816553926 -0600
 @@ -7,5 +7,6 @@
  	<use>
  		<flag name="flag1">USE flag 1</flag>
@@ -17,3 +8,12 @@ diff -Naur standalone/IuseCheck/UnknownUseFlags/metadata.xml fixed/IuseCheck/Unk
 +		<flag name="flag3">USE flag 3</flag>
  	</use>
  </pkgmetadata>
+diff -Naur standalone/IuseCheck/UnknownUseFlags/UnknownUseFlags-0.ebuild fixed/IuseCheck/UnknownUseFlags/UnknownUseFlags-0.ebuild
+--- standalone/IuseCheck/UnknownUseFlags/UnknownUseFlags-0.ebuild	2021-05-24 04:16:22.701404227 -0600
++++ fixed/IuseCheck/UnknownUseFlags/UnknownUseFlags-0.ebuild	2021-05-24 04:22:44.096668337 -0600
+@@ -3,4 +3,4 @@
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+-IUSE="amd64 used flag1 +flag2 +flag3"
++IUSE="used flag1 +flag2 +flag3"
