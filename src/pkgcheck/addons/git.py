@@ -8,6 +8,7 @@ import subprocess
 from collections import deque
 from dataclasses import dataclass
 from datetime import datetime
+from functools import partial
 from itertools import chain, takewhile
 
 from pathspec import PathSpec
@@ -287,8 +288,13 @@ class GitRemovedRepo(GitChangedRepo):
     _status_filter = {'D'}
 
 
-class _ScanCommits(argparse.Action):
-    """Argparse action that enables scannings against git commits."""
+class _ScanGit(argparse.Action):
+    """Argparse action that enables scanning against git commits or staged changes."""
+
+    def __init__(self, *args, staged=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.default_ref = 'HEAD' if staged else 'origin..HEAD'
+        self.staged = staged
 
     def generate_restrictions(self, parser, namespace, diff_cmd):
         """Generate restrictions for a given diff command."""
@@ -343,42 +349,25 @@ class _ScanCommits(argparse.Action):
             s = pluralism(namespace.targets)
             parser.error(f'{option_string} is mutually exclusive with target{s}: {targets}')
 
-        # determine target git ref
-        ref = value if value is not None else 'origin..HEAD'
+        # determine target ref
+        ref = value if value is not None else self.default_ref
         setattr(namespace, self.dest, ref)
 
         # generate scanning restrictions
-        diff_cmd = ['git', 'diff-tree', '-r', '--name-only', '-z', ref]
+        if self.staged:
+            diff_cmd = ['git', 'diff-index', '--name-only', '--cached', '-z', ref]
+        else:
+            diff_cmd = ['git', 'diff-tree', '-r', '--name-only', '-z', ref]
+
+            # avoid circular import issues
+            from .. import objects
+            # enable git checks
+            namespace.enabled_checks.update(objects.CHECKS.select(GitCommitsCheck).values())
+
+        # determine scan targets
         namespace.restrictions = self.generate_restrictions(parser, namespace, diff_cmd)
-
-        # avoid circular import issues
-        from .. import objects
-        # enable git checks
-        namespace.enabled_checks.update(objects.CHECKS.select(GitCommitsCheck).values())
-
-        # ignore uncommitted changes during scan
-        namespace.contexts.append(GitStash(namespace.target_repo.location))
-
-
-class _ScanStaged(_ScanCommits):
-    """Argparse action that enables scanning against staged changes."""
-
-    def __call__(self, parser, namespace, value, option_string=None):
-        if namespace.targets:
-            targets = ' '.join(namespace.targets)
-            s = pluralism(namespace.targets)
-            parser.error(f'{option_string} is mutually exclusive with target{s}: {targets}')
-
-        # determine target git ref
-        ref = value if value is not None else 'HEAD'
-        setattr(namespace, self.dest, ref)
-
-        # generate scanning restrictions
-        diff_cmd = ['git', 'diff-index', '--name-only', '--cached', '-z', ref]
-        namespace.restrictions = self.generate_restrictions(parser, namespace, diff_cmd)
-
-        # ignore uncommitted changes during scan
-        namespace.contexts.append(GitStash(namespace.target_repo.location, staged=True))
+        # ignore irrelevant changes during scan
+        namespace.contexts.append(GitStash(namespace.target_repo.location, staged=self.staged))
 
 
 class GitAddon(caches.CachedAddon):
@@ -407,7 +396,7 @@ class GitAddon(caches.CachedAddon):
         git_opts = group.add_mutually_exclusive_group()
         git_opts.add_argument(
             '--commits', nargs='?', default=False, metavar='tree-ish',
-            action=arghparse.Delayed, target=_ScanCommits, priority=10,
+            action=arghparse.Delayed, target=_ScanGit, priority=10,
             help='determine scan targets from unpushed commits',
             docs="""
                 Targets are determined from the committed changes compared to a
@@ -420,7 +409,7 @@ class GitAddon(caches.CachedAddon):
             """)
         git_opts.add_argument(
             '--staged', nargs='?', default=False, metavar='tree-ish',
-            action=arghparse.Delayed, target=_ScanStaged, priority=10,
+            action=arghparse.Delayed, target=partial(_ScanGit, staged=True), priority=10,
             help='determine scan targets from staged changes',
             docs="""
                 Targets are determined using all staged changes for the git
