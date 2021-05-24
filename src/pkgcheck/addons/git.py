@@ -293,14 +293,22 @@ class _ScanGit(argparse.Action):
 
     def __init__(self, *args, staged=False, **kwargs):
         super().__init__(*args, **kwargs)
-        self.default_ref = 'HEAD' if staged else 'origin..HEAD'
-        self.staged = staged
+        if staged:
+            default_ref = 'HEAD'
+            diff_cmd = ['git', 'diff-index', '--name-only', '--cached', '-z']
+        else:
+            default_ref = 'origin..HEAD'
+            diff_cmd = ['git', 'diff-tree', '-r', '--name-only', '-z']
 
-    def generate_restrictions(self, parser, namespace, diff_cmd):
+        self.staged = staged
+        self.default_ref = default_ref
+        self.diff_cmd = diff_cmd
+
+    def generate_restrictions(self, parser, namespace, ref):
         """Generate restrictions for a given diff command."""
         try:
             p = subprocess.run(
-                diff_cmd,
+                self.diff_cmd + [ref],
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                 cwd=namespace.target_repo.location, check=True, encoding='utf8')
         except FileNotFoundError as e:
@@ -349,23 +357,18 @@ class _ScanGit(argparse.Action):
             s = pluralism(namespace.targets)
             parser.error(f'{option_string} is mutually exclusive with target{s}: {targets}')
 
-        # determine target ref
-        ref = value if value is not None else self.default_ref
-        setattr(namespace, self.dest, ref)
-
-        # generate scanning restrictions
-        if self.staged:
-            diff_cmd = ['git', 'diff-index', '--name-only', '--cached', '-z', ref]
-        else:
-            diff_cmd = ['git', 'diff-tree', '-r', '--name-only', '-z', ref]
-
+        if not self.staged:
             # avoid circular import issues
             from .. import objects
             # enable git checks
             namespace.enabled_checks.update(objects.CHECKS.select(GitCommitsCheck).values())
 
-        # determine scan targets
-        namespace.restrictions = self.generate_restrictions(parser, namespace, diff_cmd)
+        # determine target ref
+        ref = value if value is not None else self.default_ref
+        setattr(namespace, self.dest, ref)
+
+        # generate scanning restrictions
+        namespace.restrictions = self.generate_restrictions(parser, namespace, ref)
         # ignore irrelevant changes during scan
         namespace.contexts.append(GitStash(namespace.target_repo.location, staged=self.staged))
 
