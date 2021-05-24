@@ -24,8 +24,8 @@ from . import Check
 from .visibility import FakeConfigurable
 
 
-class MissingLicenseFile(results.VersionResult, results.Error):
-    """Used license(s) have no matching license file(s)."""
+class UnknownLicense(results.VersionResult, results.Error):
+    """License(s) with no matching license file(s)."""
 
     def __init__(self, licenses, **kwargs):
         super().__init__(**kwargs)
@@ -35,7 +35,7 @@ class MissingLicenseFile(results.VersionResult, results.Error):
     def desc(self):
         s = pluralism(self.licenses)
         licenses = ', '.join(self.licenses)
-        return f'no matching license file{s}: {licenses}'
+        return f'unknown license{s}: {licenses}'
 
 
 class MissingLicense(results.VersionResult, results.Error):
@@ -80,7 +80,7 @@ class LicenseCheck(Check):
     """LICENSE validity checks."""
 
     known_results = frozenset([
-        InvalidLicense, MissingLicense, MissingLicenseFile, UnnecessaryLicense,
+        InvalidLicense, MissingLicense, UnknownLicense, UnnecessaryLicense,
         UnstatedIuse, MissingLicenseRestricts,
     ])
 
@@ -141,9 +141,8 @@ class LicenseCheck(Check):
             if pkg.category not in self.unlicensed_categories:
                 yield MissingLicense(pkg=pkg)
         else:
-            licenses.difference_update(pkg.repo.licenses)
-            if licenses:
-                yield MissingLicenseFile(sorted(licenses), pkg=pkg)
+            if unknown := licenses - set(pkg.repo.licenses):
+                yield UnknownLicense(sorted(unknown), pkg=pkg)
             elif pkg.category in self.unlicensed_categories:
                 yield UnnecessaryLicense(pkg=pkg)
 

@@ -1,0 +1,5 @@
+diff -Naur standalone/licenses/unknown fixed/licenses/unknown
+--- standalone/licenses/unknown	1969-12-31 17:00:00.000000000 -0700
++++ fixed/licenses/unknown	2021-05-24 05:01:42.051343452 -0600
+@@ -0,0 +1 @@
++added missing license

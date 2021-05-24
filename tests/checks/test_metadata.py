@@ -749,9 +749,8 @@ class TestLicenseCheck(use_based(), misc.ReportTestCase):
 
     def test_single_missing(self):
         r = self.assertReport(self.mk_check(), self.mk_pkg("foo"))
-        assert isinstance(r, metadata.MissingLicenseFile)
+        assert isinstance(r, metadata.UnknownLicense)
         assert r.licenses == ('foo',)
-        assert 'no matching license file: foo' in str(r)
 
     def test_multiple_existing(self):
         chk = self.mk_check(['foo', 'foo2'])
@@ -761,9 +760,8 @@ class TestLicenseCheck(use_based(), misc.ReportTestCase):
     def test_multiple_missing(self):
         chk = self.mk_check(['foo', 'foo2'])
         r = self.assertReport(chk, self.mk_pkg('|| ( foo foo3 foo4 )'))
-        assert isinstance(r, metadata.MissingLicenseFile)
+        assert isinstance(r, metadata.UnknownLicense)
         assert r.licenses == ('foo3', 'foo4')
-        assert 'no matching license files: foo3, foo4' in str(r)
 
     def test_unlicensed_categories(self):
         check = self.mk_check(['foo'])
