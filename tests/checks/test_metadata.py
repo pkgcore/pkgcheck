@@ -302,8 +302,8 @@ class TestIuseCheck(IUSE_Options, misc.ReportTestCase):
         use_addon = addons.UseAddon(options)
         return self.check_kls(options, use_addon=use_addon)
 
-    def mk_pkg(self, iuse=""):
-        return misc.FakePkg("dev-util/diffball-0.7.1", data={"IUSE": iuse})
+    def mk_pkg(self, iuse=''):
+        return misc.FakePkg('dev-util/diffball-0.7.1', data={'IUSE': iuse, 'EAPI': '1'})
 
     def test_known_iuse(self, check):
         self.assertNoReport(check, self.mk_pkg('foo bar'))
@@ -322,7 +322,7 @@ class TestIuseCheck(IUSE_Options, misc.ReportTestCase):
         assert 'x86' in str(r)
 
     def test_invalid_iuse(self, check):
-        for flag in (['+', '-'] + [f'{c}flag' for c in ('_', '@')]):
+        for flag in ('+', '-', '@', '_'):
             r = self.assertReport(check, self.mk_pkg(f'foo {flag}'))
             assert isinstance(r, metadata.InvalidUseFlags)
             assert r.flags == (flag,)
