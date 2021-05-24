@@ -78,23 +78,22 @@ class EclassUsageCheck(Check):
         self.deprecated_eclasses = eclass_addon.deprecated
         self.eclass_cache = eclass_addon.eclasses
 
-    def check_pre_inherits(self, pkg, inherits, inherit_lineno):
+    def check_pre_inherits(self, pkg, inherits):
         """Check for invalid @PRE_INHERIT variable placement."""
-        pre_inherits = set()
-
+        pre_inherits = {}
         # determine if any inherited eclasses have @PRE_INHERIT variables
-        for eclass in inherits:
-            pre_inherits.update(
-                var.name for var in self.eclass_cache[eclass].variables
-                if var.pre_inherit
-            )
+        for eclasses, lineno in inherits:
+            for eclass in eclasses:
+                for var in self.eclass_cache[eclass].variables:
+                    if var.pre_inherit:
+                        pre_inherits[var.name] = lineno
 
         # scan for any misplaced @PRE_INHERIT variables
         if pre_inherits:
             for node, _ in bash.var_assign_query.captures(pkg.tree.root_node):
                 var_name = pkg.node_str(node.child_by_field_name('name'))
                 lineno, _colno = node.start_point
-                if var_name in pre_inherits and lineno > inherit_lineno:
+                if var_name in pre_inherits and lineno > pre_inherits[var_name]:
                     line = pkg.node_str(node)
                     yield MisplacedEclassVar(
                         var_name, line=line, lineno=lineno+1, pkg=pkg)
@@ -102,23 +101,26 @@ class EclassUsageCheck(Check):
     def feed(self, pkg):
         if pkg.inherit:
             inherited = set()
+            inherits = []
             for node, _ in bash.cmd_query.captures(pkg.tree.root_node):
                 name = pkg.node_str(node.child_by_field_name('name'))
                 if name == 'inherit':
                     call = pkg.node_str(node)
                     # filter out line continuations and conditional inherits
-                    if inherits := [x for x in call.split()[1:] if x in pkg.inherit]:
+                    if eclasses := [x for x in call.split()[1:] if x in pkg.inherit]:
                         lineno, _colno = node.start_point
-                        # verify any existing @PRE_INHERIT variable placement
-                        if not inherited and inherits[0] == pkg.inherit[0]:
-                            yield from self.check_pre_inherits(pkg, inherits, lineno)
+                        if not inherited and eclasses[0] == pkg.inherit[0]:
+                            inherits.append((eclasses, lineno))
 
-                        for eclass in inherits:
+                        for eclass in eclasses:
                             if eclass not in inherited:
                                 inherited.add(eclass)
                             else:
                                 yield DuplicateEclassInherit(
                                     eclass, line=call, lineno=lineno+1, pkg=pkg)
+
+            # verify @PRE_INHERIT variable placement
+            yield from self.check_pre_inherits(pkg, inherits)
 
             for eclass in pkg.inherit.intersection(self.deprecated_eclasses):
                 replacement = self.deprecated_eclasses[eclass]
