@@ -24,8 +24,10 @@ from . import Check
 from .visibility import FakeConfigurable
 
 
-class UnknownLicense(results.VersionResult, results.Error):
-    """License(s) with no matching license file(s)."""
+class _LicenseResult(results.VersionResult):
+    """Generic license result."""
+
+    license_type = None
 
     def __init__(self, licenses, **kwargs):
         super().__init__(**kwargs)
@@ -35,7 +37,19 @@ class UnknownLicense(results.VersionResult, results.Error):
     def desc(self):
         s = pluralism(self.licenses)
         licenses = ', '.join(self.licenses)
-        return f'unknown license{s}: {licenses}'
+        return f'{self.license_type} license{s}: {licenses}'
+
+
+class UnknownLicense(_LicenseResult, results.Error):
+    """License usage with no matching license file."""
+
+    license_type = 'unknown'
+
+
+class DeprecatedLicense(_LicenseResult, results.Warning):
+    """Deprecated license usage."""
+
+    license_type = 'deprecated'
 
 
 class MissingLicense(results.VersionResult, results.Error):
@@ -80,8 +94,8 @@ class LicenseCheck(Check):
     """LICENSE validity checks."""
 
     known_results = frozenset([
-        InvalidLicense, MissingLicense, UnknownLicense, UnnecessaryLicense,
-        UnstatedIuse, MissingLicenseRestricts,
+        InvalidLicense, MissingLicense, UnknownLicense, DeprecatedLicense,
+        UnnecessaryLicense, UnstatedIuse, MissingLicenseRestricts,
     ])
 
     # categories for ebuilds that can lack LICENSE settings
@@ -91,8 +105,10 @@ class LicenseCheck(Check):
 
     def __init__(self, *args, use_addon):
         super().__init__(*args)
+        repo = self.options.target_repo
         self.iuse_filter = use_addon.get_filter('license')
-        self.eula = self.options.target_repo.licenses.groups.get('EULA')
+        self.deprecated = repo.licenses.groups.get('DEPRECATED', frozenset())
+        self.eula = repo.licenses.groups.get('EULA', frozenset())
         self.mirror_restricts = frozenset(['fetch', 'mirror'])
 
     def _required_licenses(self, license_group, nodes, restricts=None):
@@ -140,11 +156,13 @@ class LicenseCheck(Check):
         if not licenses:
             if pkg.category not in self.unlicensed_categories:
                 yield MissingLicense(pkg=pkg)
+        elif pkg.category in self.unlicensed_categories:
+            yield UnnecessaryLicense(pkg=pkg)
         else:
             if unknown := licenses - set(pkg.repo.licenses):
                 yield UnknownLicense(sorted(unknown), pkg=pkg)
-            elif pkg.category in self.unlicensed_categories:
-                yield UnnecessaryLicense(pkg=pkg)
+            if deprecated := licenses & self.deprecated:
+                yield DeprecatedLicense(sorted(deprecated), pkg=pkg)
 
 
 class _UseFlagsResult(results.VersionResult):
