@@ -755,7 +755,10 @@ class DependencyCheck(Check):
                     # purpose of deprecations is to get rid of dependencies
                     # holding them in the repo.
                     if not atom.blocks and self.deprecated(atom):
-                        deprecated[attr].add(atom)
+                        # verify all matching packages are deprecated
+                        pkgs = self.options.search_repo.match(atom.no_usedeps)
+                        if all(self.deprecated(x.versioned_atom) for x in pkgs):
+                            deprecated[attr].add(atom)
 
                     if in_or_restriction and atom.slot_operator == '=':
                         yield BadDependency(
