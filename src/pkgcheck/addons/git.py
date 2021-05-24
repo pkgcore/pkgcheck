@@ -386,8 +386,8 @@ class GitAddon(caches.CachedAddon):
     upstream.
 
     Additionally, the origin/HEAD ref must exist. If it doesn't, running ``git
-    fetch origin`` should create it. Otherwise, using ``git remote set-head
-    origin master`` or similar will also create the reference.
+    remote set-head origin master`` or similar for other branches will create
+    it.
     """
 
     # cache registry
