@@ -322,8 +322,7 @@ class TestIuseCheck(IUSE_Options, misc.ReportTestCase):
         assert 'x86' in str(r)
 
     def test_invalid_iuse(self, check):
-        chars = ['+', '-', '_', '@']
-        for flag in (chars + [f'{c}flag' for c in chars]):
+        for flag in (['+', '-'] + [f'{c}flag' for c in ('_', '@')]):
             r = self.assertReport(check, self.mk_pkg(f'foo {flag}'))
             assert isinstance(r, metadata.InvalidUseFlags)
             assert r.flags == (flag,)

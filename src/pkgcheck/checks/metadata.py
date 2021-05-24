@@ -193,13 +193,14 @@ class IuseCheck(Check):
         super().__init__(*args)
         self.iuse_handler = use_addon
         self.valid_use = atom_mod.valid_use_flag.match
-        self.bad_defaults = tuple(f'+{x}_' for x in self.use_expand_groups)
+        self.bad_defaults = tuple(['-'] + [f'+{x}_' for x in self.use_expand_groups])
 
     def feed(self, pkg):
         if invalid := sorted(x for x in pkg.iuse_stripped if not self.valid_use(x)):
             yield InvalidUseFlags(invalid, pkg=pkg)
 
-        if bad_defaults := sorted(x for x in pkg.iuse if x.startswith(self.bad_defaults)):
+        if pkg.eapi.options.iuse_defaults and (bad_defaults := sorted(
+                x for x in pkg.iuse if x.startswith(self.bad_defaults) and len(x) > 1)):
             yield BadDefaultUseFlags(bad_defaults, pkg=pkg)
 
         if not self.iuse_handler.ignore:
