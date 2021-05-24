@@ -133,7 +133,8 @@ class ReportTestCase:
 
     def assertReport(self, check, data):
         results = self.assertReports(check, data)
-        assert len(results) == 1, f"expected one report, got {len(results)}: {results}"
+        results_str = '\n'.join(map(str, results))
+        assert len(results) == 1, f"expected one report, got {len(results)}:\n{results_str}"
         self._assertReportSanity(*results)
         result = results[0]
         return result
