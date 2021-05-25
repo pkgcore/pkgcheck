@@ -188,7 +188,7 @@ setup(**dict(
     url='https://github.com/pkgcore/pkgcheck',
     data_files=list(chain(
         pkgdist.data_mapping('share/zsh/site-functions', 'completion/zsh'),
-        pkgdist.data_mapping('share/pkgcheck', 'data'),
+        pkgdist.data_mapping(DATA_INSTALL_OFFSET, 'data'),
     )),
     cmdclass=dict(
         pkgdist_cmds,
