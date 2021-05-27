@@ -68,14 +68,15 @@ class BadCommandsCheck(Check):
     known_results = frozenset([DeprecatedEapiCommand, BannedEapiCommand])
 
     def feed(self, pkg):
-        for node, _ in bash.cmd_query.captures(pkg.tree.root_node):
-            call = pkg.node_str(node)
-            name = pkg.node_str(node.child_by_field_name('name'))
-            lineno, colno = node.start_point
-            if name in pkg.eapi.bash_cmds_banned:
-                yield BannedEapiCommand(name, line=call, lineno=lineno+1, eapi=pkg.eapi, pkg=pkg)
-            elif name in pkg.eapi.bash_cmds_deprecated:
-                yield DeprecatedEapiCommand(name, line=call, lineno=lineno+1, eapi=pkg.eapi, pkg=pkg)
+        for func_node, _ in bash.func_query.captures(pkg.tree.root_node):
+            for node, _ in bash.cmd_query.captures(func_node):
+                call = pkg.node_str(node)
+                name = pkg.node_str(node.child_by_field_name('name'))
+                lineno, colno = node.start_point
+                if name in pkg.eapi.bash_cmds_banned:
+                    yield BannedEapiCommand(name, line=call, lineno=lineno+1, eapi=pkg.eapi, pkg=pkg)
+                elif name in pkg.eapi.bash_cmds_deprecated:
+                    yield DeprecatedEapiCommand(name, line=call, lineno=lineno+1, eapi=pkg.eapi, pkg=pkg)
 
 
 class MissingSlash(results.VersionResult, results.Error):
