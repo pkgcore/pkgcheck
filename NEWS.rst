@@ -3,6 +3,24 @@ Release Notes
 =============
 
 ----------------------------
+pkgcheck 0.10.1 (2021-05-28)
+----------------------------
+
+- ProfilesCheck: Add initial UnknownProfileUseExpand result support.
+
+- LicenseCheck: Add initial DeprecatedLicense result support (#325).
+
+- LicenseCheck: Rename MissingLicenseFile result to UnknownLicense for consistency.
+
+- IuseCheck: Add initial BadDefaultUseFlags result (#314 and #315).
+
+- DeprecatedDep: Verify all matching packages are deprecated (#317).
+
+- MisplacedEclassVar: Only pull pre-inherit vars for targeted eclasses (#324).
+
+- PythonCompatCheck: Fix python-single-r1 ebuilds using python_target deps (#323).
+
+----------------------------
 pkgcheck 0.10.0 (2021-05-22)
 ----------------------------
 
