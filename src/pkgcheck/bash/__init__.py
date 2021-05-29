@@ -24,9 +24,9 @@ def build_library(output_path, repo_paths):  # pragma: no cover
     the library already existed and was modified more recently than
     any of the source files.
     """
-    from ctypes.util import find_library
     from distutils.ccompiler import new_compiler
     from distutils.sysconfig import customize_compiler
+    from distutils.unixccompiler import UnixCCompiler
     from os import path
     from platform import system
     from tempfile import TemporaryDirectory
@@ -51,14 +51,9 @@ def build_library(output_path, repo_paths):  # pragma: no cover
     ]
 
     compiler = new_compiler()
-    if cpp:
-        if find_library("stdc++"):
-            compiler.add_library("stdc++")
-        elif find_library("c++"):
-            compiler.add_library("c++")
-        else:
-            # fallback to assuming libstdc++ exists (#299)
-            compiler.add_library("stdc++")
+    # force `c++` compiler so the appropriate standard library is used
+    if isinstance(compiler, UnixCCompiler):
+        compiler.compiler_cxx[0] = "c++"
 
     if max(source_mtimes) <= output_mtime:
         return False
@@ -80,7 +75,11 @@ def build_library(output_path, repo_paths):  # pragma: no cover
                     extra_preargs=flags,
                 )[0]
             )
-        compiler.link_shared_object(object_paths, output_path)
+        compiler.link_shared_object(
+            object_paths,
+            output_path,
+            target_lang="c++" if cpp else "c",
+        )
     return True
 
 
