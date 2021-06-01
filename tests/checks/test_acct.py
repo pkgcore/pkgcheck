@@ -13,7 +13,7 @@ class TestAcctUser(misc.ReportTestCase):
 
     def mk_check(self, pkgs):
         self.repo = FakeRepo(pkgs=pkgs, repo_id='test')
-        check = self.check_kls(arghparse.Namespace(target_repo=self.repo))
+        check = self.check_kls(arghparse.Namespace(target_repo=self.repo, gentoo_repo=True))
         return check
 
     def mk_pkg(self, name, identifier, version=1, ebuild=None):
