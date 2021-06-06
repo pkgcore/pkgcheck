@@ -562,18 +562,24 @@ class GitCommitMessageCheck(GentooRepoCheck, GitCommitsCheck):
 
         # categorize package changes
         pkg_changes = defaultdict(set)
-        for pkg in commit.pkgs:
-            pkg_changes[pkg.category].add(pkg.package)
+        for atom in chain.from_iterable(commit.pkgs.values()):
+            pkg_changes[atom.category].add(atom)
 
         # check git commit summary formatting
         if len(pkg_changes) == 1:
-            category, pkgs = pkg_changes.popitem()
-            if len(pkgs) == 1:
+            category, atoms = pkg_changes.popitem()
+            if len({x.package for x in atoms}) == 1:
                 # changes to a single cat/pn
-                pkg = commit.pkgs[0]
-                if not re.match(rf'^({re.escape(pkg.key)}|{re.escape(pkg.cpvstr)}): ', summary):
-                    error = f'summary missing {pkg.key!r} package prefix'
+                atom = next(iter(atoms))
+                if not re.match(rf'^({re.escape(atom.key)}|{re.escape(atom.cpvstr)}): ', summary):
+                    error = f'summary missing {atom.key!r} package prefix'
                     yield BadCommitSummary(error, summary, commit=commit)
+                # check for version in summary for singular version bumps
+                if len(commit.pkgs['A']) == 1:
+                    version = next(iter(commit.pkgs['A'])).version
+                    if not re.match(rf'^.+\b{version}\b.*$', summary):
+                        error = f'summary missing package version {version!r}'
+                        yield BadCommitSummary(error, summary, commit=commit)
             else:
                 # mutiple pkg changes in the same category
                 if not re.match(rf'^{re.escape(category)}: ', summary):

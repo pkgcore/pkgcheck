@@ -5,11 +5,11 @@ import os
 import re
 import shlex
 import subprocess
-from collections import deque
+from collections import defaultdict, deque
 from dataclasses import dataclass
 from datetime import datetime
 from functools import partial
-from itertools import chain, takewhile
+from itertools import takewhile
 
 from pathspec import PathSpec
 from pkgcore.ebuild import cpv
@@ -21,7 +21,7 @@ from pkgcore.restrictions import packages
 from snakeoil.cli import arghparse
 from snakeoil.contexts import GitStash
 from snakeoil.klass import jit_attr
-from snakeoil.mappings import OrderedSet
+from snakeoil.mappings import ImmutableDict, OrderedSet
 from snakeoil.osutils import pjoin
 from snakeoil.process import CommandNotFound, find_binary
 from snakeoil.strings import pluralism
@@ -41,7 +41,7 @@ class GitCommit:
     author: str
     committer: str
     message: tuple
-    pkgs: tuple = ()
+    pkgs: ImmutableDict = ImmutableDict()
 
     def __str__(self):
         return self.hash
@@ -180,8 +180,15 @@ class GitRepoCommits(_ParseGitRepo):
         author = next(self.git_log)
         committer = next(self.git_log)
         message = list(takewhile(lambda x: x != '\x00', self.git_log))
-        pkgs = list(chain.from_iterable(pkgs for _, pkgs in self.changes))
-        return GitCommit(commit_hash, commit_time, author, committer, message, pkgs)
+        pkgs = defaultdict(set)
+        for status, atoms in self.changes:
+            if status == 'R':
+                old, new = atoms
+                pkgs['A'].add(new)
+                pkgs['D'].add(old)
+            else:
+                pkgs[status].update(atoms)
+        return GitCommit(commit_hash, commit_time, author, committer, message, ImmutableDict(pkgs))
 
 
 class GitRepoPkgs(_ParseGitRepo):

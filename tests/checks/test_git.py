@@ -285,14 +285,29 @@ class TestGitCommitMessageRepoCheck(ReportTestCase):
 
         # poorly prefixed commit summary
         self.child_repo.create_ebuild('cat/pkg-4')
-        self.child_git_repo.add_all('version bump', signoff=True)
-        commit = self.child_git_repo.HEAD
+        self.child_git_repo.add_all('version bump to 4', signoff=True)
+        commit1 = self.child_git_repo.HEAD
+        # commit summary missing package version
+        self.child_repo.create_ebuild('cat/pkg-5')
+        self.child_git_repo.add_all('cat/pkg: version bump', signoff=True)
+        commit2 = self.child_git_repo.HEAD
+        # commit summary missing renamed package version
+        self.child_git_repo.move(
+            'cat/pkg/pkg-3.ebuild', 'cat/pkg/pkg-6.ebuild',
+            msg='cat/pkg: version bump and remove old', signoff=True)
+        commit3 = self.child_git_repo.HEAD
         self.init_check()
-        r = self.assertReport(self.check, self.source)
-        expected = git_mod.BadCommitSummary(
+        results = self.assertReports(self.check, self.source)
+        r1 = git_mod.BadCommitSummary(
             "summary missing 'cat/pkg' package prefix",
-            'version bump', commit=commit)
-        assert r == expected
+            'version bump to 4', commit=commit1)
+        r2 = git_mod.BadCommitSummary(
+            "summary missing package version '5'",
+            'cat/pkg: version bump', commit=commit2)
+        r3 = git_mod.BadCommitSummary(
+            "summary missing package version '6'",
+            'cat/pkg: version bump and remove old', commit=commit3)
+        assert set(results) == {r1, r2, r3}
 
     def test_bad_commit_summary_category(self):
         # properly prefixed commit summary
