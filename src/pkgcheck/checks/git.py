@@ -571,13 +571,13 @@ class GitCommitMessageCheck(GentooRepoCheck, GitCommitsCheck):
             if len({x.package for x in atoms}) == 1:
                 # changes to a single cat/pn
                 atom = next(iter(atoms))
-                if not re.match(rf'^({re.escape(atom.key)}|{re.escape(atom.cpvstr)}): ', summary):
+                if not re.match(rf'^{re.escape(atom.key)}: ', summary):
                     error = f'summary missing {atom.key!r} package prefix'
                     yield BadCommitSummary(error, summary, commit=commit)
                 # check for version in summary for singular version bumps
                 if len(commit.pkgs['A']) == 1:
                     version = next(iter(commit.pkgs['A'])).version
-                    if not re.match(rf'^.+\b{version}\b.*$', summary):
+                    if not re.match(rf'^.+\b{re.escape(version)}\b.*$', summary):
                         error = f'summary missing package version {version!r}'
                         yield BadCommitSummary(error, summary, commit=commit)
             else:
