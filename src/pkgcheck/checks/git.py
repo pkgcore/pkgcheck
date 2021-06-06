@@ -347,9 +347,6 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
                 pkg_map['A'].add(pkg)
                 pkg_map['D'].add(pkg.old_pkg())
 
-        # modified packages in current repo
-        modified = [pkg for pkg in pkg_map['M'] if pkg not in pkg_map['D']]
-
         # run removed package checks
         if pkg_map['D']:
             yield from self.removal_checks(list(pkg_map['D']))
@@ -357,7 +354,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
         if pkg_map['R']:
             yield from self.rename_checks(list(pkg_map['R']))
         # run modified package checks
-        if modified:
+        if modified := [pkg for pkg in pkg_map['M'] if pkg not in pkg_map['D']]:
             yield from self.modified_checks(modified)
 
         for git_pkg in pkgset:
