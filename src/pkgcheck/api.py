@@ -25,9 +25,14 @@ def scan(args=None, /, *, base_args=None):
     from .pipeline import Pipeline
     from .scripts import pkgcheck
 
-    def parser_exit(parser, status, message):
-        """Stub function to handle argparse errors."""
-        raise PkgcheckException(message.strip())
+    def parser_exit(parser, status=0, message=None):
+        """Stub function to handle argparse errors.
+
+        Exit calls with no message arguments signify truncated scans, i.e. no
+        restriction targets are specified.
+        """
+        if message:
+            raise PkgcheckException(message.strip())
 
     if args is None:
         args = []
