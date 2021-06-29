@@ -3,6 +3,16 @@ Release Notes
 =============
 
 ----------------------------
+pkgcheck 0.10.2 (2021-06-29)
+----------------------------
+
+- BadCommitSummary: Only allow "cat/pn: " prefixes.
+
+- GitCommitMessageCheck: Flag pkg adds missing versions in the summary (#298).
+
+- AcctCheck: Restrict to the gentoo repo (#327).
+
+----------------------------
 pkgcheck 0.10.1 (2021-05-28)
 ----------------------------
 
