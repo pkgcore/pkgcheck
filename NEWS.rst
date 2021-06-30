@@ -3,6 +3,12 @@ Release Notes
 =============
 
 ----------------------------
+pkgcheck 0.10.3 (2021-06-30)
+----------------------------
+
+- BadCommitSummary: Don't flag revision bumps missing pkg versions.
+
+----------------------------
 pkgcheck 0.10.2 (2021-06-29)
 ----------------------------
 
