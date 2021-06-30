@@ -574,11 +574,11 @@ class GitCommitMessageCheck(GentooRepoCheck, GitCommitsCheck):
                 if not re.match(rf'^{re.escape(atom.key)}: ', summary):
                     error = f'summary missing {atom.key!r} package prefix'
                     yield BadCommitSummary(error, summary, commit=commit)
-                # check for version in summary for singular version bumps
+                # check for version in summary for singular, non-revision bumps
                 if len(commit.pkgs['A']) == 1:
-                    version = next(iter(commit.pkgs['A'])).version
-                    if not re.match(rf'^.+\b{re.escape(version)}\b.*$', summary):
-                        error = f'summary missing package version {version!r}'
+                    atom = next(iter(commit.pkgs['A']))
+                    if not atom.revision and not re.match(rf'^.+\b{re.escape(atom.version)}\b.*$', summary):
+                        error = f'summary missing package version {atom.version!r}'
                         yield BadCommitSummary(error, summary, commit=commit)
             else:
                 # mutiple pkg changes in the same category

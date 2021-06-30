@@ -296,6 +296,9 @@ class TestGitCommitMessageRepoCheck(ReportTestCase):
             'cat/pkg/pkg-3.ebuild', 'cat/pkg/pkg-6.ebuild',
             msg='cat/pkg: version bump and remove old', signoff=True)
         commit3 = self.child_git_repo.HEAD
+        # revision bumps aren't flagged
+        self.child_repo.create_ebuild('cat/pkg-6-r1')
+        self.child_git_repo.add_all('cat/pkg: revision bump', signoff=True)
         self.init_check()
         results = self.assertReports(self.check, self.source)
         r1 = git_mod.BadCommitSummary(
