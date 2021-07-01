@@ -3,15 +3,15 @@
 import os
 import sys
 from collections import defaultdict
-from distutils import log
-from distutils.command import build_clib as dst_build_clib
-from distutils.command import install_data as dst_install_data
-from distutils.command import install_lib as dst_install_lib
-from distutils.util import byte_compile
 from itertools import chain
 from textwrap import dedent
 
 from setuptools import setup
+from setuptools._distutils import log
+from setuptools._distutils.command import build_clib as dst_build_clib
+from setuptools._distutils.command import install_data as dst_install_data
+from setuptools._distutils.command import install_lib as dst_install_lib
+from setuptools._distutils.util import byte_compile
 from snakeoil.dist import distutils_extensions as pkgdist
 
 pkgdist_setup, pkgdist_cmds = pkgdist.setup()
