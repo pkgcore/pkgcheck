@@ -1,4 +1,5 @@
 import itertools
+import subprocess
 
 from pkgcore.ebuild.atom import atom
 from pkgcore.restrictions import packages, values
@@ -27,6 +28,15 @@ CHECK_EXCLUDE = frozenset(['virtual/pypy', 'virtual/pypy3'])
 
 IUSE_PREFIX = 'python_targets_'
 IUSE_PREFIX_S = 'python_single_target_'
+
+
+def python_impls():
+    # `python-exec2c` can be relied upon because every Python target
+    # for dev-lang/python-exec is enabled via package.use.force
+    out = subprocess.check_output(['python-exec2c', '--list-implementations'])
+    for x in out.decode().split():
+        if x.startswith("python"):  # filter out pypy3
+            yield x.replace(".", "_")
 
 
 def get_python_eclass(pkg):
@@ -275,27 +285,16 @@ class PythonCompatCheck(Check):
     def __init__(self, *args):
         super().__init__(*args)
         repo = self.options.target_repo
-        # sorter for python targets leveraging USE_EXPAND flag ordering from repo
+        # sorter for python targets leveraging USE_EXPAND flag ordering
         self.sorter = repo.use_expand_sorter('python_targets')
 
-        # determine available PYTHON_TARGET use flags
-        targets = []
-        for target, _desc in repo.config.use_expand_desc.get(IUSE_PREFIX[:-1], ()):
-            if target[len(IUSE_PREFIX):].startswith('python'):
-                targets.append(target[len(IUSE_PREFIX):])
-        multi_targets = tuple(sorted(targets, key=self.sorter))
-
-        # determine available PYTHON_SINGLE_TARGET use flags
-        targets = []
-        for target, _desc in repo.config.use_expand_desc.get(IUSE_PREFIX_S[:-1], ()):
-            if target[len(IUSE_PREFIX_S):].startswith('python'):
-                targets.append(target[len(IUSE_PREFIX_S):])
-        single_targets = tuple(sorted(targets, key=self.sorter))
+        # determine available PYTHON_TARGET and PYTHON_SINGLE_TARGET use flags
+        targets = tuple(sorted(python_impls(), key=self.sorter))
 
         self.params = {
-            'python-r1': (multi_targets, IUSE_PREFIX, None),
-            'python-single-r1': (single_targets, (IUSE_PREFIX, IUSE_PREFIX_S), None),
-            'python-any-r1': (multi_targets, (IUSE_PREFIX, IUSE_PREFIX_S), ('depend', 'bdepend')),
+            'python-r1': (targets, IUSE_PREFIX, None),
+            'python-single-r1': (targets, (IUSE_PREFIX, IUSE_PREFIX_S), None),
+            'python-any-r1': (targets, (IUSE_PREFIX, IUSE_PREFIX_S), ('depend', 'bdepend')),
         }
 
     def python_deps(self, deps, prefix):
