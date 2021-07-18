@@ -7,6 +7,7 @@ import pickle
 import shutil
 from collections import UserDict
 from dataclasses import dataclass
+from hashlib import blake2b
 from operator import attrgetter
 
 from snakeoil import klass
@@ -68,10 +69,14 @@ class CachedAddon(Addon):
         raise NotImplementedError(self.update_cache)
 
     def cache_file(self, repo):
-        """Return the cache file for a given repository."""
-        return pjoin(
-            self.options.cache_dir, 'repos',
-            repo.repo_id.lstrip(os.sep), self.cache.file)
+        """Return the cache file for a given repository.
+
+        A unique token using the repo's location is used so separate repos
+        using the same identifier don't use the same cache file.
+        """
+        token = blake2b(repo.location.encode()).hexdigest()[:10]
+        dirname = f'{repo.repo_id.lstrip(os.sep)}-{token}'
+        return pjoin(self.options.cache_dir, 'repos', dirname, self.cache.file)
 
     def load_cache(self, path, fallback=None):
         cache = fallback

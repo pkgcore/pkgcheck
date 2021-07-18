@@ -32,7 +32,7 @@ class TestPkgcheckCache:
             out, err = capsys.readouterr()
             assert not err
             out = out.strip().splitlines()
-            assert out[-1] == 'standalone'
+            assert out[-1].startswith('standalone-')
             assert excinfo.value.code == 0
 
         # pretend to remove it
