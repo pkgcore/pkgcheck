@@ -461,7 +461,7 @@ class GitAddon(caches.CachedAddon):
         return False
 
     @staticmethod
-    def _get_commit_hash(path, commit='origin/HEAD'):
+    def _get_commit_hash(path, commit):
         """Retrieve a git repo's commit hash for a specific commit object."""
         try:
             p = subprocess.run(
@@ -471,6 +471,30 @@ class GitAddon(caches.CachedAddon):
         except subprocess.CalledProcessError:
             raise GitError(f'failed retrieving commit hash for git repo: {path!r}')
         return p.stdout.strip()
+
+    @staticmethod
+    def _get_current_branch(path, commit='HEAD'):
+        """Retrieve a git repo's current branch for a specific commit object."""
+        try:
+            p = subprocess.run(
+                ['git', 'rev-parse', '--abbrev-ref', commit],
+                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                cwd=path, check=True, encoding='utf8')
+        except subprocess.CalledProcessError:
+            raise GitError(f'failed retrieving branch for git repo: {path!r}')
+        return p.stdout.strip()
+
+    @staticmethod
+    def _get_default_branch(path):
+        """Retrieve a git repo's default branch used with origin remote."""
+        try:
+            p = subprocess.run(
+                ['git', 'symbolic-ref', 'refs/remotes/origin/HEAD'],
+                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                cwd=path, check=True, encoding='utf8')
+        except subprocess.CalledProcessError:
+            raise GitError(f'failed retrieving branch for git repo: {path!r}')
+        return p.stdout.strip().split('/')[-1]
 
     @staticmethod
     def pkg_history(repo, commit_range, data=None, local=False, verbosity=-1):
@@ -498,7 +522,15 @@ class GitAddon(caches.CachedAddon):
         """Update related cache and push updates to disk."""
         for repo in self.options.target_repo.trees:
             try:
-                commit = self._get_commit_hash(repo.location)
+                branch = self._get_current_branch(repo.location)
+                default_branch = self._get_default_branch(repo.location)
+                # skip cache usage when not running on the default branch
+                if branch != default_branch:
+                    logger.debug(
+                        'skipping %s git repo cache update on '
+                        'non-default branch %r', repo, branch)
+                    continue
+                commit = self._get_commit_hash(repo.location, 'origin/HEAD')
             except GitError:
                 continue
 
@@ -518,6 +550,7 @@ class GitAddon(caches.CachedAddon):
                 else:
                     data = git_cache.data
                     commit_range = f'{git_cache.commit}..origin/HEAD'
+
                 try:
                     self.pkg_history(
                         repo, commit_range, data=data,
@@ -549,8 +582,8 @@ class GitAddon(caches.CachedAddon):
         data = {}
 
         try:
-            origin = self._get_commit_hash(target_repo.location)
-            head = self._get_commit_hash(target_repo.location, commit='HEAD')
+            origin = self._get_commit_hash(target_repo.location, 'origin/HEAD')
+            head = self._get_commit_hash(target_repo.location, 'HEAD')
             if origin != head:
                 data = self.pkg_history(target_repo, 'origin/HEAD..HEAD', local=True)
         except GitError as e:
@@ -564,8 +597,8 @@ class GitAddon(caches.CachedAddon):
         commits = ()
 
         try:
-            origin = self._get_commit_hash(target_repo.location)
-            head = self._get_commit_hash(target_repo.location, commit='HEAD')
+            origin = self._get_commit_hash(target_repo.location, 'origin/HEAD')
+            head = self._get_commit_hash(target_repo.location, 'HEAD')
             if origin != head:
                 commits = GitRepoCommits(target_repo.location, 'origin/HEAD..HEAD')
         except GitError as e:
