@@ -33,6 +33,10 @@ from ..log import logger
 from . import caches
 
 
+# ignore global user and system git config
+NO_CONFIG_ENV = ImmutableDict({'GIT_CONFIG_GLOBAL': '', 'GIT_CONFIG_SYSTEM': ''})
+
+
 @dataclass(frozen=True, eq=False)
 class GitCommit:
     """Git commit objects."""
@@ -82,7 +86,7 @@ class GitLog:
         self._running = False
         self.proc = subprocess.Popen(
             cmd, cwd=path,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=NO_CONFIG_ENV)
 
     def __iter__(self):
         return self
