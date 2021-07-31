@@ -252,6 +252,19 @@ class BannedEapi(_EapiResult, results.Error):
     _type = 'banned'
 
 
+class StableKeywordsOnTestingEapi(results.VersionResult, results.Error):
+    """Package has stable keywords on EAPI marked as testing-only."""
+
+    def __init__(self, eapi, keywords, **kwargs):
+        super().__init__(**kwargs)
+        self.eapi = str(eapi)
+        self.keywords = tuple(keywords)
+
+    @property
+    def desc(self):
+        return f"stable keywords ({' '.join(self.keywords)}) on testing EAPI {self.eapi}"
+
+
 class UnsupportedEclassEapi(results.VersionResult, results.Warning):
     """Ebuild inherits an eclass with outdated @SUPPORTED_EAPIS."""
 
@@ -268,7 +281,8 @@ class UnsupportedEclassEapi(results.VersionResult, results.Warning):
 class EapiCheck(Check):
     """Scan for packages with banned or deprecated EAPIs."""
 
-    known_results = frozenset([DeprecatedEapi, BannedEapi, UnsupportedEclassEapi])
+    known_results = frozenset([DeprecatedEapi, BannedEapi, UnsupportedEclassEapi,
+                               StableKeywordsOnTestingEapi])
     required_addons = (addons.eclass.EclassAddon,)
 
     def __init__(self, *args, eclass_addon):
@@ -281,6 +295,11 @@ class EapiCheck(Check):
             yield BannedEapi(pkg.eapi, pkg=pkg)
         elif eapi_str in self.options.target_repo.config.eapis_deprecated:
             yield DeprecatedEapi(pkg.eapi, pkg=pkg)
+
+        if eapi_str in self.options.target_repo.config.eapis_testing:
+            stable_keywords_gen = (k for k in pkg.keywords if not k.startswith(('~', '-')))
+            if stable_keywords := sorted(stable_keywords_gen):
+                yield StableKeywordsOnTestingEapi(pkg.eapi, stable_keywords, pkg=pkg)
 
         for eclass in pkg.inherit:
             if eclass_obj := self.eclass_cache.get(eclass):
