@@ -3,6 +3,17 @@ Release Notes
 =============
 
 ----------------------------
+pkgcheck 0.10.4 (2021-08-04)
+----------------------------
+
+- Ignore global user and system git config (#336).
+
+- Skip git cache usage when not running on the default branch (#335).
+
+- Use location-based unique IDs for cache dirs in order to force separate repos
+  with the name ID to use different caches (#321).
+
+----------------------------
 pkgcheck 0.10.3 (2021-06-30)
 ----------------------------
 
