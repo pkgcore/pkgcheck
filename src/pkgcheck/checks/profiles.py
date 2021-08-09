@@ -302,6 +302,33 @@ class LaggingProfileEapi(results.ProfilesResult, results.Warning):
         )
 
 
+class _ProfileEapiResult(results.ProfilesResult):
+    """Generic profile EAPI result."""
+
+    _type = None
+
+    def __init__(self, profile, eapi):
+        super().__init__()
+        self.profile = profile
+        self.eapi = str(eapi)
+
+    @property
+    def desc(self):
+        return f"{self.profile!r} profile is using {self._type} EAPI {self.eapi}"
+
+
+class BannedProfileEapi(_ProfileEapiResult, results.Error):
+    """Profile has an EAPI that is banned in the repository."""
+
+    _type = 'banned'
+
+
+class DeprecatedProfileEapi(_ProfileEapiResult, results.Warning):
+    """Profile has an EAPI that is deprecated in the repository."""
+
+    _type = 'deprecated'
+
+
 class UnknownCategoryDirs(results.ProfilesResult, results.Warning):
     """Category directories that aren't listed in a repo's categories.
 
@@ -359,7 +386,7 @@ class RepoProfilesCheck(RepoCheck):
     known_results = frozenset([
         ArchesWithoutProfiles, UnusedProfileDirs, NonexistentProfilePath,
         UnknownCategoryDirs, NonexistentCategories, LaggingProfileEapi,
-        ProfileError, ProfileWarning,
+        ProfileError, ProfileWarning, BannedProfileEapi, DeprecatedProfileEapi,
     ])
 
     # known profile status types for the gentoo repo
@@ -401,7 +428,12 @@ class RepoProfilesCheck(RepoCheck):
                 known_status=known_profile_statuses, known_arch=self.arches)
         yield from log_reports
 
+        banned_eapis = self.repo.config.profile_eapis_banned
+        deprecated_eapis = self.repo.config.profile_eapis_deprecated
+
         seen_profile_dirs = set()
+        banned_profile_eapi = set()
+        deprecated_profile_eapi = set()
         lagging_profile_eapi = defaultdict(list)
         for p in profiles:
             try:
@@ -413,11 +445,19 @@ class RepoProfilesCheck(RepoCheck):
                 seen_profile_dirs.update(dir_parents(parent.name))
                 if profile.eapi is not parent.eapi and profile.eapi in parent.eapi.inherits:
                     lagging_profile_eapi[profile].append(parent)
+                if str(parent.eapi) in banned_eapis:
+                    banned_profile_eapi.add(parent)
+                if str(parent.eapi) in deprecated_eapis:
+                    deprecated_profile_eapi.add(parent)
 
         for profile, parents in lagging_profile_eapi.items():
             parent = parents[-1]
             yield LaggingProfileEapi(
                 profile.name, str(profile.eapi), parent.name, str(parent.eapi))
+        for profile in banned_profile_eapi:
+            yield BannedProfileEapi(profile.name, profile.eapi)
+        for profile in deprecated_profile_eapi:
+            yield DeprecatedProfileEapi(profile.name, profile.eapi)
 
         if unused_profile_dirs := available_profile_dirs - seen_profile_dirs:
             yield UnusedProfileDirs(sorted(unused_profile_dirs))

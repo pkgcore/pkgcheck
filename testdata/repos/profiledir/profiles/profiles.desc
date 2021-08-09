@@ -12,3 +12,6 @@ amd64 unknown_use/unknown_stable_use_mask exp
 
 amd64 deprecated/empty exp
 amd64 deprecated/nonexistent exp
+
+amd64 banned-eapi dev
+amd64 deprecated-eapi stable

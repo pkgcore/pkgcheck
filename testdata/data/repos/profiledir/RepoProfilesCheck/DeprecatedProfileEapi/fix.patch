@@ -1,0 +1,6 @@
+diff -Naur profiledir/profiles/deprecated-eapi/eapi fixed/profiles/deprecated-eapi/eapi
+--- profiledir/profiles/deprecated-eapi/eapi	2021-08-09 11:54:37.593718237 +0200
++++ fixed/profiles/deprecated-eapi/eapi	2021-08-09 12:02:23.956527121 +0200
+@@ -1 +1 @@
+-1
++7
