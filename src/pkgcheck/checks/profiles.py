@@ -411,9 +411,7 @@ class RepoProfilesCheck(RepoCheck):
                 continue
             for parent in profile.stack:
                 seen_profile_dirs.update(dir_parents(parent.name))
-                # flag lagging profile EAPIs -- assumes EAPIs are sequentially
-                # numbered which should be the case for the gentoo repo
-                if (self.options.gentoo_repo and str(profile.eapi) < str(parent.eapi)):
+                if profile.eapi is not parent.eapi and profile.eapi in parent.eapi.inherits:
                     lagging_profile_eapi[profile].append(parent)
 
         for profile, parents in lagging_profile_eapi.items():
