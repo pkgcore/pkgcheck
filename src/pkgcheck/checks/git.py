@@ -577,7 +577,7 @@ class GitCommitMessageCheck(GentooRepoCheck, GitCommitsCheck):
                 # check for version in summary for singular, non-revision bumps
                 if len(commit.pkgs['A']) == 1:
                     atom = next(iter(commit.pkgs['A']))
-                    if not atom.revision and not re.match(rf'^.+\b{re.escape(atom.version)}\b.*$', summary):
+                    if not atom.revision and not re.match(rf'^.+\bv?{re.escape(atom.version)}\b.*$', summary):
                         error = f'summary missing package version {atom.version!r}'
                         yield BadCommitSummary(error, summary, commit=commit)
             else:

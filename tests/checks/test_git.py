@@ -300,6 +300,10 @@ class TestGitCommitMessageRepoCheck(ReportTestCase):
         self.child_repo.create_ebuild('cat/pkg-6-r1')
         self.child_git_repo.add_all('cat/pkg: revision bump', signoff=True)
         self.init_check()
+        # allow vVERSION
+        self.child_repo.create_ebuild('cat/pkg-7')
+        self.child_git_repo.add_all('cat/pkg: bump to v7', signoff=True)
+        self.init_check()
         results = self.assertReports(self.check, self.source)
         r1 = git_mod.BadCommitSummary(
             "summary missing 'cat/pkg' package prefix",
