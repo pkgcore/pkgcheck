@@ -3,6 +3,21 @@ Release Notes
 =============
 
 ----------------------------
+pkgcheck 0.10.5 (2021-08-16)
+----------------------------
+
+- EapiCheck: Report using stable keywords on EAPI listed as testing.
+
+- RepoProfilesCheck: Enhance LaggingProfileEapi not to rely on string
+  comparison between EAPI versions, and enable it for repositories
+  other than ::gentoo.
+
+- RepoProfilesCheck: Report profiles using banned or deprecated EAPI.
+
+- GitCommitMessageCheck: Relax the check to allow the version to be
+  preceded by "v".
+
+----------------------------
 pkgcheck 0.10.4 (2021-08-04)
 ----------------------------
 
