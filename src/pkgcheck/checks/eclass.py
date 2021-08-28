@@ -137,11 +137,29 @@ class EclassVariableScope(VariableScope, results.EclassResult):
         return f'{self.eclass}: {super().desc}'
 
 
-class EclassVariableScopeCheck(Check):
+class EclassExportFuncsBeforeInherit(results.EclassResult, results.Error):
+    """EXPORT_FUNCTIONS called before inherit.
+
+    The EXPORT_FUNCTIONS call should occur after all inherits are done in order
+    to guarantee consistent behavior across all package managers.
+    """
+
+    def __init__(self, export_line, inherit_line, **kwargs):
+        super().__init__(**kwargs)
+        self.export_line = export_line
+        self.inherit_line = inherit_line
+
+    @property
+    def desc(self):
+        return (f'{self.eclass}: EXPORT_FUNCTIONS (line {self.export_line}) called before inherit (line '
+                f'{self.inherit_line})')
+
+
+class EclassParseCheck(Check):
     """Scan eclasses variables that are only allowed in certain scopes."""
 
     _source = sources.EclassParseRepoSource
-    known_results = frozenset([EclassVariableScope])
+    known_results = frozenset([EclassVariableScope, EclassExportFuncsBeforeInherit])
     required_addons = (addons.eclass.EclassAddon,)
 
     def __init__(self, *args, eclass_addon):
@@ -174,6 +192,17 @@ class EclassVariableScopeCheck(Check):
                         usage[var_name].add(lineno + 1)
                 for var, lines in sorted(usage.items()):
                     yield EclassVariableScope(var, func_name, lines=sorted(lines), eclass=eclass.name)
+
+        export_funcs_called = None
+        for node in eclass.global_query(bash.cmd_query):
+            call = eclass.node_str(node)
+            if call.startswith('EXPORT_FUNCTIONS'):
+                export_funcs_called = node.start_point[0] + 1
+            elif call.startswith('inherit'):
+                if export_funcs_called is not None:
+                    yield EclassExportFuncsBeforeInherit(export_funcs_called, node.start_point[0] + 1,
+                                                         eclass=eclass.name)
+                    break
 
 
 class EclassBashSyntaxError(results.EclassResult, results.Error):

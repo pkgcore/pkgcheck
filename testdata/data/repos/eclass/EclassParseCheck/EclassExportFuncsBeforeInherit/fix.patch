@@ -1,0 +1,16 @@
+diff -Naur eclass/eclass/export-funcs-before-inherit.eclass fixed/eclass/export-funcs-before-inherit.eclass
+--- eclass/eclass/export-funcs-before-inherit.eclass	2021-08-28 18:40:14.244787360 +0200
++++ fixed/eclass/export-funcs-before-inherit.eclass	2021-08-28 18:51:30.540581468 +0200
+@@ -4,10 +4,10 @@
+ # @SUPPORTED_EAPIS: 0 1 2 3 4 5 6 7
+ # @BLURB: Stub eclass for testing EclassExportFuncsBeforeInherit.
+ 
+-EXPORT_FUNCTIONS src_prepare
+-
+ inherit another-src_prepare
+ 
++EXPORT_FUNCTIONS src_prepare
++
+ # @FUNCTION: export-funcs-before-inherit_src_prepare
+ # @DESCRIPTION:
+ # My src_prepare.
