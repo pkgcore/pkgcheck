@@ -640,6 +640,12 @@ class InheritsCheck(OptionalCheck):
 
         return next(iter(eclass))
 
+    def _get_indirect_recursively(self, eclass, out):
+        for x in self.eclass_cache[eclass].indirect_eclasses:
+            if x not in out:
+                out.add(x)
+                self._get_indirect_recursively(x, out)
+
     def feed(self, pkg):
         conditional = set()
 
@@ -676,8 +682,9 @@ class InheritsCheck(OptionalCheck):
                     used[eclass].append((lineno + 1, name, name))
 
         # allowed indirect inherits
-        indirect_allowed = set().union(*(
-            self.eclass_cache[x].indirect_eclasses for x in pkg.inherit))
+        indirect_allowed = set()
+        for x in pkg.inherit:
+            self._get_indirect_recursively(x, indirect_allowed)
         # missing inherits
         missing = used.keys() - pkg.inherit - indirect_allowed - conditional
 
