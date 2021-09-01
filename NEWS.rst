@@ -2,6 +2,12 @@
 Release Notes
 =============
 
+---------------------------
+pkgcheck 0.10.6 (2021-??-??)
+---------------------------
+
+- add a check for calling EXPORT_FUNCTIONS before further inherits.
+
 ----------------------------
 pkgcheck 0.10.5 (2021-08-16)
 ----------------------------
