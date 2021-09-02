@@ -2,9 +2,15 @@
 Release Notes
 =============
 
----------------------------
+----------------------------
+pkgcheck 0.10.7 (2021-09-03)
+----------------------------
+
+- bump eclass cache version after API changes in pkgcore 0.12.7.
+
+----------------------------
 pkgcheck 0.10.6 (2021-09-02)
----------------------------
+----------------------------
 
 - add a check for calling EXPORT_FUNCTIONS before further inherits.
 
