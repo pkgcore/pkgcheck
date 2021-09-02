@@ -8,6 +8,8 @@ pkgcheck 0.10.6 (2021-??-??)
 
 - add a check for calling EXPORT_FUNCTIONS before further inherits.
 
+- InheritsCheck: process @PROVIDES recursively.
+
 ----------------------------
 pkgcheck 0.10.5 (2021-08-16)
 ----------------------------

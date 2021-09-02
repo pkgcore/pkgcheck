@@ -676,8 +676,7 @@ class InheritsCheck(OptionalCheck):
                     used[eclass].append((lineno + 1, name, name))
 
         # allowed indirect inherits
-        indirect_allowed = set().union(*(
-            self.eclass_cache[x].indirect_eclasses for x in pkg.inherit))
+        indirect_allowed = set().union(*(self.eclass_cache[x].provides for x in pkg.inherit))
         # missing inherits
         missing = used.keys() - pkg.inherit - indirect_allowed - conditional
 

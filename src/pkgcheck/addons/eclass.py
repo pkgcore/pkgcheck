@@ -49,7 +49,7 @@ class EclassAddon(caches.CachedAddon):
     """Eclass support for various checks."""
 
     # cache registry
-    cache = caches.CacheData(type='eclass', file='eclass.pickle', version=2)
+    cache = caches.CacheData(type='eclass', file='eclass.pickle', version=3)
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -115,7 +115,7 @@ class EclassAddon(caches.CachedAddon):
                         except (KeyError, AttributeError):
                             try:
                                 progress(f'{repo} -- updating eclass cache: {name:<{padding}}')
-                                eclasses[name] = EclassDoc(path, sourced=True)
+                                eclasses[name] = EclassDoc(path, sourced=True, repo=repo)
                                 cache_eclasses = True
                             except IOError:
                                 continue
