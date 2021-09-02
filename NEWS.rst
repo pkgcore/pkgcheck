@@ -3,12 +3,14 @@ Release Notes
 =============
 
 ---------------------------
-pkgcheck 0.10.6 (2021-??-??)
+pkgcheck 0.10.6 (2021-09-02)
 ---------------------------
 
 - add a check for calling EXPORT_FUNCTIONS before further inherits.
 
 - InheritsCheck: process @PROVIDES recursively.
+
+- InheritsCheck: enable by default.
 
 ----------------------------
 pkgcheck 0.10.5 (2021-08-16)
