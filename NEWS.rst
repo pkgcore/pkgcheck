@@ -3,6 +3,15 @@ Release Notes
 =============
 
 ----------------------------
+pkgcheck 0.10.8 (2021-09-26)
+----------------------------
+
+- remove tests for profiles with no replacement (no longer reported
+  by pkgcore).
+
+- derive eclass cache version from pkgcore.
+
+----------------------------
 pkgcheck 0.10.7 (2021-09-03)
 ----------------------------
 
