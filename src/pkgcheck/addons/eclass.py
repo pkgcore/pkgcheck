@@ -49,7 +49,8 @@ class EclassAddon(caches.CachedAddon):
     """Eclass support for various checks."""
 
     # cache registry
-    cache = caches.CacheData(type='eclass', file='eclass.pickle', version=5)
+    cache = caches.CacheData(type='eclass', file='eclass.pickle',
+                             version=EclassDoc.ABI_VERSION)
 
     def __init__(self, *args):
         super().__init__(*args)
