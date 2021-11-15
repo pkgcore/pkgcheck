@@ -96,9 +96,9 @@ class AcctCheck(GentooRepoCheck, RepoCheck):
             yield MissingAccountIdentifier(f"ACCT_{expected_var}_ID", pkg=pkg)
             return
 
-        # all UIDs/GIDs must be in <500, with special exception
+        # all UIDs/GIDs must be in <750, with special exception
         # of nobody/nogroup which use 65534/65533
-        if found_id >= 500 and found_id not in extra_allowed_ids:
+        if found_id >= 750 and found_id not in extra_allowed_ids:
             yield OutsideRangeAccountIdentifier(expected_var.lower(), found_id, pkg=pkg)
             return
 

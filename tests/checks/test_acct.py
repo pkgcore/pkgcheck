@@ -63,13 +63,13 @@ ACCT_{self.kind.upper()}_ID="{identifier}"
         self.assertNoReport(check, pkgs)
 
     def test_dynamic_assignment_range(self):
-        pkg = self.mk_pkg('foo', 500)
+        pkg = self.mk_pkg('foo', 750)
         check = self.mk_check((pkg,))
         r = self.assertReport(check, pkg)
         assert isinstance(r, acct.OutsideRangeAccountIdentifier)
         assert r.kind == self.kind
-        assert r.identifier == 500
-        assert f'{self.kind} id 500 outside permitted' in str(r)
+        assert r.identifier == 750
+        assert f'{self.kind} id 750 outside permitted' in str(r)
 
     def test_sysadmin_assignment_range(self):
         pkg = self.mk_pkg('foo', 1000)
