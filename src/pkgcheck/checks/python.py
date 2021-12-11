@@ -280,14 +280,14 @@ class PythonCompatCheck(Check):
 
         # determine available PYTHON_TARGET use flags
         targets = []
-        for target, _desc in repo.config.use_expand_desc.get(IUSE_PREFIX[:-1], ()):
+        for target, _desc in repo.use_expand_desc.get(IUSE_PREFIX[:-1], ()):
             if target[len(IUSE_PREFIX):].startswith('python'):
                 targets.append(target[len(IUSE_PREFIX):])
         multi_targets = tuple(sorted(targets, key=self.sorter))
 
         # determine available PYTHON_SINGLE_TARGET use flags
         targets = []
-        for target, _desc in repo.config.use_expand_desc.get(IUSE_PREFIX_S[:-1], ()):
+        for target, _desc in repo.use_expand_desc.get(IUSE_PREFIX_S[:-1], ()):
             if target[len(IUSE_PREFIX_S):].startswith('python'):
                 targets.append(target[len(IUSE_PREFIX_S):])
         single_targets = tuple(sorted(targets, key=self.sorter))
