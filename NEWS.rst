@@ -6,6 +6,8 @@ Release Notes
 pkgcheck 0.10.9 (2021-12-25)
 ----------------------------
 
+- AcctCheck: extend allowed UID/GID range to <750.
+
 - fix compatibility with setuptools 60.
 
 ----------------------------
