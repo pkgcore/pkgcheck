@@ -1,12 +1,12 @@
-# @ECLASS-VARIABLE: PYTHON_DEPS
+# @ECLASS_VARIABLE: PYTHON_DEPS
 # @DESCRIPTION:
 # See the variable docs in the related gentoo repo eclass.
 
-# @ECLASS-VARIABLE: PYTHON_USEDEP
+# @ECLASS_VARIABLE: PYTHON_USEDEP
 # @DESCRIPTION:
 # See the variable docs in the related gentoo repo eclass.
 
-# @ECLASS-VARIABLE: PYTHON_REQUIRED_USE
+# @ECLASS_VARIABLE: PYTHON_REQUIRED_USE
 # @DESCRIPTION:
 # See the variable docs in the related gentoo repo eclass.
 

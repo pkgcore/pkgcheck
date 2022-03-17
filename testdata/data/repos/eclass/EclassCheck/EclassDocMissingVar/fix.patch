@@ -5,7 +5,7 @@ diff -Naur eclass/eclass/missing-docs.eclass fixed/eclass/missing-docs.eclass
  
  missing-docs_public_func() { :; }
  
-+# @ECLASS-VARIABLE: MISSING_DOCS_PUBLIC_VAR
++# @ECLASS_VARIABLE: MISSING_DOCS_PUBLIC_VAR
 +# @DESCRIPTION:
 +# Public stub variable.
  MISSING_DOCS_PUBLIC_VAR=""
