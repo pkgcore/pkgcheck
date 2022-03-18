@@ -25,6 +25,7 @@ jobs:
             python-version: 3.9
             deps: minimal-deps
             experimental: false
+      fail-fast: false
 
     steps:
     - name: Checkout code
