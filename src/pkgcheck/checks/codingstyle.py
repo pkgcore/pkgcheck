@@ -79,6 +79,64 @@ class BadCommandsCheck(Check):
                     yield DeprecatedEapiCommand(name, line=call, lineno=lineno+1, eapi=pkg.eapi, pkg=pkg)
 
 
+class EbeginMissingEend(results.LineResult, results.Style):
+    """Ebuild calls ebegin in a phase, but is missing a call to eend"""
+
+    def __init__(self, func_name, **kwargs):
+        super().__init__(**kwargs)
+        self.func_name = func_name
+
+    @property
+    def desc(self):
+        return f'Call to ebegin with a missing call to eend ({self.func_name}), on line {self.lineno}'
+
+
+class EendMissingEbegin(results.LineResult, results.Style):
+    """Ebuild calls eend in a phase, but is missing a call to ebegin"""
+
+    def __init__(self, func_name, **kwargs):
+        super().__init__(**kwargs)
+        self.func_name = func_name
+
+    @property
+    def desc(self):
+        return f'Call to eend, but missing preceding call to ebegin ({self.func_name}), on line {self.lineno}'
+
+
+class EbeginEendCheck(Check):
+    """Scan ebuild for ebegin with missing eend, and vice versa"""
+    #probably also should try to see if you can handle scoping at all, or at least use a stack design to handle multiple calls
+
+    _source = sources.EbuildParseRepoSource
+    known_results = frozenset([EbeginMissingEend, EendMissingEbegin])
+
+    def line_details(self, node, pkg):
+        call = pkg.node_str(node)
+        lineno, _ = node.start_point
+        return call, lineno
+
+    def feed(self, pkg):
+        for func_node, _ in bash.func_query.captures(pkg.tree.root_node):
+            func_name = pkg.node_str(func_node.child_by_field_name('name'))
+            ebegun = 0
+            for node, _ in bash.cmd_query.captures(func_node):
+                name = pkg.node_str(node.child_by_field_name('name'))
+                if name == 'ebegin':
+                    if ebegun > 0:
+                        call, lineno = self.line_details(node, pkg)
+                        yield EbeginMissingEend(func_name, line=call, lineno=lineno, pkg=pkg)
+                    ebegun += 1
+                if name == 'eend':
+                    if ebegun == 0:
+                        call, lineno = self.line_details(node, pkg)
+                        yield EendMissingEbegin(func_name, line=call, lineno=lineno, pkg=pkg)
+                    else:
+                        ebegun -= 1
+            if ebegun > 0:
+                call, lineno = self.line_details(node, pkg)
+                yield EbeginMissingEend(func_name, line=call, lineno=lineno, pkg=pkg)
+
+
 class MissingSlash(results.VersionResult, results.Error):
     """Ebuild uses a path variable missing a trailing slash."""
 
