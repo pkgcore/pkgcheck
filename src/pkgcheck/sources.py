@@ -279,7 +279,8 @@ class _SourcePkg(WrappedPkg):
 
     def __init__(self, pkg):
         super().__init__(pkg)
-        self.lines = tuple(pkg.ebuild.text_fileobj())
+        with pkg.ebuild.text_fileobj() as fileobj:
+            self.lines = tuple(fileobj)
 
 
 class EbuildFileRepoSource(RepoSource):
@@ -299,7 +300,8 @@ class EbuildParseRepoSource(RepoSource):
 
     def itermatch(self, restrict, **kwargs):
         for pkg in super().itermatch(restrict, **kwargs):
-            data = pkg.ebuild.bytes_fileobj().read()
+            with pkg.ebuild.bytes_fileobj() as f:
+                data = f.read()
             yield _ParsedPkg(data, pkg=pkg)
 
 
