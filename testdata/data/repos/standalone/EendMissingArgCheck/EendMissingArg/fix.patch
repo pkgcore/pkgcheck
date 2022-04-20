@@ -1,0 +1,9 @@
+--- standalone/EendMissingArgCheck/EendMissingArg/EendMissingArg-0.ebuild	2022-04-20 14:25:14.385255909 +0200
++++ fixed/EendMissingArgCheck/EendMissingArg/EendMissingArg-0.ebuild	2022-04-20 15:42:04.363051160 +0200
+@@ -7,5 +7,5 @@
+ 
+ src_install() {
+ 	ebegin "installing"
+-	eend
++	eend $?
+ }
