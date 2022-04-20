@@ -79,6 +79,29 @@ class BadCommandsCheck(Check):
                     yield DeprecatedEapiCommand(name, line=call, lineno=lineno+1, eapi=pkg.eapi, pkg=pkg)
 
 
+class EendMissingArg(results.LineResult, results.Warning):
+    """Ebuild calls eend with no arguments."""
+
+    @property
+    def desc(self):
+        return f'eend with no arguments, on line {self.lineno}'
+
+
+class EendMissingArgCheck(Check):
+    """Scan an ebuild for calls to eend with no arguments."""
+
+    _source = sources.EbuildParseRepoSource
+    known_results = frozenset([EendMissingArg])
+
+    def feed(self, pkg):
+        for func_node, _ in bash.func_query.captures(pkg.tree.root_node):
+            for node, _ in bash.cmd_query.captures(func_node):
+                line = pkg.node_str(node)
+                if line == "eend":
+                    lineno, _ = node.start_point
+                    yield EendMissingArg(line=line, lineno=lineno+1, pkg=pkg)
+
+
 class MissingSlash(results.VersionResult, results.Error):
     """Ebuild uses a path variable missing a trailing slash."""
 
