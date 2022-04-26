@@ -18,6 +18,8 @@ support in various ways if found on the host system including the following:
 - git_: supports historical queries for git-based repos and commit-related checks
 - requests_: supports various network-related checks
 - Gentoo-PerlMod-Version_: supports Perl package version checks
+- tree-sitter-bash_: used in checks that inspect the CST of ebuilds and
+  eclasess. Must be language version >= 13.
 
 Installing
 ==========
@@ -76,6 +78,7 @@ the following::
 .. _git: https://git-scm.com/
 .. _requests: https://pypi.org/project/requests/
 .. _Gentoo-PerlMod-version: https://metacpan.org/release/Gentoo-PerlMod-Version
+.. _tree-sitter-bash: https://github.com/tree-sitter/tree-sitter-bash
 .. _docs: https://pkgcore.github.io/pkgcheck/man/pkgcheck.html
 
 .. |pypi| image:: https://img.shields.io/pypi/v/pkgcheck.svg
