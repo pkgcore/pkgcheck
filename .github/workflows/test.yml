@@ -16,6 +16,7 @@ jobs:
         python-version: ['3.8', '3.9']
         deps: [newest-deps]
         experimental: [false]
+        tree-sitter-bash: [bundled]
         include:
           - os: ubuntu-latest
             python-version: '3.10.0-alpha - 3.10.0'
@@ -25,6 +26,11 @@ jobs:
             python-version: 3.9
             deps: minimal-deps
             experimental: false
+          - os: ubuntu-latest
+            python-version: 3.9
+            deps: newest-deps
+            experimental: false
+            tree-sitter-bash: system
       fail-fast: false
 
     steps:
@@ -68,6 +74,23 @@ jobs:
       run: |
         sed -i -e 's:~=:==:' requirements/*
         mv requirements/install.txt requirements/dev.txt
+
+    # To use libtree-sitter-bash.so installed on the system, we need to compile
+    # it manually, because ubuntu doesn't yet package (but Gentoo does)
+    - name: Install tree-sitter-bash
+      if: ${{ matrix.os == 'ubuntu-latest' && matrix.tree-sitter-bash == 'system' }}
+      run: |
+        sudo apt install build-essential wget
+        wget https://github.com/tree-sitter/tree-sitter-bash/archive/v0.19.0.tar.gz
+        tar -xvzf v0.19.0.tar.gz
+        pushd tree-sitter-bash-0.19.0/src
+        objects=( parser.o scanner.o )
+        make CFLAGS="-I${PWD}" CXXFLAGS="-I${PWD}" "${objects[@]}"
+        g++ -Wl,-O1 -Wl,--as-needed -shared parser.o scanner.o -Wl,--soname=libtree-sitter-bash.so.13 -o libtree-sitter-bash.so.13
+        ln -s libtree-sitter-bash.so.13 libtree-sitter-bash.so
+        echo "LD_LIBRARY_PATH=${PWD}" >> $GITHUB_ENV
+        echo "USE_SYSTEM_TREE_SITTER_BASH=1" >> $GITHUB_ENV
+        popd
 
     - name: Install python deps
       run: |
