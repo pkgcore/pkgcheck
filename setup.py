@@ -18,15 +18,18 @@ pkgdist_setup, pkgdist_cmds = pkgdist.setup()
 
 DATA_INSTALL_OFFSET = 'share/pkgcheck'
 
+use_system_tree_sitter_bash = bool(os.environ.get('USE_SYSTEM_TREE_SITTER_BASH', False))
+
 
 class install_lib(dst_install_lib.install_lib):
     """Wrapper to install bash parsing library."""
 
     def run(self):
         super().run()
-        build_clib = self.reinitialize_command('build_clib')
-        build_clib.ensure_finalized()
-        self.copy_tree(build_clib.build_clib, self.install_dir)
+        if not use_system_tree_sitter_bash:
+            build_clib = self.reinitialize_command('build_clib')
+            build_clib.ensure_finalized()
+            self.copy_tree(build_clib.build_clib, self.install_dir)
 
 
 class install(pkgdist.install):
@@ -166,10 +169,11 @@ class build_clib(dst_build_clib.build_clib):
     """Build bash parsing library."""
 
     def run(self):
-        with pkgdist.syspath(pkgdist.PACKAGEDIR):
-            from pkgcheck.bash import build_library
-        path = os.path.join(self.build_clib, 'pkgcheck', 'bash', 'lang.so')
-        build_library(path, ['tree-sitter-bash'])
+        if not use_system_tree_sitter_bash:
+            with pkgdist.syspath(pkgdist.PACKAGEDIR):
+                from pkgcheck.bash import build_library
+            path = os.path.join(self.build_clib, 'pkgcheck', 'bash', 'lang.so')
+            build_library(path, ['tree-sitter-bash'])
 
 
 class build(pkgdist.build):
