@@ -106,6 +106,16 @@ jobs:
       run: |
         pytest --cov --cov-report=term --cov-report=xml -v
 
+    - name: Check whether bundled tree-sitter-bash was built
+      if: ${{ matrix.os == 'ubuntu-latest' && matrix.tree-sitter-bash }}
+      run: |
+        if [[ -v USE_SYSTEM_TREE_SITTER_BASH ]]; then EXPECTED=0; else EXPECTED=1; fi
+        if [[ "$(find -name 'lang.so' | wc -l)" -eq 0 ]]; then ACTUAL=0; else ACTUAL=1; fi
+        if [[ $ACTUAL -ne $EXPECTED ]]; then
+          echo "::error Expected ${{ matrix.tree-sitter-bash }} tree-sitter-bash, found the other"
+          false
+        fi
+
     - name: Submit code coverage to codecov
       uses: codecov/codecov-action@v1
       with:
