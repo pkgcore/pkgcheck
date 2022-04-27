@@ -8,9 +8,13 @@ from tree_sitter import Language, Parser
 
 from .. import const
 
-# path to bash parsing library
-lib = pjoin(os.path.dirname(__file__), 'lang.so')
+from ctypes.util import find_library
 
+# path to bash parsing library on the system (may be None)
+syslib = find_library('tree-sitter-bash')
+
+# path to bash parsing library (vendored)
+lib = pjoin(os.path.dirname(__file__), 'lang.so')
 
 # copied from tree-sitter with the following changes:
 # - prefer stdc++ over c++ when linking
@@ -87,13 +91,12 @@ try:
     from .. import _const
 except ImportError:  # pragma: no cover
     # build library when running from git repo or tarball
-    if not os.path.exists(lib) and 'tree-sitter-bash' in os.listdir(const.REPO_PATH):
+    if syslib is None and not os.path.exists(lib) and 'tree-sitter-bash' in os.listdir(const.REPO_PATH):
         bash_src = pjoin(const.REPO_PATH, 'tree-sitter-bash')
         build_library(lib, [bash_src])
 
-
-if os.path.exists(lib):
-    lang = Language(lib, 'bash')
+if syslib is not None or os.path.exists(lib):
+    lang = Language(syslib or lib, 'bash')
     query = partial(lang.query)
     parser = Parser()
     parser.set_language(lang)
