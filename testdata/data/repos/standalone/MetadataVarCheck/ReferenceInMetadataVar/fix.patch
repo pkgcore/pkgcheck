@@ -18,3 +18,36 @@ diff -Naur standalone/MetadataVarCheck/ReferenceInMetadataVar/ReferenceInMetadat
 -ARCH="~x86"
 -KEYWORDS="~amd64 ${ARCH}"
 +KEYWORDS="~amd64 ~x86"
+diff -Naur standalone/MetadataVarCheck/ReferenceInMetadataVar/ReferenceInMetadataVar-2.ebuild fixed/MetadataVarCheck/ReferenceInMetadataVar/ReferenceInMetadataVar-2.ebuild
+--- standalone/MetadataVarCheck/ReferenceInMetadataVar/ReferenceInMetadataVar-2.ebuild	2022-04-30 20:58:05.075839682 +0200
++++ fixed/MetadataVarCheck/ReferenceInMetadataVar/ReferenceInMetadataVar-2.ebuild.fixed	2022-04-30 20:57:57.498766323 +0200
+@@ -1,7 +1,6 @@
+ DESCRIPTION="Ebuild with variable in LICENSE"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+-MY_LICENSE="BSD"
+-LICENSE="${MY_LICENSE}"
++LICENSE="BSD"
+ LICENSE="${LICENSE} BSD"
+ KEYWORDS="~amd64 ~x86"
+diff -Naur standalone/MetadataVarCheck/ReferenceInMetadataVar/ReferenceInMetadataVar-3.ebuild fixed/MetadataVarCheck/ReferenceInMetadataVar/ReferenceInMetadataVar-3.ebuild
+--- standalone/MetadataVarCheck/ReferenceInMetadataVar/ReferenceInMetadataVar-3.ebuild	2022-04-30 20:58:05.075839682 +0200
++++ fixed/MetadataVarCheck/ReferenceInMetadataVar/ReferenceInMetadataVar-3.ebuild.fixed	2022-04-30 20:57:57.498766323 +0200
+@@ -1,7 +1,6 @@
+ DESCRIPTION="Ebuild with variable in LICENSE"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+-MY_LICENSE="BSD"
+ LICENSE=""
+-LICENSE+="${MY_LICENSE}"
++LICENSE+="BSD"
+ KEYWORDS="~amd64 ~x86"
+diff -Naur standalone/MetadataVarCheck/ReferenceInMetadataVar/ReferenceInMetadataVar-4.ebuild fixed/MetadataVarCheck/ReferenceInMetadataVar/ReferenceInMetadataVar-4.ebuild
+--- standalone/MetadataVarCheck/ReferenceInMetadataVar/ReferenceInMetadataVar-4.ebuild	2022-04-30 20:58:05.075839682 +0200
++++ fixed/MetadataVarCheck/ReferenceInMetadataVar/ReferenceInMetadataVar-4.ebuild.fixed	2022-04-30 20:57:57.498766323 +0200
+@@ -2,5 +2,4 @@
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+-LICENSE="${LICENSE} ${LICENSE/B/B}"
+ KEYWORDS="~amd64 ~x86"

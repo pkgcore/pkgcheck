@@ -1,2 +1,5 @@
 {"__class__": "ReferenceInMetadataVar", "category": "MetadataVarCheck", "package": "ReferenceInMetadataVar", "version": "0", "variable": "HOMEPAGE", "refs": ["${PN}"]}
 {"__class__": "ReferenceInMetadataVar", "category": "MetadataVarCheck", "package": "ReferenceInMetadataVar", "version": "1", "variable": "KEYWORDS", "refs": ["${ARCH}"]}
+{"__class__": "ReferenceInMetadataVar", "category": "MetadataVarCheck", "package": "ReferenceInMetadataVar", "version": "2", "variable": "LICENSE", "refs": ["${MY_LICENSE}"]}
+{"__class__": "ReferenceInMetadataVar", "category": "MetadataVarCheck", "package": "ReferenceInMetadataVar", "version": "3", "variable": "LICENSE", "refs": ["${MY_LICENSE}"]}
+{"__class__": "ReferenceInMetadataVar", "category": "MetadataVarCheck", "package": "ReferenceInMetadataVar", "version": "4", "variable": "LICENSE", "refs": ["${LICENSE/B/B}"]}
