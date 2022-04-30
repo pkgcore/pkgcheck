@@ -417,8 +417,13 @@ class ReferenceInMetadataVar(results.VersionResult, results.Style):
     KEYWORDS must be a simple string with literal content as stated by the QA
     policy guide [#]_.
 
+    LICENSE must specify all license names verbatim, without referring to any
+    variables. The only exception is the LICENSE variable itself, ie appending
+    is allowed [#]_.
+
     .. [#] https://devmanual.gentoo.org/ebuild-writing/variables/#ebuild-defined-variables
     .. [#] https://projects.gentoo.org/qa/policy-guide/ebuild-format.html#pg0105
+    .. [#] https://projects.gentoo.org/qa/policy-guide/ebuild-format.html#pg0106
     """
 
     def __init__(self, variable, refs, **kwargs):
@@ -484,6 +489,17 @@ class MetadataVarCheck(Check):
         matches = []
         for var_node, _ in bash.var_query.captures(node):
             matches.append(pkg.node_str(var_node.parent))
+        if matches:
+            yield ReferenceInMetadataVar(var, stable_unique(matches), pkg=pkg)
+
+    @verify_vars('LICENSE')
+    def _raw_text_license(self, var, node, value, pkg):
+        matches = []
+        for var_node, _ in bash.var_query.captures(node):
+            var_str = pkg.node_str(var_node.parent).strip()
+            if var_str in ['$LICENSE', '${LICENSE}']:
+                continue  # LICENSE in LICENSE is ok
+            matches.append(var_str)
         if matches:
             yield ReferenceInMetadataVar(var, stable_unique(matches), pkg=pkg)
 
