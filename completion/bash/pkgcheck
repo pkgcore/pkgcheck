@@ -1,0 +1,199 @@
+# bash completion for pkgcheck
+
+source "/usr/share/bash-completion/helpers/gentoo-common.sh"
+
+_pkgcheck() {
+    local i cmd cur prev words cword split
+    _init_completion || return
+
+    local subcommands=(
+        scan
+        cache
+        replay
+        show
+    )
+
+    local base_options=(
+        -h --help
+        --version
+        --debug
+        -q --quiet
+        -v --verbose
+        --color
+    )
+
+    local boolean_options=(
+        true
+        false
+    )
+
+    _list_repo_atoms() {
+        builtin cd "$(git rev-parse --show-toplevel)" || return
+        if [[ $cur == */* ]]; then
+            compgen -W "$(compgen -G "${cur}*" )" -- "${cur}"
+        else
+            compgen -W "$(compgen -G "${cur}*" -S / )" -- "${cur}"
+        fi
+    }
+
+    if [[ ${prev} == "--color" ]]; then
+        COMPREPLY=($(compgen -W "${boolean_options[*]}" -- "${cur}"))
+        return
+    fi
+    COMPREPLY=($(compgen -W "${base_options[*]}" -- "${cur}"))
+
+    # find the subcommand
+    for ((i = 1; i < ${COMP_CWORD}; i++)); do
+        case "${COMP_WORDS[i]}" in
+            -*) ;;
+            *)
+                cmd=${COMP_WORDS[i]}
+                break
+                ;;
+        esac
+    done
+
+    if [[ ${i} == ${COMP_CWORD} ]]; then
+        COMPREPLY+=($(compgen -W "${subcommands[*]}" -- "${cur}"))
+        return
+    fi
+
+    local subcmd_options
+    case ${cmd} in
+        cache)
+            local subcmd_options=(
+                --cache-dir
+                -l --list
+                -u --update
+                -R --remove
+                -f --force
+                -n --dry-run
+                -t --type
+            )
+
+            case ${prev} in
+                --cache-dir)
+			        COMPREPLY=($(compgen -d -- "${cur}"))
+                    ;;
+                -t | --type)
+                    COMPREPLY=($(compgen -W "$(</usr/share/pkgcheck/caches)" -- "${cur}"))
+                    ;;
+                *)
+                    COMPREPLY+=($(compgen -W "${subcmd_options[*]}" -- "${cur}"))
+                    ;;
+            esac
+            ;;
+        ci)
+            local subcmd_options=(
+                --failures
+            )
+
+            case ${prev} in
+                --failures)
+                    COMPREPLY=($(compgen -f -- "${cur}"))
+                    ;;
+                *)
+                    COMPREPLY+=($(compgen -W "${subcmd_options[*]}" -- "${cur}"))
+                    ;;
+            esac
+            ;;
+        replay)
+            local subcmd_options=(
+                -R --reporter
+                --format
+            )
+
+            case ${prev} in
+                -R | --reporter)
+                    COMPREPLY=($(compgen -W "$(</usr/share/pkgcheck/reporters)" -- "${cur}"))
+                    ;;
+                --format)
+                    COMPREPLY=()
+                    ;;
+                *)
+                    COMPREPLY+=($(compgen -W "${subcmd_options[*]}" -- "${cur}"))
+                    COMPREPLY+=($(compgen -f -- "${cur}"))
+                    ;;
+            esac
+            ;;
+        scan)
+            local subcmd_options=(
+                --config
+                -r --repo
+                -R --reporter
+                -f --filter
+                -j --jobs
+                -t --tasks
+                --cache
+                --cache-dir
+                --exit
+
+                --net
+                -C --checksets
+                -s --scopes
+                -c --checks
+                -k --keywords
+                --timeout
+
+                -a --arches
+
+                --commits
+                -p --profiles
+            )
+
+            case ${prev} in
+                -[jt] | --jobs | --tasks)
+                    COMPREPLY=()
+                    ;;
+                --cache-dir)
+			        COMPREPLY=($(compgen -d -- "${cur}"))
+                    ;;
+                -r | --repo)
+                    COMPREPLY=($(compgen -W "$(_parsereposconf -l)" -- "${cur}"))
+                    ;;
+                -R | --reporter)
+                    COMPREPLY=($(compgen -W "$(</usr/share/pkgcheck/reporters)" -- "${cur}"))
+                    ;;
+                -c | --checks)
+                    COMPREPLY=($(compgen -W "$(</usr/share/pkgcheck/checks)" -- "${cur}"))
+                    ;;
+                -k | --keywords)
+                    COMPREPLY=($(compgen -W "$(</usr/share/pkgcheck/keywords)" -- "${cur}"))
+                    ;;
+                -s | --scopes)
+                    COMPREPLY=($(compgen -W "$(</usr/share/pkgcheck/scopes)" -- "${cur}"))
+                    ;;
+                -f | --filter)
+                    local filter_options=(
+                        latest
+                        no
+                    )
+                    COMPREPLY=($(compgen -W "${filter_options[*]}" -- "${cur}"))
+                    ;;
+                *)
+                    case ${cur} in
+                        -*)
+                            COMPREPLY+=($(compgen -W "${subcmd_options[*]}" -- "${cur}"))
+                            ;;
+                        *)
+                            _pkgname -A "${cur}"
+                            ;;
+                    esac
+                    ;;
+            esac
+            ;;
+        show)
+            local subcmd_options=(
+                -k --keywords
+                -c --checks
+                -s --scopes
+                -r --reporters
+                -C --caches
+            )
+            COMPREPLY+=($(compgen -W "${subcmd_options[*]}" -- "${cur}"))
+            ;;
+    esac
+}
+complete -F _pkgcheck pkgcheck
+
+# vim: set ft=bash sw=4 et sts=4 :

@@ -191,6 +191,7 @@ setup(**dict(
     description='pkgcore-based QA utility for ebuild repos',
     url='https://github.com/pkgcore/pkgcheck',
     data_files=list(chain(
+        pkgdist.data_mapping('share/bash-completion/completions', 'completion/bash'),
         pkgdist.data_mapping('share/zsh/site-functions', 'completion/zsh'),
         pkgdist.data_mapping(DATA_INSTALL_OFFSET, 'data'),
     )),
