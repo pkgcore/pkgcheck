@@ -1,0 +1,2 @@
+{"__class__": "DeprecatedEclassVariable", "category": "EclassUsageCheck", "package": "DeprecatedEclassVariable", "version": "0", "line": "EGO_SUM", "lineno": 10, "variable": "EGO_SUM", "replacement": "use tarball"}
+{"__class__": "DeprecatedEclassVariable", "category": "EclassUsageCheck", "package": "DeprecatedEclassVariable", "version": "0", "line": "_GOMODULE_GOPROXY_BASEURI", "lineno": 11, "variable": "_GOMODULE_GOPROXY_BASEURI", "replacement": null}

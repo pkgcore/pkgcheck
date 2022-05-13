@@ -30,6 +30,40 @@ class DeprecatedEclass(results.VersionResult, results.Warning):
         return f'uses deprecated eclass: {self.eclass} ({replacement})'
 
 
+class DeprecatedEclassVariable(results.LineResult, results.Warning):
+    """Package uses a deprecated variable from an eclass."""
+
+    def __init__(self, variable, replacement, **kwargs):
+        super().__init__(**kwargs)
+        self.variable = variable
+        self.replacement = replacement
+
+    @property
+    def desc(self):
+        if self.replacement is not None:
+            replacement = f'migrate to {self.replacement}'
+        else:
+            replacement = 'no replacement'
+        return f'uses deprecated variable on line {self.lineno}: {self.variable} ({replacement})'
+
+
+class DeprecatedEclassFunction(results.LineResult, results.Warning):
+    """Package uses a deprecated function from an eclass."""
+
+    def __init__(self, function, replacement, **kwargs):
+        super().__init__(**kwargs)
+        self.function = function
+        self.replacement = replacement
+
+    @property
+    def desc(self):
+        if self.replacement is not None:
+            replacement = f'migrate to {self.replacement}'
+        else:
+            replacement = 'no replacement'
+        return f'uses deprecated function on line {self.lineno}: {self.function} ({replacement})'
+
+
 class DuplicateEclassInherit(results.LineResult, results.Style):
     """An ebuild directly inherits the same eclass multiple times.
 
@@ -69,7 +103,8 @@ class EclassUsageCheck(Check):
 
     _source = sources.EbuildParseRepoSource
     known_results = frozenset([
-        DeprecatedEclass, DuplicateEclassInherit, MisplacedEclassVar,
+        DeprecatedEclass, DeprecatedEclassVariable, DeprecatedEclassFunction,
+        DuplicateEclassInherit, MisplacedEclassVar,
     ])
     required_addons = (addons.eclass.EclassAddon,)
 
@@ -98,6 +133,52 @@ class EclassUsageCheck(Check):
                     yield MisplacedEclassVar(
                         var_name, line=line, lineno=lineno+1, pkg=pkg)
 
+    def check_deprecated_variables(self, pkg, inherits):
+        """Check for usage of @DEPRECATED variables or functions."""
+        deprecated = {}
+        # determine if any inherited eclasses have @DEPRECATED variables
+        for eclasses, _ in inherits:
+            for eclass in eclasses:
+                for var in self.eclass_cache[eclass].variables:
+                    if var.deprecated:
+                        deprecated[var.name] = var.deprecated
+
+        # scan for usage of @DEPRECATED variables
+        if deprecated:
+            for node, _ in bash.var_query.captures(pkg.tree.root_node):
+                var_name = pkg.node_str(node)
+                lineno, _colno = node.start_point
+                if var_name in deprecated:
+                    line = pkg.node_str(node)
+                    replacement = deprecated[var_name]
+                    if not isinstance(replacement, str):
+                        replacement = None
+                    yield DeprecatedEclassVariable(
+                        var_name, replacement, line=line, lineno=lineno+1, pkg=pkg)
+
+    def check_deprecated_functions(self, pkg, inherits):
+        """Check for usage of @DEPRECATED variables or functions."""
+        deprecated = {}
+        # determine if any inherited eclasses have @DEPRECATED variables or functions
+        for eclasses, _ in inherits:
+            for eclass in eclasses:
+                for func in self.eclass_cache[eclass].functions:
+                    if func.deprecated:
+                        deprecated[func.name] = func.deprecated
+
+        # scan for usage of @DEPRECATED functions
+        if deprecated:
+            for node, _ in bash.cmd_query.captures(pkg.tree.root_node):
+                func_name = pkg.node_str(node.child_by_field_name('name'))
+                lineno, _colno = node.start_point
+                if func_name in deprecated:
+                    line = pkg.node_str(node)
+                    replacement = deprecated[func_name]
+                    if not isinstance(replacement, str):
+                        replacement = None
+                    yield DeprecatedEclassFunction(
+                        func_name, replacement, line=line, lineno=lineno+1, pkg=pkg)
+
     def feed(self, pkg):
         if pkg.inherit:
             inherited = set()
@@ -121,6 +202,9 @@ class EclassUsageCheck(Check):
 
             # verify @PRE_INHERIT variable placement
             yield from self.check_pre_inherits(pkg, inherits)
+            # verify @DEPRECATED variables or functions
+            yield from self.check_deprecated_variables(pkg, inherits)
+            yield from self.check_deprecated_functions(pkg, inherits)
 
             for eclass in pkg.inherit.intersection(self.deprecated_eclasses):
                 replacement = self.deprecated_eclasses[eclass]
