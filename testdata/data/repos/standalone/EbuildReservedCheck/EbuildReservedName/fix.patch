@@ -1,0 +1,19 @@
+--- standalone/EbuildReservedCheck/EbuildReservedName/EbuildReservedName-0.ebuild
++++ standalone/EbuildReservedCheck/EbuildReservedName/EbuildReservedName-0.ebuild
+@@ -3,12 +3,11 @@ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+
+-prepare_locale() {
+-	DYNAMIC_DEPS="2"
+-	_hook_prepare="3"
++my_prepare_locale() {
++	MY_DYNAMIC_DEPS="2"
++	_my_prepare="3"
+ }
+
+-__ORIG_CC="STUB"
++MY_ORIG_CC="STUB"
+ EBUILD_SUCCESS_HOOKS="true"
+-EBUILD_TEST="1"
+ REBUILD_ALL="1"
