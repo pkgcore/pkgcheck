@@ -3,6 +3,32 @@ Release Notes
 =============
 
 ----------------------------
+pkgcheck 0.10.10 (2022-05-14)
+----------------------------
+
+- Unpin tree-sitter version needed by pkgcheck (Michał Górny)
+
+- Use @ECLASS_VARIABLE instead of @ECLASS-VARIABLE (Ulrich Müller, #360)
+
+- PythonCheckCompat: use ``python_*.desc`` from masters (jan Anja, #334)
+
+- Properly close opened resources (Thomas Bracht Laumann Jespersen, #364)
+
+- Use system's ``libtree-sitter-bash`` if available (Thomas Bracht Laumann
+  Jespersen, #367)
+
+- Add bash completion for pkgcheck (Arthur Zamarin, #371)
+
+- MetadataVarCheck: check LICENSE doesn't contain variables (Thomas Bracht
+  Laumann Jespersen, #368)
+
+- New check EendMissingArgCheck: check all calls to ``eend`` have an argument
+  (Thomas Bracht Laumann Jespersen, #365)
+
+- EclassUsageCheck: new checks for usage of deprecated variables or function
+  (Arthur Zamarin, #375)
+
+----------------------------
 pkgcheck 0.10.9 (2021-12-25)
 ----------------------------
 
