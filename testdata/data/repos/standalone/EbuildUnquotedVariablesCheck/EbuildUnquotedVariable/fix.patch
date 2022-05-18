@@ -1,0 +1,46 @@
+--- standalone/EbuildUnquotedVariablesCheck/EbuildUnquotedVariable/EbuildUnquotedVariable-0.ebuild	2022-05-18 20:27:34.657647175 +0200
++++ fixed/EbuildUnquotedVariablesCheck/EbuildUnquotedVariable/EbuildUnquotedVariable-0.ebuild	2022-05-18 20:50:00.271294657 +0200
+@@ -6,7 +6,7 @@
+ S=${WORKDIR}/${PV} # ok
+ 
+ PATCHES=(
+-	${FILESDIR}/foo.patch # FAIL
++	"${FILESDIR}"/foo.patch # FAIL
+ 	"${FILESDIR}"/foo.patch # ok
+ 	"${FILESDIR}/foo.patch" # ok
+ )
+@@ -16,28 +16,28 @@
+ 		:
+ 	fi
+ 
+-	if has "foo" ${FILESDIR} ; then # FAIL
++	if has "foo" "${FILESDIR}" ; then # FAIL
+ 		:
+ 	fi
+ 
+ 	local t=${T} # ok
+ 	local t=${T}/t # ok
+-	emake CC=${T}; someotherfunc ${T} # FAIL
++	emake CC="${T}"; someotherfunc "${T}" # FAIL
+ 
+-	local var=( TMP=${T} ) # FAIL
++	local var=( TMP="${T}" ) # FAIL
+ 
+ 	cat > "${T}"/somefile <<- EOF || die
+ 		PATH="${EPREFIX}${INSTALLDIR}/bin"
+ 	EOF
+ 	doenvd "${T}"/10stuffit # ok
+ 
+-	echo "InitiatorName=$(${WORKDIR}/usr/sbin/iscsi-iname)" # FAIL
++	echo "InitiatorName=$("${WORKDIR}"/usr/sbin/iscsi-iname)" # FAIL
+ 	einfo ${WORKDIR} # ok
+ 
+ 	if grep -qs '^ *sshd *:' "${WORKDIR}"/etc/hosts.{allow,deny} ; then # ok
+ 		ewarn "something something ${WORKDIR} here"
+ 	fi
+ 
+-	cat < ${T} # FAIL
+-	cat >> ${T} # FAIL
++	cat < "${T}" # FAIL
++	cat >> "${T}" # FAIL
+ }

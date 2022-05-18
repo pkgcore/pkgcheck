@@ -903,3 +903,118 @@ class RedundantDodirCheck(Check):
                         yield RedundantDodir(
                             cmd.group('cmd'), line=dodir.group('call'),
                             lineno=lineno - 1, pkg=pkg)
+
+
+class UnquotedVariable(results.AliasResult, results.Warning):
+    """Variable is used unquoted in a context where it should be quoted.
+
+    Variables like D, FILESDIR, etc may not be safe to use unquoted in some
+    contexts.
+    """
+
+    _name = 'UnquotedVariable'
+
+    def __init__(self, variable, lines, **kwargs):
+        super().__init__(**kwargs)
+        self.variable = variable
+        self.lines = tuple(lines)
+
+    @property
+    def desc(self):
+        s = pluralism(self.lines)
+        lines = ', '.join(map(str, self.lines))
+        return f'unquoted variable {self.variable} on line{s}: {lines} '
+
+
+
+class EbuildUnquotedVariable(UnquotedVariable, results.VersionResult):
+    __doc__ = UnquotedVariable.__doc__
+
+
+class EclassUnquotedVariable(UnquotedVariable, results.EclassResult):
+    __doc__ = UnquotedVariable.__doc__
+
+    @property
+    def desc(self):
+        return f'{self.eclass}: {super().desc}'
+
+
+class _UnquotedVariablesCheck(Check):
+    """Scan files for variables that should be quoted like D, FILESDIR, etc."""
+
+    message_commands = frozenset({
+        "die", "echo", "eerror", "einfo", "elog", "eqawarn", "ewarn"
+    })
+    var_names = frozenset({
+        "D", "DISTDIR", "FILESDIR", "S", "T", "ROOT", "BROOT", "WORKDIR", "ED",
+        "EPREFIX", "EROOT", "SYSROOT", "ESYSROOT", "TMPDIR", "HOME",
+        # variables for multibuild.eclass
+        "BUILD_DIR",
+    })
+
+    node_types_ok = frozenset({
+        # Variable is sitting in a string, all good
+        'string',
+        # Variable is part of a shell assignment, and does not need to be
+        # quoted. for example S=${WORKDIR}/${PN} is ok.
+        'variable_assignment',
+        # Variable sits inside a [[ ]] test command and it's OK not to be quoted
+        'test_command',
+        # Variable is being used in a heredoc body, no need to specify quotes.
+        'heredoc_body',
+    })
+
+    def _var_needs_quotes(self, pkg, node):
+        pnode = node.parent
+        while pnode != node:
+            if pnode.type in self.node_types_ok:
+                return False
+            elif pnode.type == 'command':
+                cmd = pkg.node_str(pnode.child_by_field_name('name'))
+                return cmd not in self.message_commands
+            elif pnode.type in 'array':
+                # Variable is sitting unquoted in an array
+                return True
+            pnode = pnode.parent
+
+        # Default: The variable should be quoted
+        return True
+
+    def _feed(self, item):
+        if item.tree.root_node.has_error:
+            # Do not run this check if the parse tree contains errors, as it
+            # might result in false positives. This check appears to be quite
+            # expensive though...
+            return
+        hits = defaultdict(set)
+        for var_node, _ in bash.var_query.captures(item.tree.root_node):
+            var_name = item.node_str(var_node)
+            if var_name in self.var_names:
+                if self._var_needs_quotes(item, var_node):
+                    lineno, _ = var_node.start_point
+                    hits[var_name].add(lineno+1)
+        for var_name, lines in hits.items():
+            yield var_name, sorted(lines)
+
+
+class EbuildUnquotedVariablesCheck(_UnquotedVariablesCheck):
+    """Scan ebuild for variables that should be quoted like D, FILESDIR, etc."""
+
+    _source = sources.EbuildParseRepoSource
+    known_results = frozenset([EbuildUnquotedVariable])
+
+    def feed(self, pkg):
+        for var_name, lines in self._feed(pkg):
+            yield EbuildUnquotedVariable(var_name, lines, pkg=pkg)
+
+
+class EclassUnquotedVariablesCheck(_UnquotedVariablesCheck):
+    """Scan eclass for variables that should be quoted like D, FILESDIR, etc."""
+
+    _source = sources.EclassParseRepoSource
+    known_results = frozenset([EclassUnquotedVariable])
+    required_addons = (addons.eclass.EclassAddon,)
+
+    def feed(self, eclass):
+        for var_name, lines in self._feed(eclass):
+            yield EclassUnquotedVariable(var_name, lines, eclass=eclass.name)

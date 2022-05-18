@@ -1,0 +1,3 @@
+{"__class__": "EbuildUnquotedVariable", "category": "EbuildUnquotedVariablesCheck", "package": "EbuildUnquotedVariable", "version": "0", "variable": "FILESDIR", "lines": [9, 19]}
+{"__class__": "EbuildUnquotedVariable", "category": "EbuildUnquotedVariablesCheck", "package": "EbuildUnquotedVariable", "version": "0", "variable": "T", "lines": [25, 27, 41, 42]}
+{"__class__": "EbuildUnquotedVariable", "category": "EbuildUnquotedVariablesCheck", "package": "EbuildUnquotedVariable", "version": "0", "variable": "WORKDIR", "lines": [34]}
