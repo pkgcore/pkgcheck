@@ -1,12 +1,14 @@
 import itertools
+import re
 
+from pkgcore import fetch
 from pkgcore.ebuild.atom import atom
 from pkgcore.restrictions import packages, values
 from pkgcore.restrictions.boolean import JustOneRestriction, OrRestriction
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
-from .. import results
+from .. import addons, results
 from . import Check
 
 # NB: distutils-r1 inherits one of the first two
@@ -27,6 +29,8 @@ CHECK_EXCLUDE = frozenset(['virtual/pypy', 'virtual/pypy3'])
 
 IUSE_PREFIX = 'python_targets_'
 IUSE_PREFIX_S = 'python_single_target_'
+
+GITHUB_ARCHIVE_RE = re.compile(r'^https://github.com/[^/]+/[^/]+/archive/')
 
 
 def get_python_eclass(pkg):
@@ -358,3 +362,58 @@ class PythonCompatCheck(Check):
                 return
 
             yield PythonCompatUpdate(sorted(targets, key=self.sorter), pkg=pkg)
+
+
+class PythonGHDistfileSuffix(results.VersionResult, results.Warning):
+    """Distfile from GitHub is missing ".gh.tar.gz" suffix.
+
+    Python ebuilds frequently prefer GitHub archives over sdist tarballs
+    published on PyPI.  Since both kinds of distfiles often have the same name,
+    ".gh.tar.gz" suffix is often used for the former to avoid filename
+    collisions with official archives published upstream.
+    """
+
+    def __init__(self, filename, uri, **kwargs):
+        super().__init__(**kwargs)
+        self.filename = filename
+        self.uri = uri
+
+    @property
+    def desc(self):
+        return (f"GitHub archive {self.filename!r} ({self.uri!r}) is not "
+                "using '.gh.tar.gz' suffix")
+
+
+class PythonGHDistfileSuffixCheck(Check):
+    """Check ebuilds with PyPI remotes for missing ".gh.tar.gz" suffixes.
+    """
+
+    required_addons = (addons.UseAddon,)
+    known_results = frozenset([PythonGHDistfileSuffix])
+
+    def __init__(self, *args, use_addon):
+        super().__init__(*args)
+        self.iuse_filter = use_addon.get_filter('fetchables')
+
+    def feed(self, pkg):
+        # consider only packages with pypi remote-id
+        if not any(u.type == "pypi" for u in pkg.upstreams):
+            return
+
+        # look for GitHub archives
+        fetchables, _ = self.iuse_filter(
+            (fetch.fetchable,), pkg,
+            pkg.generate_fetchables(allow_missing_checksums=True,
+                                    ignore_unknown_mirrors=True,
+                                    skip_default_mirrors=True))
+        for f in fetchables:
+            # skip files that have the correct suffix already
+            if f.filename.endswith(".gh.tar.gz"):
+                continue
+            # skip other files
+            if not f.filename.endswith(".tar.gz"):
+                continue
+            for uri in f.uri:
+                if GITHUB_ARCHIVE_RE.match(uri):
+                    yield PythonGHDistfileSuffix(f.filename, uri, pkg=pkg)
+                    break

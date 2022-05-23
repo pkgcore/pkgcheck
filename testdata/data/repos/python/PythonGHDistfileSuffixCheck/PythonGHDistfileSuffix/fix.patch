@@ -1,0 +1,18 @@
+diff -dupr python/PythonGHDistfileSuffixCheck/PythonGHDistfileSuffix/Manifest fixed/PythonGHDistfileSuffixCheck/PythonGHDistfileSuffix/Manifest
+--- python/PythonGHDistfileSuffixCheck/PythonGHDistfileSuffix/Manifest	2022-05-23 18:46:35.688579562 +0200
++++ fixed/PythonGHDistfileSuffixCheck/PythonGHDistfileSuffix/Manifest	2022-05-23 18:57:56.720475178 +0200
+@@ -1 +1 @@
+-DIST PythonGHDistfileSuffix-1.tar.gz 153310 BLAKE2B b7484cd9bebe912f9c8877c0f09df059130c2dc5c4da8c926f8df7945bcb7b255cdf810ce8cd16a987fb5bca3d1e71c088cd894968641db5dfae1c4c059df836 SHA512 86ff9e1c4b9353b1fbb475c7bb9d2a97bd9db8421ea5190b5a84832930b34cb5b79f8c3da68a5eb8db334f06851ec129cc6611a371e47b7c5de7a615feec5e05
++DIST PythonGHDistfileSuffix-1.gh.tar.gz 153310 BLAKE2B b7484cd9bebe912f9c8877c0f09df059130c2dc5c4da8c926f8df7945bcb7b255cdf810ce8cd16a987fb5bca3d1e71c088cd894968641db5dfae1c4c059df836 SHA512 86ff9e1c4b9353b1fbb475c7bb9d2a97bd9db8421ea5190b5a84832930b34cb5b79f8c3da68a5eb8db334f06851ec129cc6611a371e47b7c5de7a615feec5e05
+diff -dupr python/PythonGHDistfileSuffixCheck/PythonGHDistfileSuffix/PythonGHDistfileSuffix-1.ebuild fixed/PythonGHDistfileSuffixCheck/PythonGHDistfileSuffix/PythonGHDistfileSuffix-1.ebuild
+--- python/PythonGHDistfileSuffixCheck/PythonGHDistfileSuffix/PythonGHDistfileSuffix-1.ebuild	2022-05-23 18:44:44.916287099 +0200
++++ fixed/PythonGHDistfileSuffixCheck/PythonGHDistfileSuffix/PythonGHDistfileSuffix-1.ebuild	2022-05-23 18:58:08.377420003 +0200
+@@ -7,7 +7,7 @@ DESCRIPTION="Ebuild with tarball missing
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SRC_URI="
+ 	https://github.com/examplesoft/example/archive/v${PV}.tar.gz
+-		-> ${P}.tar.gz
++		-> ${P}.gh.tar.gz
+ "
+ 
+ LICENSE="BSD"
