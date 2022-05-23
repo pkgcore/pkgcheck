@@ -208,7 +208,7 @@ class _UrlCheck(NetworkCheck):
             if url.startswith('ftp://'):
                 self._schedule_check(
                     self._ftp_check, attr, url, executor, futures, pkg=pkg)
-            else:
+            elif url.startswith(('https://', 'http://')):
                 self._schedule_check(
                     self._http_check, attr, url, executor, futures, pkg=pkg)
                 http_urls.append((attr, url))
