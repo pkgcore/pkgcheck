@@ -1,0 +1,1 @@
+{"__class__": "DeadUrl", "category": "MetadataUrlCheck", "package": "DeadUrl-ctan", "version": "0", "attr": "metadata.xml: remote-id", "url": "https://ctan.org/pkg/pkgcheck", "message": "404 Client Error: Not Found for url: https://ctan.org/pkg/pkgcheck"}

@@ -1,0 +1,1 @@
+{"__class__": "DeadUrl", "category": "MetadataUrlCheck", "package": "DeadUrl-vim", "version": "0", "attr": "metadata.xml: remote-id", "url": "https://vim.org/scripts/script.php?script_id=12345", "message": "404 Client Error: Not Found for url: https://vim.org/scripts/script.php?script_id=12345"}

@@ -263,14 +263,26 @@ class MetadataUrlCheck(_UrlCheck):
         self.protocols = ('http://', 'https://', 'ftp://')
         self.remote_map = {
             'bitbucket': 'https://bitbucket.org/{project}',
-            'cpan': 'https://metacpan.org/release/{project}',
+            'cpan': 'https://metacpan.org/dist/{project}',
+            # some packages include a lot of modules, and scanning them
+            # DoS-es metacpan
+            # 'cpan-module': 'https://metacpan.org/pod/{project}',
+            'cran': 'https://cran.r-project.org/web/packages/{project}/',
+            'ctan': 'https://ctan.org/pkg/{project}',
+            'gentoo': 'https://gitweb.gentoo.org/{project}.git/',
             'github': 'https://github.com/{project}',
             'gitlab': 'https://gitlab.com/{project}',
             'launchpad': 'https://launchpad.net/{project}',
-            'pear': 'https://pear.php.net/package/{project}',
+            'osdn': 'https://osdn.net/projects/{project}/',
+            'pecl': 'https://pecl.php.net/package/{project}',
             'pypi': 'https://pypi.org/project/{project}/',
             'rubygems': 'https://rubygems.org/gems/{project}',
             'sourceforge': 'https://sourceforge.net/projects/{project}/',
+            'vim': 'https://vim.org/scripts/script.php?script_id={project}',
+            # these platforms return 200 for errors, so no point in trying
+            # 'google-code': 'https://code.google.com/archive/p/{project}/',
+            # 'heptapod': 'https://foss.heptapod.net/{project}',
+            # 'pear': 'https://pear.php.net/package/{project}',
         }
 
     def _get_urls(self, pkg):

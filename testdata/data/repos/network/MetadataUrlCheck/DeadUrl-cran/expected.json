@@ -1,0 +1,1 @@
+{"__class__": "DeadUrl", "category": "MetadataUrlCheck", "package": "DeadUrl-cran", "version": "0", "attr": "metadata.xml: remote-id", "url": "https://cran.r-project.org/web/packages/PkgCheck/", "message": "404 Client Error: Not Found for url: https://cran.r-project.org/web/packages/PkgCheck/"}
