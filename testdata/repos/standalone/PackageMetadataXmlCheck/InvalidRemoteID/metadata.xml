@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>larry@example.org</email>
+	</maintainer>
+	<upstream>
+		<!-- tests for {project}-style remotes -->
+		<remote-id type="cpan">foo</remote-id>
+		<remote-id type="cpan">foo/</remote-id>
+		<remote-id type="cpan">foo/bar</remote-id>
+		<remote-id type="cpan">/bar</remote-id>
+		<remote-id type="cpan">https://example.com/foo</remote-id>
+
+		<remote-id type="cpan-module">foo</remote-id>
+		<remote-id type="cpan-module">foo/</remote-id>
+		<remote-id type="cpan-module">foo/bar</remote-id>
+		<remote-id type="cpan-module">/bar</remote-id>
+		<remote-id type="cpan-module">https://example.com/foo</remote-id>
+
+		<remote-id type="cran">foo</remote-id>
+		<remote-id type="cran">foo/</remote-id>
+		<remote-id type="cran">foo/bar</remote-id>
+		<remote-id type="cran">/bar</remote-id>
+		<remote-id type="cran">https://example.com/foo</remote-id>
+
+		<remote-id type="ctan">foo</remote-id>
+		<remote-id type="ctan">foo/</remote-id>
+		<remote-id type="ctan">foo/bar</remote-id>
+		<remote-id type="ctan">/bar</remote-id>
+		<remote-id type="ctan">https://example.com/foo</remote-id>
+
+		<remote-id type="google-code">foo</remote-id>
+		<remote-id type="google-code">foo/</remote-id>
+		<remote-id type="google-code">foo/bar</remote-id>
+		<remote-id type="google-code">/bar</remote-id>
+		<remote-id type="google-code">https://example.com/foo</remote-id>
+
+		<remote-id type="launchpad">foo</remote-id>
+		<remote-id type="launchpad">foo/</remote-id>
+		<remote-id type="launchpad">foo/bar</remote-id>
+		<remote-id type="launchpad">/bar</remote-id>
+		<remote-id type="launchpad">https://example.com/foo</remote-id>
+
+		<remote-id type="osdn">foo</remote-id>
+		<remote-id type="osdn">foo/</remote-id>
+		<remote-id type="osdn">foo/bar</remote-id>
+		<remote-id type="osdn">/bar</remote-id>
+		<remote-id type="osdn">https://example.com/foo</remote-id>
+
+		<remote-id type="pear">foo</remote-id>
+		<remote-id type="pear">foo/</remote-id>
+		<remote-id type="pear">foo/bar</remote-id>
+		<remote-id type="pear">/bar</remote-id>
+		<remote-id type="pear">https://example.com/foo</remote-id>
+
+		<remote-id type="pecl">foo</remote-id>
+		<remote-id type="pecl">foo/</remote-id>
+		<remote-id type="pecl">foo/bar</remote-id>
+		<remote-id type="pecl">/bar</remote-id>
+		<remote-id type="pecl">https://example.com/foo</remote-id>
+
+		<remote-id type="pypi">foo</remote-id>
+		<remote-id type="pypi">foo/</remote-id>
+		<remote-id type="pypi">foo/bar</remote-id>
+		<remote-id type="pypi">/bar</remote-id>
+		<remote-id type="pypi">https://example.com/foo</remote-id>
+
+		<remote-id type="rubygems">foo</remote-id>
+		<remote-id type="rubygems">foo/</remote-id>
+		<remote-id type="rubygems">foo/bar</remote-id>
+		<remote-id type="rubygems">/bar</remote-id>
+		<remote-id type="rubygems">https://example.com/foo</remote-id>
+
+		<remote-id type="sourceforge">foo</remote-id>
+		<remote-id type="sourceforge">foo/</remote-id>
+		<remote-id type="sourceforge">foo/bar</remote-id>
+		<remote-id type="sourceforge">/bar</remote-id>
+		<remote-id type="sourceforge">https://example.com/foo</remote-id>
+
+		<!-- tests for 2-component remotes -->
+		<remote-id type="bitbucket">foo</remote-id>
+		<remote-id type="bitbucket">foo/</remote-id>
+		<remote-id type="bitbucket">foo/bar</remote-id>
+		<remote-id type="bitbucket">foo/bar/</remote-id>
+		<remote-id type="bitbucket">/bar</remote-id>
+		<remote-id type="bitbucket">foo/bar/baz</remote-id>
+		<remote-id type="bitbucket">/bar/baz</remote-id>
+		<remote-id type="bitbucket">foo//baz</remote-id>
+		<remote-id type="bitbucket">https://example.com/foo/bar</remote-id>
+
+		<remote-id type="github">foo</remote-id>
+		<remote-id type="github">foo/</remote-id>
+		<remote-id type="github">foo/bar</remote-id>
+		<remote-id type="github">foo/bar/</remote-id>
+		<remote-id type="github">/bar</remote-id>
+		<remote-id type="github">foo/bar/baz</remote-id>
+		<remote-id type="github">/bar/baz</remote-id>
+		<remote-id type="github">foo//baz</remote-id>
+		<remote-id type="github">https://example.com/foo/bar</remote-id>
+
+		<!-- tests for 2+-component remotes -->
+		<remote-id type="gentoo">foo</remote-id>
+		<remote-id type="gentoo">foo/</remote-id>
+		<remote-id type="gentoo">foo/bar</remote-id>
+		<remote-id type="gentoo">foo/bar/</remote-id>
+		<remote-id type="gentoo">/bar</remote-id>
+		<remote-id type="gentoo">foo/bar/baz</remote-id>
+		<remote-id type="gentoo">foo/bar/baz/</remote-id>
+		<remote-id type="gentoo">/bar/baz</remote-id>
+		<remote-id type="gentoo">foo//baz</remote-id>
+		<remote-id type="gentoo">foo/bar/baz/fjord</remote-id>
+		<remote-id type="gentoo">/bar/baz/fjord</remote-id>
+		<remote-id type="gentoo">foo//baz/fjord</remote-id>
+		<remote-id type="gentoo">https://example.com/foo/bar</remote-id>
+
+		<remote-id type="gitlab">foo</remote-id>
+		<remote-id type="gitlab">foo/</remote-id>
+		<remote-id type="gitlab">foo/bar</remote-id>
+		<remote-id type="gitlab">foo/bar/</remote-id>
+		<remote-id type="gitlab">/bar</remote-id>
+		<remote-id type="gitlab">foo/bar/baz</remote-id>
+		<remote-id type="gitlab">foo/bar/baz/</remote-id>
+		<remote-id type="gitlab">/bar/baz</remote-id>
+		<remote-id type="gitlab">foo//baz</remote-id>
+		<remote-id type="gitlab">foo/bar/baz/fjord</remote-id>
+		<remote-id type="gitlab">/bar/baz/fjord</remote-id>
+		<remote-id type="gitlab">foo//baz/fjord</remote-id>
+		<remote-id type="gitlab">https://example.com/foo/bar</remote-id>
+
+		<remote-id type="heptapod">foo</remote-id>
+		<remote-id type="heptapod">foo/</remote-id>
+		<remote-id type="heptapod">foo/bar</remote-id>
+		<remote-id type="heptapod">foo/bar/</remote-id>
+		<remote-id type="heptapod">/bar</remote-id>
+		<remote-id type="heptapod">foo/bar/baz</remote-id>
+		<remote-id type="heptapod">foo/bar/baz/</remote-id>
+		<remote-id type="heptapod">/bar/baz</remote-id>
+		<remote-id type="heptapod">foo//baz</remote-id>
+		<remote-id type="heptapod">foo/bar/baz/fjord</remote-id>
+		<remote-id type="heptapod">/bar/baz/fjord</remote-id>
+		<remote-id type="heptapod">foo//baz/fjord</remote-id>
+		<remote-id type="heptapod">https://example.com/foo/bar</remote-id>
+
+		<!-- tests for special cases -->
+		<remote-id type="gentoo">proj/portage.git</remote-id>
+		<remote-id type="launchpad">lp:ubuntu</remote-id>
+
+		<!-- tests for CPEs -->
+		<remote-id type="cpe">/a:foo:bar</remote-id>
+		<remote-id type="cpe">cpe:a:foo:bar</remote-id>
+		<remote-id type="cpe">cpe:/a:foo:bar</remote-id>
+		<remote-id type="cpe">cpe:/z:foo:bar</remote-id>
+		<remote-id type="cpe">cpe:/a:foo</remote-id>
+		<remote-id type="cpe">cpe:/a:foo:*</remote-id>
+		<remote-id type="cpe">cpe:/a::bar</remote-id>
+
+		<!-- tests for vim identifiers (a positive decimal number) -->
+		<remote-id type="vim">0</remote-id>
+		<remote-id type="vim">1</remote-id>
+		<remote-id type="vim">12345</remote-id>
+		<remote-id type="vim">0012345</remote-id>
+		<remote-id type="vim">foo</remote-id>
+	</upstream>
+</pkgmetadata>

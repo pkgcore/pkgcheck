@@ -1,10 +1,13 @@
-diff -Naur standalone/PackageMetadataXmlCheck/PkgMetadataXmlEmptyElement/metadata.xml fixed/PackageMetadataXmlCheck/PkgMetadataXmlEmptyElement/metadata.xml
---- standalone/PackageMetadataXmlCheck/PkgMetadataXmlEmptyElement/metadata.xml	2019-08-26 10:39:25.186467609 -0600
-+++ fixed/PackageMetadataXmlCheck/PkgMetadataXmlEmptyElement/metadata.xml	2019-08-26 10:40:59.606093847 -0600
-@@ -4,5 +4,5 @@
+diff -dupr standalone/PackageMetadataXmlCheck/PkgMetadataXmlEmptyElement/metadata.xml fixed/PackageMetadataXmlCheck/PkgMetadataXmlEmptyElement/metadata.xml
+--- standalone/PackageMetadataXmlCheck/PkgMetadataXmlEmptyElement/metadata.xml	2022-05-25 11:59:00.356886298 +0200
++++ fixed/PackageMetadataXmlCheck/PkgMetadataXmlEmptyElement/metadata.xml	2022-05-25 12:00:30.755558418 +0200
+@@ -4,8 +4,5 @@
  	<maintainer type="person">
  		<email>maintainer@random.email</email>
  	</maintainer>
 -	<longdescription></longdescription>
+-	<upstream>
+-		<remote-id type="pypi"></remote-id>
+-	</upstream>
 +	<longdescription>A description that actually exists.</longdescription>
  </pkgmetadata>

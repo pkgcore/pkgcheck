@@ -1,4 +1,5 @@
 import os
+import re
 from difflib import SequenceMatcher
 
 from lxml import etree
@@ -275,6 +276,21 @@ class RedundantLongDescription(results.PackageResult, results.Style):
         return self.msg
 
 
+class InvalidRemoteID(results.PackageResult, results.Warning):
+    """Package's remote-id value incorrect for the specified type."""
+
+    def __init__(self, id_type, id_value, expected, **kwargs):
+        super().__init__(**kwargs)
+        self.id_type = id_type
+        self.id_value = id_value
+        self.expected = expected
+
+    @property
+    def desc(self):
+        return (f"remote-id value {self.id_value!r} invalid for "
+                f"type={self.id_type!r}, expected: {self.expected!r}")
+
+
 class _XmlBaseCheck(Check):
     """Base class for metadata.xml scans."""
 
@@ -401,8 +417,43 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
         PkgMetadataXmlInvalidPkgRef, PkgMetadataXmlInvalidCatRef,
         PkgMetadataXmlIndentation, PkgMetadataXmlEmptyElement, MaintainerNeeded,
         MaintainerWithoutProxy, ProxyWithoutProxied, RedundantLongDescription,
-        NonexistentProjectMaintainer, WrongMaintainerType,
+        NonexistentProjectMaintainer, WrongMaintainerType, InvalidRemoteID,
     ])
+
+    _one_component_validator_re = re.compile(r'^[^/]+$')
+    _two_components_validator_re = re.compile(r'^[^/]+/[^/]+$')
+    _gitlab_validator_re = re.compile(r'^([^/]+/)*[^/]+/[^/]+$')
+
+    remote_id_validators = {
+        # {name}-style remotes
+        'cpan': (_one_component_validator_re, '{project}'),
+        'cpan-module': (_one_component_validator_re, '{module}'),
+        'cran': (_one_component_validator_re, '{project}'),
+        'ctan': (_one_component_validator_re, '{project}'),
+        'google-code': (_one_component_validator_re, '{project}'),
+        'osdn': (_one_component_validator_re, '{project}'),
+        'pear': (_one_component_validator_re, '{project}'),
+        'pecl': (_one_component_validator_re, '{project}'),
+        'pypi': (_one_component_validator_re, '{project}'),
+        'rubygems': (_one_component_validator_re, '{project}'),
+        'sourceforge': (_one_component_validator_re, '{project}'),
+        # {name} with a special check for lp: prefix
+        'launchpad': (re.compile(r'^(?!lp:)[^/]+$'), '{project}'),
+        # {owner}/{name}-style remotes
+        'bitbucket': (_two_components_validator_re, '{username}/{project}'),
+        'github': (_two_components_validator_re, '{username}/{project}'),
+        # gitlab (2+ components)
+        'gitlab': (_gitlab_validator_re, '{username}/[{group}/...]{repo}'),
+        'heptapod': (_gitlab_validator_re, '{username}/[{group}/...]{repo}'),
+        # cpe
+        'cpe': (re.compile(r'^cpe:/[aho]:[^:]+:[^:]+$'),
+                'cpe:/[aho]:{vendor}:{product}'),
+        # 1+ component + no ".git" suffix
+        'gentoo': (re.compile(r'^([^/]+/)*[^/]+(?<!\.git)$'),
+                   '[{group}/...]{repo}'),
+        # a positive decimal number
+        'vim': (re.compile(r'^[1-9]\d*$'), '{script_id}'),
+    }
 
     @staticmethod
     def _maintainer_proxied_key(m):
@@ -466,6 +517,18 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
             elif len(pkg.longdescription) < 100:
                 msg = 'metadata.xml longdescription is too short'
                 yield RedundantLongDescription(msg, pkg=pkg)
+
+    def _check_remote_id(self, pkg, loc, doc):
+        for u in pkg.upstreams:
+            # empty values are already reported as PkgMetadataXmlEmptyElement
+            if not u.name:
+                continue
+            try:
+                validator, expected = self.remote_id_validators[u.type]
+            except KeyError:  # pragma: no cover
+                continue
+            if not validator.match(u.name):
+                yield InvalidRemoteID(u.type, u.name, expected, pkg=pkg)
 
     def _get_xml_location(self, pkg):
         """Return the metadata.xml location for a given package."""

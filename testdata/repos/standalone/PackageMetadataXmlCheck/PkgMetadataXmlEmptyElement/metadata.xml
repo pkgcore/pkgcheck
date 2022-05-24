@@ -5,4 +5,7 @@
 		<email>maintainer@random.email</email>
 	</maintainer>
 	<longdescription></longdescription>
+	<upstream>
+		<remote-id type="pypi"></remote-id>
+	</upstream>
 </pkgmetadata>

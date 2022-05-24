@@ -1,1 +1,2 @@
 {"__class__": "PkgMetadataXmlEmptyElement", "category": "PackageMetadataXmlCheck", "package": "PkgMetadataXmlEmptyElement", "filename": "metadata.xml", "element": "longdescription", "line": 7}
+{"__class__": "PkgMetadataXmlEmptyElement", "category": "PackageMetadataXmlCheck", "package": "PkgMetadataXmlEmptyElement", "filename": "metadata.xml", "element": "remote-id", "line": 9}
