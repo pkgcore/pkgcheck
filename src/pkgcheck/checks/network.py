@@ -296,4 +296,4 @@ class MetadataUrlCheck(_UrlCheck):
                         yield f'metadata.xml: {element}', url
 
     def schedule(self, pkgs, *args, **kwargs):
-        super().schedule(pkgs[0], *args, **kwargs)
+        super().schedule(pkgs[-1], *args, **kwargs)
