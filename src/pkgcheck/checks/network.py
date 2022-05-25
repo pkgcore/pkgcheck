@@ -12,7 +12,7 @@ from .. import addons, results, sources
 from . import NetworkCheck
 
 
-class _UrlResult(results.FilteredVersionResult, results.Warning):
+class _UrlResult(results.VersionResult, results.Warning):
     """Generic result for a URL with some type of failed status."""
 
     def __init__(self, attr, url, message, **kwargs):
@@ -42,7 +42,7 @@ class SSLCertificateError(_UrlResult):
         return f'{self.attr}: SSL cert error: {self.message}: {self.url}'
 
 
-class _UpdatedUrlResult(results.FilteredVersionResult, results.Warning):
+class _UpdatedUrlResult(results.VersionResult, results.Warning):
     """Generic result for a URL that should be updated to an alternative."""
 
     message = None
