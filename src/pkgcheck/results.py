@@ -254,10 +254,6 @@ class LineResult(VersionResult):
         return super().__lt__(other, cmp=cmp)
 
 
-class FilteredVersionResult(VersionResult):
-    """Result that will be optionally filtered for old packages by default."""
-
-
 class _LogResult(Result):
     """Message caught from a logger instance."""
 

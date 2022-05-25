@@ -170,9 +170,7 @@ class _KeywordsLazyDict(_LazyDict):
     @klass.jit_attr
     def filter(self):
         """Mapping of default result filters."""
-        from . import results
-        return ImmutableDict({
-            v: 'latest' for v in self.select(results.FilteredVersionResult).values()})
+        return ImmutableDict()
 
 
 class _ChecksLazyDict(_LazyDict):
