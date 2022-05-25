@@ -4,6 +4,7 @@ import os
 from collections import defaultdict, deque
 from collections.abc import Set
 from dataclasses import dataclass
+from itertools import groupby
 from operator import attrgetter
 
 from pkgcore.ebuild.profiles import ProfileError
@@ -57,6 +58,16 @@ class RepoSource(Source):
     def itermatch(self, restrict, sorter=sorted, **kwargs):
         """Yield packages matching the given restriction from the selected source."""
         return self.source.itermatch(restrict, sorter=sorter, **kwargs)
+
+
+class LatestVersionRepoSource(RepoSource):
+    """Repo source that returns only the latest non-VCS and VCS slots"""
+
+    def itermatch(self, *args, **kwargs):
+        for _, pkgs in groupby(super().itermatch(*args, **kwargs),
+                               key=lambda pkg: pkg.slotted_atom):
+            best_by_live = {pkg.live: pkg for pkg in pkgs}
+            yield from sorted(best_by_live.values())
 
 
 class LatestVersionsFilter:

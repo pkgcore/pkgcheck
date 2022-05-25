@@ -98,6 +98,8 @@ class RequestError(_RequestException):
 class _UrlCheck(NetworkCheck):
     """Generic URL verification check requiring network support."""
 
+    _source = sources.LatestVersionRepoSource
+
     known_results = frozenset([
         DeadUrl, RedirectedUrl, HttpsUrlAvailable, SSLCertificateError,
     ])
