@@ -3,6 +3,32 @@ Release Notes
 =============
 
 ----------------------------
+pkgcheck 0.10.11 (2022-05-26)
+----------------------------
+
+- EclassReservedName and EbuildReservedName: new check for usage of function or
+  variable names which are reserved for the package manager by PMS (Arthur
+  Zamarin, #378)
+
+- UrlCheck: skip verification of URLs with an unknown protocol. Such issues are
+  already detected by DeadUrl (Michał Górny, #384)
+
+- PythonGHDistfileSuffix: new check for python packages which contain pypi
+  remote-id and fetch from GitHub should use ``.gh`` suffix for tarballs
+  (Michał Górny, #383)
+
+- MetadataUrlCheck: perform the check for the newest version instead of the
+  oldest (Michał Górny, #390)
+
+- InvalidRemoteID: new check for validity of remote-id in ``metadata.xml``
+  (Michał Górny, #387, #386)
+
+- Network checks: fixed filtering for latest versions (Michał Górny, #392)
+
+- Scan commits: fix ebuild parsing in old repo, fixing most of the checks done
+  by ``--commits`` mode (Arthur Zamarin, #393)
+
+----------------------------
 pkgcheck 0.10.10 (2022-05-14)
 ----------------------------
 
