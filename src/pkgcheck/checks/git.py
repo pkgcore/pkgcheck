@@ -2,7 +2,6 @@
 
 import os
 import re
-import shutil
 import subprocess
 import tarfile
 from collections import defaultdict
@@ -188,8 +187,6 @@ class _RemovalRepo(UnconfiguredTree):
         os.makedirs(pjoin(repo_dir, 'profiles'))
         with open(pjoin(repo_dir, 'profiles', 'repo_name'), 'w') as f:
             f.write('old-repo\n')
-        if os.path.exists(pjoin(repo_dir, 'eclass')):
-            shutil.copytree(pjoin(repo.location, 'eclass'), pjoin(repo_dir, 'eclass'), dirs_exist_ok=True)
         super().__init__(repo_dir)
 
     def __call__(self, pkgs):
@@ -206,6 +203,8 @@ class _RemovalRepo(UnconfiguredTree):
         """Populate the repo with a given sequence of historical packages."""
         pkg = pkgs[0]
         paths = [pjoin(pkg.category, pkg.package)]
+        if os.path.exists(pjoin(self.__parent_repo.location, 'eclass')):
+            paths.append('eclass')
         old_files = subprocess.Popen(
             ['git', 'archive', f'{pkg.commit}~1'] + paths,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE,

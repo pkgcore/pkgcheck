@@ -466,6 +466,22 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         expected = git_mod.DroppedUnstableKeywords(['~amd64'], commit, pkg=CPV('cat/pkg-1'))
         assert r == expected
 
+    def test_dropped_keywords_inherit_eclass(self):
+        # add stable ebuild to parent repo
+        with open(pjoin(self.parent_git_repo.path, 'eclass/make.eclass'), 'w') as f:
+            f.write(':')
+        self.parent_git_repo.add_all('make.eclass: initial commit')
+        self.parent_repo.create_ebuild('cat/pkg-1', keywords=['~amd64'], data="inherit make")
+        self.parent_git_repo.add_all('cat/pkg: version bump to 1')
+        # pull changes and remove it from the child repo
+        self.child_git_repo.run(['git', 'pull', 'origin', 'main'])
+        self.child_git_repo.remove('cat/pkg/pkg-1.ebuild', msg='cat/pkg: remove 1')
+        commit = self.child_git_repo.HEAD
+        self.init_check()
+        r = self.assertReport(self.check, self.source)
+        expected = git_mod.DroppedUnstableKeywords(['~amd64'], commit, pkg=CPV('cat/pkg-1'))
+        assert r == expected
+
     def test_rdepend_change(self):
         # add pkgs to parent repo
         self.parent_repo.create_ebuild('cat/dep1-0')
