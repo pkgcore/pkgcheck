@@ -105,7 +105,7 @@ class _DroppedKeywords(results.PackageResult):
         )
 
 
-class DroppedUnstableKeywords(_DroppedKeywords, results.Warning):
+class DroppedUnstableKeywords(_DroppedKeywords, results.Error):
     """Unstable keywords dropped from package."""
 
     _status = 'unstable'
