@@ -30,7 +30,8 @@ CHECK_EXCLUDE = frozenset(['virtual/pypy', 'virtual/pypy3'])
 IUSE_PREFIX = 'python_targets_'
 IUSE_PREFIX_S = 'python_single_target_'
 
-GITHUB_ARCHIVE_RE = re.compile(r'^https://github.com/[^/]+/[^/]+/archive/')
+GITHUB_ARCHIVE_RE = re.compile(r'^https://github\.com/[^/]+/[^/]+/archive/')
+SNAPSHOT_RE = re.compile(r'[a-fA-F0-9]{40}\.tar\.gz$')
 
 
 def get_python_eclass(pkg):
@@ -412,6 +413,9 @@ class PythonGHDistfileSuffixCheck(Check):
                 continue
             # skip other files
             if not f.filename.endswith(".tar.gz"):
+                continue
+            # skip files with explicit hash-suffix
+            if SNAPSHOT_RE.search(f.filename):
                 continue
             for uri in f.uri:
                 if GITHUB_ARCHIVE_RE.match(uri):
