@@ -467,3 +467,54 @@ class PythonGHDistfileSuffixCheck(Check):
                 if GITHUB_ARCHIVE_RE.match(uri):
                     yield PythonGHDistfileSuffix(f.filename, uri, pkg=pkg)
                     break
+
+
+class PythonHasVersionUsage(results.VersionResult, results.Style):
+    """Package uses has_version inside ``python_check_deps``.
+
+    Ebuilds which declare the ``python_check_deps`` function (which tests
+    Python implementations for matching dependencies) should use the special
+    ``python_has_version`` function (instead of ``has_version``) for enhanced
+    log output and defaults [#]_.
+
+    .. [#] https://projects.gentoo.org/python/guide/any.html#dependencies
+    """
+
+    def __init__(self, lines, **kwargs):
+        super().__init__(**kwargs)
+        self.lines = tuple(lines)
+
+    @property
+    def desc(self):
+        s = pluralism(self.lines)
+        lines = ', '.join(map(str, self.lines))
+        return f'usage of has_version on line{s}: {lines}, replace with python_has_version'
+
+
+
+class PythonWrongUsageCheck(Check):
+    """TODO: missing docs"""
+
+    _source = sources.EbuildParseRepoSource
+    known_results = frozenset([PythonHasVersionUsage])
+
+    python_has_version_known_flags = frozenset({
+        '-b', '-d', '-r',
+        '--host-root',
+    })
+
+    def check_python_check_deps(self, pkg, func_node):
+        has_version_lines = set()
+        for node, _ in bash.cmd_query.captures(func_node):
+            call_name = pkg.node_str(node.child_by_field_name('name'))
+            if call_name == "has_version":
+                lineno, _ = node.start_point
+                has_version_lines.add(lineno + 1)
+        if has_version_lines:
+            yield PythonHasVersionUsage(lines=sorted(has_version_lines), pkg=pkg)
+
+    def feed(self, pkg):
+        for func_node, _ in bash.func_query.captures(pkg.tree.root_node):
+            func_name = pkg.node_str(func_node.child_by_field_name('name'))
+            if func_name == "python_check_deps":
+                yield from self.check_python_check_deps(pkg, func_node)

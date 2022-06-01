@@ -24,3 +24,5 @@ _python_set_impls() {
 	PYTHON_USEDEP=$(IFS=","; echo "${use[*]}")
 }
 _python_set_impls
+
+python_gen_any_dep() { :; }
