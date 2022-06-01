@@ -32,6 +32,7 @@ IUSE_PREFIX_S = 'python_single_target_'
 
 GITHUB_ARCHIVE_RE = re.compile(r'^https://github\.com/[^/]+/[^/]+/archive/')
 SNAPSHOT_RE = re.compile(r'[a-fA-F0-9]{40}\.tar\.gz$')
+USE_FLAGS_PYTHON_USEDEP = re.compile(r'\[(.+,)?\$\{PYTHON_USEDEP\}(,.+)?\]$')
 
 
 def get_python_eclass(pkg):
@@ -491,12 +492,30 @@ class PythonHasVersionUsage(results.VersionResult, results.Style):
         return f'usage of has_version on line{s}: {lines}, replace with python_has_version'
 
 
+class PythonHasVersionMissingPythonUseDep(results.LineResult, results.Error):
+    """Package calls ``python_has_version`` or ``has_version`` without
+    ``[${PYTHON_USEDEP}]`` suffix.
+
+    All calls  to ``python_has_version`` or ``has_version`` inside
+    ``python_check_deps`` should contain ``[${PYTHON_USEDEP}]`` suffix for the
+    dependency argument [#]_.
+
+    .. [#] https://projects.gentoo.org/python/guide/any.html#dependencies
+    """
+
+    @property
+    def desc(self):
+        return f'line: {self.lineno}: missing [${{PYTHON_USEDEP}}] suffix for argument "{self.line}"'
+
 
 class PythonWrongUsageCheck(Check):
     """TODO: missing docs"""
 
     _source = sources.EbuildParseRepoSource
-    known_results = frozenset([PythonHasVersionUsage])
+    known_results = frozenset({
+        PythonHasVersionUsage,
+        PythonHasVersionMissingPythonUseDep,
+    })
 
     python_has_version_known_flags = frozenset({
         '-b', '-d', '-r',
@@ -510,6 +529,15 @@ class PythonWrongUsageCheck(Check):
             if call_name == "has_version":
                 lineno, _ = node.start_point
                 has_version_lines.add(lineno + 1)
+            if call_name in {"has_version", "python_has_version"}:
+                for arg in node.children[1:]:
+                    if (arg_name := pkg.node_str(arg)) not in self.python_has_version_known_flags:
+                        arg_name = arg_name.strip('"').strip("'")
+                        if not USE_FLAGS_PYTHON_USEDEP.search(arg_name):
+                            lineno, _ = arg.start_point
+                            yield PythonHasVersionMissingPythonUseDep(
+                                lineno=lineno+1, line=arg_name, pkg=pkg)
+
         if has_version_lines:
             yield PythonHasVersionUsage(lines=sorted(has_version_lines), pkg=pkg)
 

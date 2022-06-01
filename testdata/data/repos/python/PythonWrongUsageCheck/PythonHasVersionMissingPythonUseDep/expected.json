@@ -1,0 +1,3 @@
+{"__class__": "PythonHasVersionMissingPythonUseDep", "category": "PythonWrongUsageCheck", "package": "PythonHasVersionMissingPythonUseDep", "version": "0", "line": "dev-python/lxml", "lineno": 25}
+{"__class__": "PythonHasVersionMissingPythonUseDep", "category": "PythonWrongUsageCheck", "package": "PythonHasVersionMissingPythonUseDep", "version": "0", "line": "dev-python/gpep517", "lineno": 26}
+{"__class__": "PythonHasVersionUsage", "category": "PythonWrongUsageCheck", "package": "PythonHasVersionMissingPythonUseDep", "version": "0", "lines": [25]}
