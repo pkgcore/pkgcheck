@@ -48,11 +48,11 @@ class MissingPythonEclass(results.VersionResult, results.Warning):
     """Package depends on Python but does not use the eclasses.
 
     All packages depending on Python are required to use one of the following
-    python eclasses: python-r1, python-single-r1, or python-any-r1. For
-    documentation on choosing the correct eclass, please see the Python project
-    wiki page on eclasses [#]_.
+    python eclasses: ``python-r1``, ``python-single-r1``, or ``python-any-r1``.
+    For documentation on choosing the correct eclass, please see the Gentoo
+    Python Guide page on eclasses [#]_.
 
-    .. [#] https://wiki.gentoo.org/wiki/Project:Python/Eclasses
+    .. [#] https://projects.gentoo.org/python/guide/eclass.html
     """
 
     def __init__(self, eclass, dep_type, dep, **kwargs):
@@ -67,11 +67,11 @@ class MissingPythonEclass(results.VersionResult, results.Warning):
 
 
 class PythonMissingRequiredUse(results.VersionResult, results.Warning):
-    """Package is missing PYTHON_REQUIRED_USE.
+    """Package is missing ``PYTHON_REQUIRED_USE``.
 
-    The python-r1 and python-single-r1 eclasses require the packages to
-    explicitly specify `REQUIRED_USE=${PYTHON_REQUIRED_USE}`. If Python is used
-    conditionally, it can be wrapped in appropriate USE conditionals.
+    The ``python-r1`` and ``python-single-r1`` eclasses require the packages to
+    explicitly specify ``REQUIRED_USE=${PYTHON_REQUIRED_USE}``. If Python is
+    used conditionally, it can be wrapped in appropriate USE conditionals.
     """
 
     @property
@@ -80,11 +80,11 @@ class PythonMissingRequiredUse(results.VersionResult, results.Warning):
 
 
 class PythonMissingDeps(results.VersionResult, results.Warning):
-    """Package is missing PYTHON_DEPS.
+    """Package is missing ``PYTHON_DEPS``.
 
-    The python-r1 and python-single-r1 eclasses require the packages
-    to explicitly reference `${PYTHON_DEPS}` in RDEPEND (and DEPEND,
-    if necessary); python-any-r1 requires it in DEPEND.
+    The ``python-r1`` and ``python-single-r1`` eclasses require the packages
+    to explicitly reference ``${PYTHON_DEPS}`` in ``RDEPEND`` (and ``DEPEND``,
+    if necessary); ``python-any-r1`` requires it in ``DEPEND``.
 
     If Python is used conditionally, the dependency can be wrapped
     in appropriate USE conditionals.
@@ -102,11 +102,11 @@ class PythonMissingDeps(results.VersionResult, results.Warning):
 class PythonRuntimeDepInAnyR1(results.VersionResult, results.Warning):
     """Package depends on Python at runtime but uses any-r1 eclass.
 
-    The python-any-r1 eclass is meant to be used purely for build-time
+    The ``python-any-r1`` eclass is meant to be used purely for build-time
     dependencies on Python. However, this package lists Python as a runtime
     dependency. If this is intentional, the package needs to switch to
-    python-r1 or python-single-r1 eclass, otherwise the runtime dependency
-    should be removed.
+    ``python-r1`` or ``python-single-r1`` eclass, otherwise the runtime
+    dependency should be removed.
     """
 
     def __init__(self, dep_type, dep, **kwargs):
@@ -256,7 +256,7 @@ class PythonCheck(Check):
 
 
 class PythonCompatUpdate(results.VersionResult, results.Info):
-    """PYTHON_COMPAT can be updated to support newer python version(s)."""
+    """``PYTHON_COMPAT`` can be updated to support newer python version(s)."""
 
     def __init__(self, updates, **kwargs):
         super().__init__(**kwargs)
@@ -270,9 +270,10 @@ class PythonCompatUpdate(results.VersionResult, results.Info):
 
 
 class PythonCompatCheck(Check):
-    """Check python ebuilds for possible PYTHON_COMPAT updates.
+    """Check python ebuilds for possible ``PYTHON_COMPAT`` updates.
 
-    Supports ebuilds inheriting python-r1, python-single-r1, and python-any-r1.
+    Supports ebuilds inheriting ``python-r1``, ``python-single-r1``, and
+    ``python-any-r1``.
     """
 
     known_results = frozenset([PythonCompatUpdate])
