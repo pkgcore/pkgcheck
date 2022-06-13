@@ -121,7 +121,9 @@ class UnknownPkgDirEntry(results.PackageResult, results.Warning):
 
 
 class SizeViolation(results.PackageResult, results.Warning):
-    """File in $FILESDIR is too large (current limit is 20KiB)."""
+    """File in $FILESDIR is too large."""
+
+    limit = 20480  # bytes → 20 KiB
 
     def __init__(self, filename, size, **kwargs):
         super().__init__(**kwargs)
@@ -130,7 +132,8 @@ class SizeViolation(results.PackageResult, results.Warning):
 
     @property
     def desc(self):
-        return f'{self.filename!r} exceeds 20KiB in size; {sizeof_fmt(self.size)} total'
+        return (f'{self.filename!r} exceeds {sizeof_fmt(self.limit)} in size; '
+                f'{sizeof_fmt(self.size)} total')
 
 
 class BannedCharacter(results.PackageResult, results.Error):
@@ -252,7 +255,7 @@ class PkgDirCheck(Check):
                         yield EmptyFile(pjoin(base_dir, filename), pkg=pkg)
                     else:
                         files_by_size[file_stat.st_size].append(pjoin(base_dir, filename))
-                        if file_stat.st_size > 20480:
+                        if file_stat.st_size > SizeViolation.limit:
                             yield SizeViolation(
                                 pjoin(base_dir, filename), file_stat.st_size, pkg=pkg)
                     if banned_chars := set(filename) - allowed_filename_chars:
