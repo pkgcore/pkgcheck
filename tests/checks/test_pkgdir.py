@@ -279,13 +279,15 @@ class TestSizeViolation(PkgDirCheckBase):
                 f.seek(size)
                 f.write('\0')
         r = self.assertReports(self.mk_check(), [pkg])
-        assert len(r) == 2
+        assert len(r) == 3
         assert isinstance(r[0], pkgdir.SizeViolation)
         assert isinstance(r[1], pkgdir.SizeViolation)
+        assert isinstance(r[2], pkgdir.TotalSizeViolation)
         assert (
-            tuple(sorted((x.filename, x.size) for x in r)) ==
+            tuple(sorted((x.filename, x.size) for x in r[:2])) ==
             (('files/massive', 1024*100+1), ('files/over', 1024*20+1))
         )
+        assert r[2].size == 1024*(10+20+20+100)+4-1
 
 
 class TestExecutableFile(PkgDirCheckBase):
