@@ -136,6 +136,21 @@ class SizeViolation(results.PackageResult, results.Warning):
                 f'{sizeof_fmt(self.size)} total')
 
 
+class TotalSizeViolation(results.PackageResult, results.Warning):
+    """The total size of $FILESDIR is too large."""
+
+    limit = 51200  # bytes → 50 KiB
+
+    def __init__(self, size, **kwargs):
+        super().__init__(**kwargs)
+        self.size = size
+
+    @property
+    def desc(self):
+        return (f'files/ directory exceeds {sizeof_fmt(self.limit)} in size; '
+                f'{sizeof_fmt(self.size)} total')
+
+
 class BannedCharacter(results.PackageResult, results.Error):
     """File or directory name doesn't abide by GLEP 31 requirements.
 
@@ -178,7 +193,7 @@ class PkgDirCheck(Check):
     required_addons = (addons.git.GitAddon,)
     known_results = frozenset([
         DuplicateFiles, EmptyFile, ExecutableFile, UnknownPkgDirEntry, SizeViolation,
-        BannedCharacter, InvalidUTF8, MismatchedPN, InvalidPN,
+        BannedCharacter, InvalidUTF8, MismatchedPN, InvalidPN, TotalSizeViolation,
     ])
 
     # TODO: put some 'preferred algorithms by purpose' into snakeoil?
@@ -238,6 +253,7 @@ class PkgDirCheck(Check):
 
         files_by_size = defaultdict(list)
         pkg_path_len = len(pkg_path) + 1
+        total_size = 0
         for root, dirs, files in os.walk(pjoin(pkg_path, 'files')):
             # don't visit any ignored directories
             for d in self.ignore_dirs.intersection(dirs):
@@ -255,12 +271,16 @@ class PkgDirCheck(Check):
                         yield EmptyFile(pjoin(base_dir, filename), pkg=pkg)
                     else:
                         files_by_size[file_stat.st_size].append(pjoin(base_dir, filename))
+                        total_size += file_stat.st_size
                         if file_stat.st_size > SizeViolation.limit:
                             yield SizeViolation(
                                 pjoin(base_dir, filename), file_stat.st_size, pkg=pkg)
                     if banned_chars := set(filename) - allowed_filename_chars:
                         yield BannedCharacter(
                             pjoin(base_dir, filename), sorted(banned_chars), pkg=pkg)
+
+        if total_size > TotalSizeViolation.limit:
+            yield TotalSizeViolation(total_size, pkg=pkg)
 
         files_by_digest = defaultdict(list)
         for size, files in files_by_size.items():
