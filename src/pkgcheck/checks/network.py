@@ -280,6 +280,7 @@ class MetadataUrlCheck(_UrlCheck):
             'pypi': 'https://pypi.org/project/{project}/',
             'rubygems': 'https://rubygems.org/gems/{project}',
             'sourceforge': 'https://sourceforge.net/projects/{project}/',
+            'sourcehut': 'https://sr.ht/{project}/',
             'vim': 'https://vim.org/scripts/script.php?script_id={project}',
             # these platforms return 200 for errors, so no point in trying
             # 'google-code': 'https://code.google.com/archive/p/{project}/',
