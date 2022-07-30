@@ -2,6 +2,26 @@
 Release Notes
 =============
 
+
+----------------------------
+pkgcheck 0.10.12 (2022-07-30)
+----------------------------
+
+- UnquotedVariable: new check for problematic unquoted variables in ebuilds and
+  eclasses (Thomas Bracht Laumann Jespersen, #379)
+
+- DroppedUnstableKeywords: set priority to Error (Arthur Zamarin, #397)
+
+- PythonGHDistfileSuffix: exempt commit snapshots from requiring ``.gh`` suffix
+  (Michał Górny, #398)
+
+- SizeViolation: add check for total size of ``files/`` directory and improve
+  texts (Michał Górny, #406)
+
+- MetadataUrlCheck: add sourcehut remote-id (Sam James, #415)
+
+- MetadataUrlCheck: add hackage remote-id (Sam James, #416)
+
 ----------------------------
 pkgcheck 0.10.11 (2022-05-26)
 ----------------------------
