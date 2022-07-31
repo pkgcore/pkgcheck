@@ -303,3 +303,21 @@ class JsonStream(Reporter):
         while True:
             result = (yield)
             self.out.write(json.dumps(result, default=self.to_json))
+
+
+class FlycheckReporter(Reporter):
+    """Simple line reporter done for easier integration with flycheck [#]_ .
+
+    .. [#] https://github.com/flycheck/flycheck
+    """
+
+    priority = -1001
+
+    @coroutine
+    def _process_report(self):
+        while True:
+            result = (yield)
+            file = f'{getattr(result, "package", "")}-{getattr(result, "version", "")}.ebuild'
+            lineno = getattr(result, "lineno", 0)
+            message = f'{getattr(result, "name")}: {getattr(result, "desc")}'
+            self.out.write(f'{file}:{lineno}:{getattr(result, "level")}:{message}')

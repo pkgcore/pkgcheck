@@ -5,7 +5,7 @@ from textwrap import dedent
 
 import pytest
 from pkgcheck import base, reporters
-from pkgcheck.checks import git, metadata, metadata_xml, pkgdir, profiles
+from pkgcheck.checks import codingstyle, git, metadata, metadata_xml, pkgdir, profiles
 from pkgcore.test.misc import FakePkg
 from snakeoil.formatters import PlainTextFormatter
 
@@ -23,6 +23,7 @@ class BaseReporter:
         self.category_result = metadata_xml.CatMissingMetadataXml('metadata.xml', pkg=pkg)
         self.package_result = pkgdir.InvalidPN(('bar', 'baz'), pkg=pkg)
         self.versioned_result = metadata.BadFilename(('0.tar.gz', 'foo.tar.gz'), pkg=pkg)
+        self.line_result = codingstyle.ReadonlyVariable('P', line='P=6', lineno=7, pkg=pkg)
 
     def mk_reporter(self, **kwargs):
         out = PlainTextFormatter(sys.stdout)
@@ -37,6 +38,7 @@ class BaseReporter:
             reporter.report(self.category_result)
             reporter.report(self.package_result)
             reporter.report(self.versioned_result)
+            reporter.report(self.line_result)
         out, err = capsys.readouterr()
         assert not err
         assert out == self.add_report_output
@@ -51,6 +53,7 @@ class TestStrReporter(BaseReporter):
         dev-libs: category is missing metadata.xml
         dev-libs/foo: invalid package names: [ bar, baz ]
         dev-libs/foo-0: bad filenames: [ 0.tar.gz, foo.tar.gz ]
+        dev-libs/foo-0: read-only variable 'P' assigned, line 7: P=6
     """)
 
 
@@ -70,6 +73,7 @@ class TestFancyReporter(BaseReporter):
         dev-libs/foo
           InvalidPN: invalid package names: [ bar, baz ]
           BadFilename: version 0: bad filenames: [ 0.tar.gz, foo.tar.gz ]
+          ReadonlyVariable: version 0: read-only variable 'P' assigned, line 7: P=6
     """)
 
 
@@ -82,6 +86,7 @@ class TestJsonReporter(BaseReporter):
         {"dev-libs": {"_error": {"CatMissingMetadataXml": "category is missing metadata.xml"}}}
         {"dev-libs": {"foo": {"_error": {"InvalidPN": "invalid package names: [ bar, baz ]"}}}}
         {"dev-libs": {"foo": {"0": {"_warning": {"BadFilename": "bad filenames: [ 0.tar.gz, foo.tar.gz ]"}}}}}
+        {"dev-libs": {"foo": {"0": {"_warning": {"ReadonlyVariable": "read-only variable 'P' assigned, line 7: P=6"}}}}}
     """)
 
 
@@ -95,6 +100,7 @@ class TestXmlReporter(BaseReporter):
         <result><category>dev-libs</category><class>CatMissingMetadataXml</class><msg>category is missing metadata.xml</msg></result>
         <result><category>dev-libs</category><package>foo</package><class>InvalidPN</class><msg>invalid package names: [ bar, baz ]</msg></result>
         <result><category>dev-libs</category><package>foo</package><version>0</version><class>BadFilename</class><msg>bad filenames: [ 0.tar.gz, foo.tar.gz ]</msg></result>
+        <result><category>dev-libs</category><package>foo</package><version>0</version><class>ReadonlyVariable</class><msg>read-only variable 'P' assigned, line 7: P=6</msg></result>
         </checks>
     """)
 
@@ -108,6 +114,7 @@ class TestCsvReporter(BaseReporter):
         dev-libs,,,category is missing metadata.xml
         dev-libs,foo,,"invalid package names: [ bar, baz ]"
         dev-libs,foo,0,"bad filenames: [ 0.tar.gz, foo.tar.gz ]"
+        dev-libs,foo,0,"read-only variable 'P' assigned, line 7: P=6"
     """)
 
 
@@ -117,12 +124,12 @@ class TestFormatReporter(BaseReporter):
 
     def test_add_report(self, capsys):
         for format_str, expected in (
-                    ('r', 'r\n' * 5),
-                    ('{category}', 'dev-libs\n' * 3),
-                    ('{category}/{package}', '/\n/\ndev-libs/\n' + 'dev-libs/foo\n' * 2),
-                    ('{category}/{package}-{version}', '/-\n/-\ndev-libs/-\ndev-libs/foo-\ndev-libs/foo-0\n'),
+                    ('r', 'r\n' * 6),
+                    ('{category}', 'dev-libs\n' * 4),
+                    ('{category}/{package}', '/\n/\ndev-libs/\n' + 'dev-libs/foo\n' * 3),
+                    ('{category}/{package}-{version}', '/-\n/-\ndev-libs/-\ndev-libs/foo-\ndev-libs/foo-0\ndev-libs/foo-0\n'),
                     ('{name}',
-                     'InvalidCommitMessage\nProfileWarning\nCatMissingMetadataXml\nInvalidPN\nBadFilename\n'),
+                     'InvalidCommitMessage\nProfileWarning\nCatMissingMetadataXml\nInvalidPN\nBadFilename\nReadonlyVariable\n'),
                     ('{foo}', ''),
                 ):
             self.reporter_cls = partial(reporters.FormatReporter, format_str)
@@ -165,3 +172,16 @@ class TestJsonStream(BaseReporter):
             json_obj = json.dumps(obj)
             with pytest.raises(reporters.DeserializationError, match='unknown result'):
                 next(reporter.from_iter([json_obj]))
+
+
+class TestFlycheckReporter(BaseReporter):
+
+    reporter_cls = reporters.FlycheckReporter
+    add_report_output = dedent("""\
+        -.ebuild:0:style:InvalidCommitMessage: commit 8d86269bb4c7: no commit message
+        -.ebuild:0:warning:ProfileWarning: profile warning
+        -.ebuild:0:error:CatMissingMetadataXml: category is missing metadata.xml
+        foo-.ebuild:0:error:InvalidPN: invalid package names: [ bar, baz ]
+        foo-0.ebuild:0:warning:BadFilename: bad filenames: [ 0.tar.gz, foo.tar.gz ]
+        foo-0.ebuild:7:warning:ReadonlyVariable: read-only variable 'P' assigned, line 7: P=6
+    """)
