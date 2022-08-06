@@ -1,1 +1,2 @@
-{"__class__": "PythonMissingDeps", "category": "PythonCheck", "package": "PythonMissingDeps", "version": "0", "dep_type": "RDEPEND"}
+{"__class__": "PythonMissingDeps", "category": "PythonCheck", "package": "PythonMissingDeps", "version": "0", "dep_type": "RDEPEND", "dep_value": "PYTHON_DEPS"}
+{"__class__": "PythonMissingDeps", "category": "PythonCheck", "package": "PythonMissingDeps", "version": "1", "dep_type": "BDEPEND", "dep_value": "DISTUTILS_DEPS"}

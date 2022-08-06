@@ -8,7 +8,7 @@ from pkgcore.restrictions.boolean import JustOneRestriction, OrRestriction
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
-from .. import addons, results
+from .. import addons, bash, results, sources
 from . import Check
 
 # NB: distutils-r1 inherits one of the first two
@@ -90,13 +90,14 @@ class PythonMissingDeps(results.VersionResult, results.Warning):
     in appropriate USE conditionals.
     """
 
-    def __init__(self, dep_type, **kwargs):
+    def __init__(self, dep_type, dep_value="PYTHON_DEPS", **kwargs):
         super().__init__(**kwargs)
         self.dep_type = dep_type
+        self.dep_value = dep_value
 
     @property
     def desc(self):
-        return f'missing {self.dep_type}="${{PYTHON_DEPS}}"'
+        return f'missing {self.dep_type}="${{{self.dep_value}}}"'
 
 
 class PythonRuntimeDepInAnyR1(results.VersionResult, results.Warning):
@@ -141,6 +142,7 @@ class PythonCheck(Check):
     they don't suffer from common mistakes.
     """
 
+    _source = sources.EbuildParseRepoSource
     known_results = frozenset([
         MissingPythonEclass, PythonMissingRequiredUse,
         PythonMissingDeps, PythonRuntimeDepInAnyR1, PythonEclassError,
@@ -194,6 +196,46 @@ class PythonCheck(Check):
                 return True
         return False
 
+    def check_pep517_depend(self, item):
+        """Check Python ebuilds for missing optional dependencies.
+
+        The problematic case for us is ``DISTUTILS_OPTIONAL`` and
+        ``DISTUTILS_USE_PEP517 != no`` but ``${DISTUTILS_DEPS}`` is not in
+        the ebuild.
+        """
+        has_distutils_optional = None
+        has_distutils_pep517_non_no = None
+
+        # We're not interested in testing fake objects from TestPythonCheck
+        if not isinstance(item, sources._ParsedPkg) or not hasattr(item, 'tree'): # pragma: no cover
+            return True
+
+        for var_node, _ in bash.var_assign_query.captures(item.tree.root_node):
+            var_name = item.node_str(var_node.child_by_field_name('name'))
+
+            if var_name == "DISTUTILS_OPTIONAL":
+                has_distutils_optional = True
+
+            if "DISTUTILS_DEPS" in item.node_str(var_node.parent):
+                # If they're referencing the eclass' dependency variable,
+                # there's nothing for us to do anyway.
+                return True
+
+            if var_name == "DISTUTILS_USE_PEP517" and not has_distutils_pep517_non_no:
+                var_val = item.node_str(var_node.children[-1])
+
+                # For DISTUTILS_USE_PEP517=no, the eclass doesn't
+                # provide ${DISTUTILS_DEPS}.
+                has_distutils_pep517_non_no = (var_val != "no")
+
+            if has_distutils_optional and has_distutils_pep517_non_no:
+                # We always need BDEPEND for these if != no.
+                # We are looking for USE-conditional on appropriate target
+                # flag, with dep on dev-python/gpep517.
+                return "dev-python/gpep517" in iflatten_instance(item.bdepend, atom)
+
+        return True
+
     def feed(self, pkg):
         try:
             eclass = get_python_eclass(pkg)
@@ -234,10 +276,13 @@ class PythonCheck(Check):
                 req_use_args = (flags, IUSE_PREFIX, OrRestriction)
             else:
                 req_use_args = (s_flags, IUSE_PREFIX_S, JustOneRestriction)
+
             if not self.check_required_use(pkg.required_use, *req_use_args):
                 yield PythonMissingRequiredUse(pkg=pkg)
             if not self.check_depend(pkg.rdepend, *(req_use_args[:2])):
                 yield PythonMissingDeps('RDEPEND', pkg=pkg)
+            if 'distutils-r1' in pkg.inherited and not self.check_pep517_depend(pkg):
+                yield PythonMissingDeps("BDEPEND", pkg=pkg, dep_value="DISTUTILS_DEPS")
         else:  # python-any-r1
             for attr in ("rdepend", "pdepend"):
                 for p in iflatten_instance(getattr(pkg, attr), atom):
