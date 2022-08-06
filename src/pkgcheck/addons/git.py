@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from functools import partial
 from itertools import takewhile
+import tempfile
 
 from pathspec import PathSpec
 from pkgcore.ebuild import cpv
@@ -31,10 +32,6 @@ from ..base import PkgcheckUserException
 from ..checks import GitCommitsCheck
 from ..log import logger
 from . import caches
-
-
-# ignore global user and system git config
-NO_CONFIG_ENV = ImmutableDict({'GIT_CONFIG_GLOBAL': '', 'GIT_CONFIG_SYSTEM': ''})
 
 
 @dataclass(frozen=True, eq=False)
@@ -79,14 +76,36 @@ class GitCache(caches.DictCache):
         self.commit = commit
 
 
+class GitConfig:
+    """Manages temporary file which holds git config for disabling
+    safe directory feature of git."""
+
+    def __init__(self):
+        fd, self.path = tempfile.mkstemp()
+        os.write(fd, b'[safe]\n\tdirectory = *\n')
+        os.close(fd)
+
+    @property
+    def config_env(self):
+        # ignore global user and system git config, but disable safe.directory
+        return ImmutableDict({
+            'GIT_CONFIG_GLOBAL': self.path,
+            'GIT_CONFIG_SYSTEM': '',
+        })
+
+    def close(self):
+        os.unlink(self.path)
+
+
 class GitLog:
     """Iterator for decoded `git log` line output."""
 
     def __init__(self, cmd, path):
         self._running = False
+        self.git_config = GitConfig()
         self.proc = subprocess.Popen(
             cmd, cwd=path,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=NO_CONFIG_ENV)
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self.git_config.config_env)
 
     def __iter__(self):
         return self
@@ -101,6 +120,7 @@ class GitLog:
                 error = self.proc.stderr.read().decode().strip()
                 raise GitError(f'failed running git log: {error}')
             self._running = True
+            self.git_config.close()
 
         # EOF has been reached when readline() returns an empty string
         if not line:
