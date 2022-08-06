@@ -7,3 +7,10 @@ diff -Naur python/PythonCheck/PythonMissingDeps/PythonMissingDeps-0.ebuild fixed
  REQUIRED_USE="${PYTHON_REQUIRED_USE}"
 +
 +RDEPEND="${PYTHON_DEPS}"
+--- python/PythonCheck/PythonMissingDeps/PythonMissingDeps-1.ebuild
++++ fixed/PythonCheck/PythonMissingDeps/PythonMissingDeps-1.ebuild
+@@ -15,3 +15,4 @@
+ IUSE="python"
+ 
+ RDEPEND="python? ( ${PYTHON_DEPS} )"
++BDEPEND="python? ( ${DISTUTILS_DEPS} )"
