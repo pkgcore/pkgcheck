@@ -1,4 +1,4 @@
-diff -dupr a/python/PythonWrongUsageCheck/PythonHasVersionMissingPythonUseDep/PythonHasVersionMissingPythonUseDep-0.ebuild b/python/PythonWrongUsageCheck/PythonHasVersionMissingPythonUseDep/PythonHasVersionMissingPythonUseDep-0.ebuild
+diff -dupr a/python/PythonWrongUsageCheck/PythonHasVersionMissingPythonUseDep/PythonHasVersionMissingPythonUseDep-0.ebuild fixed/PythonWrongUsageCheck/PythonHasVersionMissingPythonUseDep/PythonHasVersionMissingPythonUseDep-0.ebuild
 index 24ebb878..48f4ae11 100644
 --- python/PythonWrongUsageCheck/PythonHasVersionMissingPythonUseDep/PythonHasVersionMissingPythonUseDep-0.ebuild
 +++ fixed/PythonWrongUsageCheck/PythonHasVersionMissingPythonUseDep/PythonHasVersionMissingPythonUseDep-0.ebuild

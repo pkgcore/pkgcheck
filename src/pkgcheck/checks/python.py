@@ -1,8 +1,11 @@
+from collections import defaultdict
 import itertools
 import re
 
 from pkgcore import fetch
 from pkgcore.ebuild.atom import atom
+from pkgcore.ebuild.conditionals import DepSet
+from pkgcore.ebuild.errors import DepsetParseError
 from pkgcore.restrictions import packages, values
 from pkgcore.restrictions.boolean import JustOneRestriction, OrRestriction
 from snakeoil.sequences import iflatten_instance
@@ -508,41 +511,167 @@ class PythonHasVersionMissingPythonUseDep(results.LineResult, results.Error):
         return f'line: {self.lineno}: missing [${{PYTHON_USEDEP}}] suffix for argument "{self.line}"'
 
 
+class PythonAnyMismatchedUseHasVersionCheck(results.VersionResult, results.Warning):
+    """Package has mismatch in dependency's use flags between call to
+    ``python_gen_any_dep`` and ``python_has_version``.
+
+    For every dependency used under ``python_gen_any_dep``, the check for a
+    matching python implementation in ``python_has_version`` should match the
+    exact use flags.
+
+    .. [#] https://projects.gentoo.org/python/guide/any.html#dependencies
+    """
+
+    def __init__(self, dep_category, dep_atom, use_flags, location, **kwargs):
+        super().__init__(**kwargs)
+        self.dep_category = dep_category
+        self.dep_atom = dep_atom
+        self.use_flags = tuple(use_flags)
+        self.location = location
+
+    @property
+    def desc(self):
+        s = pluralism(self.use_flags)
+        use_flags = ', '.join(map(str, self.use_flags))
+        return f'{self.dep_category}: mismatch for {self.dep_atom} check use flag{s} [{use_flags}] in {self.location}'
+
+
+class PythonAnyMismatchedDepHasVersionCheck(results.VersionResult, results.Warning):
+    """Package has mismatch in dependencies between call to
+    ``python_gen_any_dep`` and ``python_has_version``.
+
+    For every dependency used under ``python_gen_any_dep``, a matching check
+    for a matching python implementation in ``python_has_version`` should
+    exist.
+
+    .. [#] https://projects.gentoo.org/python/guide/any.html#dependencies
+    """
+
+    def __init__(self, dep_category, dep_atom, use_flags, location, **kwargs):
+        super().__init__(**kwargs)
+        self.dep_category = dep_category
+        self.dep_atom = dep_atom
+        self.use_flags = tuple(use_flags)
+        self.location = location
+
+    @property
+    def desc(self):
+        use_flags = ', '.join(map(str, self.use_flags))
+        return f'{self.dep_category}: missing check for {self.dep_atom}[{use_flags}] in {self.location}'
+
+
 class PythonWrongUsageCheck(Check):
-    """TODO: missing docs"""
+    """Check ebuilds for wrong usage of Python eclasses features.
+
+    This check parses the ebuild and checks for more advanced failures/misuses
+    of API.
+    """
 
     _source = sources.EbuildParseRepoSource
     known_results = frozenset({
         PythonHasVersionUsage,
         PythonHasVersionMissingPythonUseDep,
+        PythonAnyMismatchedUseHasVersionCheck,
+        PythonAnyMismatchedDepHasVersionCheck,
     })
 
-    python_has_version_known_flags = frozenset({
-        '-b', '-d', '-r',
-        '--host-root',
-    })
+    has_version_known_flags = {
+        '-b': 'BDEPEND',
+        '-r': 'RDEPEND',
+        '-d': 'DEPEND',
+        '--host-root': 'BDEPEND',
+    }
 
-    def check_python_check_deps(self, pkg, func_node):
+    has_version_default = {
+        'has_version': 'DEPEND',
+        'python_has_version': 'BDEPEND',
+    }
+
+    @staticmethod
+    def _prepare_deps(deps: str):
+        try:
+            deps_str = deps.strip('\"\'').replace('\\$', '$').replace('${PYTHON_USEDEP}', 'pkgcheck_python_usedep')
+            return iflatten_instance(DepSet.parse(deps_str, atom), atom)
+        except DepsetParseError:
+            # if we are unable to parse that dep's string, skip it
+            return ()
+
+
+    def build_python_gen_any_dep_calls(self, pkg):
+        check_deps = defaultdict(set)
+        for var_node in pkg.global_query(bash.var_assign_query):
+            name = pkg.node_str(var_node.child_by_field_name('name'))
+            if name in {'DEPEND', 'BDEPEND'}:
+                for call_node, _ in bash.cmd_query.captures(var_node):
+                    call_name = pkg.node_str(call_node.child_by_field_name('name'))
+                    if call_name == "python_gen_any_dep" and len(call_node.children) > 1:
+                        check_deps[name].update(self._prepare_deps(
+                            pkg.node_str(call_node.children[1])))
+        return {dep: frozenset(atoms) for dep, atoms in check_deps.items()}
+
+    def report_mismatch_check_deps(self, pkg, python_check_deps, has_version_checked_deps):
+        for dep_type in frozenset(python_check_deps.keys()).union(
+                has_version_checked_deps.keys()):
+            extra = has_version_checked_deps[dep_type] - python_check_deps.get(dep_type, set())
+            missing = python_check_deps.get(dep_type, set()) - has_version_checked_deps[dep_type]
+            for diff, other, location in (
+                (extra, missing, "python_check_deps"),
+                (missing, extra, "python_gen_any_dep"),
+            ):
+                for dep in diff:
+                    dep_atom = str(dep.versioned_atom)
+                    for other_dep in other:
+                        if dep_atom == str(other_dep.versioned_atom):
+                            if diff_flags := set(other_dep.use) - set(dep.use):
+                                yield PythonAnyMismatchedUseHasVersionCheck(pkg=pkg,
+                                    dep_category=dep_type, dep_atom=dep_atom,
+                                    use_flags=diff_flags, location=location)
+                            break
+                    else:
+                        use_flags = {'${PYTHON_USEDEP}'} | set(dep.use) \
+                           - {'pkgcheck_python_usedep'}
+                        yield PythonAnyMismatchedDepHasVersionCheck(pkg=pkg,
+                            dep_category=dep_type, dep_atom=dep_atom,
+                            use_flags=use_flags, location=location)
+
+    @staticmethod
+    def _prepare_dep_type(pkg, dep_type: str) -> str:
+        if dep_type == 'BDEPEND' not in pkg.eapi.dep_keys:
+            return 'DEPEND'
+        return dep_type
+
+    def check_python_check_deps(self, pkg, func_node, python_check_deps):
+        has_version_checked_deps = defaultdict(set)
         has_version_lines = set()
         for node, _ in bash.cmd_query.captures(func_node):
             call_name = pkg.node_str(node.child_by_field_name('name'))
             if call_name == "has_version":
                 lineno, _ = node.start_point
                 has_version_lines.add(lineno + 1)
-            if call_name in {"has_version", "python_has_version"}:
+            if dep_mode := self.has_version_default.get(call_name, None):
+                dep_mode = self._prepare_dep_type(pkg, dep_mode)
                 for arg in node.children[1:]:
-                    if (arg_name := pkg.node_str(arg)) not in self.python_has_version_known_flags:
-                        arg_name = arg_name.strip('"').strip("'")
+                    arg_name = pkg.node_str(arg)
+                    if new_dep_mode := self.has_version_known_flags.get(arg_name, None):
+                        dep_mode = self._prepare_dep_type(pkg, new_dep_mode)
+                    else:
+                        arg_name = arg_name.strip('\"\'')
                         if not USE_FLAGS_PYTHON_USEDEP.search(arg_name):
                             lineno, _ = arg.start_point
                             yield PythonHasVersionMissingPythonUseDep(
                                 lineno=lineno+1, line=arg_name, pkg=pkg)
+                        else:
+                            has_version_checked_deps[dep_mode].update(
+                                self._prepare_deps(arg_name))
 
         if has_version_lines:
             yield PythonHasVersionUsage(lines=sorted(has_version_lines), pkg=pkg)
 
+        yield from self.report_mismatch_check_deps(pkg, python_check_deps, has_version_checked_deps)
+
     def feed(self, pkg):
+        python_check_deps = self.build_python_gen_any_dep_calls(pkg)
         for func_node, _ in bash.func_query.captures(pkg.tree.root_node):
             func_name = pkg.node_str(func_node.child_by_field_name('name'))
             if func_name == "python_check_deps":
-                yield from self.check_python_check_deps(pkg, func_node)
+                yield from self.check_python_check_deps(pkg, func_node, python_check_deps)

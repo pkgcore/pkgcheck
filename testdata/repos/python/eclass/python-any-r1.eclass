@@ -26,3 +26,4 @@ _python_set_impls() {
 _python_set_impls
 
 python_gen_any_dep() { :; }
+python_gen_cond_dep() { :; }
