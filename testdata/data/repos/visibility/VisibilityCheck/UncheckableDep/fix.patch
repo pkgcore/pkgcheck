@@ -1,0 +1,14 @@
+--- standalone/UncheckableDep/UncheckableDep/UncheckableDep-0.ebuild    2022-08-07 03:50:01.594610569 +0100
++++ fixed/UncheckableDep/UncheckableDep/UncheckableDep-0.ebuild 2022-08-07 03:50:03.207956684 +0100
+@@ -15,7 +15,10 @@
+ LLVM_DEPEND="|| ( "
+ for _s in 13 14 15; do
+ 	LLVM_DEPEND+=" ( "
+-	LLVM_DEPEND+=" stub/stable:${_s}[${LLVM_TARGET_USEDEPS// /,}]"
++	for _x in ${ALL_LLVM_TARGETS[@]}; do
++	        LLVM_DEPEND+="
++			${_x}? ( stub/stable:${_s}[${_x}(-)] )"
++	done
+ 	LLVM_DEPEND+=" )"
+ done
+ LLVM_DEPEND+=" ) "
