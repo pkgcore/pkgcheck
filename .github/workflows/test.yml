@@ -23,11 +23,11 @@ jobs:
             deps: newest-deps
             experimental: true
           - os: ubuntu-latest
-            python-version: 3.9
+            python-version: '3.10'
             deps: minimal-deps
             experimental: false
           - os: ubuntu-latest
-            python-version: 3.9
+            python-version: '3.10'
             deps: newest-deps
             experimental: false
             tree-sitter-bash: system
