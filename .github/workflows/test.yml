@@ -18,10 +18,10 @@ jobs:
         experimental: [false]
         tree-sitter-bash: [bundled]
         include:
-          # - os: ubuntu-latest
-          #   python-version: '3.11.0-alpha - 3.11.0'
-          #   deps: newest-deps
-          #   experimental: true
+          - os: ubuntu-latest
+            python-version: '3.11.0-beta - 3.11'
+            deps: newest-deps
+            experimental: true
           - os: ubuntu-latest
             python-version: 3.9
             deps: minimal-deps
