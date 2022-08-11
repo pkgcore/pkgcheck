@@ -77,7 +77,7 @@ class InvalidLicenseHeader(_FileHeaderResult, results.AliasResult, results.Error
 
     The file does not have with a valid license header.
 
-    Ebuilds and eclasses in the Gentoo repository must use:
+    Ebuilds and eclasses in the Gentoo repository must use::
 
         # Distributed under the terms of the GNU General Public License v2
     """

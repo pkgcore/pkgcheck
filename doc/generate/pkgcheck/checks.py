@@ -61,7 +61,7 @@ def main(f=sys.stdout, **kwargs):
                     explanation = '\n'.join(dedent(explanation).strip().split('\n'))
                     out('\n' + explanation)
                 if issubclass(check, GentooRepoCheck):
-                    out(f'\n- Gentoo repo specific')
+                    out(f'\n\n- Gentoo repo specific')
                 known_results = ', '.join(
                     f'`{r.__name__}`_' for r in
                     sorted(check.known_results, key=attrgetter('__name__')))

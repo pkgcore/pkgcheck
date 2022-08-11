@@ -517,7 +517,7 @@ class PythonAnyMismatchedUseHasVersionCheck(results.VersionResult, results.Warni
 
     For every dependency used under ``python_gen_any_dep``, the check for a
     matching python implementation in ``python_has_version`` should match the
-    exact use flags.
+    exact use flags [#]_.
 
     .. [#] https://projects.gentoo.org/python/guide/any.html#dependencies
     """
@@ -542,7 +542,7 @@ class PythonAnyMismatchedDepHasVersionCheck(results.VersionResult, results.Warni
 
     For every dependency used under ``python_gen_any_dep``, a matching check
     for a matching python implementation in ``python_has_version`` should
-    exist.
+    exist [#]_.
 
     .. [#] https://projects.gentoo.org/python/guide/any.html#dependencies
     """
