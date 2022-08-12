@@ -804,6 +804,27 @@ class InvalidIdepend(results.MetadataError, results.VersionResult):
     attr = 'idepend'
 
 
+class MisplacedWeakBlocker(results.Warning, results.VersionResult):
+    """Weak blocker is within a misplaced dependency class.
+
+    Weak blockers control whether we ignore file collisions at the point of
+    merge, so being (exclusively) defined in DEPEND or BDEPEND is wrong.
+
+    Note that in cases where the weak blocker is also defined in RDEPEND, this
+    warning won't be triggered, to give leeway given this is a common ebuild
+    pattern.
+    """
+
+    def __init__(self, attr, atom, **kwargs):
+        super().__init__(**kwargs)
+        self.attr = attr.upper()
+        self.atom = str(atom)
+
+    @property
+    def desc(self):
+        return f'{self.attr}: misplaced weak blocker: {self.atom}'
+
+
 class DependencyCheck(Check):
     """Verify dependency attributes (e.g. RDEPEND)."""
 
@@ -811,7 +832,7 @@ class DependencyCheck(Check):
     known_results = frozenset([
         BadDependency, MissingPackageRevision, MissingUseDepDefault,
         UnstatedIuse, DeprecatedDep, InvalidDepend, InvalidRdepend,
-        InvalidPdepend, InvalidBdepend, InvalidIdepend,
+        InvalidPdepend, InvalidBdepend, InvalidIdepend, MisplacedWeakBlocker,
     ])
 
     def __init__(self, *args, use_addon):
@@ -841,6 +862,8 @@ class DependencyCheck(Check):
 
     def feed(self, pkg):
         deprecated = defaultdict(set)
+
+        weak_blocks = defaultdict(set)
 
         for attr in sorted(x.lower() for x in pkg.eapi.dep_keys):
             try:
@@ -889,6 +912,15 @@ class DependencyCheck(Check):
                         elif atom.slot_operator == '=':
                             yield BadDependency(
                                 attr, atom, '= slot operator used in blocker', pkg=pkg)
+                        elif not atom.blocks_strongly:
+                            weak_blocks[attr].add(atom)
+
+        for attr in ('depend', 'bdepend'):
+            weak_blocks[attr].difference_update(weak_blocks['rdepend'])
+        weak_blocks['idepend'].difference_update(weak_blocks['rdepend'], weak_blocks['depend'])
+        for attr in ('depend', 'bdepend', 'idepend', 'pdepend'):
+            for atom in weak_blocks[attr]:
+                yield MisplacedWeakBlocker(attr, atom, pkg=pkg)
 
         for attr, atoms in deprecated.items():
             yield DeprecatedDep(attr.upper(), map(str, sorted(atoms)), pkg=pkg)

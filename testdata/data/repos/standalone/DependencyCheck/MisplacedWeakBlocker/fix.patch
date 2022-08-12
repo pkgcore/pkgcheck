@@ -1,0 +1,40 @@
+--- standalone/DependencyCheck/MisplacedWeakBlocker/MisplacedWeakBlocker-6.ebuild
++++ fixed/DependencyCheck/MisplacedWeakBlocker/MisplacedWeakBlocker-6.ebuild
+@@ -6,7 +6,7 @@ SLOT="0"
+ LICENSE="BSD"
+
+ BDEPEND="!DependencyCheck/InvalidRdepend"
+-DEPEND="!DependencyCheck/BadDependency"
++DEPEND="!!DependencyCheck/BadDependency"
+ RDEPEND="!DependencyCheck/BadDependency"
+-PDEPEND="!DependencyCheck/BadDependency"
++PDEPEND="!!DependencyCheck/BadDependency"
+ IDEPEND="!DependencyCheck/BadDependency"
+--- standalone/DependencyCheck/MisplacedWeakBlocker/MisplacedWeakBlocker-7.ebuild
++++ fixed/DependencyCheck/MisplacedWeakBlocker/MisplacedWeakBlocker-7.ebuild
+@@ -5,8 +5,8 @@ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+
+-BDEPEND="!DependencyCheck/InvalidRdepend"
+-DEPEND="!DependencyCheck/InvalidRdepend"
++BDEPEND="!!DependencyCheck/InvalidRdepend"
++DEPEND="!!DependencyCheck/InvalidRdepend"
+ RDEPEND="!DependencyCheck/BadDependency"
+-PDEPEND="!DependencyCheck/BadDependency"
++PDEPEND="!!DependencyCheck/BadDependency"
+ IDEPEND="!DependencyCheck/BadDependency"
+--- standalone/DependencyCheck/MisplacedWeakBlocker/MisplacedWeakBlocker-8.ebuild
++++ fixed/DependencyCheck/MisplacedWeakBlocker/MisplacedWeakBlocker-8.ebuild
+@@ -5,8 +5,8 @@ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+
+-BDEPEND="!DependencyCheck/InvalidRdepend"
+-DEPEND="!DependencyCheck/InvalidRdepend"
++BDEPEND="!!DependencyCheck/InvalidRdepend"
++DEPEND="!!DependencyCheck/InvalidRdepend"
+ RDEPEND="!DependencyCheck/BadDependency"
+-PDEPEND="!DependencyCheck/BadDependency"
++PDEPEND="!!DependencyCheck/BadDependency"
+ IDEPEND="!DependencyCheck/BadDependency"

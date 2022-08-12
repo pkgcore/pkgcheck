@@ -866,7 +866,11 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
         self.assertNoReport(chk, mk_pkg())
         self.assertNoReport(chk, mk_pkg('dev-util/foo'))
         self.assertNoReport(chk, mk_pkg("|| ( dev-util/foo ) dev-foo/bugger "))
-        self.assertNoReport(chk, mk_pkg("!dev-util/blah"))
+        if attr == 'RDEPEND':
+            self.assertNoReport(chk, mk_pkg("!dev-util/blah"))
+        else:
+            r = self.assertReport(chk, mk_pkg("!dev-util/blah"))
+            assert isinstance(r, metadata.MisplacedWeakBlocker)
 
         # invalid depset syntax
         r = self.assertReport(chk, mk_pkg("|| ("))
@@ -935,7 +939,11 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
         for use_dep in use_deps:
             # USE flag doesn't exist but has proper default
             self.assertNoReport(chk, mk_pkg(eapi='4', depset=f'dev-libs/bar[{use_dep}]'))
-            self.assertNoReport(chk, mk_pkg(eapi='4', depset=f'!dev-libs/bar[{use_dep}]'))
+            if attr == 'RDEPEND':
+                self.assertNoReport(chk, mk_pkg(eapi='4', depset=f'!dev-libs/bar[{use_dep}]'))
+            else:
+                r = self.assertReport(chk, mk_pkg(eapi='4', depset=f'!dev-libs/bar[{use_dep}]'))
+                assert isinstance(r, metadata.MisplacedWeakBlocker)
 
         # result triggers when all matching pkgs don't have requested USE flag
         for dep in (
@@ -946,9 +954,15 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
                 'dev-libs/bar[-foo]',
                 '|| ( dev-libs/foo[bar] dev-libs/bar[foo] )',
                 '|| ( dev-libs/foo[bar] dev-libs/bar[-foo] )',
-                '!dev-libs/bar[foo?]',
                 ):
             r = self.assertReport(chk, mk_pkg(eapi='4', depset=dep))
+            assert isinstance(r, metadata.MissingUseDepDefault)
+            assert r.pkgs == ('dev-libs/bar-2',)
+            assert r.flag == 'foo'
+            assert "USE flag 'foo' missing" in str(r)
+
+        if attr == 'RDEPEND':
+            r = self.assertReport(chk, mk_pkg(eapi='4', depset='!dev-libs/bar[foo?]'))
             assert isinstance(r, metadata.MissingUseDepDefault)
             assert r.pkgs == ('dev-libs/bar-2',)
             assert r.flag == 'foo'

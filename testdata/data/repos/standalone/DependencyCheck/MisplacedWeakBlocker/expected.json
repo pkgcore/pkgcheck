@@ -1,0 +1,7 @@
+{"__class__": "MisplacedWeakBlocker", "category": "DependencyCheck", "package": "MisplacedWeakBlocker", "version": "6", "attr": "PDEPEND", "atom": "!DependencyCheck/BadDependency"}
+{"__class__": "MisplacedWeakBlocker", "category": "DependencyCheck", "package": "MisplacedWeakBlocker", "version": "7", "attr": "BDEPEND", "atom": "!DependencyCheck/InvalidRdepend"}
+{"__class__": "MisplacedWeakBlocker", "category": "DependencyCheck", "package": "MisplacedWeakBlocker", "version": "7", "attr": "DEPEND", "atom": "!DependencyCheck/InvalidRdepend"}
+{"__class__": "MisplacedWeakBlocker", "category": "DependencyCheck", "package": "MisplacedWeakBlocker", "version": "7", "attr": "PDEPEND", "atom": "!DependencyCheck/BadDependency"}
+{"__class__": "MisplacedWeakBlocker", "category": "DependencyCheck", "package": "MisplacedWeakBlocker", "version": "8", "attr": "BDEPEND", "atom": "!DependencyCheck/InvalidRdepend"}
+{"__class__": "MisplacedWeakBlocker", "category": "DependencyCheck", "package": "MisplacedWeakBlocker", "version": "8", "attr": "DEPEND", "atom": "!DependencyCheck/InvalidRdepend"}
+{"__class__": "MisplacedWeakBlocker", "category": "DependencyCheck", "package": "MisplacedWeakBlocker", "version": "8", "attr": "PDEPEND", "atom": "!DependencyCheck/BadDependency"}
