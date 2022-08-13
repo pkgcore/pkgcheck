@@ -21,11 +21,11 @@ class InvalidCopyright(_FileHeaderResult, results.AliasResult, results.Error):
     """File with invalid copyright.
 
     The file does not start with a valid copyright line. Each ebuild or eclass
-    file must start with a copyright line of the form:
+    file must start with a copyright line of the form::
 
         # Copyright YEARS MAIN-CONTRIBUTOR [OTHER-CONTRIBUTOR]... [and others]
 
-    Files in the Gentoo repository must use:
+    Files in the Gentoo repository must use::
 
         # Copyright YEARS Gentoo Authors
     """

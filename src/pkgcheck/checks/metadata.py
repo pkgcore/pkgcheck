@@ -1,3 +1,4 @@
+import itertools
 import os
 import re
 from collections import defaultdict
@@ -20,7 +21,7 @@ from snakeoil.strings import pluralism
 from .. import addons, results, sources
 from ..addons import UnstatedIuse
 from ..base import LogMap, LogReports
-from . import Check
+from . import Check, GentooRepoCheck
 from .visibility import FakeConfigurable
 
 
@@ -569,9 +570,9 @@ class LocalUseCheck(Check):
                 elif ratio >= 0.75:
                     yield ProbableGlobalUse(flag, pkg=pkg)
             elif '_' in flag:
-                for group in self.use_expand:
+                for group, flags in self.use_expand.items():
                     if flag.startswith(f'{group}_'):
-                        if flag not in self.use_expand[group]:
+                        if flag not in flags:
                             yield ProbableUseExpand(flag, group.upper(), pkg=pkg)
                         break
                 else:
@@ -585,6 +586,69 @@ class LocalUseCheck(Check):
         if missing_desc:
             yield MissingLocalUseDesc(sorted(missing_desc), pkg=pkg)
 
+
+class UseFlagWithoutDeps(results.VersionResult, results.Warning):
+    """Special USE flag with little utility and without effect on dependencies.
+
+    Various USE flags, such as "ipv6", should be always turned on or off, and
+    their existence is questionable, in cases were it doesn't introduce new
+    dependencies. Other USE flags, such as "bash-completion", without any new
+    dependencies, are probable violators of small files QA policy [#]_.
+
+    In cases where this USE flag is appropriate, you can silence this warning
+    by adding a description to this USE flag in ``metadata.xml`` file and thus
+    making it a local USE flag instead of global one.
+
+    .. [#] https://projects.gentoo.org/qa/policy-guide/installed-files.html#pg0301
+    """
+
+    def __init__(self, flags, **kwargs):
+        super().__init__(**kwargs)
+        self.flags = tuple(flags)
+
+    @property
+    def desc(self):
+        s = pluralism(self.flags)
+        flags = ', '.join(self.flags)
+        return f'special small-files USE flag{s} without effect on dependencies: [ {flags} ]'
+
+
+class UseFlagsWithoutEffectsCheck(GentooRepoCheck):
+    """Check for USE flags without effects."""
+
+    known_results = frozenset({
+        UseFlagWithoutDeps,
+    })
+
+    warn_use_small_files = frozenset({
+        'ipv6', 'logrotate', 'unicode',
+        'bash-completion', 'fish-completion', 'zsh-completion', 'vim-syntax',
+        # TODO: enable those one day
+        # 'systemd',
+    })
+
+    def feed(self, pkg):
+        used_flags = set(pkg.local_use)
+        for attr in pkg.eapi.dep_keys:
+            deps = getattr(pkg, attr.lower())
+
+            use_values = set()
+            use_values.update(itertools.chain.from_iterable(
+                atom.use or ()
+                for atom in iflatten_instance(deps, atom_cls)
+            ))
+            use_values.update(itertools.chain.from_iterable(
+                atom.restriction.vals
+                for atom in iflatten_instance(deps, packages.Conditional)
+                if isinstance(atom, packages.Conditional) and atom.attr == 'use'
+            ))
+            for check_use in self.warn_use_small_files:
+                if any(check_use in use for use in use_values):
+                    used_flags.add(check_use)
+
+        flags = self.warn_use_small_files.intersection(pkg.iuse_stripped).difference(used_flags)
+        if flags:
+            yield UseFlagWithoutDeps(flags, pkg=pkg)
 
 class MissingSlotDep(results.VersionResult, results.Warning):
     """Missing slot value in dependencies.
