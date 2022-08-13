@@ -190,6 +190,14 @@ check_options.add_argument(
         Use ``pkgcheck show --keywords`` to see available options.
     """)
 
+check_options.add_argument(
+    '--stabletime', metavar='DAYS', dest='stable_time', default=30,
+    type=arghparse.positive_int, help='set number of days before stabilisation',
+    docs="""
+        An integer number of days before a package version is flagged by
+        StableRequestCheck. Defaults to 30 days.
+    """)
+
 scan.plugin = scan.add_argument_group('plugin options')
 
 

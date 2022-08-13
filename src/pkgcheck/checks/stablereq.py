@@ -70,7 +70,7 @@ class StableRequestCheck(GentooRepoCheck):
 
                     added = datetime.fromtimestamp(match.time)
                     days_old = (self.today - added).days
-                    if days_old >= 30:
+                    if days_old >= self.options.stable_time:
                         pkg_stable_keywords = {x.lstrip('~') for x in pkg.keywords}
                         if stable_slot_keywords:
                             keywords = stable_slot_keywords.intersection(pkg_stable_keywords)
