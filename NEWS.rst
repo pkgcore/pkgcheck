@@ -4,6 +4,43 @@ Release Notes
 
 
 ----------------------------
+pkgcheck 0.10.13 (2022-08-15)
+----------------------------
+
+- Add new ``FlycheckReporter`` which is used for flycheck integration (On the
+  fly syntax checking for GNU Emacs) (Arthur Zamarin, Maciej Barć, #420)
+
+- PythonMissingDeps: check for missing ``BDEPEND="${DISTUTILS_DEPS}"`` in
+  PEP517 python ebuilds with ``DISTUTILS_OPTIONAL`` set (Sam James, #389)
+
+- PythonHasVersionUsage: new check for using ``has_version`` inside
+  ``python_check_deps`` (Arthur Zamarin, #401)
+
+- PythonHasVersionMissingPythonUseDep: new check for missing ``PYTHON_USEDEP``
+  in calls to ``python_has_version`` or ``has_version`` (Arthur Zamarin, #401)
+
+- PythonAnyMismatchedHasVersionCheck: new check for mismatch between calls to
+  ``python_has_version`` and ``has_version`` against calls to
+  ``python_gen_any_dep`` in dependencies (Arthur Zamarin, #401)
+
+- Fix calls to ``git`` on system repositories when ``safe.directory`` is
+  enforced (Arthur Zamarin, #421)
+
+- Fix and port pkgcheck to Python 3.11 (Sam James, #424)
+
+- Bump snakeoil and pkgcore dependencies (Sam James, #425)
+
+- UseFlagWithoutDeps (Gentoo repository only): new check for USE flags, which
+  don't affect dependencies and because they provide little utility (Arthur
+  Zamarin, #428)
+
+- StableRequestCheck: add ``--stabletime`` config option for specifying the
+  time before a version is flagged by StableRequestCheck (Emily Rowlands, #429)
+
+- MisplacedWeakBlocker: new check for pure-DEPEND weak blockers (Arthur
+  Zamarin, #430)
+
+----------------------------
 pkgcheck 0.10.12 (2022-07-30)
 ----------------------------
 
