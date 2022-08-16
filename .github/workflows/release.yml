@@ -49,7 +49,6 @@ jobs:
         CIBW_PRERELEASE_PYTHONS: True
         CIBW_BEFORE_BUILD: pip install -r {project}/requirements/dist.txt && {project}/.github/workflows/manylinux.sh
         CIBW_BEFORE_TEST: pip install -r {project}/requirements/test.txt
-        CIBW_TEST_SKIP: "*-musllinux_*" # unable to install 'git' inside this alpine docker
         CIBW_ENVIRONMENT: PY_COLORS=1
         CIBW_TEST_COMMAND: pytest -v {project}/tests
 
