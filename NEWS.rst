@@ -4,6 +4,12 @@ Release Notes
 
 
 ----------------------------
+pkgcheck 0.10.14 (2022-08-16)
+----------------------------
+
+- sdist file now includes ``contrib/`` directory (Arthur Zamarin)
+
+----------------------------
 pkgcheck 0.10.13 (2022-08-15)
 ----------------------------
 
