@@ -106,6 +106,7 @@ class TestEclassAddon:
             self.addon.update_cache()
             save_cache.assert_called_once()
 
+    @pytest.mark.xfail(reason='Flaky')
     def test_eclass_changes(self):
         """The cache stores eclass mtimes and regenerates entries if they differ."""
         eclass_path = pjoin(self.eclass_dir, 'foo.eclass')
