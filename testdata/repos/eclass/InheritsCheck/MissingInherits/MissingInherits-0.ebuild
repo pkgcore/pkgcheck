@@ -7,4 +7,5 @@ LICENSE="BSD"
 
 src_prepare() {
 	inherit_public_func
+	unset EBUILD_TEST
 }

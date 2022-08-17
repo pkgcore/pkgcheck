@@ -709,6 +709,8 @@ class InheritsCheck(Check):
         # match captured variables with eclasses
         for node, _ in bash.var_query.captures(pkg.tree.root_node):
             name = pkg.node_str(node)
+            if node.parent.type == 'unset_command':
+                continue
             if name not in self.eapi_vars[pkg.eapi] | assigned_vars.keys():
                 lineno, colno = node.start_point
                 if eclass := self.get_eclass(name, pkg):
