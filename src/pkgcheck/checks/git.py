@@ -495,6 +495,11 @@ class GitCommitMessageCheck(GentooRepoCheck, GitCommitsCheck):
     _commit_footer_regex = re.compile(r'^(?P<tag>[a-zA-Z0-9_-]+): (?P<value>.*)$')
     _git_cat_file_regex = re.compile(r'^(?P<object>.+?) (?P<status>.+)$')
 
+    # categories exception for rule of having package version in summary
+    skipped_categories = frozenset({
+        'acct-group', 'acct-user', 'virtual',
+    })
+
     def __init__(self, *args):
         super().__init__(*args)
         # mapping of required tags to forcibly run verifications methods
@@ -577,7 +582,7 @@ class GitCommitMessageCheck(GentooRepoCheck, GitCommitsCheck):
                     error = f'summary missing {atom.key!r} package prefix'
                     yield BadCommitSummary(error, summary, commit=commit)
                 # check for version in summary for singular, non-revision bumps
-                if len(commit.pkgs['A']) == 1:
+                if len(commit.pkgs['A']) == 1 and category not in self.skipped_categories:
                     atom = next(iter(commit.pkgs['A']))
                     if not atom.revision and not re.match(rf'^.+\bv?{re.escape(atom.version)}\b.*$', summary):
                         error = f'summary missing package version {atom.version!r}'

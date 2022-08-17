@@ -283,6 +283,18 @@ class TestGitCommitMessageRepoCheck(ReportTestCase):
         self.init_check()
         self.assertNoReport(self.check, self.source)
 
+        # special categories that allow not having version in new package summary
+        self.child_repo.create_ebuild('acct-user/pkgcheck-1')
+        self.child_git_repo.add_all('acct-user/pkgcheck: add user for pkgcheck', signoff=True)
+        self.init_check()
+        self.assertNoReport(self.check, self.source)
+
+        # special categories that allow not having version in bump version summary
+        self.child_repo.create_ebuild('acct-user/pkgcheck-2')
+        self.child_git_repo.add_all('acct-user/pkgcheck: bump user for pkgcheck', signoff=True)
+        self.init_check()
+        self.assertNoReport(self.check, self.source)
+
         # poorly prefixed commit summary
         self.child_repo.create_ebuild('cat/pkg-4')
         self.child_git_repo.add_all('version bump to 4', signoff=True)
