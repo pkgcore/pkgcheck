@@ -43,10 +43,10 @@ class TestDescriptionCheck(misc.ReportTestCase):
         assert isinstance(r, metadata.BadDescription)
         assert 'empty/unset' in str(r)
 
-        self.assertNoReport(self.check, self.mk_pkg('s' * 150))
-        r = self.assertReport(self.check, self.mk_pkg('s' * 151))
+        self.assertNoReport(self.check, self.mk_pkg('s' * 80))
+        r = self.assertReport(self.check, self.mk_pkg('s' * 81))
         assert isinstance(r, metadata.BadDescription)
-        assert 'over 150 chars in length' in str(r)
+        assert 'over 80 chars in length' in str(r)
 
         self.assertNoReport(self.check, self.mk_pkg('s' * 10))
         r = self.assertReport(self.check, self.mk_pkg('s' * 9))

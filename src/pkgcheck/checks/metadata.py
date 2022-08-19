@@ -1357,8 +1357,8 @@ class BadDescription(results.VersionResult, results.Style):
 class DescriptionCheck(Check):
     """DESCRIPTION checks.
 
-    Check on length (<=150), too short (<10), or generic (lifted from eclass or
-    just using the package's name.
+    Check on length (<=80), too short (<10), or generic (lifted from eclass or
+    just using the package's name).
     """
 
     known_results = frozenset([BadDescription])
@@ -1374,8 +1374,8 @@ class DescriptionCheck(Check):
             desc_len = len(desc)
             if not desc_len:
                 yield BadDescription("empty/unset", pkg=pkg)
-            elif desc_len > 150:
-                yield BadDescription("over 150 chars in length", pkg=pkg)
+            elif desc_len > 80:
+                yield BadDescription("over 80 chars in length", pkg=pkg)
             elif desc_len < 10:
                 yield BadDescription("under 10 chars in length", pkg_desc=desc, pkg=pkg)
 
