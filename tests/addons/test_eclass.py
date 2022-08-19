@@ -1,5 +1,6 @@
 import os
 import textwrap
+from time import sleep
 from unittest.mock import patch
 
 import pytest
@@ -106,13 +107,13 @@ class TestEclassAddon:
             self.addon.update_cache()
             save_cache.assert_called_once()
 
-    @pytest.mark.xfail(reason='Flaky')
     def test_eclass_changes(self):
         """The cache stores eclass mtimes and regenerates entries if they differ."""
         eclass_path = pjoin(self.eclass_dir, 'foo.eclass')
         touch(eclass_path)
         self.addon.update_cache()
         assert list(self.addon.eclasses) == ['foo']
+        sleep(1)
         with open(eclass_path, 'w') as f:
             f.write('# changed eclass\n')
         with patch('pkgcheck.addons.caches.CachedAddon.save_cache') as save_cache:
