@@ -1,6 +1,7 @@
 from collections import defaultdict
 from datetime import datetime
 
+from snakeoil.cli import arghparse
 from snakeoil.strings import pluralism
 
 from .. import addons, results, sources
@@ -39,6 +40,16 @@ class StableRequestCheck(GentooRepoCheck):
     _source = (sources.PackageRepoSource, (), (('source', sources.UnmaskedRepoSource),))
     required_addons = (addons.git.GitAddon,)
     known_results = frozenset([StableRequest])
+
+    @staticmethod
+    def mangle_argparser(parser):
+        parser.plugin.add_argument(
+            '--stabletime', metavar='DAYS', dest='stable_time', default=30,
+            type=arghparse.positive_int, help='set number of days before stabilisation',
+            docs="""
+                An integer number of days before a package version is flagged by
+                StableRequestCheck. Defaults to 30 days.
+            """)
 
     def __init__(self, *args, git_addon):
         super().__init__(*args)
