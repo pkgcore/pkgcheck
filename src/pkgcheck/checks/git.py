@@ -126,7 +126,13 @@ class DirectNoMaintainer(results.PackageResult, results.Error):
 
 
 class RdependChange(results.VersionResult, results.Warning):
-    """Package RDEPEND was modified without adding a new ebuild revision."""
+    """Package RDEPEND was modified without adding a new ebuild revision.
+
+    When package's RDEPEND is modified, without change in USE flags, a new
+    ebuild revision is needed [#]_.
+
+    .. [#] https://devmanual.gentoo.org/general-concepts/ebuild-revisions/index.html
+    """
 
     @property
     def desc(self):
@@ -316,7 +322,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
             # ignore broken ebuild
             return
 
-        if old_pkg.rdepend != new_pkg.rdepend:
+        if old_pkg.rdepend != new_pkg.rdepend and set(old_pkg.iuse_stripped) == set(new_pkg.iuse_stripped):
             yield RdependChange(pkg=new_pkg)
 
         old_slot, new_slot = old_pkg.slot, new_pkg.slot

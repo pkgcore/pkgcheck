@@ -504,6 +504,8 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         self.parent_git_repo.add_all('newcat/newpkg: initial import')
         self.parent_repo.create_ebuild('newcat/newpkg-2', rdepend="cat/dep1 cat/dep2")
         self.parent_git_repo.add_all('newcat/newpkg: version bump')
+        self.parent_repo.create_ebuild('newcat/newpkg2-0')
+        self.parent_git_repo.add_all('newcat/newpkg2: initial import')
         # pull changes to child repo
         self.child_git_repo.run(['git', 'pull', 'origin', 'main'])
         # change pkg RDEPEND and commit
@@ -519,6 +521,11 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         with open(pjoin(self.child_git_repo.path, 'newcat/newpkg/newpkg-2.ebuild'), 'a') as f:
             f.write('RDEPEND="cat/dep2 cat/dep1"\n')
         self.child_git_repo.add_all('newcat/newpkg: reorder deps')
+        # change pkg RDEPEND and USE flags and commit
+        with open(pjoin(self.child_git_repo.path, 'newcat/newpkg2/newpkg-0.ebuild'), 'a') as f:
+            f.write('IUSE="test"\nRDEPEND="cat/dep1"\n')
+        self.child_git_repo.add_all('newcat/newpkg2: update deps and add IUSE="test"')
+
         self.init_check()
         r = self.assertReport(self.check, self.source)
         # only one result is expected since live ebuilds are ignored
