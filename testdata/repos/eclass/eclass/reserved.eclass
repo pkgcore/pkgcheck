@@ -11,8 +11,10 @@
 # Public stub function.
 prepare_locale() {
 	local DYNAMIC_DEPS
-	local prepered
+	local prepared
 	export EBUILD_DEATH_HOOKS="die"
+	echo "${EBUILD}" # This is wrong
+	echo "${EBUILD_PHASE}" # This is fine
 }
 
 # @ECLASS_VARIABLE: EBUILD_TEST

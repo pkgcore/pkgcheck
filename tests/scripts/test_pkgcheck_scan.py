@@ -527,7 +527,7 @@ class TestPkgcheckScan:
 
     @pytest.mark.parametrize('repo', repos)
     def test_scan_repo_verbose(self, repo, tmp_path):
-        """Scan a target repo in verbose mode, saving results for verfication."""
+        """Scan a target repo in verbose mode, saving results for verification."""
         return self.test_scan_repo(repo, tmp_path, verbosity=1)
 
     def _get_results(self, path):

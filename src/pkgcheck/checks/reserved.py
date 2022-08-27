@@ -9,7 +9,10 @@ class _ReservedNameCheck(Check):
     reserved_ebuild_regex = re.compile(r'(.*[^a-zA-Z])?ebuild.*')
 
     """Portage variables whose use is half-legitimate and harmless if the package manager doesn't support them."""
-    special_whitelist = ('EBUILD_DEATH_HOOKS', 'EBUILD_SUCCESS_HOOKS', 'PORTAGE_QUIET')
+    special_whitelist = ('EBUILD_DEATH_HOOKS', 'EBUILD_SUCCESS_HOOKS', 'PORTAGE_QUIET', 'PORTAGE_ACTUAL_DISTDIR')
+
+    """Approved good exceptions to using of variables."""
+    variables_usage_whitelist = {"EBUILD_PHASE", "EBUILD_PHASE_FUNC"}
 
     def _check(self, used_type: str, used_names):
         for used_name, node_start in used_names.items():
@@ -31,10 +34,14 @@ class _ReservedNameCheck(Check):
             item.node_str(node.child_by_field_name('name')): node.start_point
             for node, _ in bash.func_query.captures(item.tree.root_node)
         })
-        yield from self._check('variable', {
+        used_variables = {
             item.node_str(node.child_by_field_name('name')): node.start_point
             for node, _ in bash.var_assign_query.captures(item.tree.root_node)
-        })
+        }
+        for node, _ in bash.var_query.captures(item.tree.root_node):
+            if (name := item.node_str(node)) not in self.variables_usage_whitelist:
+                used_variables.setdefault(name, node.start_point)
+        yield from self._check('variable', used_variables)
 
 
 class EclassReservedName(results.EclassResult, results.Warning):

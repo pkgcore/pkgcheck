@@ -1,2 +1,5 @@
 {"__class__": "EclassReservedName", "eclass": "reserved", "used_name": "prepare_locale", "used_type": "function", "reserved_word": "prep", "reserved_type": "prefix"}
+{"__class__": "EclassReservedName", "eclass": "reserved", "used_name": "DYNAMIC_DEPS", "used_type": "variable", "reserved_word": "dyn", "reserved_type": "prefix"}
+{"__class__": "EclassReservedName", "eclass": "reserved", "used_name": "EBUILD", "used_type": "variable", "reserved_word": "ebuild", "reserved_type": "substring"}
 {"__class__": "EclassReservedName", "eclass": "reserved", "used_name": "EBUILD_TEST", "used_type": "variable", "reserved_word": "ebuild", "reserved_type": "substring"}
+{"__class__": "EclassReservedName", "eclass": "reserved", "used_name": "prepared", "used_type": "variable", "reserved_word": "prep", "reserved_type": "prefix"}
