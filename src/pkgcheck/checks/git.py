@@ -176,7 +176,7 @@ class _RemovalRepo(UnconfiguredTree):
 
     def __init__(self, repo):
         self.__parent_repo = repo
-        self.__tmpdir = TemporaryDirectory()
+        self.__tmpdir = TemporaryDirectory(prefix='tmp-pkgcheck-', suffix='.repo')
         self.__created = False
         repo_dir = self.__tmpdir.name
 
