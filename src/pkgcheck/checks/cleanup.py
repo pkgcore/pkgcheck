@@ -33,6 +33,17 @@ class RedundantVersionCheck(Check):
     _source = sources.PackageRepoSource
     known_results = frozenset([RedundantVersion])
 
+    @staticmethod
+    def mangle_argparser(parser):
+        parser.plugin.add_argument(
+            '--stable-only', action='store_true',
+            help='consider redundant versions only within stable',
+            docs="""
+                If enabled, for each slot, only consider redundant versions
+                with stable keywords. This is useful for cases of cleanup after
+                successful stabilization.
+            """)
+
     def feed(self, pkgset):
         if len(pkgset) == 1:
             return
@@ -62,10 +73,12 @@ class RedundantVersionCheck(Check):
             # also, yes, have to use list comp here- we're adding as we go
             curr_set.update([f'~{x}' for x in curr_set if not x.startswith('~')])
 
-            stack.append([pkg, curr_set])
+            stack.append((pkg, curr_set))
             if matches:
                 bad.append((pkg, matches))
 
         for pkg, matches in reversed(bad):
             later_versions = (x.fullver for x in sorted(matches))
+            if self.options.stable_only and all(key.startswith('~') for x in matches for key in x.keywords):
+                continue
             yield RedundantVersion(pkg.slot, later_versions, pkg=pkg)
