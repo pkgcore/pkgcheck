@@ -15,5 +15,13 @@
 # @ECLASS_VARIABLE: EBZR_STORE_DIR
 # @USER_VARIABLE
 # @DESCRIPTION:
-# The directory to store all fetched Bazaar live sources.
+# Some text
 : ${EBZR_STORE_DIR:=${PORTAGE_ACTUAL_DISTDIR:-${DISTDIR}}/bzr-src}
+
+# @FUNCTION: webapp_configfile
+# @USAGE: <file> [more files ...]
+# @DESCRIPTION:
+# Some text
+webapp_configfile() {
+	echo "${my_file}" >> ${D}/${WA_CONFIGLIST}
+}

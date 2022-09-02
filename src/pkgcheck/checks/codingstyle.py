@@ -945,7 +945,7 @@ class _UnquotedVariablesCheck(Check):
     """Scan files for variables that should be quoted like D, FILESDIR, etc."""
 
     message_commands = frozenset({
-        "die", "echo", "eerror", "einfo", "elog", "eqawarn", "ewarn"
+        "die", "echo", "eerror", "einfo", "elog", "eqawarn", "ewarn", ":"
     })
     var_names = frozenset({
         "D", "DISTDIR", "FILESDIR", "S", "T", "ROOT", "BROOT", "WORKDIR", "ED",
