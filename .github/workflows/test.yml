@@ -12,7 +12,7 @@ jobs:
     continue-on-error: ${{ matrix.experimental }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest]
         python-version: ['3.8', '3.9', '3.10']
         deps: [newest-deps]
         experimental: [false]
@@ -22,15 +22,22 @@ jobs:
             python-version: '3.11.0-beta - 3.11'
             deps: newest-deps
             experimental: true
+            tree-sitter-bash: bundled
           - os: ubuntu-latest
             python-version: '3.10'
             deps: minimal-deps
             experimental: false
+            tree-sitter-bash: bundled
           - os: ubuntu-latest
             python-version: '3.10'
             deps: newest-deps
             experimental: false
             tree-sitter-bash: system
+          - os: macos-latest
+            python-version: '3.10'
+            deps: newest-deps
+            experimental: false
+            tree-sitter-bash: bundled
       fail-fast: false
 
     steps:
