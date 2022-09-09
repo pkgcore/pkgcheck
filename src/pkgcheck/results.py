@@ -4,6 +4,7 @@ from functools import total_ordering
 
 from pkgcore.ebuild import cpv
 from snakeoil import klass
+from snakeoil.strings import pluralism
 
 from . import base
 from .packages import FilteredPkg, RawCPV
@@ -78,6 +79,20 @@ class Result:
 
 class AliasResult(Result):
     """Classes directly inheriting this class can be targeted as scannable keywords."""
+
+
+class BaseLinesResult:
+    """Base class for results of multiples lines."""
+
+    def __init__(self, lines, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.lines = tuple(lines)
+
+    @property
+    def lines_str(self):
+        s = pluralism(self.lines)
+        lines = ', '.join(map(str, self.lines))
+        return f'on line{s}: {lines}'
 
 
 class Error(Result):
@@ -228,6 +243,10 @@ class VersionResult(PackageResult):
         except AttributeError:
             pass
         return super().__lt__(other)
+
+
+class LinesResult(BaseLinesResult, VersionResult):
+    """Result related to multiples lines of an ebuild."""
 
 
 class LineResult(VersionResult):

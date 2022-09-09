@@ -3,23 +3,12 @@
 import re
 from typing import NamedTuple
 
-from snakeoil.strings import pluralism
-
 from .. import results, sources
 from . import Check
 
 
-class _Whitespace(results.VersionResult, results.Style):
-
-    def __init__(self, lines, **kwargs):
-        super().__init__(**kwargs)
-        self.lines = tuple(lines)
-
-    @property
-    def lines_str(self):
-        s = pluralism(self.lines)
-        lines = ', '.join(map(str, self.lines))
-        return f'line{s}: {lines}'
+class _Whitespace(results.LinesResult, results.Style):
+    ...
 
 
 class WhitespaceFound(_Whitespace):
@@ -47,7 +36,7 @@ class DoubleEmptyLine(_Whitespace):
 
     @property
     def desc(self):
-        return f"ebuild has unneeded empty {self.lines_str}"
+        return f"ebuild has unneeded empty line on {self.lines_str}"
 
 
 class TrailingEmptyLine(results.VersionResult, results.Style):

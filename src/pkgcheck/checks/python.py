@@ -473,7 +473,7 @@ class PythonGHDistfileSuffixCheck(Check):
                     break
 
 
-class PythonHasVersionUsage(results.VersionResult, results.Style):
+class PythonHasVersionUsage(results.LinesResult, results.Style):
     """Package uses has_version inside ``python_check_deps``.
 
     Ebuilds which declare the ``python_check_deps`` function (which tests
@@ -484,15 +484,9 @@ class PythonHasVersionUsage(results.VersionResult, results.Style):
     .. [#] https://projects.gentoo.org/python/guide/any.html#dependencies
     """
 
-    def __init__(self, lines, **kwargs):
-        super().__init__(**kwargs)
-        self.lines = tuple(lines)
-
     @property
     def desc(self):
-        s = pluralism(self.lines)
-        lines = ', '.join(map(str, self.lines))
-        return f'usage of has_version on line{s}: {lines}, replace with python_has_version'
+        return f'usage of has_version {self.lines_str}, replace with python_has_version'
 
 
 class PythonHasVersionMissingPythonUseDep(results.LineResult, results.Error):

@@ -206,22 +206,19 @@ class CatMetadataXmlInvalidCatRef(_MetadataXmlInvalidCatRef, results.CategoryRes
     """Invalid category reference in category metadata.xml."""
 
 
-class _MetadataXmlIndentation(results.Style):
+class _MetadataXmlIndentation(results.BaseLinesResult, results.Style):
     """Inconsistent indentation in metadata.xml file.
 
     Either all tabs or all spaces should be used, not a mixture of both.
     """
 
-    def __init__(self, filename, lines, **kwargs):
+    def __init__(self, filename, **kwargs):
         super().__init__(**kwargs)
         self.filename = filename
-        self.lines = tuple(lines)
 
     @property
     def desc(self):
-        s = pluralism(self.lines)
-        lines = ', '.join(self.lines)
-        return f'{self.filename}: metadata.xml has inconsistent indentation on line{s}: {lines}'
+        return f'{self.filename}: metadata.xml has inconsistent indentation {self.lines_str}'
 
 
 class CatMetadataXmlIndentation(_MetadataXmlIndentation, results.CategoryResult):
@@ -364,7 +361,7 @@ class _XmlBaseCheck(Check):
                         else:
                             indents.add(lineno)
         if indents:
-            yield self.indent_error(os.path.basename(loc), map(str, sorted(indents)), pkg=pkg)
+            yield self.indent_error(os.path.basename(loc), lines=map(str, sorted(indents)), pkg=pkg)
 
     @staticmethod
     def _format_lxml_errors(error_log):

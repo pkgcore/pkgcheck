@@ -102,37 +102,31 @@ class EendMissingArgCheck(Check):
                     yield EendMissingArg(line=line, lineno=lineno+1, pkg=pkg)
 
 
-class MissingSlash(results.VersionResult, results.Error):
+class MissingSlash(results.LinesResult, results.Error):
     """Ebuild uses a path variable missing a trailing slash."""
 
-    def __init__(self, match, lines, **kwargs):
+    def __init__(self, match, **kwargs):
         super().__init__(**kwargs)
         self.match = match
-        self.lines = tuple(lines)
 
     @property
     def desc(self):
-        s = pluralism(self.lines)
-        lines = ', '.join(map(str, self.lines))
-        return f'{self.match} missing trailing slash on line{s}: {lines}'
+        return f'{self.match} missing trailing slash {self.lines_str}'
 
 
-class UnnecessarySlashStrip(results.VersionResult, results.Style):
+class UnnecessarySlashStrip(results.LinesResult, results.Style):
     """Ebuild uses a path variable that strips a nonexistent slash."""
 
-    def __init__(self, match, lines, **kwargs):
+    def __init__(self, match, **kwargs):
         super().__init__(**kwargs)
         self.match = match
-        self.lines = tuple(lines)
 
     @property
     def desc(self):
-        s = pluralism(self.lines)
-        lines = ', '.join(map(str, self.lines))
-        return f'{self.match} unnecessary slash strip on line{s}: {lines}'
+        return f'{self.match} unnecessary slash strip {self.lines_str}'
 
 
-class DoublePrefixInPath(results.VersionResult, results.Error):
+class DoublePrefixInPath(results.LinesResult, results.Error):
     """Ebuild uses two consecutive paths including EPREFIX.
 
     Ebuild combines two path variables (or a variable and a getter), both
@@ -143,16 +137,13 @@ class DoublePrefixInPath(results.VersionResult, results.Error):
     with ``${D}$(python_get_sitedir)``.
     """
 
-    def __init__(self, match, lines, **kwargs):
+    def __init__(self, match, **kwargs):
         super().__init__(**kwargs)
         self.match = match
-        self.lines = tuple(lines)
 
     @property
     def desc(self):
-        s = pluralism(self.lines)
-        lines = ', '.join(map(str, self.lines))
-        return f'{self.match}: concatenates two paths containing EPREFIX on line{s} {lines}'
+        return f'{self.match}: concatenates two paths containing EPREFIX {self.lines_str}'
 
 
 class PathVariablesCheck(Check):
@@ -246,11 +237,11 @@ class PathVariablesCheck(Check):
                 unnecessary[mo.group(1)].append(lineno)
 
         for match, lines in missing.items():
-            yield MissingSlash(match, lines, pkg=pkg)
+            yield MissingSlash(match, lines=lines, pkg=pkg)
         for match, lines in unnecessary.items():
-            yield UnnecessarySlashStrip(match, lines, pkg=pkg)
+            yield UnnecessarySlashStrip(match, lines=lines, pkg=pkg)
         for match, lines in double_prefix.items():
-            yield DoublePrefixInPath(match, lines, pkg=pkg)
+            yield DoublePrefixInPath(match, lines=lines, pkg=pkg)
 
 
 class AbsoluteSymlink(results.LineResult, results.Warning):
@@ -461,7 +452,7 @@ class ReferenceInMetadataVar(results.VersionResult, results.Style):
         return f'{self.variable} includes variable{s}: {refs}'
 
 
-class MultipleKeywordsLines(results.VersionResult, results.Style):
+class MultipleKeywordsLines(results.LinesResult, results.Style):
     """KEYWORDS is specified across multiple lines in global scope.
 
     Due to limitations of ekeyword it's advised to specify KEYWORDS once on a
@@ -470,14 +461,9 @@ class MultipleKeywordsLines(results.VersionResult, results.Style):
     .. [#] https://projects.gentoo.org/qa/policy-guide/ebuild-format.html#pg0105
     """
 
-    def __init__(self, lines, **kwargs):
-        super().__init__(**kwargs)
-        self.lines = tuple(lines)
-
     @property
     def desc(self):
-        lines = ', '.join(map(str, self.lines))
-        return f"KEYWORDS specified on lines {lines}"
+        return f"KEYWORDS specified {self.lines_str}"
 
 
 def verify_vars(*variables):
@@ -793,22 +779,19 @@ class ReadonlyVariableCheck(Check):
                 yield ReadonlyVariable(name, line=call, lineno=lineno + 1, pkg=pkg)
 
 
-class VariableScope(results.AliasResult, results.Warning):
+class VariableScope(results.BaseLinesResult, results.AliasResult, results.Warning):
     """Variable used outside its defined scope."""
 
     _name = 'VariableScope'
 
-    def __init__(self, variable, func, lines, **kwargs):
+    def __init__(self, variable, func, **kwargs):
         super().__init__(**kwargs)
         self.variable = variable
         self.func = func
-        self.lines = tuple(lines)
 
     @property
     def desc(self):
-        s = pluralism(self.lines)
-        lines = ', '.join(map(str, self.lines))
-        return f'variable {self.variable!r} used in {self.func!r}, line{s} {lines}'
+        return f'variable {self.variable!r} used in {self.func!r} {self.lines_str}'
 
 
 class EbuildVariableScope(VariableScope, results.VersionResult):
@@ -907,7 +890,7 @@ class RedundantDodirCheck(Check):
                             lineno=lineno - 1, pkg=pkg)
 
 
-class UnquotedVariable(results.AliasResult, results.Warning):
+class UnquotedVariable(results.BaseLinesResult, results.AliasResult, results.Warning):
     """Variable is used unquoted in a context where it should be quoted.
 
     Variables like D, FILESDIR, etc may not be safe to use unquoted in some
@@ -916,17 +899,13 @@ class UnquotedVariable(results.AliasResult, results.Warning):
 
     _name = 'UnquotedVariable'
 
-    def __init__(self, variable, lines, **kwargs):
+    def __init__(self, variable, **kwargs):
         super().__init__(**kwargs)
         self.variable = variable
-        self.lines = tuple(lines)
 
     @property
     def desc(self):
-        s = pluralism(self.lines)
-        lines = ', '.join(map(str, self.lines))
-        return f'unquoted variable {self.variable} on line{s}: {lines} '
-
+        return f'unquoted variable {self.variable} {self.lines_str}'
 
 
 class EbuildUnquotedVariable(UnquotedVariable, results.VersionResult):
@@ -1007,7 +986,7 @@ class EbuildUnquotedVariablesCheck(_UnquotedVariablesCheck):
 
     def feed(self, pkg):
         for var_name, lines in self._feed(pkg):
-            yield EbuildUnquotedVariable(var_name, lines, pkg=pkg)
+            yield EbuildUnquotedVariable(var_name, lines=lines, pkg=pkg)
 
 
 class EclassUnquotedVariablesCheck(_UnquotedVariablesCheck):
@@ -1019,4 +998,4 @@ class EclassUnquotedVariablesCheck(_UnquotedVariablesCheck):
 
     def feed(self, eclass):
         for var_name, lines in self._feed(eclass):
-            yield EclassUnquotedVariable(var_name, lines, eclass=eclass.name)
+            yield EclassUnquotedVariable(var_name, lines=lines, eclass=eclass.name)
