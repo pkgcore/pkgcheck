@@ -24,6 +24,7 @@ class BaseReporter:
         self.package_result = pkgdir.InvalidPN(('bar', 'baz'), pkg=pkg)
         self.versioned_result = metadata.BadFilename(('0.tar.gz', 'foo.tar.gz'), pkg=pkg)
         self.line_result = codingstyle.ReadonlyVariable('P', line='P=6', lineno=7, pkg=pkg)
+        self.lines_result = codingstyle.EbuildUnquotedVariable('D', lines=(5, 7), pkg=pkg)
 
     def mk_reporter(self, **kwargs):
         out = PlainTextFormatter(sys.stdout)
@@ -39,6 +40,7 @@ class BaseReporter:
             reporter.report(self.package_result)
             reporter.report(self.versioned_result)
             reporter.report(self.line_result)
+            reporter.report(self.lines_result)
         out, err = capsys.readouterr()
         assert not err
         assert out == self.add_report_output
@@ -54,6 +56,7 @@ class TestStrReporter(BaseReporter):
         dev-libs/foo: invalid package names: [ bar, baz ]
         dev-libs/foo-0: bad filenames: [ 0.tar.gz, foo.tar.gz ]
         dev-libs/foo-0: read-only variable 'P' assigned, line 7: P=6
+        dev-libs/foo-0: unquoted variable D on lines: 5, 7
     """)
 
 
@@ -74,6 +77,7 @@ class TestFancyReporter(BaseReporter):
           InvalidPN: invalid package names: [ bar, baz ]
           BadFilename: version 0: bad filenames: [ 0.tar.gz, foo.tar.gz ]
           ReadonlyVariable: version 0: read-only variable 'P' assigned, line 7: P=6
+          UnquotedVariable: version 0: unquoted variable D on lines: 5, 7
     """)
 
 
@@ -87,6 +91,7 @@ class TestJsonReporter(BaseReporter):
         {"dev-libs": {"foo": {"_error": {"InvalidPN": "invalid package names: [ bar, baz ]"}}}}
         {"dev-libs": {"foo": {"0": {"_warning": {"BadFilename": "bad filenames: [ 0.tar.gz, foo.tar.gz ]"}}}}}
         {"dev-libs": {"foo": {"0": {"_warning": {"ReadonlyVariable": "read-only variable 'P' assigned, line 7: P=6"}}}}}
+        {"dev-libs": {"foo": {"0": {"_warning": {"UnquotedVariable": "unquoted variable D on lines: 5, 7"}}}}}
     """)
 
 
@@ -101,6 +106,7 @@ class TestXmlReporter(BaseReporter):
         <result><category>dev-libs</category><package>foo</package><class>InvalidPN</class><msg>invalid package names: [ bar, baz ]</msg></result>
         <result><category>dev-libs</category><package>foo</package><version>0</version><class>BadFilename</class><msg>bad filenames: [ 0.tar.gz, foo.tar.gz ]</msg></result>
         <result><category>dev-libs</category><package>foo</package><version>0</version><class>ReadonlyVariable</class><msg>read-only variable 'P' assigned, line 7: P=6</msg></result>
+        <result><category>dev-libs</category><package>foo</package><version>0</version><class>UnquotedVariable</class><msg>unquoted variable D on lines: 5, 7</msg></result>
         </checks>
     """)
 
@@ -115,6 +121,7 @@ class TestCsvReporter(BaseReporter):
         dev-libs,foo,,"invalid package names: [ bar, baz ]"
         dev-libs,foo,0,"bad filenames: [ 0.tar.gz, foo.tar.gz ]"
         dev-libs,foo,0,"read-only variable 'P' assigned, line 7: P=6"
+        dev-libs,foo,0,"unquoted variable D on lines: 5, 7"
     """)
 
 
@@ -124,12 +131,12 @@ class TestFormatReporter(BaseReporter):
 
     def test_add_report(self, capsys):
         for format_str, expected in (
-                    ('r', 'r\n' * 6),
-                    ('{category}', 'dev-libs\n' * 4),
-                    ('{category}/{package}', '/\n/\ndev-libs/\n' + 'dev-libs/foo\n' * 3),
-                    ('{category}/{package}-{version}', '/-\n/-\ndev-libs/-\ndev-libs/foo-\ndev-libs/foo-0\ndev-libs/foo-0\n'),
+                    ('r', 'r\n' * 7),
+                    ('{category}', 'dev-libs\n' * 5),
+                    ('{category}/{package}', '/\n/\ndev-libs/\n' + 'dev-libs/foo\n' * 4),
+                    ('{category}/{package}-{version}', '/-\n/-\ndev-libs/-\ndev-libs/foo-\n' + 'dev-libs/foo-0\n' * 3),
                     ('{name}',
-                     'InvalidCommitMessage\nProfileWarning\nCatMissingMetadataXml\nInvalidPN\nBadFilename\nReadonlyVariable\n'),
+                     'InvalidCommitMessage\nProfileWarning\nCatMissingMetadataXml\nInvalidPN\nBadFilename\nReadonlyVariable\nUnquotedVariable\n'),
                     ('{foo}', ''),
                 ):
             self.reporter_cls = partial(reporters.FormatReporter, format_str)
@@ -184,4 +191,6 @@ class TestFlycheckReporter(BaseReporter):
         foo-.ebuild:0:error:InvalidPN: invalid package names: [ bar, baz ]
         foo-0.ebuild:0:warning:BadFilename: bad filenames: [ 0.tar.gz, foo.tar.gz ]
         foo-0.ebuild:7:warning:ReadonlyVariable: read-only variable 'P' assigned, line 7: P=6
+        foo-0.ebuild:5:warning:UnquotedVariable: unquoted variable D
+        foo-0.ebuild:7:warning:UnquotedVariable: unquoted variable D
     """)

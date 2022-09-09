@@ -9,7 +9,7 @@ from xml.sax.saxutils import escape as xml_escape
 from snakeoil.decorators import coroutine
 
 from . import base
-from .results import InvalidResult, Result
+from .results import BaseLinesResult, InvalidResult, Result
 
 
 class Reporter:
@@ -318,6 +318,11 @@ class FlycheckReporter(Reporter):
         while True:
             result = (yield)
             file = f'{getattr(result, "package", "")}-{getattr(result, "version", "")}.ebuild'
-            lineno = getattr(result, "lineno", 0)
             message = f'{getattr(result, "name")}: {getattr(result, "desc")}'
-            self.out.write(f'{file}:{lineno}:{getattr(result, "level")}:{message}')
+            if isinstance(result, BaseLinesResult):
+                message = message.replace(result.lines_str, '').strip()
+                for lineno in result.lines:
+                    self.out.write(f'{file}:{lineno}:{getattr(result, "level")}:{message}')
+            else:
+                lineno = getattr(result, "lineno", 0)
+                self.out.write(f'{file}:{lineno}:{getattr(result, "level")}:{message}')
