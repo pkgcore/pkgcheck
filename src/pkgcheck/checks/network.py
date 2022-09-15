@@ -271,6 +271,7 @@ class MetadataUrlCheck(_UrlCheck):
             # 'cpan-module': 'https://metacpan.org/pod/{project}',
             'cran': 'https://cran.r-project.org/web/packages/{project}/',
             'ctan': 'https://ctan.org/pkg/{project}',
+            'freedesktop-gitlab': 'https://gitlab.freedesktop.org/{project}.git/',
             'gentoo': 'https://gitweb.gentoo.org/{project}.git/',
             'github': 'https://github.com/{project}',
             'gitlab': 'https://gitlab.com/{project}',
