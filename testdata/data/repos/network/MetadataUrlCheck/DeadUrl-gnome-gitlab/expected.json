@@ -1,0 +1,1 @@
+{"__class__": "DeadUrl", "category": "MetadataUrlCheck", "package": "DeadUrl-gnome-gitlab", "version": "0", "attr": "metadata.xml: remote-id", "url": "https://gitlab.gnome.org/pkgcore/pkgcheck.git/", "message": "404 Client Error: Not Found for url: https://gitlab.gnome.org/pkgcore/pkgcheck.git/"}
