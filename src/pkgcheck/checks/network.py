@@ -275,6 +275,7 @@ class MetadataUrlCheck(_UrlCheck):
             'gentoo': 'https://gitweb.gentoo.org/{project}.git/',
             'github': 'https://github.com/{project}',
             'gitlab': 'https://gitlab.com/{project}',
+            'gnome-gitlab': 'https://gitlab.gnome.org/{project}.git/',
             'hackage': 'https://hackage.haskell.org/package/{project}',
             'launchpad': 'https://launchpad.net/{project}',
             'osdn': 'https://osdn.net/projects/{project}/',
