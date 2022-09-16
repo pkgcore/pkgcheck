@@ -2,6 +2,34 @@
 Release Notes
 =============
 
+----------------------------
+pkgcheck 0.10.15 (2022-09-16)
+----------------------------
+
+- MissingInherits: fix false positives with ``unset`` (Arthur Zamarin, #432)
+
+- DescriptionCheck: change long length threshold to 80 (Arthur Zamarin)
+
+- BadCommitSummary: version check should be ignored for ``acct-*`` packages
+  (Arthur Zamarin, #434)
+
+- ReservedNameCheck: update rules for usage of reserved, that both usage
+  *and* definitions reserved names and not only defining is prohibited
+  (Arthur Zamarin, #437)
+
+- GitPkgCommitsCheck: add prefix and suffix for created temporary files (Arthur
+  Zamarin, #441)
+
+- FlycheckReporter: split multiple line results into separate reported lines,
+  (Arthur Zamarin, #443)
+
+- RedundantVersionCheck: add ``--stable-only`` option, to consider redundant
+  versions only within stable (Arthur Zamarin, #438)
+
+- network: add ``savannah`` and ``savannah-nongnu`` remote-ids (Sam James, #446)
+
+- network: add ``freedesktop-gitlab`` and ``gnome-gitlab`` remote-ids (Matt
+  Turner, #445)
 
 ----------------------------
 pkgcheck 0.10.14 (2022-08-16)
