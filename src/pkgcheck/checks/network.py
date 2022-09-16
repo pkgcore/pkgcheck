@@ -280,6 +280,8 @@ class MetadataUrlCheck(_UrlCheck):
             'pecl': 'https://pecl.php.net/package/{project}',
             'pypi': 'https://pypi.org/project/{project}/',
             'rubygems': 'https://rubygems.org/gems/{project}',
+            'savannah': 'https://savannah.gnu.org/projects/{project}',
+            'savannah-nongnu': 'https://savannah.nongnu.org/projects/{project}',
             'sourceforge': 'https://sourceforge.net/projects/{project}/',
             'sourcehut': 'https://sr.ht/{project}/',
             'vim': 'https://vim.org/scripts/script.php?script_id={project}',
