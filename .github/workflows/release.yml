@@ -6,7 +6,7 @@ on:
     tags: [v*]
 
 jobs:
-  build-and-deploy:
+  build-sdist:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
@@ -16,8 +16,6 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: "3.10"
-        cache: 'pip'
-        cache-dependency-path: requirements/*.txt
 
     - name: Install dependencies
       run: |
@@ -38,48 +36,65 @@ jobs:
         # run in-place build so wheel deps use release versions
         python setup.py build_py -i
 
+    - name: Output dist file info
+      run: |
+        tar -ztf dist/*.tar.gz | sort
+
+    - name: Upload sdist artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: dist
+        path: dist/*.tar.gz
+
+
+  build-wheel:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        pyver: [cp38, cp39, cp310, cp311]
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
     - name: Build wheels
-      uses: joerick/cibuildwheel@v2.8.1
+      uses: joerick/cibuildwheel@v2.10.0
       with:
         output-dir: dist
       env:
-        CIBW_BUILD: cp38-* cp39-* cp310-* cp311-*
+        CIBW_BUILD: ${{matrix.pyver}}-*
         CIBW_ARCHS_LINUX: x86_64
         CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_24
-        CIBW_PRERELEASE_PYTHONS: True
         CIBW_BEFORE_BUILD: pip install -r {project}/requirements/dist.txt && {project}/.github/workflows/manylinux.sh
         CIBW_BEFORE_TEST: pip install -r {project}/requirements/test.txt
         CIBW_ENVIRONMENT: PY_COLORS=1
         CIBW_TEST_COMMAND: pytest -v {project}/tests
 
-    - name: Output dist file info
-      run: |
-        sha512sum dist/*
-        tar -ztf dist/*.tar.gz | sort
-
-    - uses: actions/upload-artifact@v3
+    - name: Upload wheel artifacts
+      uses: actions/upload-artifact@v3
       with:
-        name: results
-        path: dist/*
+        name: dist
+        path: dist/*.whl
 
-    - name: Install twine and check files
-      run: |
-        pip install twine wheel-inspect
-        twine check dist/*
-        wheel2json dist/*.whl
 
-    - name: Upload to PyPI
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-      # only upload files for tagged releases
-      if: startsWith(github.ref, 'refs/tags/')
-      run: |
-        twine upload dist/*
+  deploy:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: ["build-sdist", "build-wheel"]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/download-artifact@v3
+      with:
+        name: dist
+        path: dist
+
+    - name: Publish a Python distribution to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.PYPI_API_TOKEN }}
+        print_hash: true
 
     - name: Create GitHub release
       uses: softprops/action-gh-release@v1
-      if: startsWith(github.ref, 'refs/tags/')
       with:
         files: dist/*.tar.gz
         fail_on_unmatched_files: true
