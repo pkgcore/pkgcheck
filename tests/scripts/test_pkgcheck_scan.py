@@ -19,7 +19,7 @@ from pkgcheck.scripts import run
 from pkgcore import const as pkgcore_const
 from pkgcore.ebuild import atom, restricts
 from pkgcore.restrictions import packages
-from snakeoil.contexts import chdir
+from snakeoil.contexts import chdir, os_environ
 from snakeoil.fileutils import touch
 from snakeoil.formatters import PlainTextFormatter
 from snakeoil.osutils import pjoin
@@ -253,6 +253,20 @@ class TestPkgcheckScanParseArgs:
         out, err = capsys.readouterr()
         assert not out
         assert err.strip() == "pkgcheck scan: error: no default repo found"
+
+    @pytest.mark.parametrize(('makeopts', 'expected_jobs'), (
+        ('', 4),
+        ('-j1', 1),
+        ('--jobs=6 -l 1', 6),
+        ('--load 1', 4),
+    ))
+    def test_makeopts_parsing(self, parser, makeopts, expected_jobs):
+        with patch('os.cpu_count', return_value=4), \
+            os_environ(MAKEOPTS=makeopts):
+
+            options = parser.parse_args(['scan'])
+            assert options.jobs == expected_jobs
+            assert options.tasks == 5 * expected_jobs
 
 
 class TestPkgcheckScanParseConfigArgs:

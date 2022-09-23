@@ -1,5 +1,6 @@
 import argparse
 import os
+import shlex
 from contextlib import ExitStack
 
 from pkgcore import const as pkgcore_const
@@ -63,14 +64,14 @@ main_options.add_argument(
         'no' argument.
     """)
 main_options.add_argument(
-    '-j', '--jobs', type=arghparse.positive_int, default=os.cpu_count(),
+    '-j', '--jobs', type=arghparse.positive_int,
     help='number of checks to run in parallel',
     docs="""
         Number of checks to run in parallel, defaults to using all available
         processors.
     """)
 main_options.add_argument(
-    '-t', '--tasks', type=arghparse.positive_int, default=os.cpu_count() * 5,
+    '-t', '--tasks', type=arghparse.positive_int,
     help='number of asynchronous tasks to run concurrently',
     docs="""
         Number of asynchronous tasks to run concurrently (defaults to 5 * CPU count).
@@ -379,6 +380,21 @@ def generate_restricts(repo, targets):
                     raise PkgcheckUserException(
                         f"{repo.repo_id!r} repo doesn't contain: {target!r}")
                 raise PkgcheckUserException(str(e))
+
+
+@scan.bind_delayed_default(1000, 'jobs')
+def _default_jobs(namespace, attr):
+    """Extract jobs count from MAKEOPTS."""
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-j', '--jobs', type=arghparse.positive_int, default=os.cpu_count())
+    makeopts, _ = parser.parse_known_args(shlex.split(os.getenv('MAKEOPTS', '')))
+    setattr(namespace, attr, makeopts.jobs)
+
+
+@scan.bind_delayed_default(1001, 'tasks')
+def _default_tasks(namespace, attr):
+    """Set based on jobs count."""
+    setattr(namespace, attr, namespace.jobs * 5)
 
 
 @scan.bind_delayed_default(1000, 'filter')
