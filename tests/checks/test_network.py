@@ -1,4 +1,3 @@
-import glob
 import importlib.util
 import os
 import socket
@@ -15,7 +14,6 @@ from pkgcheck.checks.network import (DeadUrl, FetchablesUrlCheck,
                                      HomepageUrlCheck)
 from pkgcheck.packages import RawCPV
 from snakeoil.formatters import PlainTextFormatter
-from snakeoil.osutils import pjoin
 
 # skip module tests if requests isn't available
 requests = pytest.importorskip('requests')
@@ -23,8 +21,8 @@ requests = pytest.importorskip('requests')
 
 class TestNetworkChecks:
 
-    repos_data = pjoin(pytest.REPO_ROOT, 'testdata', 'data', 'repos')
-    repos_dir = pjoin(pytest.REPO_ROOT, 'testdata', 'repos')
+    repos_data = pytest.REPO_ROOT / 'testdata/data/repos'
+    repos_dir = pytest.REPO_ROOT / 'testdata/repos'
 
     @pytest.fixture(autouse=True)
     def _setup(self, testconfig, tmp_path):
@@ -32,14 +30,15 @@ class TestNetworkChecks:
         self.scan = partial(scan, base_args=base_args)
         self.scan_args = [
             '--config', 'no', '--cache-dir', str(tmp_path), '--net',
-            '-r', pjoin(self.repos_dir, 'network'),
+            '-r', str(self.repos_dir / 'network'),
         ]
 
-    _net_results = []
-    for name, cls in sorted(objects.CHECKS.items()):
-        if issubclass(cls, NetworkCheck):
-            for result in sorted(cls.known_results, key=attrgetter('__name__')):
-                _net_results.append((cls, result))
+    _net_results = [
+        (cls, result)
+        for _name, cls in sorted(objects.CHECKS.items())
+        if issubclass(cls, NetworkCheck)
+        for result in sorted(cls.known_results, key=attrgetter('__name__'))
+    ]
 
     def _render_results(self, results, **kwargs):
         """Render a given set of result objects into their related string form."""
@@ -55,18 +54,18 @@ class TestNetworkChecks:
     def test_scan(self, check, result):
         check_name = check.__name__
         keyword = result.__name__
-        result_dir = pjoin(self.repos_dir, 'network', check_name, keyword)
 
-        paths = glob.glob(f'{result_dir}*')
+        result_dir = self.repos_dir / 'network' / check_name
+        paths = tuple(result_dir.glob(keyword + '*'))
         if not paths:
             pytest.skip('data unavailable')
 
         for path in paths:
             ebuild_name = os.path.basename(path)
-            data_dir = pjoin(self.repos_data, 'network', check_name, ebuild_name)
+            data_dir = self.repos_data / 'network' / check_name / ebuild_name
 
             # load response data to fake
-            module_path = pjoin(path, 'responses.py')
+            module_path = path / 'responses.py'
             spec = importlib.util.spec_from_file_location('responses_mod', module_path)
             responses_mod = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(responses_mod)
@@ -78,7 +77,7 @@ class TestNetworkChecks:
 
                 # load expected results if they exist
                 try:
-                    with open(pjoin(data_dir, 'expected.json')) as f:
+                    with (data_dir / 'expected.json').open() as f:
                         expected_results = set(reporters.JsonStream.from_iter(f))
                 except FileNotFoundError:
                     # check stopped before making request or completed successfully
@@ -94,8 +93,10 @@ class TestNetworkChecks:
                     error.append(f'got:\n{rendered_results}')
                     pytest.fail('\n'.join(error))
 
-    @pytest.mark.parametrize(
-        'check, result', ((HomepageUrlCheck, DeadUrl), (FetchablesUrlCheck, DeadUrl)))
+    @pytest.mark.parametrize('check, result', (
+        (HomepageUrlCheck, DeadUrl),
+        (FetchablesUrlCheck, DeadUrl),
+    ))
     def test_scan_ftp(self, check, result):
         check_name = check.__name__
         keyword = result.__name__
@@ -121,6 +122,5 @@ class TestNetworkChecks:
                 if side_effect is None:
                     assert not results
                 else:
-                    assert len(results) == 1
-                    assert results[0] == expected_result
+                    assert results == [expected_result]
                     assert self._render_results(results), 'failed rendering results'

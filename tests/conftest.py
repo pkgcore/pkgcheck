@@ -2,6 +2,7 @@ import os
 import tempfile
 import textwrap
 from contextlib import ExitStack
+from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -15,7 +16,7 @@ from snakeoil.formatters import PlainTextFormatter
 from snakeoil.osutils import pjoin
 
 pytest_plugins = ['pkgcore']
-REPO_ROOT = os.path.dirname(os.path.dirname(__file__))
+REPO_ROOT = Path(__file__).parent.parent
 
 
 def pytest_configure():
@@ -57,7 +58,7 @@ def testconfig(tmp_path_factory):
     config = tmp_path_factory.mktemp('testconfig')
     repos_conf = config / 'repos.conf'
     stubrepo = pjoin(pkgcore_const.DATA_PATH, 'stubrepo')
-    testdir = pjoin(REPO_ROOT, 'testdata', 'repos')
+    testdir = REPO_ROOT / 'testdata/repos'
     with open(repos_conf, 'w') as f:
         f.write(textwrap.dedent(f"""\
             [DEFAULT]
@@ -65,9 +66,9 @@ def testconfig(tmp_path_factory):
             [stubrepo]
             location = {stubrepo}
         """))
-        for repo in os.listdir(testdir):
-            f.write(f'[{repo}]\n')
-            f.write(f'location = {pjoin(testdir, repo)}\n')
+        for repo in testdir.iterdir():
+            f.write(f'[{repo.name}]\n')
+            f.write(f'location = {repo}\n')
     profile_path = pjoin(stubrepo, 'profiles', 'default')
     os.symlink(profile_path, str(config / 'make.profile'))
     return str(config)
@@ -83,13 +84,11 @@ def cache_dir(tmp_path_factory):
 @pytest.fixture
 def fakerepo(tmp_path_factory):
     """Generate a stub repo."""
-    fakerepo = str(tmp_path_factory.mktemp('fakerepo'))
-    os.makedirs(pjoin(fakerepo, 'profiles'))
-    os.makedirs(pjoin(fakerepo, 'metadata'))
-    with open(pjoin(fakerepo, 'profiles', 'repo_name'), 'w') as f:
-        f.write('fakerepo\n')
-    with open(pjoin(fakerepo, 'metadata', 'layout.conf'), 'w') as f:
-        f.write('masters =\n')
+    fakerepo = tmp_path_factory.mktemp('fakerepo')
+    (profiles := fakerepo / 'profiles').mkdir(parents=True)
+    (profiles / 'repo_name').write_text('fakerepo\n')
+    (metadata := fakerepo / 'metadata').mkdir(parents=True)
+    (metadata / 'layout.conf').write_text('masters =\n')
     return fakerepo
 
 

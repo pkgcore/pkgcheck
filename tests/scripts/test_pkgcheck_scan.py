@@ -154,10 +154,11 @@ class TestPkgcheckScanParseArgs:
             out, err = capsys.readouterr()
             assert not out
             assert err.startswith(
-                "pkgcheck scan: error: argument -r/--repo: couldn't find repo 'foo'")
+                "pkgcheck scan: error: argument -r/--repo: couldn't find repo 'foo'"
+            )
 
     def test_invalid_repo(self, tmp_path, capsys, tool):
-        touch(pjoin(str(tmp_path), 'foo'))
+        (tmp_path / 'foo').touch()
         for opt in ('-r', '--repo'):
             with pytest.raises(SystemExit) as excinfo:
                 with chdir(str(tmp_path)):
@@ -218,32 +219,27 @@ class TestPkgcheckScanParseArgs:
             assert options.cwd == const.DATA_PATH
 
     def test_eclass_target(self, fakerepo, tool):
-        os.makedirs(pjoin(fakerepo, 'eclass'))
-        eclass_path = pjoin(fakerepo, 'eclass', 'foo.eclass')
-        touch(eclass_path)
-        options, _ = tool.parse_args(['scan', eclass_path])
+        (eclass_dir := fakerepo / 'eclass').mkdir()
+        (eclass_path := eclass_dir / 'foo.eclass').touch()
+        options, _ = tool.parse_args(['scan', str(eclass_path)])
         assert list(options.restrictions) == [(base.eclass_scope, 'foo')]
 
     def test_profiles_target(self, fakerepo, tool):
-        profiles_path = pjoin(fakerepo, 'profiles')
+        profiles_path = str(fakerepo / 'profiles')
         options, _ = tool.parse_args(['scan', profiles_path])
         assert list(options.restrictions) == [(base.profiles_scope, packages.AlwaysTrue)]
 
     def test_profiles_path_target_file(self, fakerepo, tool):
-        pkg_mask_path = pjoin(fakerepo, 'profiles', 'package.mask')
-        touch(pkg_mask_path)
-        options, _ = tool.parse_args(['scan', pkg_mask_path])
-        assert list(options.restrictions) == [(base.profile_node_scope, pkg_mask_path)]
+        (pkg_mask_path := fakerepo / 'profiles/package.mask').touch()
+        options, _ = tool.parse_args(['scan', str(pkg_mask_path)])
+        assert list(options.restrictions) == [(base.profile_node_scope, str(pkg_mask_path))]
 
     def test_profiles_path_target_dir(self, fakerepo, tool):
-        profile_dir = pjoin(fakerepo, 'profiles', 'default')
-        os.makedirs(profile_dir)
-        pkg_mask_path = pjoin(profile_dir, 'package.mask')
-        pkg_use_path = pjoin(profile_dir, 'package.use')
-        touch(pkg_mask_path)
-        touch(pkg_use_path)
-        options, _ = tool.parse_args(['scan', profile_dir])
-        assert list(options.restrictions) == [(base.profile_node_scope, {pkg_mask_path, pkg_use_path})]
+        (profile_dir := fakerepo / 'profiles/default').mkdir(parents=True)
+        (pkg_mask_path := profile_dir / 'package.mask').touch()
+        (pkg_use_path := profile_dir / 'package.use').touch()
+        options, _ = tool.parse_args(['scan', str(profile_dir)])
+        assert list(options.restrictions) == [(base.profile_node_scope, {str(pkg_mask_path), str(pkg_use_path)})]
 
     def test_no_default_repo(self, tool, capsys):
         stubconfig = pjoin(pkgcore_const.DATA_PATH, 'stubconfig')
@@ -335,17 +331,18 @@ class TestPkgcheckScanParseConfigArgs:
 
 class TestPkgcheckScan:
 
-    script = partial(run, project)
+    script = staticmethod(partial(run, project))
 
-    repos_data = pjoin(pytest.REPO_ROOT, 'testdata', 'data', 'repos')
-    repos_dir = pjoin(pytest.REPO_ROOT, 'testdata', 'repos')
-    repos = tuple(x for x in sorted(os.listdir(repos_data)) if x != 'network')
+    repos_data = pytest.REPO_ROOT / 'testdata/data/repos'
+    repos_dir = pytest.REPO_ROOT / 'testdata/repos'
+    repos = tuple(sorted(x.name for x in repos_data.iterdir() if x.name != 'network'))
 
-    _all_results = []
-    for name, cls in sorted(objects.CHECKS.items()):
-        if not issubclass(cls, checks_mod.NetworkCheck):
-            for result in sorted(cls.known_results, key=attrgetter('__name__')):
-                _all_results.append((cls, result))
+    _all_results = [
+        (cls, result)
+        for name, cls in sorted(objects.CHECKS.items())
+        if not issubclass(cls, checks_mod.NetworkCheck)
+        for result in sorted(cls.known_results, key=attrgetter('__name__'))
+    ]
 
     @pytest.fixture(autouse=True)
     def _setup(self, testconfig, tmp_path):
@@ -445,7 +442,7 @@ class TestPkgcheckScan:
         results = list(self.scan(self.scan_args + ['-r', repo.location, 'cat/unknown']))
         assert not results
 
-    def test_explict_skip_check(self, capsys):
+    def test_explict_skip_check(self):
         """SkipCheck exceptions are raised when triggered for explicitly enabled checks."""
         error = 'network checks not enabled'
         with pytest.raises(base.PkgcheckException, match=error):
@@ -458,12 +455,11 @@ class TestPkgcheckScan:
         with pytest.raises(base.PkgcheckException, match=error):
             self.scan(self.scan_args + args)
 
-    @pytest.mark.parametrize(
-        'action, module', (
-            ('producer', 'pkgcheck.pipeline.UnversionedSource'),
-            ('consumer', 'pkgcheck.runners.SyncCheckRunner.run'),
+    @pytest.mark.parametrize('module', (
+        pytest.param('pkgcheck.pipeline.UnversionedSource', id='producer'),
+        pytest.param('pkgcheck.runners.SyncCheckRunner.run', id='consumer'),
         ))
-    def test_pipeline_exceptions(self, action, module):
+    def test_pipeline_exceptions(self, module):
         """Test checkrunner pipeline against unhandled exceptions."""
         with patch(module) as faked:
             faked.side_effect = Exception('pipeline failed')
@@ -476,18 +472,18 @@ class TestPkgcheckScan:
     @pytest.mark.parametrize('repo', repos)
     def test_scan_repo_data(self, repo):
         """Make sure the test data is up to date check/result naming wise."""
-        for check in os.listdir(pjoin(self.repos_data, repo)):
-            assert check in objects.CHECKS
-            for keyword in os.listdir(pjoin(self.repos_data, repo, check)):
-                assert keyword in objects.KEYWORDS
-                self._checks[repo][check].add(keyword)
+        for check in (self.repos_data / repo).iterdir():
+            assert check.name in objects.CHECKS
+            for keyword in check.iterdir():
+                assert keyword.name in objects.KEYWORDS
+                self._checks[repo][check.name].add(keyword.name)
 
     @staticmethod
     def _script(fix, repo_path):
         try:
             subprocess.run([fix], cwd=repo_path, capture_output=True, check=True, text=True)
-        except subprocess.CalledProcessError as e:
-            error = e.stderr if e.stderr else e.stdout
+        except subprocess.CalledProcessError as exc:
+            error = exc.stderr if exc.stderr else exc.stdout
             pytest.fail(error)
 
     # mapping of repos to scanned results
@@ -496,45 +492,41 @@ class TestPkgcheckScan:
 
     @pytest.mark.parametrize('repo', repos)
     def test_scan_repo(self, repo, tmp_path, verbosity=0):
-        """Scan a target repo, saving results for verfication."""
-        repo_dir = pjoin(self.repos_dir, repo)
+        """Scan a target repo, saving results for verification."""
+        repo_dir = self.repos_dir / repo
 
         # run all existing triggers
-        triggers = []
-        for root, _dirs, files in os.walk(pjoin(self.repos_data, repo)):
-            for f in (x for x in files if x == 'trigger.sh'):
-                triggers.append(pjoin(root, f))
+        triggers = [
+            pjoin(root, 'trigger.sh')
+            for root, _dirs, files in os.walk(self.repos_data / repo)
+            if 'trigger.sh' in files
+        ]
         if triggers:
-            triggered_repo = str(tmp_path / f'triggered-{repo}')
+            triggered_repo = tmp_path / f'triggered-{repo}'
             shutil.copytree(repo_dir, triggered_repo)
             for trigger in triggers:
                 self._script(trigger, triggered_repo)
             repo_dir = triggered_repo
 
-        args = (['-v'] * verbosity) + ['-r', repo_dir, '-c', ','.join(self._checks[repo])]
+        args = (['-v'] * verbosity) + ['-r', str(repo_dir), '-c', ','.join(self._checks[repo])]
 
         # add any defined extra repo args
         try:
-            with open(f'{repo_dir}/metadata/pkgcheck-args') as f:
-                args.extend(shlex.split(f.read()))
+            args.extend(shlex.split((repo_dir / 'metadata/pkgcheck-args').read_text()))
         except FileNotFoundError:
             pass
 
         results = []
-        verbose_results = []
         for result in self.scan(self.scan_args + args):
             # ignore results generated from stubs
             stubs = (getattr(result, x, '') for x in ('category', 'package'))
             if any(x.startswith('stub') for x in stubs):
                 continue
-            if verbosity:
-                verbose_results.append(result)
-            else:
-                results.append(result)
+            results.append(result)
 
         if verbosity:
-            self._verbose_results[repo] = set(verbose_results)
-            assert len(verbose_results) == len(self._verbose_results[repo])
+            self._verbose_results[repo] = set(results)
+            assert len(results) == len(self._verbose_results[repo])
         else:
             self._results[repo] = set(results)
             assert len(results) == len(self._results[repo])
@@ -547,7 +539,7 @@ class TestPkgcheckScan:
     def _get_results(self, path):
         """Return the set of result objects from a given json stream file."""
         try:
-            with open(pjoin(self.repos_data, path)) as f:
+            with (self.repos_data / path).open() as f:
                 return set(reporters.JsonStream.from_iter(f))
         except FileNotFoundError:
             return set()
@@ -604,13 +596,13 @@ class TestPkgcheckScan:
 
     @staticmethod
     def _patch(fix, repo_path):
-        with open(fix) as f:
+        with fix.open() as fix_file:
             try:
                 subprocess.run(
-                    ['patch', '-p1'], cwd=repo_path, stdin=f,
+                    ['patch', '-p1'], cwd=repo_path, stdin=fix_file,
                     capture_output=True, check=True, text=True)
-            except subprocess.CalledProcessError as e:
-                error = e.stderr if e.stderr else e.stdout
+            except subprocess.CalledProcessError as exc:
+                error = exc.stderr if exc.stderr else exc.stdout
                 pytest.fail(error)
 
     @pytest.mark.parametrize('check, result', _all_results)
@@ -620,23 +612,21 @@ class TestPkgcheckScan:
         keyword = result.__name__
         tested = False
         for repo in self.repos:
-            keyword_dir = pjoin(self.repos_data, f'{repo}/{check_name}/{keyword}')
-            if os.path.exists(pjoin(keyword_dir, 'fix.patch')):
-                fix = pjoin(keyword_dir, 'fix.patch')
+            keyword_dir = self.repos_data / repo / check_name / keyword
+            if (fix := keyword_dir / 'fix.patch').exists():
                 func = self._patch
-            elif os.path.exists(pjoin(keyword_dir, 'fix.sh')):
-                fix = pjoin(keyword_dir, 'fix.sh')
+            elif (fix := keyword_dir / 'fix.sh').exists():
                 func = self._script
             else:
                 continue
 
             # apply a fix if one exists and make sure the related result doesn't appear
-            repo_dir = pjoin(self.repos_dir, repo)
-            fixed_repo = str(tmp_path / f'fixed-{repo}')
+            repo_dir = self.repos_dir / repo
+            fixed_repo = tmp_path / f'fixed-{repo}'
             shutil.copytree(repo_dir, fixed_repo)
             func(fix, fixed_repo)
 
-            args = ['-r', fixed_repo, '-c', check_name, '-k', keyword]
+            args = ['-r', str(fixed_repo), '-c', check_name, '-k', keyword]
 
             # add any defined extra repo args
             try:

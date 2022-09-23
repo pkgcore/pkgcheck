@@ -73,7 +73,7 @@ class TestPkgcheckReplay:
                 assert excinfo.value.code == 2
 
     def test_replay_pipe_stdin(self):
-        script = os.path.join(pytest.REPO_ROOT, 'bin', 'pkgcheck')
+        script = pytest.REPO_ROOT / 'bin/pkgcheck'
         result = ProfileWarning('profile warning: foo')
         with tempfile.NamedTemporaryFile() as f:
             out = PlainTextFormatter(f)
