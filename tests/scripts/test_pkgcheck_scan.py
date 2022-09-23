@@ -508,6 +508,8 @@ class TestPkgcheckScan:
                 self._script(trigger, triggered_repo)
             repo_dir = triggered_repo
 
+        if repo not in self._checks:
+            self.test_scan_repo_data(repo)
         args = (['-v'] * verbosity) + ['-r', str(repo_dir), '-c', ','.join(self._checks[repo])]
 
         # add any defined extra repo args
@@ -559,6 +561,10 @@ class TestPkgcheckScan:
         """Run pkgcheck against test pkgs in bundled repo, verifying result output."""
         results = set()
         verbose_results = set()
+        if repo not in self._results:
+            self.test_scan_repo(repo, tmp_path, verbosity=0)
+        if repo not in self._verbose_results:
+            self.test_scan_repo(repo, tmp_path, verbosity=0)
         for check, keywords in self._checks[repo].items():
             for keyword in keywords:
                 # verify the expected results were seen during the repo scans

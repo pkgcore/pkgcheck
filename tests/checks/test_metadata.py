@@ -851,7 +851,7 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
         return super().mk_check(options=kwargs)
 
     # pull the set of dependency attrs from the most recent EAPI
-    dep_attrs = list(eapi.EAPI.known_eapis.values())[-1].dep_keys
+    dep_attrs = sorted(list(eapi.EAPI.known_eapis.values())[-1].dep_keys)
 
     @pytest.mark.parametrize('attr', dep_attrs)
     def test_depset(self, attr):
