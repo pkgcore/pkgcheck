@@ -6,12 +6,14 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
+from pkgcheck.addons.git import GitConfig
 from pkgcheck.cli import Tool
 from pkgcheck.reporters import StrReporter
 from pkgcheck.results import Result
 from pkgcheck.scripts import pkgcheck
 from pkgcore import const as pkgcore_const
 from snakeoil.cli.arghparse import ArgumentParser
+from snakeoil.contexts import os_environ
 from snakeoil.formatters import PlainTextFormatter
 from snakeoil.osutils import pjoin
 
@@ -42,9 +44,11 @@ def default_session_fixture(request):
     stack = ExitStack()
     # don't load the default system or user config files
     stack.enter_context(patch('pkgcheck.cli.ConfigFileParser.default_configs', ()))
+    stack.enter_context(os_environ(**(git_config := GitConfig()).config_env))
 
     def unpatch():
         stack.close()
+        git_config.close()
 
     request.addfinalizer(unpatch)
 
