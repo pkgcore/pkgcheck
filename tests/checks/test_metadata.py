@@ -12,7 +12,6 @@ from pkgcheck.checks import metadata
 from pkgcore.ebuild import eapi, repo_objs, repository
 from pkgcore.ebuild.cpv import VersionedCPV as CPV
 from pkgcore.test.misc import FakePkg, FakeRepo
-from snakeoil import fileutils
 from snakeoil.cli import arghparse
 from snakeoil.osutils import pjoin
 
@@ -110,15 +109,12 @@ class IUSE_Options(misc.Tmpdir):
         repo_base = tempfile.mkdtemp(dir=self.dir)
         base = pjoin(repo_base, 'profiles')
         os.mkdir(base)
-        fileutils.write_file(
-            pjoin(base, "arch.list"), 'w',
-            "\n".join(kwargs.pop("arches", ("x86", "ppc", "amd64", "amd64-fbsd"))))
-
-        fileutils.write_file(
-            pjoin(base, "use.desc"), "w",
-            "\n".join(f"{x} - {x}" for x in kwargs.pop("use_desc", ("foo", "bar"))))
-
-        fileutils.write_file(pjoin(base, 'repo_name'), 'w', kwargs.pop('repo_name', 'monkeys'))
+        with open(pjoin(base, "arch.list"), 'w') as file:
+            file.write("\n".join(kwargs.pop("arches", ("x86", "ppc", "amd64", "amd64-fbsd"))))
+        with open(pjoin(base, "use.desc"), "w") as file:
+            file.write("\n".join(f"{x} - {x}" for x in kwargs.pop("use_desc", ("foo", "bar"))))
+        with open(pjoin(base, 'repo_name'), 'w') as file:
+            file.write(kwargs.pop('repo_name', 'monkeys'))
         os.mkdir(pjoin(repo_base, 'metadata'))
         with open(pjoin(repo_base, 'metadata', 'layout.conf'), 'w') as f:
             f.write(textwrap.dedent(f"""\

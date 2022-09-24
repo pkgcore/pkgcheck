@@ -47,7 +47,8 @@ class PkgDirCheckBase(misc.ReportTestCase):
 
         # create specified files in FILESDIR
         for fn, contents in files.items():
-            fileutils.write_file(pjoin(self.filesdir, fn), 'w', contents)
+            with open(pjoin(self.filesdir, fn), 'w') as file:
+                file.write(contents)
 
         return misc.FakeFilesDirPkg(pkg, repo=self.repo)
 
