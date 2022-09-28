@@ -378,9 +378,7 @@ class ObsoleteUriCheck(Check):
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.regexes = []
-        for regexp, repl in self.REGEXPS:
-            self.regexes.append((re.compile(regexp), repl))
+        self.regexes = tuple((re.compile(regexp), repl) for regexp, repl in self.REGEXPS)
 
     def feed(self, pkg):
         for lineno, line in enumerate(pkg.lines, 1):
@@ -413,13 +411,14 @@ class StaticSrcUri(results.VersionResult, results.Style):
     instead of ${P} or ${PV} where relevant.
     """
 
-    def __init__(self, static_str, **kwargs):
+    def __init__(self, static_str: str, replacement: str, **kwargs):
         super().__init__(**kwargs)
         self.static_str = static_str
+        self.replacement = replacement
 
     @property
     def desc(self):
-        return f'{self.static_str!r} in SRC_URI'
+        return f'{self.static_str!r} in SRC_URI, replace with {self.replacement}'
 
 
 class ReferenceInMetadataVar(results.VersionResult, results.Style):
@@ -512,18 +511,55 @@ class MetadataVarCheck(Check):
         if matches:
             yield ReferenceInMetadataVar(var, stable_unique(matches), pkg=pkg)
 
+    def build_src_uri_variants_regex(self, pkg):
+        p, pv = pkg.P, pkg.PV
+        replacements = {
+            p: '${P}',
+            pv: '${PV}'
+        }
+        replacements.setdefault(p.capitalize(), "${P^}")
+        replacements.setdefault(p.upper(), "${P^^}")
+
+        for value, replacement in tuple(replacements.items()):
+            replacements.setdefault(value.replace('.', ''), replacement.replace('}', '//.}'))
+            replacements.setdefault(value.replace('.', '_'), replacement.replace('}', '//./_}'))
+            replacements.setdefault(value.replace('.', '-'), replacement.replace('}', '//./-}'))
+
+        pos = 0
+        positions = [pos := pv.find('.', pos+1) for _ in range(pv.count('.'))]
+
+        for sep in ('', '-', '_'):
+            replacements.setdefault(pv.replace('.', sep, 1), f"$(ver_rs 1 {sep!r})")
+            for count in range(2, pv.count('.')):
+                replacements.setdefault(pv.replace('.', sep, count), f"$(ver_rs 1-{count} {sep!r})")
+
+        for pos, index in enumerate(positions[1:], start=2):
+            replacements.setdefault(pv[:index], f"$(ver_cut 1-{pos})")
+
+        replacements = sorted(replacements.items(), key=lambda x: -len(x[0]))
+
+        return tuple(zip(*replacements))[1], '|'.join(
+            rf'(?P<r{index}>{re.escape(s)})'
+            for index, (s, _) in enumerate(replacements)
+        )
+
     @verify_vars('SRC_URI')
     def _src_uri(self, var, node, value, pkg):
         if '${HOMEPAGE}' in value:
             yield HomepageInSrcUri(pkg=pkg)
 
-        exts = pkg.eapi.archive_exts_regex_pattern
-        P = re.escape(pkg.P)
-        PV = re.escape(pkg.PV)
-        static_src_uri_re = rf'/(?P<static_str>({P}{exts}(?="|\n)|{PV}(?=/)))'
+        replacements, regex = self.build_src_uri_variants_regex(pkg)
+        static_src_uri_re = rf'(?:/|{re.escape(pkg.PN)}[-._]?|->\s*)[v]?(?P<static_str>({regex}))'
+        static_urls = {}
         for match in re.finditer(static_src_uri_re, value):
-            static_str = match.group('static_str')
-            yield StaticSrcUri(static_str, pkg=pkg)
+            relevant = {key: value for key, value in match.groupdict().items() if value is not None}
+            static_str = relevant.pop('static_str')
+            assert len(relevant) == 1
+            key = int(tuple(relevant.keys())[0][1:])
+            static_urls[static_str] = replacements[key]
+
+        for static_str, replacement in static_urls.items():
+            yield StaticSrcUri(static_str, replacement=replacement, pkg=pkg)
 
     def feed(self, pkg):
         keywords_lines = set()

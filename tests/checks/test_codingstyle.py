@@ -1,6 +1,8 @@
 from itertools import chain
 
+import pytest
 from pkgcheck.checks import codingstyle
+from pkgcheck.sources import _ParsedPkg
 from pkgcore.ebuild.eapi import EAPI
 
 from .. import misc
@@ -311,3 +313,81 @@ class TestObsoleteUri(misc.ReportTestCase):
         assert (r.replacement ==
                 'https://gitlab.com/foo/bar/-/archive/${PV}/bar-${PV}.zip')
         assert uri in str(r)
+
+
+class TestStaticSrcUri(misc.ReportTestCase):
+
+    check_kls = codingstyle.MetadataVarCheck
+    check = check_kls(None)
+
+    @staticmethod
+    def _prepare_pkg(uri_value: str, rename: str = '', pkgver: str = 'diffball-0.1.2.3'):
+        if rename:
+            rename = f' -> {rename}'
+        uri = f'https://github.com/pkgcore/pkgcheck/archive/{uri_value}.tar.gz'
+        fake_src = [
+            f'SRC_URI="{uri}{rename}"\n'
+        ]
+
+        fake_pkg = misc.FakePkg(f"dev-util/{pkgver}", ebuild=''.join(fake_src), lines=fake_src)
+        data = ''.join(fake_src).encode()
+        return _ParsedPkg(data, pkg=fake_pkg)
+
+
+    @pytest.mark.parametrize('value', (
+        '${P}',
+        '${PV}',
+        'v${PV}',
+        'random-0.1.2.3', # not a valid prefix
+        '1.2.3', # currently we support only ver_cut with start=1
+        '0', # for ver_cut only if more then 1 part
+    ))
+    def test_no_report(self, value):
+        self.assertNoReport(self.check, self._prepare_pkg(value))
+
+    @pytest.mark.parametrize(('value', 'static_str', 'replacement'), (
+        ('diffball-0.1.2.3', 'diffball-0.1.2.3', '${P}'),
+        ('Diffball-0.1.2.3', 'Diffball-0.1.2.3', '${P^}'),
+        ('DIFFBALL-0.1.2.3', 'DIFFBALL-0.1.2.3', '${P^^}'),
+        ('diffball-0123', 'diffball-0123', '${P//.}'),
+        ('Diffball-0123', 'Diffball-0123', '${P^//.}'),
+        ('0.1.2.3', '0.1.2.3', '${PV}'),
+        ('v0.1.2.3', '0.1.2.3', '${PV}'),
+        ('0.1.2', '0.1.2', '$(ver_cut 1-3)'),
+        ('0.1', '0.1', '$(ver_cut 1-2)'),
+        ('diffball-0.1.2', '0.1.2', '$(ver_cut 1-3)'),
+        ('v0123', '0123', "${PV//.}"),
+        ('012.3', '012.3', "$(ver_rs 1-2 '')"),
+        ('012.3', '012.3', "$(ver_rs 1-2 '')"),
+        ('0_1_2_3', '0_1_2_3', "${PV//./_}"),
+        ('0_1_2.3', '0_1_2.3', "$(ver_rs 1-2 '_')"),
+        ('0-1.2.3', '0-1.2.3', "$(ver_rs 1 '-')"),
+    ))
+    def test_with_report(self, value, static_str, replacement):
+        r = self.assertReport(self.check, self._prepare_pkg(value))
+        assert r.static_str == static_str
+        assert r.replacement == replacement
+
+    def test_rename(self):
+        self.assertNoReport(self.check, self._prepare_pkg('${P}', '${P}.tar.gz'))
+
+        r = self.assertReport(self.check, self._prepare_pkg('${P}', 'diffball-0.1.2.3.tar.gz'))
+        assert r.static_str == 'diffball-0.1.2.3'
+        assert r.replacement == '${P}'
+
+        r = self.assertReport(self.check, self._prepare_pkg('0.1.2.3', '${P}.tar.gz'))
+        assert r.static_str == '0.1.2.3'
+        assert r.replacement == '${PV}'
+
+        r = self.assertReport(self.check, self._prepare_pkg('diffball-0.1.2.3', 'diffball-0.1.2.3.tar.gz'))
+        assert r.static_str == 'diffball-0.1.2.3'
+        assert r.replacement == '${P}'
+
+    def test_capitalize(self):
+        r = self.assertReport(self.check, self._prepare_pkg('DIFFBALL-0.1.2.3', pkgver='DIFFBALL-0.1.2.3'))
+        assert r.static_str == 'DIFFBALL-0.1.2.3'
+        assert r.replacement == '${P}'
+
+        r = self.assertReport(self.check, self._prepare_pkg('Diffball-0.1.2.3', pkgver='Diffball-0.1.2.3'))
+        assert r.static_str == 'Diffball-0.1.2.3'
+        assert r.replacement == '${P}'
