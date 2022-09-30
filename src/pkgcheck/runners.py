@@ -77,6 +77,9 @@ class SyncCheckRunner(CheckRunner):
             if restrict.match(pkg):
                 yield result
 
+        for check in self.checks:
+            check.cleanup()
+
 
 class RepoCheckRunner(SyncCheckRunner):
     """Generic runner for checks run across an entire repo."""

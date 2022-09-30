@@ -189,6 +189,9 @@ class _RemovalRepo(UnconfiguredTree):
             f.write('old-repo\n')
         super().__init__(repo_dir)
 
+    def cleanup(self):
+        self.__tmpdir.cleanup()
+
     def __call__(self, pkgs):
         """Update the repo with a given sequence of packages."""
         self._populate(pkgs)
@@ -235,16 +238,23 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
         self.repo = self.options.target_repo
         self.valid_arches = self.options.target_repo.known_arches
         self._git_addon = git_addon
+        self._cleanup = []
+
+    def cleanup(self):
+        for repo in self._cleanup:
+            repo.cleanup()
 
     @klass.jit_attr
     def removal_repo(self):
         """Create a repository of packages removed from git."""
-        return _RemovalRepo(self.repo)
+        self._cleanup.append(repo := _RemovalRepo(self.repo))
+        return repo
 
     @klass.jit_attr
     def modified_repo(self):
         """Create a repository of old packages newly modified in git."""
-        return _RemovalRepo(self.repo)
+        self._cleanup.append(repo := _RemovalRepo(self.repo))
+        return repo
 
     @klass.jit_attr
     def added_repo(self):

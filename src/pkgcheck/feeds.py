@@ -33,6 +33,9 @@ class Feed(base.Addon):
         """Handle functionality against the passed in item."""
         yield from ()
 
+    def cleanup(self):
+        """Do cleanup here."""
+
 
 class QueryCache(Feed):
 
