@@ -28,6 +28,23 @@ class UnknownProfilePackage(results.ProfilesResult, results.Warning):
         return f'{self.path!r}: unknown package: {self.atom!r}'
 
 
+class UnmatchedProfilePackageUnmask(results.ProfilesResult, results.Warning):
+    """The profile's files include a package.unmask (or similar) entry which
+    negates a non-existent mask, i.e. it undoes a mask which doesn't exist in
+    the parent profile.
+
+    No atoms matching this entry were found in the parent profile to unmask."""
+
+    def __init__(self, path, atom):
+        super().__init__()
+        self.path = path
+        self.atom = str(atom)
+
+    @property
+    def desc(self):
+        return f'{self.path!r}: unmask of not masked package: {self.atom!r}'
+
+
 class UnknownProfilePackageUse(results.ProfilesResult, results.Warning):
     """Profile files include entries with USE flags that aren't used on any matching packages."""
 
@@ -129,7 +146,8 @@ class ProfilesCheck(Check):
     _source = sources.ProfilesRepoSource
     required_addons = (addons.UseAddon, addons.KeywordsAddon)
     known_results = frozenset([
-        UnknownProfilePackage, UnknownProfilePackageUse, UnknownProfileUse,
+        UnknownProfilePackage, UnmatchedProfilePackageUnmask,
+        UnknownProfilePackageUse, UnknownProfileUse,
         UnknownProfilePackageKeywords, UnknownProfileUseExpand,
         ProfileWarning, ProfileError,
     ])
@@ -145,10 +163,18 @@ class ProfilesCheck(Check):
         self.profiles_dir = repo.config.profiles_base
         self.use_expand_groups = frozenset(x.upper() for x in repo.config.use_expand_desc)
 
-        local_iuse = {use for pkg, (use, desc) in repo.config.use_local_desc}
+        local_iuse = {use for _pkg, (use, _desc) in repo.config.use_local_desc}
         self.available_iuse = frozenset(
             local_iuse | use_addon.global_iuse |
             use_addon.global_iuse_expand | use_addon.global_iuse_implicit)
+
+    @staticmethod
+    def traverse_parents_tree(profile):
+        def _traverse(node):
+            for parent in node.parents:
+                yield parent
+                yield from _traverse(parent)
+        return set(_traverse(profile))
 
     @verify_files(('parent', 'parents'),
                   ('eapi', 'eapi'))
@@ -160,7 +186,7 @@ class ProfilesCheck(Check):
     def _deprecated(self, filename, node, vals):
         # make sure replacement profile exists
         if vals is not None:
-            replacement, msg = vals
+            replacement, _msg = vals
             try:
                 addons.profiles.ProfileNode(pjoin(self.profiles_dir, replacement))
             except profiles_mod.ProfileError:
@@ -195,13 +221,28 @@ class ProfilesCheck(Check):
                         pjoin(node.name, filename), unknown_enabled)
 
     @verify_files(('packages', 'packages'),
-                  ('package.mask', 'masks'),
                   ('package.unmask', 'unmasks'),
                   ('package.deprecated', 'pkg_deprecated'))
     def _pkg_atoms(self, filename, node, vals):
         for x in iflatten_instance(vals, atom_cls):
             if not self.search_repo.match(x):
                 yield UnknownProfilePackage(pjoin(node.name, filename), x)
+
+    @verify_files(('package.mask', 'masks'),)
+    def _pkg_masks(self, filename, node, vals):
+        all_parents = self.traverse_parents_tree(node)
+        all_masked = set().union(*(masked[1]
+            for p in all_parents if (masked := p.masks)))
+
+        unmasked, masked = vals
+        for x in masked:
+            if not self.search_repo.match(x):
+                yield UnknownProfilePackage(pjoin(node.name, filename), x)
+        for x in unmasked:
+            if not self.search_repo.match(x):
+                yield UnknownProfilePackage(pjoin(node.name, filename), x)
+            elif x not in all_masked:
+                yield UnmatchedProfilePackageUnmask(pjoin(node.name, filename), x)
 
     @verify_files(('package.use', 'pkg_use'),
                   ('package.use.force', 'pkg_use_force'),

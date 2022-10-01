@@ -1,0 +1,7 @@
+diff -Naur profiledir/profiles/unmatched_unmasks/package.mask fixed/profiles/unmatched_unmasks/package.mask
+index fc6201bc..73b38bc7 100644
+--- profiledir/profiles/unmatched_unmasks/package.mask
++++ fixed/profiles/unmatched_unmasks/package.mask
+@@ -1,2 +1 @@
+--cat/pkg4
+ -cat/pkg3
