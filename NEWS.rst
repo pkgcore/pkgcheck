@@ -3,6 +3,19 @@ Release Notes
 =============
 
 ----------------------------
+pkgcheck 0.10.16 (2022-10-04)
+----------------------------
+
+- StaticSrcUri: handle more cases of static URI and offer replacements (Arthur
+  Zamarin, #453)
+
+- scan: respect jobs count from MAKEOPTS (Arthur Zamarin, #449)
+  https://bugs.gentoo.org/799314
+
+- ProfilesCheck: new check for no-op ``package.mask`` entries which negates
+  non-existent mask in parents profiles (Arthur Zamarin, #456)
+
+----------------------------
 pkgcheck 0.10.15 (2022-09-16)
 ----------------------------
 
