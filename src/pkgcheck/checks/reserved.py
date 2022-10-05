@@ -1,4 +1,7 @@
 import re
+
+from pkgcore.ebuild.eapi import EAPI
+
 from .. import addons, bash, results, sources
 from . import Check
 
@@ -15,19 +18,18 @@ class _ReservedNameCheck(Check):
     variables_usage_whitelist = {"EBUILD_PHASE", "EBUILD_PHASE_FUNC"}
 
     def _check(self, used_type: str, used_names):
-        for used_name, node_start in used_names.items():
+        for used_name, (lineno, _) in used_names.items():
             if used_name in self.special_whitelist:
                 continue
             test_name = used_name.lower()
-            lineno, _ = node_start
             for reserved in self.reserved_prefixes:
                 if test_name.startswith(reserved):
-                    yield used_name, used_type, reserved, 'prefix', lineno
+                    yield used_name, used_type, reserved, 'prefix', lineno+1
             for reserved in self.reserved_substrings:
                 if reserved in test_name:
-                    yield used_name, used_type, reserved, 'substring', lineno
+                    yield used_name, used_type, reserved, 'substring', lineno+1
             if self.reserved_ebuild_regex.match(test_name):
-                yield used_name, used_type, 'ebuild', 'substring', lineno
+                yield used_name, used_type, 'ebuild', 'substring', lineno+1
 
     def _feed(self, item):
         yield from self._check('function', {
@@ -78,16 +80,15 @@ class EclassReservedCheck(_ReservedNameCheck):
 class EbuildReservedName(results.LineResult, results.Warning):
     """Ebuild uses reserved variable or function name for package manager."""
 
-    def __init__(self, used_name: str, used_type: str, reserved_word: str, reserved_type: str, **kwargs):
+    def __init__(self, used_type: str, reserved_word: str, reserved_type: str, **kwargs):
         super().__init__(**kwargs)
-        self.used_name = used_name
         self.used_type = used_type
         self.reserved_word = reserved_word
         self.reserved_type = reserved_type
 
     @property
     def desc(self):
-        return f'line {self.lineno}: {self.used_type} name "{self.used_name}" is disallowed because "{self.reserved_word}" is a reserved {self.reserved_type}'
+        return f'line {self.lineno}: {self.used_type} name "{self.line}" is disallowed because "{self.reserved_word}" is a reserved {self.reserved_type}'
 
 
 class EbuildReservedCheck(_ReservedNameCheck):
@@ -96,6 +97,21 @@ class EbuildReservedCheck(_ReservedNameCheck):
     _source = sources.EbuildParseRepoSource
     known_results = frozenset([EbuildReservedName])
 
+    def __init__(self, options, **kwargs):
+        super().__init__(options, **kwargs)
+        self.phases_hooks = {
+            eapi_name: {
+                f'{prefix}_{phase}' for phase in eapi.phases.values() for prefix in ('pre', 'post')
+            }
+            for eapi_name, eapi in EAPI.known_eapis.items()
+        }
+
     def feed(self, pkg):
-        for *args, lineno in self._feed(pkg):
-            yield EbuildReservedName(*args, lineno=lineno, line='', pkg=pkg)
+        for used_name, *args, lineno in self._feed(pkg):
+            yield EbuildReservedName(*args, lineno=lineno, line=used_name, pkg=pkg)
+
+        for node, _ in bash.func_query.captures(pkg.tree.root_node):
+            used_name = pkg.node_str(node.child_by_field_name('name'))
+            if used_name in self.phases_hooks[str(pkg.eapi)]:
+                lineno, _ = node.start_point
+                yield EbuildReservedName('function', used_name, 'phase hook', lineno=lineno+1, line=used_name, pkg=pkg)

@@ -1,6 +1,7 @@
+diff -Naur standalone/EbuildReservedCheck/EbuildReservedName/EbuildReservedName-0.ebuild fixed/EbuildReservedCheck/EbuildReservedName/EbuildReservedName-0.ebuild
 --- standalone/EbuildReservedCheck/EbuildReservedName/EbuildReservedName-0.ebuild
-+++ standalone/EbuildReservedCheck/EbuildReservedName/EbuildReservedName-0.ebuild
-@@ -3,12 +3,11 @@ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
++++ fixed/EbuildReservedCheck/EbuildReservedName/EbuildReservedName-0.ebuild
+@@ -3,20 +3,19 @@ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
  SLOT="0"
  LICENSE="BSD"
 
@@ -17,3 +18,13 @@
  EBUILD_SUCCESS_HOOKS="true"
 -EBUILD_TEST="1"
  REBUILD_ALL="1"
+
+-post_src_unpack() {
++my_post_src_unpack() {
+ 	echo "Larry was here"
+ }
+
+-pre_src_test() {
++my_pre_src_test() {
+ 	echo "Larry was even here"
+ }
