@@ -168,14 +168,6 @@ class ProfilesCheck(Check):
             local_iuse | use_addon.global_iuse |
             use_addon.global_iuse_expand | use_addon.global_iuse_implicit)
 
-    @staticmethod
-    def traverse_parents_tree(profile):
-        def _traverse(node):
-            for parent in node.parents:
-                yield parent
-                yield from _traverse(parent)
-        return set(_traverse(profile))
-
     @verify_files(('parent', 'parents'),
                   ('eapi', 'eapi'))
     def _pull_attr(self, *args):
@@ -230,9 +222,8 @@ class ProfilesCheck(Check):
 
     @verify_files(('package.mask', 'masks'),)
     def _pkg_masks(self, filename, node, vals):
-        all_parents = self.traverse_parents_tree(node)
         all_masked = set().union(*(masked[1]
-            for p in all_parents if (masked := p.masks)))
+            for p in profiles_mod.ProfileStack(node.path).stack if (masked := p.masks)))
 
         unmasked, masked = vals
         for x in masked:
