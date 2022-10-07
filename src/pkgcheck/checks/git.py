@@ -7,6 +7,7 @@ import tarfile
 from collections import defaultdict
 from datetime import datetime
 from itertools import chain
+from operator import attrgetter
 from tempfile import TemporaryDirectory
 from urllib.parse import urlparse
 
@@ -204,10 +205,11 @@ class _RemovalRepo(UnconfiguredTree):
 
     def _populate(self, pkgs):
         """Populate the repo with a given sequence of historical packages."""
-        pkg = pkgs[0]
+        pkg = min(pkgs, key=attrgetter('time'))
         paths = [pjoin(pkg.category, pkg.package)]
-        if os.path.exists(pjoin(self.__parent_repo.location, 'eclass')):
-            paths.append('eclass')
+        for subdir in ('eclass', 'profiles'):
+            if os.path.exists(pjoin(self.__parent_repo.location, subdir)):
+                paths.append(subdir)
         old_files = subprocess.Popen(
             ['git', 'archive', f'{pkg.commit}~1'] + paths,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE,
