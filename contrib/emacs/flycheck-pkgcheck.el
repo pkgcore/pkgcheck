@@ -1,14 +1,15 @@
 ;;; flycheck-pkgcheck.el --- Flycheck checker for ebuilds -*- lexical-binding: t -*-
 
 
-;; Copyright (c) 2006-2021, pkgcheck contributors
+;; Copyright (c) 2006-2022, pkgcheck contributors
 
-;; Authors: Maciej Barć <xgqt@gentoo.org>
+;; Author: Maciej Barć <xgqt@gentoo.org>
+;;         Alfred Wingate <parona@protonmail.com>
 ;; Keywords: convenience processes tools
 ;; Homepage: https://pkgcore.github.io/pkgcheck/
 ;; SPDX-License-Identifier: BSD-3-Clause
 ;; Package-Requires: ((emacs "24.1") (flycheck "32"))
-;; Version: 1.0.0
+;; Version: 1.0.1
 
 
 
@@ -17,7 +18,7 @@
 
 ;; Flycheck checker for ebuilds using the "pkgcheck" utility.
 
-;; This checker uses a reported made exclusively for it - FlycheckReporter.
+;; This checker uses a reporter made exclusively for it - FlycheckReporter.
 
 ;; In addition to "Package-Requires" also ebuild-mode is required for hooks.
 
@@ -44,14 +45,13 @@
 (flycheck-define-checker pkgcheck
   "A checker for ebuild files."
   :modes ebuild-mode
-  :predicate (lambda () (buffer-file-name))
+  :predicate flycheck-buffer-saved-p
   :command ("pkgcheck"
             "scan"
             "--exit="
             "--reporter=FlycheckReporter"
             "--scopes=-git"
-            "--verbose"
-            (eval (buffer-file-name)))
+            source-original)
   :error-patterns
   ((info
     line-start (file-name) ":" line ":" "info" ":" (message) line-end)
