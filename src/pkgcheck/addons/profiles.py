@@ -396,6 +396,10 @@ class ProfileAddon(caches.CachedAddon):
         except KeyError:
             return default
 
+    def items(self):
+        """Iterate over all keywords and profiles."""
+        return self.profile_filters.items()
+
     def __iter__(self):
         """Iterate over all profile data objects."""
         return chain.from_iterable(self.profile_filters.values())

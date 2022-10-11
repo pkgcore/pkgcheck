@@ -1,6 +1,9 @@
+from operator import attrgetter
+
+from snakeoil.mappings import defaultdictkey
 from snakeoil.strings import pluralism
 
-from .. import results, sources
+from .. import addons, results, sources
 from . import Check
 
 
@@ -31,6 +34,7 @@ class RedundantVersionCheck(Check):
     """
 
     _source = sources.PackageRepoSource
+    required_addons = (addons.profiles.ProfileAddon,)
     known_results = frozenset([RedundantVersion])
 
     @staticmethod
@@ -43,6 +47,31 @@ class RedundantVersionCheck(Check):
                 with stable keywords. This is useful for cases of cleanup after
                 successful stabilization.
             """)
+
+    def __init__(self, *args, profile_addon):
+        super().__init__(*args)
+        self.keywords_profiles = {
+            keyword: sorted(profiles, key=attrgetter('name'))
+            for keyword, profiles in profile_addon.items()}
+
+    def filter_later_profiles_masks(self, visible_cache, pkg, later_versions):
+        # check both stable/unstable profiles for stable KEYWORDS and only
+        # unstable profiles for unstable KEYWORDS
+        keywords = []
+        for keyword in pkg.sorted_keywords:
+            if keyword[0] != '~':
+                keywords.append('~' + keyword)
+            keywords.append(keyword)
+
+        # if a profile exists, where the package is visible, but the later aren't
+        # then it isn't redundant
+        visible_profiles = tuple(profile
+            for keyword in keywords
+            for profile in self.keywords_profiles.get(keyword, ())
+            if visible_cache[(profile, pkg)])
+        return tuple(
+            later for later in later_versions
+            if all(visible_cache[(profile, later)] for profile in visible_profiles))
 
     def feed(self, pkgset):
         if len(pkgset) == 1:
@@ -77,8 +106,10 @@ class RedundantVersionCheck(Check):
             if matches:
                 bad.append((pkg, matches))
 
+        visible_cache = defaultdictkey(lambda profile_pkg: profile_pkg[0].visible(profile_pkg[1]))
         for pkg, matches in reversed(bad):
-            later_versions = (x.fullver for x in sorted(matches))
             if self.options.stable_only and all(key.startswith('~') for x in matches for key in x.keywords):
                 continue
-            yield RedundantVersion(pkg.slot, later_versions, pkg=pkg)
+            if matches := self.filter_later_profiles_masks(visible_cache, pkg, matches):
+                later_versions = (x.fullver for x in sorted(matches))
+                yield RedundantVersion(pkg.slot, later_versions, pkg=pkg)

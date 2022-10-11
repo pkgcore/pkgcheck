@@ -15,3 +15,7 @@ amd64 deprecated/nonexistent exp
 
 amd64 banned-eapi dev
 amd64 deprecated-eapi stable
+
+amd64 redundant/amd64      stable
+amd64 redundant/amd64/musl dev
+x86   redundant/x86        stable

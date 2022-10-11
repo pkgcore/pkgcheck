@@ -11,7 +11,7 @@ def mk_pkg(ver, keywords=("x86", "amd64"), slot="0", **kwds):
 class TestRedundantVersion(misc.ReportTestCase):
 
     check_kls = cleanup.RedundantVersionCheck
-    check = cleanup.RedundantVersionCheck(arghparse.Namespace(stable_only=None))
+    check = check_kls(arghparse.Namespace(stable_only=True), profile_addon={})
 
     def test_single_version(self):
         self.assertNoReport(self.check, [mk_pkg("0.7.1")])
@@ -68,7 +68,7 @@ class TestRedundantVersion(misc.ReportTestCase):
 class TestRedundantVersionByStable(misc.ReportTestCase):
 
     check_kls = cleanup.RedundantVersionCheck
-    check = cleanup.RedundantVersionCheck(arghparse.Namespace(stable_only=True))
+    check = cleanup.RedundantVersionCheck(arghparse.Namespace(stable_only=True), profile_addon={})
 
     def test_only_unstable(self):
         l = [mk_pkg("0.1", keywords=("~x86", "~amd64")),
