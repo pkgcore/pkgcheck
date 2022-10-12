@@ -92,6 +92,15 @@ class RepoCheckRunner(SyncCheckRunner):
             yield from check.finish()
 
 
+class SequentialCheckRunner(SyncCheckRunner):
+    """Generic runner for sequential checks.
+
+    Checks that must not be run in parallel, will be run on the main process.
+    """
+
+    type = 'sequential'
+
+
 class AsyncCheckRunner(CheckRunner):
     """Generic runner for asynchronous checks.
 
