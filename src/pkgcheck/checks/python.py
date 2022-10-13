@@ -150,6 +150,86 @@ class DistutilsNonPEP517Build(results.VersionResult, results.Warning):
         )
 
 
+class PythonHasVersionUsage(results.LinesResult, results.Style):
+    """Package uses has_version inside ``python_check_deps``.
+
+    Ebuilds which declare the ``python_check_deps`` function (which tests
+    Python implementations for matching dependencies) should use the special
+    ``python_has_version`` function (instead of ``has_version``) for enhanced
+    log output and defaults [#]_.
+
+    .. [#] https://projects.gentoo.org/python/guide/any.html#dependencies
+    """
+
+    @property
+    def desc(self):
+        return f'usage of has_version {self.lines_str}, replace with python_has_version'
+
+
+class PythonHasVersionMissingPythonUseDep(results.LineResult, results.Error):
+    """Package calls ``python_has_version`` or ``has_version`` without
+    ``[${PYTHON_USEDEP}]`` suffix.
+
+    All calls  to ``python_has_version`` or ``has_version`` inside
+    ``python_check_deps`` should contain ``[${PYTHON_USEDEP}]`` suffix for the
+    dependency argument [#]_.
+
+    .. [#] https://projects.gentoo.org/python/guide/any.html#dependencies
+    """
+
+    @property
+    def desc(self):
+        return f'line: {self.lineno}: missing [${{PYTHON_USEDEP}}] suffix for argument "{self.line}"'
+
+
+class PythonAnyMismatchedUseHasVersionCheck(results.VersionResult, results.Warning):
+    """Package has mismatch in dependency's use flags between call to
+    ``python_gen_any_dep`` and ``python_has_version``.
+
+    For every dependency used under ``python_gen_any_dep``, the check for a
+    matching python implementation in ``python_has_version`` should match the
+    exact use flags [#]_.
+
+    .. [#] https://projects.gentoo.org/python/guide/any.html#dependencies
+    """
+
+    def __init__(self, dep_category, dep_atom, use_flags, location, **kwargs):
+        super().__init__(**kwargs)
+        self.dep_category = dep_category
+        self.dep_atom = dep_atom
+        self.use_flags = tuple(use_flags)
+        self.location = location
+
+    @property
+    def desc(self):
+        s = pluralism(self.use_flags)
+        use_flags = ', '.join(map(str, self.use_flags))
+        return f'{self.dep_category}: mismatch for {self.dep_atom} check use flag{s} [{use_flags}] in {self.location}'
+
+
+class PythonAnyMismatchedDepHasVersionCheck(results.VersionResult, results.Warning):
+    """Package has mismatch in dependencies between call to
+    ``python_gen_any_dep`` and ``python_has_version``.
+
+    For every dependency used under ``python_gen_any_dep``, a matching check
+    for a matching python implementation in ``python_has_version`` should
+    exist [#]_.
+
+    .. [#] https://projects.gentoo.org/python/guide/any.html#dependencies
+    """
+
+    def __init__(self, dep_category, dep_atom, use_flags, location, **kwargs):
+        super().__init__(**kwargs)
+        self.dep_category = dep_category
+        self.dep_atom = dep_atom
+        self.use_flags = tuple(use_flags)
+        self.location = location
+
+    @property
+    def desc(self):
+        use_flags = ', '.join(map(str, self.use_flags))
+        return f'{self.dep_category}: missing check for {self.dep_atom}[{use_flags}] in {self.location!r}'
+
 class PythonCheck(Check):
     """Python eclass checks.
 
@@ -162,7 +242,29 @@ class PythonCheck(Check):
         MissingPythonEclass, PythonMissingRequiredUse,
         PythonMissingDeps, PythonRuntimeDepInAnyR1, PythonEclassError,
         DistutilsNonPEP517Build,
+        PythonHasVersionUsage,
+        PythonHasVersionMissingPythonUseDep,
+        PythonAnyMismatchedUseHasVersionCheck,
+        PythonAnyMismatchedDepHasVersionCheck,
     ])
+
+    has_version_known_flags = {
+        '-b': 'BDEPEND',
+        '-r': 'RDEPEND',
+        '-d': 'DEPEND',
+        '--host-root': 'BDEPEND',
+    }
+
+    has_version_default = {
+        'has_version': 'DEPEND',
+        'python_has_version': 'BDEPEND',
+    }
+
+    eclass_any_dep_func = {
+        'python-single-r1': 'python_gen_cond_dep',
+        'python-any-r1': 'python_gen_any_dep',
+        'python-r1': 'python_gen_any_dep',
+    }
 
     def scan_tree_recursively(self, deptree, expected_cls):
         for x in deptree:
@@ -212,65 +314,128 @@ class PythonCheck(Check):
                 return True
         return False
 
-    def check_pep517_depend(self, item):
-        """Check Python ebuilds for missing optional dependencies.
+    def check_pep517(self, pkg):
+        """Check Python ebuilds for whether PEP517 mode is used and missing
+        optional dependencies.
 
         The problematic case for us is ``DISTUTILS_OPTIONAL`` and
         ``DISTUTILS_USE_PEP517 != no`` but ``${DISTUTILS_DEPS}`` is not in
         the ebuild.
         """
         has_distutils_optional = None
-        has_distutils_pep517_non_no = None
+        has_distutils_deps = False
+        pep517_value = None
 
-        # We're not interested in testing fake objects from TestPythonCheck
-        if not isinstance(item, sources._ParsedPkg) or not hasattr(item, 'tree'): # pragma: no cover
-            return True
-
-        for var_node, _ in bash.var_assign_query.captures(item.tree.root_node):
-            var_name = item.node_str(var_node.child_by_field_name('name'))
+        for var_node, _ in bash.var_assign_query.captures(pkg.tree.root_node):
+            var_name = pkg.node_str(var_node.child_by_field_name('name'))
 
             if var_name == "DISTUTILS_OPTIONAL":
                 has_distutils_optional = True
+            elif var_name == "DISTUTILS_USE_PEP517":
+                pep517_value = pkg.node_str(var_node.children[-1])
 
-            if "DISTUTILS_DEPS" in item.node_str(var_node.parent):
+            if "DISTUTILS_DEPS" in pkg.node_str(var_node.parent):
                 # If they're referencing the eclass' dependency variable,
                 # there's nothing for us to do anyway.
-                return True
+                has_distutils_deps = True
 
-            if var_name == "DISTUTILS_USE_PEP517" and not has_distutils_pep517_non_no:
-                var_val = item.node_str(var_node.children[-1])
 
-                # For DISTUTILS_USE_PEP517=no, the eclass doesn't
-                # provide ${DISTUTILS_DEPS}.
-                has_distutils_pep517_non_no = (var_val != "no")
+        if pep517_value is None:
+            yield DistutilsNonPEP517Build(pkg=pkg)
+        elif has_distutils_optional and not has_distutils_deps and pep517_value != "no":
+            # We always need BDEPEND for these if != no.
+            # We are looking for USE-conditional on appropriate target
+            # flag, with dep on dev-python/gpep517.
+            if "dev-python/gpep517" not in iflatten_instance(pkg.bdepend, atom):
+                yield PythonMissingDeps("BDEPEND", pkg=pkg, dep_value="DISTUTILS_DEPS")
 
-            if has_distutils_optional and has_distutils_pep517_non_no:
-                # We always need BDEPEND for these if != no.
-                # We are looking for USE-conditional on appropriate target
-                # flag, with dep on dev-python/gpep517.
-                return "dev-python/gpep517" in iflatten_instance(item.bdepend, atom)
 
-        return True
+    @staticmethod
+    def _prepare_deps(deps: str):
+        try:
+            deps_str = deps.strip('\"\'').replace('\\$', '$').replace('${PYTHON_USEDEP}', 'pkgcheck_python_usedep')
+            return iflatten_instance(DepSet.parse(deps_str, atom), atom)
+        except DepsetParseError:
+            # if we are unable to parse that dep's string, skip it
+            return ()
 
-    def check_pep517_mode(self, item):
-        """Check whether PEP517 mode is used."""
-        # We're not interested in testing fake objects from TestPythonCheck
-        if not isinstance(item, sources._ParsedPkg) or not hasattr(item, 'tree'): # pragma: no cover
-            return True
+    def build_python_gen_any_dep_calls(self, pkg, any_dep_func):
+        check_deps = defaultdict(set)
+        for var_node in pkg.global_query(bash.var_assign_query):
+            name = pkg.node_str(var_node.child_by_field_name('name'))
+            if name in {'DEPEND', 'BDEPEND'}:
+                for call_node, _ in bash.cmd_query.captures(var_node):
+                    call_name = pkg.node_str(call_node.child_by_field_name('name'))
+                    if call_name == any_dep_func and len(call_node.children) > 1:
+                        check_deps[name].update(self._prepare_deps(
+                            pkg.node_str(call_node.children[1])))
+        return {dep: frozenset(atoms) for dep, atoms in check_deps.items()}
 
-        for var_node, _ in bash.var_assign_query.captures(item.tree.root_node):
-            var_name = item.node_str(var_node.child_by_field_name('name'))
+    def report_mismatch_check_deps(self, pkg, python_check_deps, has_version_checked_deps, any_dep_func):
+        for dep_type in frozenset(python_check_deps.keys()).union(
+                has_version_checked_deps.keys()):
+            extra = has_version_checked_deps[dep_type] - python_check_deps.get(dep_type, set())
+            missing = python_check_deps.get(dep_type, set()) - has_version_checked_deps[dep_type]
+            for diff, other, location in (
+                (extra, missing, any_dep_func),
+                (missing, extra, "python_check_deps"),
+            ):
+                for dep in diff:
+                    dep_atom = str(dep.versioned_atom)
+                    for other_dep in other:
+                        if dep_atom == str(other_dep.versioned_atom):
+                            if diff_flags := set(other_dep.use) - set(dep.use):
+                                yield PythonAnyMismatchedUseHasVersionCheck(pkg=pkg,
+                                    dep_category=dep_type, dep_atom=dep_atom,
+                                    use_flags=diff_flags, location=location)
+                            break
+                    else:
+                        use_flags = {'${PYTHON_USEDEP}'} | set(dep.use) \
+                           - {'pkgcheck_python_usedep'}
+                        yield PythonAnyMismatchedDepHasVersionCheck(pkg=pkg,
+                            dep_category=dep_type, dep_atom=dep_atom,
+                            use_flags=use_flags, location=location)
 
-            if var_name == "DISTUTILS_USE_PEP517":
-                return True
+    @staticmethod
+    def _prepare_dep_type(pkg, dep_type: str) -> str:
+        if dep_type == 'BDEPEND' not in pkg.eapi.dep_keys:
+            return 'DEPEND'
+        return dep_type
 
-        return False
+    def check_python_check_deps(self, pkg, func_node, python_check_deps, any_dep_func):
+        has_version_checked_deps = defaultdict(set)
+        has_version_lines = set()
+        for node, _ in bash.cmd_query.captures(func_node):
+            call_name = pkg.node_str(node.child_by_field_name('name'))
+            if call_name == "has_version":
+                lineno, _ = node.start_point
+                has_version_lines.add(lineno + 1)
+            if dep_mode := self.has_version_default.get(call_name, None):
+                dep_mode = self._prepare_dep_type(pkg, dep_mode)
+                for arg in node.children[1:]:
+                    arg_name = pkg.node_str(arg)
+                    if new_dep_mode := self.has_version_known_flags.get(arg_name, None):
+                        dep_mode = self._prepare_dep_type(pkg, new_dep_mode)
+                    else:
+                        arg_name = arg_name.strip('\"\'')
+                        if not USE_FLAGS_PYTHON_USEDEP.search(arg_name):
+                            lineno, _ = arg.start_point
+                            yield PythonHasVersionMissingPythonUseDep(
+                                lineno=lineno+1, line=arg_name, pkg=pkg)
+                        else:
+                            has_version_checked_deps[dep_mode].update(
+                                self._prepare_deps(arg_name))
+
+        if has_version_lines:
+            yield PythonHasVersionUsage(lines=sorted(has_version_lines), pkg=pkg)
+
+        yield from self.report_mismatch_check_deps(pkg, python_check_deps, has_version_checked_deps, any_dep_func)
 
     def feed(self, pkg):
         try:
             eclass = get_python_eclass(pkg)
-        except ValueError as e:
-            yield PythonEclassError(str(e), pkg=pkg)
+        except ValueError as exc:
+            yield PythonEclassError(str(exc), pkg=pkg)
             return
 
         if eclass is None:
@@ -291,46 +456,51 @@ class PythonCheck(Check):
             if highest_found is not None:
                 attr, p = highest_found
                 if attr in ("rdepend", "pdepend"):
-                    recomm = "python-r1 or python-single-r1"
+                    recommendation = "python-r1 or python-single-r1"
                 else:
-                    recomm = "python-any-r1"
-                yield MissingPythonEclass(recomm, attr.upper(), str(p), pkg=pkg)
+                    recommendation = "python-any-r1"
+                yield MissingPythonEclass(recommendation, attr.upper(), str(p), pkg=pkg)
         elif eclass in ('python-r1', 'python-single-r1'):
             # grab Python implementations from IUSE
-            iuse = [x.lstrip('+-') for x in pkg.iuse]
-            flags = {x[len(IUSE_PREFIX):] for x in iuse if x.startswith(IUSE_PREFIX)}
-            s_flags = {
-                x[len(IUSE_PREFIX_S):] for x in iuse if x.startswith(IUSE_PREFIX_S)}
+            iuse = {x.lstrip('+-') for x in pkg.iuse}
 
             if eclass == 'python-r1':
+                flags = {x[len(IUSE_PREFIX):] for x in iuse if x.startswith(IUSE_PREFIX)}
                 req_use_args = (flags, IUSE_PREFIX, OrRestriction)
             else:
-                req_use_args = (s_flags, IUSE_PREFIX_S, JustOneRestriction)
+                flags = {x[len(IUSE_PREFIX_S):] for x in iuse if x.startswith(IUSE_PREFIX_S)}
+                req_use_args = (flags, IUSE_PREFIX_S, JustOneRestriction)
 
             if not self.check_required_use(pkg.required_use, *req_use_args):
                 yield PythonMissingRequiredUse(pkg=pkg)
             if not self.check_depend(pkg.rdepend, *(req_use_args[:2])):
                 yield PythonMissingDeps('RDEPEND', pkg=pkg)
-            if "distutils-r1" in pkg.inherited:
-                if not self.check_pep517_mode(pkg):
-                    yield DistutilsNonPEP517Build(pkg=pkg)
-                if not self.check_pep517_depend(pkg):
-                    yield PythonMissingDeps("BDEPEND", pkg=pkg, dep_value="DISTUTILS_DEPS")
         else:  # python-any-r1
             for attr in ("rdepend", "pdepend"):
                 for p in iflatten_instance(getattr(pkg, attr), atom):
                     if not p.blocks and p.key in INTERPRETERS:
                         yield PythonRuntimeDepInAnyR1(attr.upper(), str(p), pkg=pkg)
                         break
-            for attr in ("depend", "bdepend"):
-                for p in iflatten_instance(getattr(pkg, attr), atom):
-                    if not p.blocks and p.key in INTERPRETERS:
-                        break
-                else:
-                    continue
-                break
-            else:
+            if not any(
+                not p.blocks and p.key in INTERPRETERS
+                for attr in ("depend", "bdepend")
+                for p in iflatten_instance(getattr(pkg, attr), atom)
+            ):
                 yield PythonMissingDeps('DEPEND', pkg=pkg)
+
+        # We're not interested in testing fake objects from TestPythonCheck
+        if eclass is None or not isinstance(pkg, sources._ParsedPkg) or not hasattr(pkg, 'tree'): # pragma: no cover
+            return
+
+        if "distutils-r1" in pkg.inherited:
+            yield from self.check_pep517(pkg)
+
+        any_dep_func = self.eclass_any_dep_func[eclass]
+        python_check_deps = self.build_python_gen_any_dep_calls(pkg, any_dep_func)
+        for func_node, _ in bash.func_query.captures(pkg.tree.root_node):
+            func_name = pkg.node_str(func_node.child_by_field_name('name'))
+            if func_name == "python_check_deps":
+                yield from self.check_python_check_deps(pkg, func_node, python_check_deps, any_dep_func)
 
 
 class PythonCompatUpdate(results.VersionResult, results.Info):
@@ -500,210 +670,3 @@ class PythonGHDistfileSuffixCheck(Check):
                 if GITHUB_ARCHIVE_RE.match(uri):
                     yield PythonGHDistfileSuffix(f.filename, uri, pkg=pkg)
                     break
-
-
-class PythonHasVersionUsage(results.LinesResult, results.Style):
-    """Package uses has_version inside ``python_check_deps``.
-
-    Ebuilds which declare the ``python_check_deps`` function (which tests
-    Python implementations for matching dependencies) should use the special
-    ``python_has_version`` function (instead of ``has_version``) for enhanced
-    log output and defaults [#]_.
-
-    .. [#] https://projects.gentoo.org/python/guide/any.html#dependencies
-    """
-
-    @property
-    def desc(self):
-        return f'usage of has_version {self.lines_str}, replace with python_has_version'
-
-
-class PythonHasVersionMissingPythonUseDep(results.LineResult, results.Error):
-    """Package calls ``python_has_version`` or ``has_version`` without
-    ``[${PYTHON_USEDEP}]`` suffix.
-
-    All calls  to ``python_has_version`` or ``has_version`` inside
-    ``python_check_deps`` should contain ``[${PYTHON_USEDEP}]`` suffix for the
-    dependency argument [#]_.
-
-    .. [#] https://projects.gentoo.org/python/guide/any.html#dependencies
-    """
-
-    @property
-    def desc(self):
-        return f'line: {self.lineno}: missing [${{PYTHON_USEDEP}}] suffix for argument "{self.line}"'
-
-
-class PythonAnyMismatchedUseHasVersionCheck(results.VersionResult, results.Warning):
-    """Package has mismatch in dependency's use flags between call to
-    ``python_gen_any_dep`` and ``python_has_version``.
-
-    For every dependency used under ``python_gen_any_dep``, the check for a
-    matching python implementation in ``python_has_version`` should match the
-    exact use flags [#]_.
-
-    .. [#] https://projects.gentoo.org/python/guide/any.html#dependencies
-    """
-
-    def __init__(self, dep_category, dep_atom, use_flags, location, **kwargs):
-        super().__init__(**kwargs)
-        self.dep_category = dep_category
-        self.dep_atom = dep_atom
-        self.use_flags = tuple(use_flags)
-        self.location = location
-
-    @property
-    def desc(self):
-        s = pluralism(self.use_flags)
-        use_flags = ', '.join(map(str, self.use_flags))
-        return f'{self.dep_category}: mismatch for {self.dep_atom} check use flag{s} [{use_flags}] in {self.location}'
-
-
-class PythonAnyMismatchedDepHasVersionCheck(results.VersionResult, results.Warning):
-    """Package has mismatch in dependencies between call to
-    ``python_gen_any_dep`` and ``python_has_version``.
-
-    For every dependency used under ``python_gen_any_dep``, a matching check
-    for a matching python implementation in ``python_has_version`` should
-    exist [#]_.
-
-    .. [#] https://projects.gentoo.org/python/guide/any.html#dependencies
-    """
-
-    def __init__(self, dep_category, dep_atom, use_flags, location, **kwargs):
-        super().__init__(**kwargs)
-        self.dep_category = dep_category
-        self.dep_atom = dep_atom
-        self.use_flags = tuple(use_flags)
-        self.location = location
-
-    @property
-    def desc(self):
-        use_flags = ', '.join(map(str, self.use_flags))
-        return f'{self.dep_category}: missing check for {self.dep_atom}[{use_flags}] in {self.location!r}'
-
-
-class PythonWrongUsageCheck(Check):
-    """Check ebuilds for wrong usage of Python eclasses features.
-
-    This check parses the ebuild and checks for more advanced failures/misuses
-    of API.
-    """
-
-    _source = sources.EbuildParseRepoSource
-    known_results = frozenset({
-        PythonHasVersionUsage,
-        PythonHasVersionMissingPythonUseDep,
-        PythonAnyMismatchedUseHasVersionCheck,
-        PythonAnyMismatchedDepHasVersionCheck,
-    })
-
-    has_version_known_flags = {
-        '-b': 'BDEPEND',
-        '-r': 'RDEPEND',
-        '-d': 'DEPEND',
-        '--host-root': 'BDEPEND',
-    }
-
-    has_version_default = {
-        'has_version': 'DEPEND',
-        'python_has_version': 'BDEPEND',
-    }
-
-    eclass_any_dep_func = {
-        'python-single-r1': 'python_gen_cond_dep',
-        'python-any-r1': 'python_gen_any_dep',
-        'python-r1': 'python_gen_any_dep',
-    }
-
-    @staticmethod
-    def _prepare_deps(deps: str):
-        try:
-            deps_str = deps.strip('\"\'').replace('\\$', '$').replace('${PYTHON_USEDEP}', 'pkgcheck_python_usedep')
-            return iflatten_instance(DepSet.parse(deps_str, atom), atom)
-        except DepsetParseError:
-            # if we are unable to parse that dep's string, skip it
-            return ()
-
-
-    def build_python_gen_any_dep_calls(self, pkg, any_dep_func):
-        check_deps = defaultdict(set)
-        for var_node in pkg.global_query(bash.var_assign_query):
-            name = pkg.node_str(var_node.child_by_field_name('name'))
-            if name in {'DEPEND', 'BDEPEND'}:
-                for call_node, _ in bash.cmd_query.captures(var_node):
-                    call_name = pkg.node_str(call_node.child_by_field_name('name'))
-                    if call_name == any_dep_func and len(call_node.children) > 1:
-                        check_deps[name].update(self._prepare_deps(
-                            pkg.node_str(call_node.children[1])))
-        return {dep: frozenset(atoms) for dep, atoms in check_deps.items()}
-
-    def report_mismatch_check_deps(self, pkg, python_check_deps, has_version_checked_deps, any_dep_func):
-        for dep_type in frozenset(python_check_deps.keys()).union(
-                has_version_checked_deps.keys()):
-            extra = has_version_checked_deps[dep_type] - python_check_deps.get(dep_type, set())
-            missing = python_check_deps.get(dep_type, set()) - has_version_checked_deps[dep_type]
-            for diff, other, location in (
-                (extra, missing, any_dep_func),
-                (missing, extra, "python_check_deps"),
-            ):
-                for dep in diff:
-                    dep_atom = str(dep.versioned_atom)
-                    for other_dep in other:
-                        if dep_atom == str(other_dep.versioned_atom):
-                            if diff_flags := set(other_dep.use) - set(dep.use):
-                                yield PythonAnyMismatchedUseHasVersionCheck(pkg=pkg,
-                                    dep_category=dep_type, dep_atom=dep_atom,
-                                    use_flags=diff_flags, location=location)
-                            break
-                    else:
-                        use_flags = {'${PYTHON_USEDEP}'} | set(dep.use) \
-                           - {'pkgcheck_python_usedep'}
-                        yield PythonAnyMismatchedDepHasVersionCheck(pkg=pkg,
-                            dep_category=dep_type, dep_atom=dep_atom,
-                            use_flags=use_flags, location=location)
-
-    @staticmethod
-    def _prepare_dep_type(pkg, dep_type: str) -> str:
-        if dep_type == 'BDEPEND' not in pkg.eapi.dep_keys:
-            return 'DEPEND'
-        return dep_type
-
-    def check_python_check_deps(self, pkg, func_node, python_check_deps, any_dep_func):
-        has_version_checked_deps = defaultdict(set)
-        has_version_lines = set()
-        for node, _ in bash.cmd_query.captures(func_node):
-            call_name = pkg.node_str(node.child_by_field_name('name'))
-            if call_name == "has_version":
-                lineno, _ = node.start_point
-                has_version_lines.add(lineno + 1)
-            if dep_mode := self.has_version_default.get(call_name, None):
-                dep_mode = self._prepare_dep_type(pkg, dep_mode)
-                for arg in node.children[1:]:
-                    arg_name = pkg.node_str(arg)
-                    if new_dep_mode := self.has_version_known_flags.get(arg_name, None):
-                        dep_mode = self._prepare_dep_type(pkg, new_dep_mode)
-                    else:
-                        arg_name = arg_name.strip('\"\'')
-                        if not USE_FLAGS_PYTHON_USEDEP.search(arg_name):
-                            lineno, _ = arg.start_point
-                            yield PythonHasVersionMissingPythonUseDep(
-                                lineno=lineno+1, line=arg_name, pkg=pkg)
-                        else:
-                            has_version_checked_deps[dep_mode].update(
-                                self._prepare_deps(arg_name))
-
-        if has_version_lines:
-            yield PythonHasVersionUsage(lines=sorted(has_version_lines), pkg=pkg)
-
-        yield from self.report_mismatch_check_deps(pkg, python_check_deps, has_version_checked_deps, any_dep_func)
-
-    def feed(self, pkg):
-        if (python_eclass := get_python_eclass(pkg)) is None:
-            return
-        any_dep_func = self.eclass_any_dep_func[python_eclass]
-        python_check_deps = self.build_python_gen_any_dep_calls(pkg, any_dep_func)
-        for func_node, _ in bash.func_query.captures(pkg.tree.root_node):
-            func_name = pkg.node_str(func_node.child_by_field_name('name'))
-            if func_name == "python_check_deps":
-                yield from self.check_python_check_deps(pkg, func_node, python_check_deps, any_dep_func)

@@ -1,7 +1,7 @@
-diff -dupr a/python/PythonWrongUsageCheck/PythonAnyMismatchedUseHasVersionCheck/PythonAnyMismatchedUseHasVersionCheck-0.ebuild b/python/PythonWrongUsageCheck/PythonAnyMismatchedUseHasVersionCheck/PythonAnyMismatchedUseHasVersionCheck-0.ebuild
+diff -dupr a/python/PythonCheck/PythonAnyMismatchedUseHasVersionCheck/PythonAnyMismatchedUseHasVersionCheck-0.ebuild b/python/PythonCheck/PythonAnyMismatchedUseHasVersionCheck/PythonAnyMismatchedUseHasVersionCheck-0.ebuild
 index 52e24cab..f2040c7b 100644
---- python/PythonWrongUsageCheck/PythonAnyMismatchedUseHasVersionCheck/PythonAnyMismatchedUseHasVersionCheck-0.ebuild
-+++ fixed/PythonWrongUsageCheck/PythonAnyMismatchedUseHasVersionCheck/PythonAnyMismatchedUseHasVersionCheck-0.ebuild
+--- python/PythonCheck/PythonAnyMismatchedUseHasVersionCheck/PythonAnyMismatchedUseHasVersionCheck-0.ebuild
++++ fixed/PythonCheck/PythonAnyMismatchedUseHasVersionCheck/PythonAnyMismatchedUseHasVersionCheck-0.ebuild
 @@ -17,11 +17,11 @@ DEPEND="${PYTHON_DEPS}"
  BDEPEND="${PYTHON_DEPS}
  	$(python_gen_any_dep '
@@ -16,10 +16,10 @@ index 52e24cab..f2040c7b 100644
 +	python_has_version "dev-python/lxml[${PYTHON_USEDEP},threads]" &&
  	python_has_version "dev-python/gpep517[${PYTHON_USEDEP},xml]"
  }
-diff -dupr python/PythonWrongUsageCheck/PythonAnyMismatchedUseHasVersionCheck/PythonAnyMismatchedUseHasVersionCheck-1.ebuild fixed/PythonWrongUsageCheck/PythonAnyMismatchedUseHasVersionCheck/PythonAnyMismatchedUseHasVersionCheck-1.ebuild
+diff -dupr python/PythonCheck/PythonAnyMismatchedUseHasVersionCheck/PythonAnyMismatchedUseHasVersionCheck-1.ebuild fixed/PythonCheck/PythonAnyMismatchedUseHasVersionCheck/PythonAnyMismatchedUseHasVersionCheck-1.ebuild
 index d34cef22..f2040c7b 100644
---- python/PythonWrongUsageCheck/PythonAnyMismatchedUseHasVersionCheck/PythonAnyMismatchedUseHasVersionCheck-1.ebuild
-+++ fixed/PythonWrongUsageCheck/PythonAnyMismatchedUseHasVersionCheck/PythonAnyMismatchedUseHasVersionCheck-1.ebuild
+--- python/PythonCheck/PythonAnyMismatchedUseHasVersionCheck/PythonAnyMismatchedUseHasVersionCheck-1.ebuild
++++ fixed/PythonCheck/PythonAnyMismatchedUseHasVersionCheck/PythonAnyMismatchedUseHasVersionCheck-1.ebuild
 @@ -16,12 +16,12 @@ SLOT="0"
  DEPEND="${PYTHON_DEPS}"
  BDEPEND="${PYTHON_DEPS}

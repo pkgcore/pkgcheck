@@ -1,0 +1,13 @@
+diff -dupr a/python/PythonCheck/PythonHasVersionMissingPythonUseDep/PythonHasVersionMissingPythonUseDep-0.ebuild fixed/PythonCheck/PythonHasVersionMissingPythonUseDep/PythonHasVersionMissingPythonUseDep-0.ebuild
+index 24ebb878..48f4ae11 100644
+--- python/PythonCheck/PythonHasVersionMissingPythonUseDep/PythonHasVersionMissingPythonUseDep-0.ebuild
++++ fixed/PythonCheck/PythonHasVersionMissingPythonUseDep/PythonHasVersionMissingPythonUseDep-0.ebuild
+@@ -22,6 +22,6 @@ BDEPEND="${PYTHON_DEPS}
+ "
+
+ python_check_deps() {
+-	has_version -b "dev-python/lxml" &&
+-	python_has_version "dev-python/gpep517"
++	python_has_version "dev-python/lxml[${PYTHON_USEDEP}]" &&
++	python_has_version "dev-python/gpep517[${PYTHON_USEDEP}]"
+ }

@@ -1,0 +1,5 @@
+{"__class__": "PythonHasVersionMissingPythonUseDep", "category": "PythonCheck", "package": "PythonHasVersionMissingPythonUseDep", "version": "0", "line": "dev-python/lxml", "lineno": 25}
+{"__class__": "PythonHasVersionMissingPythonUseDep", "category": "PythonCheck", "package": "PythonHasVersionMissingPythonUseDep", "version": "0", "line": "dev-python/gpep517", "lineno": 26}
+{"__class__": "PythonHasVersionUsage", "category": "PythonCheck", "package": "PythonHasVersionMissingPythonUseDep", "version": "0", "lines": [25]}
+{"__class__": "PythonAnyMismatchedDepHasVersionCheck", "category": "PythonCheck", "package": "PythonHasVersionMissingPythonUseDep", "version": "0", "dep_category": "BDEPEND", "dep_atom": "dev-python/gpep517", "use_flags": ["${PYTHON_USEDEP}"], "location": "python_check_deps"}
+{"__class__": "PythonAnyMismatchedDepHasVersionCheck", "category": "PythonCheck", "package": "PythonHasVersionMissingPythonUseDep", "version": "0", "dep_category": "BDEPEND", "dep_atom": "dev-python/lxml", "use_flags": ["${PYTHON_USEDEP}"], "location": "python_check_deps"}
