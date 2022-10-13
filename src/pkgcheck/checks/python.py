@@ -139,6 +139,17 @@ class PythonEclassError(results.VersionResult, results.Error):
         return self.msg
 
 
+class DistutilsNonPEP517Build(results.VersionResult, results.Warning):
+    """Ebuild uses the deprecated non-PEP517 build"""
+
+    @property
+    def desc(self):
+        return (
+            "uses deprecated non-PEP517 build mode, please switch to "
+            "DISTUTILS_USE_PEP517=..."
+        )
+
+
 class PythonCheck(Check):
     """Python eclass checks.
 
@@ -150,6 +161,7 @@ class PythonCheck(Check):
     known_results = frozenset([
         MissingPythonEclass, PythonMissingRequiredUse,
         PythonMissingDeps, PythonRuntimeDepInAnyR1, PythonEclassError,
+        DistutilsNonPEP517Build,
     ])
 
     def scan_tree_recursively(self, deptree, expected_cls):
@@ -240,6 +252,20 @@ class PythonCheck(Check):
 
         return True
 
+    def check_pep517_mode(self, item):
+        """Check whether PEP517 mode is used."""
+        # We're not interested in testing fake objects from TestPythonCheck
+        if not isinstance(item, sources._ParsedPkg) or not hasattr(item, 'tree'): # pragma: no cover
+            return True
+
+        for var_node, _ in bash.var_assign_query.captures(item.tree.root_node):
+            var_name = item.node_str(var_node.child_by_field_name('name'))
+
+            if var_name == "DISTUTILS_USE_PEP517":
+                return True
+
+        return False
+
     def feed(self, pkg):
         try:
             eclass = get_python_eclass(pkg)
@@ -285,8 +311,11 @@ class PythonCheck(Check):
                 yield PythonMissingRequiredUse(pkg=pkg)
             if not self.check_depend(pkg.rdepend, *(req_use_args[:2])):
                 yield PythonMissingDeps('RDEPEND', pkg=pkg)
-            if 'distutils-r1' in pkg.inherited and not self.check_pep517_depend(pkg):
-                yield PythonMissingDeps("BDEPEND", pkg=pkg, dep_value="DISTUTILS_DEPS")
+            if "distutils-r1" in pkg.inherited:
+                if not self.check_pep517_mode(pkg):
+                    yield DistutilsNonPEP517Build(pkg=pkg)
+                if not self.check_pep517_depend(pkg):
+                    yield PythonMissingDeps("BDEPEND", pkg=pkg, dep_value="DISTUTILS_DEPS")
         else:  # python-any-r1
             for attr in ("rdepend", "pdepend"):
                 for p in iflatten_instance(getattr(pkg, attr), atom):
