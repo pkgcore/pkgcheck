@@ -1,0 +1,10 @@
+diff -Naur python/PythonCheck/DistutilsNonPEP517Build/DistutilsNonPEP517Build-0.ebuild fixed/PythonCheck/DistutilsNonPEP517Build/DistutilsNonPEP517Build-0.ebuild
+--- python/PythonCheck/DistutilsNonPEP517Build/DistutilsNonPEP517Build-0.ebuild	2022-10-13 15:21:07.676924455 +0200
++++ fixed/PythonCheck/DistutilsNonPEP517Build/DistutilsNonPEP517Build-0.ebuild	2022-10-13 15:24:54.005682963 +0200
+@@ -1,5 +1,6 @@
+ EAPI=7
+ 
++DISTUTILS_USE_PEP517=setuptools
+ PYTHON_COMPAT=( python3_10 )
+ 
+ inherit distutils-r1
