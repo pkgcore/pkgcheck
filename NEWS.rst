@@ -3,6 +3,39 @@ Release Notes
 =============
 
 ----------------------------
+pkgcheck 0.10.17 (2022-10-14)
+----------------------------
+
+- EbuildReservedCheck: catch declaration of phase hooks as reserved (Arthur
+  Zamarin, #458)
+
+- GitPkgCommitsCheck: cleanup temporary directories after use, so unless
+  pkgcheck crashes, the ``/tmp/tmp-pkgcheck-*.repo`` directories will be
+  cleaned (Arthur Zamarin, #449)
+
+- GitPkgCommitsCheck: fix crashes when checking commit range which has multiple
+  commits dropping versions from same package (Arthur Zamarin, #460, #461)
+
+- GitPkgCommitsCheck: fix crashes with checking EAPI of ebuilds because of
+  missing ``profiles`` directory (Arthur Zamarin, #461)
+
+- PythonCheck: when checking for matching ``python_check_deps``, use
+  ``python_gen_cond_dep`` for ebuilds inheriting ``python-single-r1``
+  (Arthur Zamarin)
+
+- RedundantVersionCheck: consider profile masks for redundancy check (Arthur
+  Zamarin, #466, #465)
+
+- contrib/emacs: run flycheck only when buffer is saved (Alfred Wingate, #464)
+
+- GitCommitsCheck: run all checks sequentially on main process, to mitigate
+  race conditions during parallel calls to ``git log`` (Arthur Zamarin, #326,
+  #454)
+
+- PythonCheck: warn about use of ``distutils-r1`` non-PEP517 mode (Michał
+  Górny, #467)
+
+----------------------------
 pkgcheck 0.10.16 (2022-10-04)
 ----------------------------
 
