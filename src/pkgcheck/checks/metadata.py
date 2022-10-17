@@ -1358,18 +1358,20 @@ class DescriptionCheck(Check):
     """DESCRIPTION checks.
 
     Check on length (<=80), too short (<10), or generic (lifted from eclass or
-    just using the package's name).
+    just using the package's name), or ending with a full stop.
     """
 
     known_results = frozenset([BadDescription])
 
     def feed(self, pkg):
-        desc = pkg.description
+        desc: str = pkg.description
         s = desc.lower()
         if s.startswith("based on") and "eclass" in s:
             yield BadDescription("generic eclass defined description", pkg_desc=desc, pkg=pkg)
         elif s in (pkg.package.lower(), pkg.key.lower()):
             yield BadDescription("generic package description", pkg_desc=desc, pkg=pkg)
+        elif desc.endswith(tuple(".,:;")):
+            yield BadDescription("ends with a full stop", pkg_desc=desc, pkg=pkg)
         else:
             desc_len = len(desc)
             if not desc_len:
