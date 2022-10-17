@@ -26,13 +26,32 @@ class TestDescriptionCheck(misc.ReportTestCase):
     def mk_pkg(self, desc=""):
         return misc.FakePkg("dev-util/diffball-0.7.1", data={"DESCRIPTION": desc})
 
-    def test_good_desc(self):
-        self.assertNoReport(self.check, self.mk_pkg("a perfectly written package description"))
+    @pytest.mark.parametrize(
+        "desc",
+        (
+            "a perfectly written package description",
+            "foo, bar, etc.",
+            "something something something...",
+        ),
+    )
+    def test_good_desc(self, desc: str):
+        self.assertNoReport(self.check, self.mk_pkg(desc))
 
-    def test_bad_descs(self):
-        for desc in ("based on eclass", "diffball", "dev-util/diffball", "foon"):
-            r = self.assertReport(self.check, self.mk_pkg(desc))
-            assert isinstance(r, metadata.BadDescription)
+    @pytest.mark.parametrize(
+        "desc",
+        (
+            "based on eclass",
+            "diffball",
+            "dev-util/diffball",
+            "foon",
+            "some kind of description.",
+            "some kind of description,",
+            "some kind of description..",
+        ),
+    )
+    def test_bad_descs(self, desc: str):
+        r = self.assertReport(self.check, self.mk_pkg(desc))
+        assert isinstance(r, metadata.BadDescription)
 
     def test_desc_length(self):
         r = self.assertReport(self.check, self.mk_pkg())

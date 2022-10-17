@@ -14,6 +14,9 @@ pkgcheck 0.10.40 (unreleased)
 - StabilizationGroupsCheck: check for invalid and non-existant stabilization
   groups  (Arthur Zamarin)
 
+- DescriptionCheck: check for descriptions ending with a full-stop  (Arthur
+  Zamarin and Michał Górny)
+
 
 **Packaging:**
 
