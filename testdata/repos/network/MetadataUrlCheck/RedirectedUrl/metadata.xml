@@ -2,6 +2,8 @@
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
 	<upstream>
+		<remote-id type="github">pkgcore/pkgcheck</remote-id>
+		<doc>https://github.com/pkgcore/pkgcheck</doc>
 		<changelog>https://github.com/pkgcore/pkgcheck/changelog</changelog>
 	</upstream>
 </pkgmetadata>

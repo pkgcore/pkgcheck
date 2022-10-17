@@ -167,7 +167,7 @@ class _UrlCheck(NetworkCheck):
             result = DeadUrl(attr, url, str(e), pkg=pkg)
         return result
 
-    def task_done(self, pkg, future):
+    def task_done(self, pkg, attr, future):
         """Determine the result of a given URL verification task."""
         exc = future.exception()
         if exc is not None:
@@ -180,8 +180,10 @@ class _UrlCheck(NetworkCheck):
         result = future.result()
         if result is not None:
             if pkg is not None:
-                # recreate result object with different pkg target
-                result = result._create(**result._attrs, pkg=pkg)
+                # recreate result object with different pkg target and attr
+                attrs = result._attrs.copy()
+                attrs['attr'] = attr
+                result = result._create(**attrs, pkg=pkg)
             self.results_q.put([result])
 
     def _get_urls(self, pkg):
@@ -198,10 +200,10 @@ class _UrlCheck(NetworkCheck):
         future = futures.get(url)
         if future is None:
             future = executor.submit(func, attr, url, **kwargs)
-            future.add_done_callback(partial(self.task_done, None))
+            future.add_done_callback(partial(self.task_done, None, None))
             futures[url] = future
         else:
-            future.add_done_callback(partial(self.task_done, kwargs['pkg']))
+            future.add_done_callback(partial(self.task_done, kwargs['pkg'], attr))
 
     def schedule(self, pkg, executor, futures):
         """Schedule verification methods to run in separate threads for all flagged URLs."""
