@@ -1079,3 +1079,42 @@ class EclassUnquotedVariablesCheck(_UnquotedVariablesCheck):
     def feed(self, eclass):
         for var_name, lines in self._feed(eclass):
             yield EclassUnquotedVariable(var_name, lines=lines, eclass=eclass.name)
+
+
+class ExcessiveLineLength(results.LinesResult, results.Style):
+    """Line is longer than 120 characters."""
+
+    line_length = 120
+    word_length = 110
+
+    @property
+    def desc(self):
+        return f'excessive line length (over {self.line_length} characters) {self.lines_str}'
+
+
+class LineLengthCheck(Check):
+    """Scan ebuild for lines with excessive length."""
+
+    _source = sources.EbuildFileRepoSource
+    known_results = frozenset([ExcessiveLineLength])
+
+    def __init__(self, options, **kwargs):
+        super().__init__(options, **kwargs)
+        self.exception = re.compile(r'\s*(?:DESCRIPTION|KEYWORDS|IUSE)=')
+        str_length = f'[^\'\"]{{{ExcessiveLineLength.word_length},}}'
+        self.long_string = re.compile(rf'"{str_length}"|\'{str_length}\'')
+
+    def feed(self, pkg):
+        lines = []
+        for lineno, line in enumerate(pkg.lines, 1):
+            if len(line) <= ExcessiveLineLength.line_length:
+                continue
+            if self.exception.match(line):
+                continue # exception variables which are fine to be long
+            if max(map(len, line.split())) > ExcessiveLineLength.word_length:
+                continue # if one part of the line is very long word
+            if self.long_string.search(line):
+                continue # skip lines with long quoted string
+            lines.append(lineno)
+        if lines:
+            yield ExcessiveLineLength(lines=lines, pkg=pkg)

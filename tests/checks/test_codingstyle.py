@@ -433,3 +433,62 @@ class TestStaticSrcUri(misc.ReportTestCase):
         r = self.assertReport(self.check, self._prepare_pkg('Diffball-0.1.2.3', pkgver='Diffball-0.1.2.3'))
         assert r.static_str == 'Diffball-0.1.2.3'
         assert r.replacement == '${P}'
+
+
+class TestExcessiveLineLength(misc.ReportTestCase):
+
+    check_kls = codingstyle.LineLengthCheck
+    check = check_kls(None)
+    word_length = codingstyle.ExcessiveLineLength.word_length
+
+
+    @staticmethod
+    def _prepare_pkg(*lines: str):
+        fake_pkg = misc.FakePkg("dev-util/diffball-0", ebuild=''.join(lines), lines=lines)
+        data = ''.join(lines).encode()
+        return _ParsedPkg(data, pkg=fake_pkg)
+
+    def test_normal_length(self):
+        self.assertNoReport(self.check, self._prepare_pkg('echo "short line"'))
+
+    def test_long_line(self):
+        r = self.assertReport(self.check, self._prepare_pkg(f'echo {"a " * codingstyle.ExcessiveLineLength.line_length}'))
+        assert r.lines == (1, )
+
+    def test_multiple_lines(self):
+        r = self.assertReport(self.check, self._prepare_pkg(
+            f'echo {"a " * codingstyle.ExcessiveLineLength.line_length}',
+            'echo "short line"',
+            f'echo {"Hello " * codingstyle.ExcessiveLineLength.line_length}',
+        ))
+        assert r.lines == (1, 3)
+
+    @pytest.mark.parametrize('variable', ('DESCRIPTION', 'KEYWORDS', 'IUSE'))
+    def test_special_variables(self, variable):
+        self.assertNoReport(self.check, self._prepare_pkg(
+            f'{variable}="{"a " * codingstyle.ExcessiveLineLength.line_length}"',
+            f'    {variable}="{"a " * codingstyle.ExcessiveLineLength.line_length}"',
+            f'\t\t{variable}="{"a " * codingstyle.ExcessiveLineLength.line_length}"',
+        ))
+
+    def test_long_words(self):
+        long_word = 'a' * self.word_length + 'b'
+        medium_word = 'a' * (self.word_length // 2)
+        r = self.assertReport(self.check, self._prepare_pkg(
+            f'echo {"a" * codingstyle.ExcessiveLineLength.line_length}',
+            f'echo {medium_word} {long_word}',
+            f'echo {medium_word} {long_word[:-5]}',
+        ))
+        assert r.lines == (3, )
+
+    def test_long_quotes(self):
+        # The exception is for any quoted string with length >= word_length.
+        # Each quoted string is computed by itself.
+        long_word = 'a ' * (self.word_length // 2) + 'b' # long quoted string, skipped
+        medium_word = 'a ' * (self.word_length // 4) # not long enough string, not skipped
+        r = self.assertReport(self.check, self._prepare_pkg(
+            f'echo "{"a" * codingstyle.ExcessiveLineLength.line_length}"',
+            f'echo "{medium_word}" "{long_word}"',
+            'echo' + f' "{medium_word}"' * 3,
+        ))
+        assert r.lines == (3, )
