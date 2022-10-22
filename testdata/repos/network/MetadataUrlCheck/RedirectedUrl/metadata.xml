@@ -4,6 +4,5 @@
 	<upstream>
 		<remote-id type="github">pkgcore/pkgcheck</remote-id>
 		<doc>https://github.com/pkgcore/pkgcheck</doc>
-		<changelog>https://github.com/pkgcore/pkgcheck/changelog</changelog>
 	</upstream>
 </pkgmetadata>
