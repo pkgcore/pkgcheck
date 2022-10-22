@@ -391,6 +391,50 @@ class ObsoleteUriCheck(Check):
                     yield ObsoleteUri(lineno, uri, regexp.sub(repl, uri), pkg=pkg)
 
 
+class BetterCompressionUri(results.LineResult, results.Style):
+    """URI provider has better compression suggestion.
+
+    The URI used to fetch distfile doesn't use the best compression
+    available from the provider. Using better compression can save
+    bandwidth for the users and mirrors.
+    """
+
+    def __init__(self, replacement, **kwargs):
+        super().__init__(**kwargs)
+        self.replacement = replacement
+
+    @property
+    def desc(self):
+        return (f"line {self.lineno}: better compression URI using extension "
+                f"{self.replacement!r} for {self.line!r}")
+
+
+class BetterCompressionCheck(Check):
+    """Scan ebuild for URIs with better compression."""
+
+    _source = sources.EbuildFileRepoSource
+    known_results = frozenset([BetterCompressionUri])
+
+    REGEXPS = (
+        (r'.*\b(?P<uri>(?P<prefix>https?://[^/]*?gitlab[^/]*?/.*/-/archive/.*?/\S*)\.(?:tar\.gz|tar|zip))',
+         '.tar.bz2'),
+    )
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.regexes = tuple((re.compile(regexp), repl) for regexp, repl in self.REGEXPS)
+
+    def feed(self, pkg):
+        for lineno, line in enumerate(pkg.lines, 1):
+            if not line.strip() or line.startswith('#'):
+                continue
+            # searching for multiple matches on a single line is too slow
+            for regexp, replacement in self.regexes:
+                if mo := regexp.match(line):
+                    uri = mo.group('uri')
+                    yield BetterCompressionUri(replacement, lineno=lineno, line=uri, pkg=pkg)
+
+
 class HomepageInSrcUri(results.VersionResult, results.Style):
     """${HOMEPAGE} is referenced in SRC_URI.
 

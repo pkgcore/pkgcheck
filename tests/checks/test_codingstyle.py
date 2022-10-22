@@ -315,6 +315,48 @@ class TestObsoleteUri(misc.ReportTestCase):
         assert uri in str(r)
 
 
+class TestBetterCompression(misc.ReportTestCase):
+
+    check_kls = codingstyle.BetterCompressionCheck
+
+    def test_github_archive_uri(self):
+        uri = 'https://github.com/foo/bar/archive/${PV}.tar.gz'
+        fake_src = [
+            f'SRC_URI="{uri} -> ${{P}}.tar.gz"\n'
+        ]
+        fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
+        self.assertNoReport(self.check_kls(None), fake_pkg)
+
+    def test_comment_uri(self):
+        uri = 'https://gitlab.com/GNOME/${PN}/-/archive/${PV}/${P}.tar'
+        fake_src = [
+            f'#SRC_URI="{uri} -> ${{P}}.tar.gz"\n',
+            " ",
+            "    ",
+            f'SRC_URI="{uri} -> ${{P}}.tar.gz"\n',
+        ]
+        fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
+        r = self.assertReport(self.check_kls(None), fake_pkg)
+        assert r.lineno == 4
+
+    @pytest.mark.parametrize('uri', (
+        'https://gitlab.com/GNOME/${PN}/-/archive/${PV}/${P}.tar',
+        'https://gitlab.gnome.org/GNOME/${PN}/-/archive/${PV}/${P}.tar.gz',
+        'https://gitlab.gnome.org/GNOME/${PN}/-/archive/${PV}/${P}.zip',
+        'https://gitlab.freedesktop.org/glvnd/${PN}/-/archive/v${PV}/${PN}-v${PV}.tar.gz',
+    ))
+    def test_gitlab_archive_uri(self, uri):
+        fake_src = [
+            f'SRC_URI="{uri} -> ${{P}}.tar.gz"\n'
+        ]
+        fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
+        r = self.assertReport(self.check_kls(None), fake_pkg)
+        assert r.lineno == 1
+        assert r.line == uri
+        assert r.replacement == '.tar.bz2'
+        assert uri in str(r)
+
+
 class TestStaticSrcUri(misc.ReportTestCase):
 
     check_kls = codingstyle.MetadataVarCheck
