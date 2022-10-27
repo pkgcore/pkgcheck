@@ -7,7 +7,7 @@ from difflib import SequenceMatcher
 from functools import partial
 from operator import attrgetter
 
-from pkgcore.ebuild import atom as atom_mod
+from pkgcore.ebuild import atom as atom_mod, restricts
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.ebuild.misc import sort_keywords
@@ -1627,3 +1627,81 @@ class MissingUnpackerDepCheck(Check):
         for unpackers, filenames in missing_unpackers.items():
             yield MissingUnpackerDep(
                 str(pkg.eapi), sorted(filenames), sorted(unpackers), pkg=pkg)
+
+
+class VirtualWithSingleProvider(results.PackageResult, results.Warning):
+    """Virtual package with a single remaining provider.
+
+    Virtual packages are used to provide a common interface for multiple
+    implementations of a given functionality. However, if there is only a
+    single implementation, there is no need for a virtual package. In such
+    case, consider adding the package to package.deprecated and removing the
+    virtual package.
+    """
+
+    def __init__(self, provider, **kwargs):
+        super().__init__(**kwargs)
+        self.provider = str(provider)
+
+    @property
+    def desc(self):
+        return f'virtual package with a single provider: {self.provider}'
+
+
+class VirtualWithBdepend(results.VersionResult, results.Warning):
+    """Virtual package with a BDEPEND defined."""
+
+    desc = 'virtual package with a BDEPEND defined'
+
+
+class VirtualWithDepend(results.VersionResult, results.Warning):
+    """Virtual package with a BDEPEND defined."""
+
+    desc = 'virtual package with a DEPEND defined'
+
+
+class VirtualProvidersCheck(Check):
+    """Check providers of virtual packages."""
+
+    _restricted_source = (sources.RestrictionRepoSource, (restricts.CategoryDep('virtual'), ))
+    _source = (sources.PackageRepoSource, (), (('source', _restricted_source),))
+    known_results = frozenset([VirtualWithSingleProvider,
+        VirtualWithBdepend, VirtualWithDepend])
+
+    useless_depends = (
+        ('depend', VirtualWithDepend),
+        ('bdepend', VirtualWithBdepend),
+    )
+
+    def __init__(self, options, **kwargs):
+        super().__init__(options, **kwargs)
+
+        self.deprecated = self.options.target_repo.deprecated
+
+    def pkg_has_conditional_exception(self, pkgs):
+        return any(use.startswith(('elibc', 'kernel'))
+            for pkg in pkgs
+            for dep in iflatten_instance(pkg.rdepend, (atom_cls, packages.Conditional))
+            if isinstance(dep, packages.Conditional) and dep.attr == 'use' and isinstance(dep.restriction, values.ContainmentMatch)
+            for use in dep.restriction.vals
+        )
+
+    def feed(self, pkgs):
+        for pkg in pkgs:
+            for attr, cls in self.useless_depends:
+                if getattr(pkg, attr):
+                    yield cls(pkg=pkg)
+
+        if not any(self.deprecated.match(pkg) for pkg in pkgs):
+            pkgs_rdepends = tuple(
+                tuple(iflatten_instance(pkg.rdepend, atom_cls))
+                for pkg in pkgs
+            )
+            if max(map(len, pkgs_rdepends)) == 1:
+                unversioned_rdepends = {
+                    deps[0].unversioned_atom
+                    for deps in pkgs_rdepends
+                    if len(deps) == 1
+                }
+                if len(unversioned_rdepends) == 1 and not self.pkg_has_conditional_exception(pkgs):
+                    yield VirtualWithSingleProvider(unversioned_rdepends.pop(), pkg=pkgs[0])
