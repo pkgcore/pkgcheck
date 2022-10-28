@@ -406,9 +406,9 @@ class TestPkgcheckScan:
         # create stub profile to suppress ArchesWithoutProfiles result
         repo.create_profiles([Profile('stub', 'amd64')])
         # create ebuild with unknown keywords
-        repo.create_ebuild('cat/pkg-0', keywords=['unknown'])
+        repo.create_ebuild('cat/pkg-0', keywords=['unknown'], homepage='https://example.com')
         # and a good ebuild for the latest version
-        repo.create_ebuild('cat/pkg-1', keywords=['amd64'])
+        repo.create_ebuild('cat/pkg-1', keywords=['amd64'], homepage='https://example.com')
 
         # results for old pkgs will be shown by default
         args = ['-r', repo.location]

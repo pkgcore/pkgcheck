@@ -1,11 +1,15 @@
 import os
 import re
 from difflib import SequenceMatcher
+from itertools import chain
 
 from lxml import etree
 from pkgcore import const as pkgcore_const
 from pkgcore.ebuild.atom import MalformedAtom, atom
+from pkgcore.restrictions.packages import Conditional
+from pkgcore.fetch import fetchable
 from snakeoil.osutils import pjoin
+from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
 from .. import results, sources
@@ -553,3 +557,77 @@ class CategoryMetadataXmlCheck(_XmlBaseCheck):
     def _get_xml_location(self, pkg):
         """Return the metadata.xml location for a given package's category."""
         return pjoin(self.repo_base, pkg.category, 'metadata.xml')
+
+
+class MissingRemoteId(results.PackageResult, results.Info):
+    """Missing remote-id which was inferred from ebuilds.
+
+    Based on URIs found in SRC_URI and HOMEPAGE, a remote-id can be suggested.
+    If a remote-id of same type is already defined in ``metadata.xml``, the
+    suggestion won't be reported. It ignores URIs ending with ``.diff`` or
+    ``.patch``, as they might point to a fork or developer's space. It also
+    ignores URIs that are conditional on USE flags.
+    """
+
+    def __init__(self, remote_type: str, value: str, uri: str, **kwarg):
+        super().__init__(**kwarg)
+        self.remote_type = remote_type
+        self.value = value
+        self.uri = uri
+
+    @property
+    def desc(self):
+        return (f'missing remote-id of type {self.remote_type!r} with '
+            f'value {self.value!r} (inferred from URI {self.uri!r})')
+
+
+class MissingRemoteIdCheck(Check):
+    """Detect missing remote-ids based on SRC_URI and HOMEPAGE."""
+
+    _source = sources.PackageRepoSource
+    known_results = frozenset([MissingRemoteId])
+
+    _gitlab_match = r'(?P<value>(\w[^/]*/)*\w[^/]*/\w[^/]*)'
+
+    remotes_map = (
+        ('bitbucket', r'https://bitbucket.org/(?P<value>[^/]+/[^/]+)'),
+        ('freedesktop-gitlab', rf'https://gitlab.freedesktop.org/{_gitlab_match}'),
+        ('github', r'https://github.com/(?P<value>[^/]+/[^/]+)'),
+        ('gitlab', rf'https://gitlab.com/{_gitlab_match}'),
+        ('gnome-gitlab', rf'https://gitlab.gnome.org/{_gitlab_match}'),
+        ('heptapod', rf'https://foss.heptapod.net/{_gitlab_match}'),
+        ('launchpad', r'https://launchpad.net/(?P<value>[^/]+)'),
+        ('pypi', r'https://pypi.org/project/(?P<value>[^/]+)'),
+        ('pypi', r'https://files.pythonhosted.org/packages/source/\S/(?P<value>[^/]+)'),
+        ('savannah', r'https://savannah.gnu.org/projects/(?P<value>[^/]+)'),
+        ('savannah-nongnu', r'https://savannah.nongnu.org/projects/(?P<value>[^/]+)'),
+        ('sourceforge', r'https://(?P<value>[^/]+).sourceforge.net/'),
+        ('sourceforge', r'https://sourceforge.net/projects/(?P<value>[^/]+)'),
+        ('sourceforge', r'https://downloads.sourceforge.net/(?:project/)?(?P<value>[^/]+)'),
+        ('sourcehut', r'https://sr.ht/(?P<value>[^/]+/[^/]+)'),
+    )
+
+    def __init__(self, options, **kwargs):
+        super().__init__(options, **kwargs)
+        self.remotes_map = tuple((remote_type, re.compile(regex)) for remote_type, regex in self.remotes_map)
+
+    def feed(self, pkgset):
+        remotes = {u.type: (None, None) for u in pkgset[0].upstreams}
+        for pkg in sorted(pkgset, reverse=True):
+            fetchables = iflatten_instance(pkg.generate_fetchables(allow_missing_checksums=True,
+                ignore_unknown_mirrors=True, skip_default_mirrors=True), (fetchable, Conditional))
+            all_urls = set(chain.from_iterable(f.uri for f in fetchables if isinstance(f, fetchable)))
+            urls = {url for url in all_urls if not url.endswith(('.patch', '.diff'))}
+            urls = sorted(urls.union(pkg.homepage), key=len)
+
+            for remote_type, regex in self.remotes_map:
+                if remote_type in remotes:
+                    continue
+                for url in urls:
+                    if mo := regex.match(url):
+                        remotes[remote_type] = (mo.group('value'), url)
+                        break
+
+        for remote_type, (value, url) in remotes.items():
+            if value is not None:
+                yield MissingRemoteId(remote_type, value, url, pkg=pkgset[0])

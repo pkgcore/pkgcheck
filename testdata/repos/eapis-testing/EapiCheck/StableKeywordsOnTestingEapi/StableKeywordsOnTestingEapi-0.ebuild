@@ -1,7 +1,7 @@
 EAPI=7
 
 DESCRIPTION="Ebuild with stable keywords on EAPI marked as stable"
-HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+HOMEPAGE="https://pkgcore.github.io/pkgcheck/"
 SRC_URI=""
 
 LICENSE="BSD"
