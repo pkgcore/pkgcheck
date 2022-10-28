@@ -1118,3 +1118,52 @@ class LineLengthCheck(Check):
             lines.append(lineno)
         if lines:
             yield ExcessiveLineLength(lines=lines, pkg=pkg)
+
+
+class InstallCompressedManpage(results.LineResult, results.Warning):
+    """Compressed manpages are not supported by ``doman`` or ``newman``."""
+
+    def __init__(self, func, **kwargs):
+        super().__init__(**kwargs)
+        self.func = func
+
+    @property
+    def desc(self):
+        return f'line {self.lineno}: compressed manpage {self.line!r} passed to {self.func}'
+
+
+class InstallCompressedInfo(results.LineResult, results.Warning):
+    """Compressed manpages are not supported by ``doinfo``."""
+
+    def __init__(self, func, **kwargs):
+        super().__init__(**kwargs)
+        self.func = func
+
+    @property
+    def desc(self):
+        return f'line {self.lineno}: compressed info {self.line!r} passed to {self.func}'
+
+
+class DoCompressedFilesCheck(Check):
+    """Scan ebuild for compressed files passed to ``do*`` or ``new**``."""
+
+    _source = sources.EbuildParseRepoSource
+    known_results = frozenset([InstallCompressedManpage, InstallCompressedInfo])
+
+    compresion_extentions = ('.Z', '.gz', '.bz2', '.lzma', '.lz', '.lzo', '.lz4', '.xz', '.zst')
+    functions = ImmutableDict({
+        'doman': InstallCompressedManpage,
+        'newman': InstallCompressedManpage,
+        'doinfo': InstallCompressedInfo,
+    })
+
+    def feed(self, pkg):
+        for node, _ in bash.cmd_query.captures(pkg.tree.root_node):
+            call_name = pkg.node_str(node.child_by_field_name('name'))
+            if call_name not in self.functions:
+                continue
+            for arg in node.children[1:]:
+                arg_name = pkg.node_str(arg).strip('\'\"')
+                lineno, _ = arg.start_point
+                if arg_name.endswith(self.compresion_extentions):
+                    yield self.functions[call_name](call_name, lineno=lineno+1, line=arg_name, pkg=pkg)
