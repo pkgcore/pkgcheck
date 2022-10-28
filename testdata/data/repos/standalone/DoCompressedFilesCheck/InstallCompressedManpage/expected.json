@@ -1,0 +1,4 @@
+{"__class__": "InstallCompressedManpage", "category": "DoCompressedFilesCheck", "package": "InstallCompressedManpage", "version": "0", "line": "${PN}.2.bz2", "lineno": 9, "func": "doman"}
+{"__class__": "InstallCompressedManpage", "category": "DoCompressedFilesCheck", "package": "InstallCompressedManpage", "version": "0", "line": "test.gz", "lineno": 9, "func": "doman"}
+{"__class__": "InstallCompressedManpage", "category": "DoCompressedFilesCheck", "package": "InstallCompressedManpage", "version": "0", "line": "${PN}.1.xz", "lineno": 10, "func": "newman"}
+{"__class__": "InstallCompressedManpage", "category": "DoCompressedFilesCheck", "package": "InstallCompressedManpage", "version": "0", "line": "${PN}.xz", "lineno": 10, "func": "newman"}

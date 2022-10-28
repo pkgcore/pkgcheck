@@ -1,0 +1,2 @@
+{"__class__": "InstallCompressedInfo", "category": "DoCompressedFilesCheck", "package": "InstallCompressedInfo", "version": "0", "line": "${PN}.bz2", "lineno": 9, "func": "doinfo"}
+{"__class__": "InstallCompressedInfo", "category": "DoCompressedFilesCheck", "package": "InstallCompressedInfo", "version": "0", "line": "test.gz", "lineno": 9, "func": "doinfo"}
