@@ -621,6 +621,10 @@ class PythonGHDistfileSuffix(results.VersionResult, results.Warning):
     published on PyPI.  Since both kinds of distfiles often have the same name,
     ".gh.tar.gz" suffix is often used for the former to avoid filename
     collisions with official archives published upstream.
+
+    To solve this warning, rename the distfile in ``SRC_URI`` to include the
+    suffix. There is no need to contact upstream, as it is done simply by
+    adding ``-> ${P}.gh.tar.gz`` after the URI.
     """
 
     def __init__(self, filename, uri, **kwargs):
