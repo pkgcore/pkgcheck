@@ -416,7 +416,7 @@ class BetterCompressionCheck(Check):
     known_results = frozenset([BetterCompressionUri])
 
     REGEXPS = (
-        (r'.*\b(?P<uri>(?P<prefix>https?://[^/]*?gitlab[^/]*?/.*/-/archive/.*?/\S*)\.(?:tar\.gz|tar|zip))',
+        (r'.*\b(?P<uri>https?://[^/]*?gitlab[^/]*?/.*/-/archive/.*?/\S*\.(?:tar\.gz|tar(?!.bz2)|zip))',
          '.tar.bz2'),
     )
 
