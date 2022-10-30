@@ -601,9 +601,9 @@ class MissingRemoteIdCheck(Check):
         ('pypi', r'https://files.pythonhosted.org/packages/source/\S/(?P<value>[^/]+)'),
         ('savannah', r'https://savannah.gnu.org/projects/(?P<value>[^/]+)'),
         ('savannah-nongnu', r'https://savannah.nongnu.org/projects/(?P<value>[^/]+)'),
-        ('sourceforge', r'https://(?P<value>[^/]+).sourceforge.net/'),
-        ('sourceforge', r'https://sourceforge.net/projects/(?P<value>[^/]+)'),
-        ('sourceforge', r'https://downloads.sourceforge.net/(?:project/)?(?P<value>[^/]+)'),
+        ('sourceforge', r'https://downloads.sourceforge.(net|io)/(?:project/)?(?P<value>[^/]+)'),
+        ('sourceforge', r'https://sourceforge.(net|io)/projects/(?P<value>[^/]+)'),
+        ('sourceforge', r'https://(?P<value>[^/]+).sourceforge.(net|io)/'),
         ('sourcehut', r'https://sr.ht/(?P<value>[^/]+/[^/]+)'),
     )
 
