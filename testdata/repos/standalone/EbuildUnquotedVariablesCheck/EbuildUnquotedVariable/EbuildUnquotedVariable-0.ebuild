@@ -40,4 +40,8 @@ src_prepare() {
 
 	cat < ${T} # FAIL
 	cat >> ${T} # FAIL
+
+	local TMPDIR # ok
+	TMPDIR="$(mktemp --directory --tmpdir=/tmp ${PN}-XXXX)" # ok
+	export TMPDIR # ok
 }
