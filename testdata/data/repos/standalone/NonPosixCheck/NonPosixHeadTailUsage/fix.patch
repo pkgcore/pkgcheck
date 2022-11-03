@@ -1,0 +1,26 @@
+--- standalone/NonPosixCheck/NonPosixHeadTailUsage/NonPosixHeadTailUsage-0.ebuild
++++ fixed/NonPosixCheck/NonPosixHeadTailUsage/NonPosixHeadTailUsage-0.ebuild
+@@ -4,7 +4,7 @@ SLOT="0"
+ LICENSE="BSD"
+
+ src_prepare() {
+-	head -1 file > another || die
+-	head -q file -1 > another || die
++	head -n -1 file > another || die
++	head -qn 1 file > another || die
+ 	default
+ }
+--- standalone/NonPosixCheck/NonPosixHeadTailUsage/NonPosixHeadTailUsage-1.ebuild
++++ fixed/NonPosixCheck/NonPosixHeadTailUsage/NonPosixHeadTailUsage-1.ebuild
+@@ -4,8 +4,8 @@ SLOT="0"
+ LICENSE="BSD"
+
+ src_prepare() {
+-	tail -1 file > another || die
+-	tail -q file -1 > another || die
+-	tail -qn file +1 > another || die
++	tail -n 1 file > another || die
++	tail -q file -c 1 > another || die
++	tail file -qn +1 > another || die
+ 	default
+ }

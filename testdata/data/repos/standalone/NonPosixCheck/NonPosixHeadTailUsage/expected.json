@@ -1,0 +1,5 @@
+{"__class__": "NonPosixHeadTailUsage", "category": "NonPosixCheck", "package": "NonPosixHeadTailUsage", "version": "0", "line": "head -1 file", "lineno": 7, "command": "head -1"}
+{"__class__": "NonPosixHeadTailUsage", "category": "NonPosixCheck", "package": "NonPosixHeadTailUsage", "version": "0", "line": "head -q file -1", "lineno": 8, "command": "head -1"}
+{"__class__": "NonPosixHeadTailUsage", "category": "NonPosixCheck", "package": "NonPosixHeadTailUsage", "version": "1", "line": "tail -1 file", "lineno": 7, "command": "tail -1"}
+{"__class__": "NonPosixHeadTailUsage", "category": "NonPosixCheck", "package": "NonPosixHeadTailUsage", "version": "1", "line": "tail -q file -1", "lineno": 8, "command": "tail -1"}
+{"__class__": "NonPosixHeadTailUsage", "category": "NonPosixCheck", "package": "NonPosixHeadTailUsage", "version": "1", "line": "tail -qn file +1", "lineno": 9, "command": "tail +1"}

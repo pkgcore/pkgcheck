@@ -1170,3 +1170,49 @@ class DoCompressedFilesCheck(Check):
                 lineno, _ = arg.start_point
                 if arg_name.endswith(self.compresion_extentions):
                     yield self.functions[call_name](call_name, lineno=lineno+1, line=arg_name, pkg=pkg)
+
+
+class NonPosixHeadTailUsage(results.LineResult, results.Warning):
+    """Using of non-POSIX compliant ``head`` or ``tail``.
+
+    The numeric argument to ``head`` or ``tail`` without ``-n`` (for example
+    ``head -10``) is deprecated and not POSIX compliant. To fix, prepand ``-n``
+    before the number [#]_.
+
+    .. [#] https://devmanual.gentoo.org/tools-reference/head-and-tail/index.html
+    """
+    def __init__(self, command, **kwargs):
+        super().__init__(**kwargs)
+        self.command = command
+
+    @property
+    def desc(self):
+        return f'line {self.lineno}: non-posix usage of {self.command!r}: {self.line!r}'
+
+
+class NonPosixCheck(Check):
+    """Scan ebuild for non-posix usage, code which might be not portable."""
+
+    _source = sources.EbuildParseRepoSource
+    known_results = frozenset([NonPosixHeadTailUsage])
+
+    def __init__(self, options, **kwargs):
+        super().__init__(options, **kwargs)
+        self.re_head_tail = re.compile(r'[+-]\d+')
+
+    def check_head_tail(self, pkg, call_node, call_name):
+        prev_arg = ''
+        for arg in map(pkg.node_str, call_node.children[1:]):
+            if (self.re_head_tail.match(arg) and
+                not (prev_arg.startswith('-') and prev_arg.endswith(('n', 'c')))):
+                lineno, _ = call_node.start_point
+                yield NonPosixHeadTailUsage(f'{call_name} {arg}',
+                    lineno=lineno+1, line=pkg.node_str(call_node), pkg=pkg)
+                break
+            prev_arg = arg
+
+    def feed(self, pkg):
+        for call_node, _ in bash.cmd_query.captures(pkg.tree.root_node):
+            call_name = pkg.node_str(call_node.child_by_field_name('name'))
+            if call_name in ('head', 'tail'):
+                yield from self.check_head_tail(pkg, call_node, call_name)
