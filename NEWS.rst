@@ -3,6 +3,49 @@ Release Notes
 =============
 
 ----------------------------
+pkgcheck 0.10.18 (2022-11-09)
+----------------------------
+
+Special thanks is given to Sam James, for continues support during all
+development, bringing ideas, testing and improving, and especially proofreading
+and improving all docs, texts and help messages. Every release is better thanks
+to him.
+
+- Network checks: fix wrong attributes ("blame") shown when same URL is checked
+  (#403, Arthur Zamarin)
+
+- BetterCompressionCheck: new check for suggesting better compression URI for
+  gitlab and github distfiles (#483, Arthur Zamarin)
+
+- ExcessiveLineLength: report lines longer than 120 characters (with multiple
+  exception rules) (#480, Arthur Zamarin)
+
+- MissingRemoteIdCheck: new check for suggesting missing remote-ids, inferred
+  from HOMEPAGE and SRC_URI (#486, Arthur Zamarin)
+
+- DoCompressedFilesCheck: new check for calling ``doman``, ``newman``, and
+  ``doinfo`` with compressed files (#485, Arthur Zamarin)
+
+- AcctCheck: determine dynamic ID range from repository file
+  ``metadata/qa-policy.conf`` rather than static hardcoded values in pkgcheck
+  (#489, Arthur Zamarin)
+
+- UnquotedVariable: fix false positives with ``declaration_command`` and
+  ``unset_command`` (Arthur Zamarin)
+
+- VirtualWithSingleProvider: new check for virtual packages with a single
+  provider across all versions, which should be deprecated (#484, Arthur
+  Zamarin)
+
+- VirtualProvidersCheck: new check for virtual packages defining build
+  dependencies (#484, Arthur Zamarin)
+
+- NonPosixHeadTailUsage: new check for non-POSIX compliant usage of ``head``
+  and ``tail`` (#491, Arthur Zamarin)
+
+- drop Python 3.8 support (Arthur Zamarin)
+
+----------------------------
 pkgcheck 0.10.17 (2022-10-14)
 ----------------------------
 
