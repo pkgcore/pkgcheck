@@ -1019,6 +1019,8 @@ class _UnquotedVariablesCheck(Check):
         # Variable is part of a shell assignment, and does not need to be
         # quoted. for example S=${WORKDIR}/${PN} is ok.
         'variable_assignment',
+        # Variable is being used in a unset command.
+        'unset_command',
         # Variable is part of declaring variables, and does not need to be
         # quoted. for example local TMPDIR is ok.
         'declaration_command',

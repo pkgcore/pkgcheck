@@ -44,4 +44,6 @@ src_prepare() {
 	local TMPDIR # ok
 	TMPDIR="$(mktemp --directory --tmpdir=/tmp ${PN}-XXXX)" # ok
 	export TMPDIR # ok
+
+	unset TMPDIR # ok
 }
