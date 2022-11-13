@@ -4,6 +4,7 @@ on:
   push:
     branches: [deploy]
     tags: [v*]
+  workflow_dispatch:
 
 jobs:
   build-sdist:
@@ -19,22 +20,19 @@ jobs:
 
     - name: Install dependencies
       run: |
-        # install deps required for building sdist/wheels
         python -m pip install --upgrade pip
-        pip install -r requirements/dist.txt -r requirements/test.txt
+        pip install build ".[test,doc]"
 
     - name: Test with pytest
       env:
         PY_COLORS: 1 # forcibly enable pytest colors
-      run: python setup.py test
+      run: pytest
 
     - name: Build sdist
       run: |
         git clean -fxd
-        # build sdist
-        python setup.py sdist
-        # run in-place build so wheel deps use release versions
-        python setup.py build_py -i
+        make man
+        make sdist
 
     - name: Output dist file info
       run: |
@@ -49,10 +47,6 @@ jobs:
 
   build-wheel:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        pyver: [cp39, cp310, cp311]
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
@@ -62,13 +56,12 @@ jobs:
       with:
         output-dir: dist
       env:
-        CIBW_BUILD: ${{matrix.pyver}}-*
+        CIBW_BUILD: cp310-*
         CIBW_ARCHS_LINUX: x86_64
         CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_24
-        CIBW_BEFORE_BUILD: pip install -r {project}/requirements/dist.txt && {project}/.github/workflows/manylinux.sh
-        CIBW_BEFORE_TEST: pip install -r {project}/requirements/test.txt
-        CIBW_ENVIRONMENT: PY_COLORS=1
-        CIBW_TEST_COMMAND: pytest -v {project}/tests
+        CIBW_BEFORE_BUILD: "{project}/.github/workflows/manylinux.sh && pip install '{project}'"
+        CIBW_BEFORE_TEST: pip install '{project}[test]'
+        CIBW_TEST_COMMAND: pytest {project}/tests
 
     - name: Upload wheel artifacts
       uses: actions/upload-artifact@v3
