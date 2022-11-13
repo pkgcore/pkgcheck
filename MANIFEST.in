@@ -4,6 +4,8 @@ recursive-include bin *
 recursive-include contrib *
 recursive-include data *
 recursive-include doc *
+recursive-exclude doc/generated *
+recursive-exclude doc/man/pkgcheck *
 recursive-include requirements *
 recursive-include src *
 recursive-include testdata *

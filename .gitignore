@@ -14,3 +14,4 @@ _trial_temp
 /doc/_build
 /doc/api
 /doc/generated
+/doc/man/pkgcheck

@@ -40,7 +40,7 @@ def main(f=sys.stdout, **kwargs):
 
     wrapper = TextWrapper(width=85)
 
-    for i, scope in enumerate(base.scopes.values()):
+    for scope in base.scopes.values():
         _rst_header('-', scope.desc.capitalize() + ' scope')
 
         checks = (x for x in objects.CHECKS.values() if x.scope == scope)
@@ -61,7 +61,7 @@ def main(f=sys.stdout, **kwargs):
                     explanation = '\n'.join(dedent(explanation).strip().split('\n'))
                     out('\n' + explanation)
                 if issubclass(check, GentooRepoCheck):
-                    out(f'\n\n- Gentoo repo specific')
+                    out('\n\n- Gentoo repo specific')
                 known_results = ', '.join(
                     f'`{r.__name__}`_' for r in
                     sorted(check.known_results, key=attrgetter('__name__')))

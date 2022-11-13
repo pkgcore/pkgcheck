@@ -11,4 +11,4 @@ sdist wheel:
 
 .PHONY: clean
 clean:
-	$(RM) -r build/sphinx doc/api doc/generated dist
+	$(RM) -r build doc/man/pkgcheck doc/generated dist
