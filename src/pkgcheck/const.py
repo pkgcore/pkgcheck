@@ -33,7 +33,7 @@ for xdg_var, var_name, fallback_dir in (
         os.environ.get(xdg_var, os.path.join(os.path.expanduser(fallback_dir), 'pkgcheck')))
 
 REPO_PATH = _GET_CONST('REPO_PATH', _reporoot)
-DATA_PATH = _GET_CONST('DATA_PATH', '%(REPO_PATH)s/data')
+DATA_PATH = _GET_CONST('DATA_PATH', '%(REPO_PATH)s/data/share/pkgcheck')
 
 USER_CACHE_DIR = getattr(_module, 'USER_CACHE_PATH')
 USER_CONF_FILE = os.path.join(getattr(_module, 'USER_CONFIG_PATH'), 'pkgcheck.conf')

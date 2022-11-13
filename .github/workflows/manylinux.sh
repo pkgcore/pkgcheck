@@ -1,13 +1,12 @@
 #!/bin/sh
 # Mangle the manylinux docker image to successfully build and test wheels.
 
-set -e
-set +x
+set -ex
 
 # install git
-if type -P apk; then
+if command -v apk; then
     apk add --no-cache git bash py3-lxml
-elif type -P yum; then
+elif command -v yum; then
     yum update -y
     yum install -y libxslt-devel libxml2-devel python-devel
 else
