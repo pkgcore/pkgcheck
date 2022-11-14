@@ -47,21 +47,26 @@ jobs:
 
   build-wheel:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64, aarch64, ppc64le, s390x]
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
 
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v2
+      with:
+        platforms: ${{matrix.arch}}
+
     - name: Build wheels
-      uses: joerick/cibuildwheel@v2.10.0
+      uses: joerick/cibuildwheel@v2.11.2
       with:
         output-dir: dist
       env:
-        CIBW_BUILD: cp310-*
-        CIBW_ARCHS_LINUX: x86_64
-        CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_24
-        CIBW_BEFORE_BUILD: "{project}/.github/workflows/manylinux.sh && pip install '{project}'"
-        CIBW_BEFORE_TEST: pip install '{project}[test]'
-        CIBW_TEST_COMMAND: pytest {project}/tests
+        CIBW_ARCHS_LINUX: ${{matrix.arch}}
 
     - name: Upload wheel artifacts
       uses: actions/upload-artifact@v3

@@ -77,3 +77,39 @@ version = {attr = "pkgcheck.__version__"}
 minversion = "6.0"
 addopts = "-vv -ra -l"
 testpaths = ["tests"]
+
+[tool.cibuildwheel]
+build = "cp310-*"
+build-frontend = "build"
+
+before-build = [
+	"rm -f {project}/src/pkgcheck/bash/lang.so"
+]
+test-requires = ["pytest", "requests"]
+test-command = "pytest {project}/tests"
+
+# glibc 2.24
+manylinux-x86_64-image = "manylinux_2_24"
+manylinux-i686-image = "manylinux_2_24"
+manylinux-aarch64-image = "manylinux_2_24"
+manylinux-ppc64le-image = "manylinux_2_24"
+manylinux-s390x-image = "manylinux_2_24"
+test-skip = "*-*linux_{aarch64,ppc64le,s390x}"
+
+[[tool.cibuildwheel.overrides]]
+select = "*-musllinux*"
+before-all = [
+	"apk add --no-cache git bash libxml2-dev libxslt-dev",
+]
+
+[[tool.cibuildwheel.overrides]]
+select = "*-manylinux*"
+before-all = [
+	"apt-get update",
+	"apt-get install -y git libxml2-dev libxslt-dev",
+	# "yum update -y",
+	# "yum install -y git libxslt-devel libxml2-devel",
+
+	"curl -L \"https://github.com/robxu9/bash-static/releases/download/5.1.016-1.2.3/bash-linux-$(uname -m)\" -o /usr/local/bin/bash",
+	"chmod +x /usr/local/bin/bash",
+]
