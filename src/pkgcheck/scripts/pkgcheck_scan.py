@@ -342,6 +342,9 @@ def _setup_scan(parser, namespace, args):
     # load repo-specific args from config if they exist
     namespace = config_parser.parse_config_sections(namespace, namespace.target_repo.aliases)
 
+    if os.getenv('NOCOLOR'):
+        namespace.color = False
+
     return namespace, args
 
 

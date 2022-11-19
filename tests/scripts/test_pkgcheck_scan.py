@@ -264,6 +264,21 @@ class TestPkgcheckScanParseArgs:
             assert options.jobs == expected_jobs
             assert options.tasks == 5 * expected_jobs
 
+    def test_no_color(self, parser, tmp_path):
+        (config_file := tmp_path / 'config').write_text(textwrap.dedent('''\
+            [DEFAULT]
+            color = true
+        '''))
+
+        args = ('scan', '--config', str(config_file))
+        assert parser.parse_args(args).color is True
+        with os_environ(NOCOLOR='1'):
+            # NOCOLOR overrides config file
+            assert parser.parse_args(args).color is False
+            # cmd line option overrides NOCOLOR
+            assert parser.parse_args([*args, '--color', 'n']).color is False
+            assert parser.parse_args([*args, '--color', 'y']).color is True
+
 
 class TestPkgcheckScanParseConfigArgs:
 
