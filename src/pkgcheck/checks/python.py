@@ -17,12 +17,6 @@ from . import Check
 # NB: distutils-r1 inherits one of the first two
 ECLASSES = frozenset(['python-r1', 'python-single-r1', 'python-any-r1'])
 
-# NB: dev-java/jython omitted as not supported by the eclasses atm
-INTERPRETERS = frozenset([
-    'dev-lang/python',
-    'dev-python/pypy3',
-])
-
 IUSE_PREFIX = 'python_targets_'
 IUSE_PREFIX_S = 'python_single_target_'
 
@@ -39,6 +33,14 @@ def get_python_eclass(pkg):
         raise ValueError(
             f"python eclasses are mutually exclusive: [ {', '.join(eclasses)} ]")
     return next(iter(eclasses)) if eclasses else None
+
+
+def is_python_interpreter(pkg):
+    if pkg.key == "dev-lang/python":
+        # ignore python:2.7 deps since they are being phased out from eclass
+        # support
+        return pkg.slot is None or not pkg.slot.startswith("2")
+    return pkg.key in ["dev-python/pypy3"]
 
 
 class MissingPythonEclass(results.VersionResult, results.Warning):
@@ -300,7 +302,7 @@ class PythonCheck(Check):
                 flag = next(iter(x.restriction.vals))
                 if not flag.startswith(prefix):
                     continue
-                if not any(y.key in INTERPRETERS for y in x if isinstance(y, atom)):
+                if not any(is_python_interpreter(y) for y in x if isinstance(y, atom)):
                     continue
                 matched.add(flag[len(prefix):])
             if matched == flags:
@@ -436,7 +438,7 @@ class PythonCheck(Check):
             highest_found = None
             for attr in (x.lower() for x in pkg.eapi.dep_keys):
                 for p in iflatten_instance(getattr(pkg, attr), atom):
-                    if not p.blocks and p.key in INTERPRETERS:
+                    if not p.blocks and is_python_interpreter(p):
                         highest_found = (attr, p)
                         # break scanning packages, go to next attr
                         break
@@ -466,11 +468,11 @@ class PythonCheck(Check):
         else:  # python-any-r1
             for attr in ("rdepend", "pdepend"):
                 for p in iflatten_instance(getattr(pkg, attr), atom):
-                    if not p.blocks and p.key in INTERPRETERS:
+                    if not p.blocks and is_python_interpreter(p):
                         yield PythonRuntimeDepInAnyR1(attr.upper(), str(p), pkg=pkg)
                         break
             if not any(
-                not p.blocks and p.key in INTERPRETERS
+                not p.blocks and is_python_interpreter(p)
                 for attr in ("depend", "bdepend")
                 for p in iflatten_instance(getattr(pkg, attr), atom)
             ):

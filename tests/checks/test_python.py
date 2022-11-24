@@ -29,9 +29,7 @@ class TestPythonCheck(misc.ReportTestCase):
         assert isinstance(r, python.MissingPythonEclass)
         assert 'missing python-any-r1 eclass usage for DEPEND="dev-lang/python"' in str(r)
 
-        assert isinstance(
-            self.assertReport(self.check, self.mk_pkg(DEPEND='dev-lang/python:2.7')),
-            python.MissingPythonEclass)
+        self.assertNoReport(self.check, self.mk_pkg(DEPEND='dev-lang/python:2.7'))
         assert isinstance(
             self.assertReport(self.check, self.mk_pkg(DEPEND='dev-lang/python:*')),
             python.MissingPythonEclass)
@@ -53,9 +51,7 @@ class TestPythonCheck(misc.ReportTestCase):
         assert isinstance(
             self.assertReport(self.check, self.mk_pkg(BDEPEND='dev-lang/python')),
             python.MissingPythonEclass)
-        assert isinstance(
-            self.assertReport(self.check, self.mk_pkg(BDEPEND='dev-lang/python:2.7')),
-            python.MissingPythonEclass)
+        self.assertNoReport(self.check, self.mk_pkg(BDEPEND='dev-lang/python:2.7'))
         assert isinstance(
             self.assertReport(self.check, self.mk_pkg(BDEPEND='dev-lang/python:*')),
             python.MissingPythonEclass)
@@ -71,19 +67,17 @@ class TestPythonCheck(misc.ReportTestCase):
     def test_missing_eclass_rdepend(self):
         self.assertNoReport(
             self.check,
-            self.mk_pkg(_eclasses_=['python-r1'], RDEPEND='dev-lang/python:2.7'))
+            self.mk_pkg(_eclasses_=['python-r1'], RDEPEND='dev-lang/python:3.7'))
         self.assertNoReport(
             self.check,
-            self.mk_pkg(_eclasses_=['python-single-r1'], RDEPEND='dev-lang/python:2.7'))
+            self.mk_pkg(_eclasses_=['python-single-r1'], RDEPEND='dev-lang/python:3.7'))
         self.assertNoReport(self.check, self.mk_pkg(RDEPEND='dev-foo/frobnicate'))
 
         r = self.assertReport(self.check, self.mk_pkg(RDEPEND='dev-lang/python'))
         assert isinstance(r, python.MissingPythonEclass)
         assert 'missing python-r1 or python-single-r1 eclass' in str(r)
 
-        assert isinstance(
-            self.assertReport(self.check, self.mk_pkg(RDEPEND='dev-lang/python:2.7')),
-            python.MissingPythonEclass)
+        self.assertNoReport(self.check, self.mk_pkg(RDEPEND='dev-lang/python:2.7'))
         assert isinstance(
             self.assertReport(self.check, self.mk_pkg(RDEPEND='dev-lang/python:=')),
             python.MissingPythonEclass)
@@ -99,18 +93,16 @@ class TestPythonCheck(misc.ReportTestCase):
     def test_missing_eclass_pdepend(self):
         self.assertNoReport(
             self.check,
-            self.mk_pkg(_eclasses_=['python-r1'], PDEPEND='dev-lang/python:2.7'))
+            self.mk_pkg(_eclasses_=['python-r1'], PDEPEND='dev-lang/python:3.7'))
         self.assertNoReport(
             self.check,
-            self.mk_pkg(_eclasses_=['python-single-r1'], PDEPEND='dev-lang/python:2.7'))
+            self.mk_pkg(_eclasses_=['python-single-r1'], PDEPEND='dev-lang/python:3.7'))
         self.assertNoReport(self.check, self.mk_pkg(PDEPEND='dev-foo/frobnicate'))
 
         assert isinstance(
             self.assertReport(self.check, self.mk_pkg(PDEPEND='dev-lang/python')),
             python.MissingPythonEclass)
-        assert isinstance(
-            self.assertReport(self.check, self.mk_pkg(PDEPEND='dev-lang/python:2.7')),
-            python.MissingPythonEclass)
+        self.assertNoReport(self.check, self.mk_pkg(PDEPEND='dev-lang/python:2.7'))
         assert isinstance(
             self.assertReport(self.check, self.mk_pkg(PDEPEND='dev-lang/python:=')),
             python.MissingPythonEclass)
