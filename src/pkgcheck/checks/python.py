@@ -20,7 +20,6 @@ ECLASSES = frozenset(['python-r1', 'python-single-r1', 'python-any-r1'])
 # NB: dev-java/jython omitted as not supported by the eclasses atm
 INTERPRETERS = frozenset([
     'dev-lang/python',
-    'dev-python/pypy',
     'dev-python/pypy3',
 ])
 

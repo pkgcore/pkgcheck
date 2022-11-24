@@ -43,9 +43,6 @@ class TestPythonCheck(misc.ReportTestCase):
                 self.check,
                 self.mk_pkg(DEPEND='|| ( dev-lang/python:2.7 dev-lang/python:3.6 )')),
             python.MissingPythonEclass)
-        assert isinstance(
-            self.assertReport(self.check, self.mk_pkg(DEPEND='dev-python/pypy')),
-            python.MissingPythonEclass)
 
     def test_missing_eclass_bdepend(self):
         self.assertNoReport(
@@ -69,9 +66,6 @@ class TestPythonCheck(misc.ReportTestCase):
             self.assertReport(
                 self.check,
                 self.mk_pkg(BDEPEND='|| ( dev-lang/python:2.7 dev-lang/python:3.6 )')),
-            python.MissingPythonEclass)
-        assert isinstance(
-            self.assertReport(self.check, self.mk_pkg(BDEPEND='dev-python/pypy')),
             python.MissingPythonEclass)
 
     def test_missing_eclass_rdepend(self):
@@ -101,9 +95,6 @@ class TestPythonCheck(misc.ReportTestCase):
                 self.check,
                 self.mk_pkg(RDEPEND='|| ( dev-lang/python:2.7 dev-lang/python:3.6 )')),
             python.MissingPythonEclass)
-        assert isinstance(
-            self.assertReport(self.check, self.mk_pkg(RDEPEND='dev-python/pypy')),
-            python.MissingPythonEclass)
 
     def test_missing_eclass_pdepend(self):
         self.assertNoReport(
@@ -130,9 +121,6 @@ class TestPythonCheck(misc.ReportTestCase):
             self.assertReport(
                 self.check,
                 self.mk_pkg(PDEPEND='|| ( dev-lang/python:2.7 dev-lang/python:3.6 )')),
-            python.MissingPythonEclass)
-        assert isinstance(
-            self.assertReport(self.check, self.mk_pkg(PDEPEND='dev-python/pypy')),
             python.MissingPythonEclass)
 
     def test_valid_packages(self):
