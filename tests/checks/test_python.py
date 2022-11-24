@@ -105,12 +105,6 @@ class TestPythonCheck(misc.ReportTestCase):
             self.assertReport(self.check, self.mk_pkg(RDEPEND='dev-python/pypy')),
             python.MissingPythonEclass)
 
-        # special exception: virtual/pypy
-        self.assertNoReport(self.check, self.mk_pkg(cpv='virtual/pypy-4.1',
-            RDEPEND='|| ( dev-python/pypy:0/41 dev-python/pypy-bin:0/41 )'))
-        self.assertNoReport(self.check, self.mk_pkg(cpv='virtual/pypy3-4.1',
-            RDEPEND='|| ( dev-python/pypy3:0/41 dev-python/pypy3-bin:0/41 )'))
-
     def test_missing_eclass_pdepend(self):
         self.assertNoReport(
             self.check,

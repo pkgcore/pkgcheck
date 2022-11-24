@@ -22,13 +22,7 @@ INTERPRETERS = frozenset([
     'dev-lang/python',
     'dev-python/pypy',
     'dev-python/pypy3',
-    'dev-python/pypy-bin',
-    'dev-python/pypy3-bin',
-    'virtual/pypy',
-    'virtual/pypy3',
 ])
-
-CHECK_EXCLUDE = frozenset(['virtual/pypy', 'virtual/pypy3'])
 
 IUSE_PREFIX = 'python_targets_'
 IUSE_PREFIX_S = 'python_single_target_'
@@ -439,11 +433,6 @@ class PythonCheck(Check):
             return
 
         if eclass is None:
-            # virtual/pypy* need to be exempted as they serve as slot-matchers
-            # for other packages
-            if pkg.key in CHECK_EXCLUDE:
-                return
-
             # check whether we should be using one
             highest_found = None
             for attr in (x.lower() for x in pkg.eapi.dep_keys):
