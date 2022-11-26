@@ -3,6 +3,27 @@ Release Notes
 =============
 
 ----------------------------
+pkgcheck 0.10.19 (2022-11-26)
+----------------------------
+
+- scan: add support to disable colors using environment variable ``NOCOLOR``
+  (Arthur Zamarin)
+
+- Use refactored and pure setuptools as build backend for pkgcheck. This
+  includes removal of old development scripts and setup.py hacks, in favor of
+  a simple commands or using the Makefile. (Arthur Zamarin, #494)
+
+- docs: use new snakeoil extension for sphinx (Arthur Zamarin, #494)
+
+- release: add support for other linux architectures wheels, including
+  aarch64, ppc64le, and s390x (Arthur Zamarin, #494)
+
+- PythonCheck: remove obsolete pypy packages (Michał Górny, #495)
+
+- PythonCheck: stop warning about eclass use on ``python:2.7`` deps (Michał
+  Górny, #495)
+
+----------------------------
 pkgcheck 0.10.18 (2022-11-09)
 ----------------------------
 
