@@ -13,9 +13,11 @@ from urllib.parse import urlparse
 
 from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.ebuild.repository import UnconfiguredTree
+from pkgcore.fetch import fetchable
 from snakeoil import klass
 from snakeoil.mappings import ImmutableDict
 from snakeoil.osutils import pjoin
+from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
 from .. import base, results, sources
@@ -169,6 +171,38 @@ class MissingMove(results.PackageResult, results.Error):
         return f"renamed package: {self.old} -> {self.new}"
 
 
+class SrcUriChecksumChange(results.PackageResult, results.Error):
+    """SRC_URI changing checksum without distfile rename."""
+
+    def __init__(self, filename, **kwargs):
+        super().__init__(**kwargs)
+        self.filename = filename
+
+    @property
+    def desc(self):
+        return f"{self.filename!r} has different checksums across commits"
+
+
+class SuspiciousSrcUriChange(results.PackageResult, results.Warning):
+    """Suspicious SRC_URI changing URI without distfile rename."""
+
+    def __init__(self, old_uri, new_uri, filename, **kwargs):
+        super().__init__(**kwargs)
+        if isinstance(old_uri, tuple):
+            self.old_uri = f"mirror://{old_uri[0].mirror_name}/{old_uri[1]}"
+        else:
+            self.old_uri = str(old_uri)
+        if isinstance(new_uri, tuple):
+            self.new_uri = f"mirror://{new_uri[0].mirror_name}/{new_uri[1]}"
+        else:
+            self.new_uri = str(new_uri)
+        self.filename = filename
+
+    @property
+    def desc(self):
+        return f"{self.filename!r} has changed SRC_URI from {self.old_uri!r} to {self.new_uri!r}"
+
+
 class _RemovalRepo(UnconfiguredTree):
     """Repository of removed packages stored in a temporary directory."""
 
@@ -235,6 +269,8 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
             DroppedUnstableKeywords,
             MissingSlotmove,
             MissingMove,
+            SrcUriChecksumChange,
+            SuspiciousSrcUriChange,
         ]
     )
 
@@ -345,7 +381,34 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
             else:
                 yield MissingSlotmove(old_slot, new_slot, pkg=new_pkg)
 
-    def feed(self, pkgset):
+    def src_uri_changes(self, pkgset):
+        pkg = pkgset[0].unversioned_atom
+
+        try:
+            new_checksums = {
+                fetch.filename: (fetch.chksums, tuple(fetch.uri._uri_source))
+                for pkg in self.repo.match(pkg)
+                for fetch in iflatten_instance(pkg.fetchables, fetchable)
+            }
+
+            old_checksums = {
+                fetch.filename: (fetch.chksums, tuple(fetch.uri._uri_source))
+                for pkg in self.modified_repo(pkgset).match(pkg)
+                for fetch in iflatten_instance(pkg.fetchables, fetchable)
+            }
+        except (IndexError, FileNotFoundError, tarfile.ReadError):
+            # ignore broken ebuild
+            return
+
+        for filename in old_checksums.keys() & new_checksums.keys():
+            old_checksum, old_uri = old_checksums[filename]
+            new_checksum, new_uri = new_checksums[filename]
+            if old_checksum != new_checksum:
+                yield SrcUriChecksumChange(filename, pkg=pkg)
+            elif old_uri != new_uri:
+                yield SuspiciousSrcUriChange(old_uri[0], new_uri[0], filename, pkg=pkg)
+
+    def feed(self, pkgset: list[git.GitPkgChange]):
         # Mapping of commit types to pkgs, available commit types can be seen
         # under the --diff-filter option in git log parsing support and are
         # disambiguated as follows:
@@ -406,6 +469,8 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
                 # check for no maintainers
                 if not pkg.maintainers and newly_added:
                     yield DirectNoMaintainer(pkg=pkg)
+
+        yield from self.src_uri_changes(pkgset)
 
 
 class MissingSignOff(results.CommitResult, results.Error):

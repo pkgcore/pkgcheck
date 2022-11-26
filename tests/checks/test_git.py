@@ -7,7 +7,7 @@ import pytest
 from pkgcheck.base import PkgcheckUserException
 from pkgcheck.checks import git as git_mod
 from pkgcheck.addons.git import GitCommit
-from pkgcore.ebuild.cpv import VersionedCPV as CPV
+from pkgcore.ebuild.cpv import VersionedCPV as CPV, UnversionedCPV as CP
 from pkgcore.test.misc import FakeRepo
 from snakeoil.cli import arghparse
 from snakeoil.fileutils import touch
@@ -649,6 +649,59 @@ class TestGitPkgCommitsCheck(ReportTestCase):
 
         self.init_check()
         self.assertNoReport(self.check, self.source)
+
+    def test_checksum_change(self):
+        distfile = [
+            "DIST",
+            "pkgcheck-1.tar.gz",
+            "549746",
+            "BLAKE2B",
+            "72ed97d93674ffd311978d03ad3738494a752bf1b02bea5eaaaf1b066c48e8c9ec5f82b79baeeabf3e56e618c76614ee6179b7115d1d875364ac6e3fbc3c6028",
+            "SHA512",
+            "6a8c135ca44ccbfe15548bd396aba9448c29f60147920b18b8be5aa5fcd1200e0b75bc5de50fc7892ad5460ddad1e7d28a7e44025bdc581a518d136eda8b0df2",
+        ]
+        with open(pjoin(self.parent_repo.path, "profiles/thirdpartymirrors"), "a") as f:
+            f.write("gentoo  https://gentoo.org/distfiles\n")
+        self.parent_repo.create_ebuild("cat/pkg-1", src_uri=f"mirror://gentoo/{distfile[1]}")
+        with open(pjoin(self.parent_repo.path, "cat/pkg/Manifest"), "w") as f:
+            f.write(" ".join(distfile) + "\n")
+        self.parent_git_repo.add_all("cat/pkg: add 1", signoff=True)
+        # pull changes and change checksum in child repo
+        self.child_git_repo.run(["git", "pull", "origin", "main"])
+        self.child_repo.create_ebuild("cat/pkg-1-r1", src_uri=f"mirror://gentoo/{distfile[1]}")
+        distfile[-1] = distfile[-1][:-1] + "0"
+        with open(pjoin(self.child_repo.path, "cat/pkg/Manifest"), "w") as f:
+            f.write(" ".join(distfile) + "\n")
+        self.child_git_repo.add_all("cat/pkg: revbump", signoff=True)
+        self.init_check()
+        r = self.assertReport(self.check, self.source)
+        assert r == git_mod.SrcUriChecksumChange(distfile[1], pkg=CP("cat/pkg"))
+
+    def test_src_uri_change(self):
+        distfile = [
+            "DIST",
+            "pkgcheck-1.tar.gz",
+            "549746",
+            "BLAKE2B",
+            "72ed97d93674ffd311978d03ad3738494a752bf1b02bea5eaaaf1b066c48e8c9ec5f82b79baeeabf3e56e618c76614ee6179b7115d1d875364ac6e3fbc3c6028",
+            "SHA512",
+            "6a8c135ca44ccbfe15548bd396aba9448c29f60147920b18b8be5aa5fcd1200e0b75bc5de50fc7892ad5460ddad1e7d28a7e44025bdc581a518d136eda8b0df2",
+        ]
+        old_url = f"mirror://gentoo/{distfile[1]}"
+        new_url = f"https://pkgcore.github.io/pkgcheck/{distfile[1]}"
+        with open(pjoin(self.parent_repo.path, "profiles/thirdpartymirrors"), "a") as f:
+            f.write("gentoo  https://gentoo.org/distfiles\n")
+        self.parent_repo.create_ebuild("cat/pkg-1", src_uri=old_url)
+        with open(pjoin(self.parent_repo.path, "cat/pkg/Manifest"), "w") as f:
+            f.write(" ".join(distfile) + "\n")
+        self.parent_git_repo.add_all("cat/pkg: add 1", signoff=True)
+        # pull changes and change checksum in child repo
+        self.child_git_repo.run(["git", "pull", "origin", "main"])
+        self.child_repo.create_ebuild("cat/pkg-1", src_uri=new_url)
+        self.child_git_repo.add_all("cat/pkg: change SRC_URI", signoff=True)
+        self.init_check()
+        r = self.assertReport(self.check, self.source)
+        assert r == git_mod.SuspiciousSrcUriChange(old_url, new_url, distfile[1], pkg=CP("cat/pkg"))
 
 
 class TestGitEclassCommitsCheck(ReportTestCase):
