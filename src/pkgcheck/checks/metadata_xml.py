@@ -577,8 +577,8 @@ class MissingRemoteId(results.PackageResult, results.Info):
 
     @property
     def desc(self):
-        return (f'missing remote-id of type {self.remote_type!r} with '
-            f'value {self.value!r} (inferred from URI {self.uri!r})')
+        return (f'missing <remote-id type="{self.remote_type}">'
+            f'{self.value}</remote-id> (inferred from URI {self.uri!r})')
 
 
 class MissingRemoteIdCheck(Check):
