@@ -23,9 +23,11 @@ def main(f=sys.stdout, **kwargs):
     def out(s, **kwargs):
         print(s, file=f, **kwargs)
 
-    def _rst_header(char, text, newline=True):
+    def _rst_header(char, text, newline=True, leading=False):
         if newline:
             out('\n', end='')
+        if leading:
+            out(char * len(text))
         out(text)
         out(char * len(text))
 
@@ -39,7 +41,7 @@ def main(f=sys.stdout, **kwargs):
             related_checks[keyword].add(check)
 
     for scope in base.scopes.values():
-        _rst_header('-', scope.desc.capitalize() + ' scope')
+        _rst_header('-', scope.desc.capitalize() + ' scope', leading=True)
 
         keywords = (x for x in objects.KEYWORDS.values() if x.scope == scope)
         for keyword in keywords:
@@ -52,7 +54,7 @@ def main(f=sys.stdout, **kwargs):
             else:
                 summary = None
 
-            _rst_header('^', keyword.__name__)
+            _rst_header('-', keyword.__name__)
             if summary:
                 out('\n' + dedent(summary).strip())
                 if explanation:
