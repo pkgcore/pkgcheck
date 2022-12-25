@@ -6,7 +6,8 @@ from .. import results, sources
 from . import GentooRepoCheck
 
 copyright_regex = re.compile(
-    r'^# Copyright (?P<begin>\d{4}-)?(?P<end>\d{4}) (?P<holder>.+)$')
+    r"^# Copyright (?P<begin>\d{4}-)?(?P<end>\d{4}) (?P<holder>.+)$"
+)
 
 
 class _FileHeaderResult(results.Result):
@@ -30,11 +31,11 @@ class InvalidCopyright(_FileHeaderResult, results.AliasResult, results.Error):
         # Copyright YEARS Gentoo Authors
     """
 
-    _name = 'InvalidCopyright'
+    _name = "InvalidCopyright"
 
     @property
     def desc(self):
-        return f'invalid copyright: {self.line!r}'
+        return f"invalid copyright: {self.line!r}"
 
 
 class OldGentooCopyright(_FileHeaderResult, results.AliasResult, results.Warning):
@@ -49,7 +50,7 @@ class OldGentooCopyright(_FileHeaderResult, results.AliasResult, results.Warning
     holder instead.
     """
 
-    _name = 'OldGentooCopyright'
+    _name = "OldGentooCopyright"
 
     @property
     def desc(self):
@@ -65,7 +66,7 @@ class NonGentooAuthorsCopyright(_FileHeaderResult, results.AliasResult, results.
     via bugs.gentoo.org.
     """
 
-    _name = 'NonGentooAuthorsCopyright'
+    _name = "NonGentooAuthorsCopyright"
 
     @property
     def desc(self):
@@ -82,13 +83,13 @@ class InvalidLicenseHeader(_FileHeaderResult, results.AliasResult, results.Error
         # Distributed under the terms of the GNU General Public License v2
     """
 
-    _name = 'InvalidLicenseHeader'
+    _name = "InvalidLicenseHeader"
 
     @property
     def desc(self):
         if self.line:
-            return f'invalid license header: {self.line!r}'
-        return 'missing license header'
+            return f"invalid license header: {self.line!r}"
+        return "missing license header"
 
 
 class _HeaderCheck(GentooRepoCheck):
@@ -98,12 +99,19 @@ class _HeaderCheck(GentooRepoCheck):
     _old_copyright = OldGentooCopyright
     _non_gentoo_authors = NonGentooAuthorsCopyright
     _invalid_license = InvalidLicenseHeader
-    known_results = frozenset([
-        _invalid_copyright, _old_copyright, _non_gentoo_authors, _invalid_license,
-    ])
-    _item_attr = 'pkg'
+    known_results = frozenset(
+        [
+            _invalid_copyright,
+            _old_copyright,
+            _non_gentoo_authors,
+            _invalid_license,
+        ]
+    )
+    _item_attr = "pkg"
 
-    license_header = '# Distributed under the terms of the GNU General Public License v2'
+    license_header = (
+        "# Distributed under the terms of the GNU General Public License v2"
+    )
 
     def args(self, item):
         return {self._item_attr: item}
@@ -114,19 +122,19 @@ class _HeaderCheck(GentooRepoCheck):
             if mo := copyright_regex.match(line):
                 # Copyright policy is active since 2018-10-21, so it applies
                 # to all ebuilds committed in 2019 and later
-                if int(mo.group('end')) >= 2019:
-                    if mo.group('holder') == 'Gentoo Foundation':
+                if int(mo.group("end")) >= 2019:
+                    if mo.group("holder") == "Gentoo Foundation":
                         yield self._old_copyright(line, **self.args(item))
                     # Gentoo policy requires 'Gentoo Authors'
-                    elif mo.group('holder') != 'Gentoo Authors':
+                    elif mo.group("holder") != "Gentoo Authors":
                         yield self._non_gentoo_authors(line, **self.args(item))
             else:
                 yield self._invalid_copyright(line, **self.args(item))
 
             try:
-                line = item.lines[1].strip('\n')
+                line = item.lines[1].strip("\n")
             except IndexError:
-                line = ''
+                line = ""
             if line != self.license_header:
                 yield self._invalid_license(line, **self.args(item))
 
@@ -156,10 +164,15 @@ class EbuildHeaderCheck(_HeaderCheck):
     _old_copyright = EbuildOldGentooCopyright
     _non_gentoo_authors = EbuildNonGentooAuthorsCopyright
     _invalid_license = EbuildInvalidLicenseHeader
-    known_results = frozenset([
-        _invalid_copyright, _old_copyright, _non_gentoo_authors, _invalid_license,
-    ])
-    _item_attr = 'pkg'
+    known_results = frozenset(
+        [
+            _invalid_copyright,
+            _old_copyright,
+            _non_gentoo_authors,
+            _invalid_license,
+        ]
+    )
+    _item_attr = "pkg"
 
 
 class EclassInvalidCopyright(InvalidCopyright, results.EclassResult):
@@ -167,7 +180,7 @@ class EclassInvalidCopyright(InvalidCopyright, results.EclassResult):
 
     @property
     def desc(self):
-        return f'{self.eclass}: {super().desc}'
+        return f"{self.eclass}: {super().desc}"
 
 
 class EclassOldGentooCopyright(OldGentooCopyright, results.EclassResult):
@@ -175,7 +188,7 @@ class EclassOldGentooCopyright(OldGentooCopyright, results.EclassResult):
 
     @property
     def desc(self):
-        return f'{self.eclass}: {super().desc}'
+        return f"{self.eclass}: {super().desc}"
 
 
 class EclassNonGentooAuthorsCopyright(NonGentooAuthorsCopyright, results.EclassResult):
@@ -183,7 +196,7 @@ class EclassNonGentooAuthorsCopyright(NonGentooAuthorsCopyright, results.EclassR
 
     @property
     def desc(self):
-        return f'{self.eclass}: {super().desc}'
+        return f"{self.eclass}: {super().desc}"
 
 
 class EclassInvalidLicenseHeader(InvalidLicenseHeader, results.EclassResult):
@@ -191,7 +204,7 @@ class EclassInvalidLicenseHeader(InvalidLicenseHeader, results.EclassResult):
 
     @property
     def desc(self):
-        return f'{self.eclass}: {super().desc}'
+        return f"{self.eclass}: {super().desc}"
 
 
 class EclassHeaderCheck(_HeaderCheck):
@@ -203,7 +216,12 @@ class EclassHeaderCheck(_HeaderCheck):
     _old_copyright = EclassOldGentooCopyright
     _non_gentoo_authors = EclassNonGentooAuthorsCopyright
     _invalid_license = EclassInvalidLicenseHeader
-    known_results = frozenset([
-        _invalid_copyright, _old_copyright, _non_gentoo_authors, _invalid_license,
-    ])
-    _item_attr = 'eclass'
+    known_results = frozenset(
+        [
+            _invalid_copyright,
+            _old_copyright,
+            _non_gentoo_authors,
+            _invalid_license,
+        ]
+    )
+    _item_attr = "eclass"

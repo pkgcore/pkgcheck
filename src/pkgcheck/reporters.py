@@ -62,15 +62,15 @@ class StrReporter(Reporter):
     def _process_report(self):
         # scope to result prefix mapping
         scope_prefix_map = {
-            base.version_scope: '{category}/{package}-{version}: ',
-            base.package_scope: '{category}/{package}: ',
-            base.category_scope: '{category}: ',
+            base.version_scope: "{category}/{package}-{version}: ",
+            base.package_scope: "{category}/{package}: ",
+            base.category_scope: "{category}: ",
         }
 
         while True:
-            result = (yield)
-            prefix = scope_prefix_map.get(result.scope, '').format(**vars(result))
-            self.out.write(f'{prefix}{result.desc}')
+            result = yield
+            prefix = scope_prefix_map.get(result.scope, "").format(**vars(result))
+            self.out.write(f"{prefix}{result.desc}")
             self.out.stream.flush()
 
 
@@ -92,9 +92,9 @@ class FancyReporter(Reporter):
         prev_key = None
 
         while True:
-            result = (yield)
+            result = yield
             if result.scope in (base.version_scope, base.package_scope):
-                key = f'{result.category}/{result.package}'
+                key = f"{result.category}/{result.package}"
             elif result.scope == base.category_scope:
                 key = result.category
             else:
@@ -103,17 +103,21 @@ class FancyReporter(Reporter):
             if key != prev_key:
                 if prev_key is not None:
                     self.out.write()
-                self.out.write(self.out.bold, self.out.fg('blue'), key, self.out.reset)
+                self.out.write(self.out.bold, self.out.fg("blue"), key, self.out.reset)
                 prev_key = key
-            self.out.first_prefix.append('  ')
-            self.out.later_prefix.append('    ')
-            s = ''
+            self.out.first_prefix.append("  ")
+            self.out.later_prefix.append("    ")
+            s = ""
             if result.scope == base.version_scope:
                 s = f"version {result.version}: "
             self.out.write(
                 self.out.fg(result.color),
-                result.name, self.out.reset,
-                ': ', s, result.desc)
+                result.name,
+                self.out.reset,
+                ": ",
+                s,
+                result.desc,
+            )
             self.out.first_prefix.pop()
             self.out.later_prefix.pop()
             self.out.stream.flush()
@@ -145,10 +149,10 @@ class JsonReporter(Reporter):
         }
 
         while True:
-            result = (yield)
+            result = yield
             data = json_dict()
             d = scope_map.get(result.scope, lambda x, y: x)(data, result)
-            d['_' + result.level][result.name] = result.desc
+            d["_" + result.level][result.name] = result.desc
             self.out.write(json.dumps(data))
             # flush output so partial objects aren't written
             self.out.stream.flush()
@@ -160,27 +164,30 @@ class XmlReporter(Reporter):
     priority = -1000
 
     def _start(self):
-        self.out.write('<checks>')
+        self.out.write("<checks>")
 
     def _finish(self):
-        self.out.write('</checks>')
+        self.out.write("</checks>")
 
     @coroutine
     def _process_report(self):
         result_template = (
-            "<result><class>%(class)s</class>"
-            "<msg>%(msg)s</msg></result>")
+            "<result><class>%(class)s</class>" "<msg>%(msg)s</msg></result>"
+        )
         cat_template = (
             "<result><category>%(category)s</category>"
-            "<class>%(class)s</class><msg>%(msg)s</msg></result>")
+            "<class>%(class)s</class><msg>%(msg)s</msg></result>"
+        )
         pkg_template = (
             "<result><category>%(category)s</category>"
             "<package>%(package)s</package><class>%(class)s</class>"
-            "<msg>%(msg)s</msg></result>")
+            "<msg>%(msg)s</msg></result>"
+        )
         ver_template = (
             "<result><category>%(category)s</category>"
             "<package>%(package)s</package><version>%(version)s</version>"
-            "<class>%(class)s</class><msg>%(msg)s</msg></result>")
+            "<class>%(class)s</class><msg>%(msg)s</msg></result>"
+        )
 
         scope_map = {
             base.category_scope: cat_template,
@@ -189,10 +196,10 @@ class XmlReporter(Reporter):
         }
 
         while True:
-            result = (yield)
-            d = {k: getattr(result, k, '') for k in ('category', 'package', 'version')}
-            d['class'] = xml_escape(result.name)
-            d['msg'] = xml_escape(result.desc)
+            result = yield
+            d = {k: getattr(result, k, "") for k in ("category", "package", "version")}
+            d["class"] = xml_escape(result.name)
+            d["msg"] = xml_escape(result.desc)
             self.out.write(scope_map.get(result.scope, result_template) % d)
 
 
@@ -212,18 +219,19 @@ class CsvReporter(Reporter):
     @coroutine
     def _process_report(self):
         writer = csv.writer(
-            self.out,
-            doublequote=False,
-            escapechar='\\',
-            lineterminator='')
+            self.out, doublequote=False, escapechar="\\", lineterminator=""
+        )
 
         while True:
-            result = (yield)
-            writer.writerow((
-                getattr(result, 'category', ''),
-                getattr(result, 'package', ''),
-                getattr(result, 'version', ''),
-                result.desc))
+            result = yield
+            writer.writerow(
+                (
+                    getattr(result, "category", ""),
+                    getattr(result, "package", ""),
+                    getattr(result, "version", ""),
+                    result.desc,
+                )
+            )
 
 
 class _ResultFormatter(Formatter):
@@ -235,9 +243,10 @@ class _ResultFormatter(Formatter):
             try:
                 return kwds[key]
             except KeyError:
-                return ''
+                return ""
         raise base.PkgcheckUserException(
-            'FormatReporter: integer indexes are not supported')
+            "FormatReporter: integer indexes are not supported"
+        )
 
 
 class FormatReporter(Reporter):
@@ -253,10 +262,10 @@ class FormatReporter(Reporter):
     def _process_report(self):
         formatter = _ResultFormatter()
         # provide expansions for result desc, level, and output name properties
-        properties = ('desc', 'level', 'name')
+        properties = ("desc", "level", "name")
 
         while True:
-            result = (yield)
+            result = yield
             attrs = vars(result)
             attrs.update((k, getattr(result, k)) for k in properties)
             s = formatter.format(self.format_str, **attrs)
@@ -279,7 +288,7 @@ class JsonStream(Reporter):
     def to_json(obj):
         """Serialize results and other objects to JSON."""
         if isinstance(obj, Result):
-            d = {'__class__': obj.__class__.__name__}
+            d = {"__class__": obj.__class__.__name__}
             d.update(obj._attrs)
             return d
         return str(obj)
@@ -289,19 +298,24 @@ class JsonStream(Reporter):
         """Deserialize results from a given iterable."""
         # avoid circular import issues
         from . import objects
+
         try:
             for data in map(json.loads, iterable):
-                cls = objects.KEYWORDS[data.pop('__class__')]
+                cls = objects.KEYWORDS[data.pop("__class__")]
                 yield cls._create(**data)
-        except (json.decoder.JSONDecodeError, UnicodeDecodeError, DeserializationError) as e:
-            raise DeserializationError('failed loading') from e
+        except (
+            json.decoder.JSONDecodeError,
+            UnicodeDecodeError,
+            DeserializationError,
+        ) as e:
+            raise DeserializationError("failed loading") from e
         except (KeyError, InvalidResult):
-            raise DeserializationError('unknown result')
+            raise DeserializationError("unknown result")
 
     @coroutine
     def _process_report(self):
         while True:
-            result = (yield)
+            result = yield
             self.out.write(json.dumps(result, default=self.to_json))
 
 
@@ -316,13 +330,15 @@ class FlycheckReporter(Reporter):
     @coroutine
     def _process_report(self):
         while True:
-            result = (yield)
+            result = yield
             file = f'{getattr(result, "package", "")}-{getattr(result, "version", "")}.ebuild'
             message = f'{getattr(result, "name")}: {getattr(result, "desc")}'
             if isinstance(result, BaseLinesResult):
-                message = message.replace(result.lines_str, '').strip()
+                message = message.replace(result.lines_str, "").strip()
                 for lineno in result.lines:
-                    self.out.write(f'{file}:{lineno}:{getattr(result, "level")}:{message}')
+                    self.out.write(
+                        f'{file}:{lineno}:{getattr(result, "level")}:{message}'
+                    )
             else:
                 lineno = getattr(result, "lineno", 0)
                 self.out.write(f'{file}:{lineno}:{getattr(result, "level")}:{message}')

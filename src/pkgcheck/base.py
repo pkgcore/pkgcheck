@@ -26,12 +26,13 @@ from snakeoil.mappings import ImmutableDict
 @dataclass(frozen=True, eq=False)
 class Scope:
     """Generic scope for scans, checks, and results."""
+
     desc: str
     level: int
     _children: tuple = ()
 
     def __str__(self):
-        return f'{self.__class__.__name__}({self.desc!r})'
+        return f"{self.__class__.__name__}({self.desc!r})"
 
     def __lt__(self, other):
         if isinstance(other, Scope):
@@ -62,8 +63,8 @@ class Scope:
         return hash(self.desc)
 
     def __repr__(self):
-        address = '@%#8x' % (id(self),)
-        return f'<{self.__class__.__name__} desc={self.desc!r} {address}>'
+        address = "@%#8x" % (id(self),)
+        return f"<{self.__class__.__name__} desc={self.desc!r} {address}>"
 
     def __contains__(self, key):
         return self == key or key in self._children
@@ -80,37 +81,41 @@ class PackageScope(Scope):
 @dataclass(repr=False, frozen=True, eq=False)
 class ConditionalScope(Scope):
     """Scope for checks run only in certain circumstances."""
+
     level: int = -99
 
 
 @dataclass(repr=False, frozen=True, eq=False)
 class LocationScope(Scope):
     """Scope for location-specific checks."""
+
     level: int = 0
 
 
 # pkg-related scopes (level increasing by granularity)
-repo_scope = PackageScope('repo', 1)
-category_scope = PackageScope('category', 2)
-package_scope = PackageScope('package', 3)
-version_scope = PackageScope('version', 4)
+repo_scope = PackageScope("repo", 1)
+category_scope = PackageScope("category", 2)
+package_scope = PackageScope("package", 3)
+version_scope = PackageScope("version", 4)
 
 # conditional (negative level) and location-specific scopes (zero level)
-commit_scope = ConditionalScope('commit')
-profile_node_scope = LocationScope('profile_node')
-profiles_scope = LocationScope('profiles', 0, (profile_node_scope,))
-eclass_scope = LocationScope('eclass')
+commit_scope = ConditionalScope("commit")
+profile_node_scope = LocationScope("profile_node")
+profiles_scope = LocationScope("profiles", 0, (profile_node_scope,))
+eclass_scope = LocationScope("eclass")
 
 # mapping for -S/--scopes option, ordered for sorted output in the case of unknown scopes
-scopes = ImmutableDict({
-    'git': commit_scope,
-    'profiles': profiles_scope,
-    'eclass': eclass_scope,
-    'repo': repo_scope,
-    'cat': category_scope,
-    'pkg': package_scope,
-    'ver': version_scope,
-})
+scopes = ImmutableDict(
+    {
+        "git": commit_scope,
+        "profiles": profiles_scope,
+        "eclass": eclass_scope,
+        "repo": repo_scope,
+        "cat": category_scope,
+        "pkg": package_scope,
+        "ver": version_scope,
+    }
+)
 
 
 class PkgcheckException(Exception):
@@ -182,12 +187,13 @@ def param_name(cls):
 
     For example, GitAddon -> git_addon and GitCache -> git_cache.
     """
-    return re.sub(r'([a-z])([A-Z])', r'\1_\2', cls.__name__).lower()
+    return re.sub(r"([a-z])([A-Z])", r"\1_\2", cls.__name__).lower()
 
 
 @dataclass(frozen=True)
 class LogMap:
     """Log function to callable mapping."""
+
     func: str
     call: typing.Callable
 
@@ -223,7 +229,7 @@ class ProgressManager(AbstractContextManager):
         """Callback used for progressive output."""
         # avoid rewriting the same output
         if s != self._cached:
-            sys.stderr.write(f'{s}\r')
+            sys.stderr.write(f"{s}\r")
             self._cached = s
 
     def __enter__(self):
@@ -233,4 +239,4 @@ class ProgressManager(AbstractContextManager):
 
     def __exit__(self, _exc_type, _exc_value, _traceback):
         if self._cached is not None:
-            sys.stderr.write('\n')
+            sys.stderr.write("\n")

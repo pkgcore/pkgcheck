@@ -9,4 +9,4 @@ import logging
 # overrides the root logger handler.
 logging.basicConfig()
 
-logger = logging.getLogger('pkgcheck')
+logger = logging.getLogger("pkgcheck")

@@ -7,4 +7,5 @@ ebuild repositories for various issues.
 from pkgcore.util import commandline
 
 argparser = commandline.ArgumentParser(
-    description=__doc__, help=False, subcmds=True, script=(__file__, __name__))
+    description=__doc__, help=False, subcmds=True, script=(__file__, __name__)
+)

@@ -23,6 +23,7 @@ from ..log import logger
 @dataclass(frozen=True)
 class CacheData:
     """Cache registry data."""
+
     type: str
     file: str
     version: int
@@ -31,7 +32,7 @@ class CacheData:
 class Cache:
     """Mixin for data caches."""
 
-    __getattr__ = klass.GetAttrProxy('_cache')
+    __getattr__ = klass.GetAttrProxy("_cache")
 
 
 class DictCache(UserDict, Cache):
@@ -46,7 +47,7 @@ class CacheDisabled(PkgcheckException):
     """Exception flagging that a requested cache type is disabled."""
 
     def __init__(self, cache):
-        super().__init__(f'{cache.type} cache support required')
+        super().__init__(f"{cache.type} cache support required")
 
 
 class CachedAddon(Addon):
@@ -61,7 +62,7 @@ class CachedAddon(Addon):
         """Register available caches."""
         super().__init_subclass__(**kwargs)
         if cls.cache is None:
-            raise ValueError(f'invalid cache registry: {cls!r}')
+            raise ValueError(f"invalid cache registry: {cls!r}")
         cls.caches[cls] = cls.cache
 
     def update_cache(self, repo=None, force=False):
@@ -75,17 +76,18 @@ class CachedAddon(Addon):
         using the same identifier don't use the same cache file.
         """
         token = blake2b(repo.location.encode()).hexdigest()[:10]
-        dirname = f'{repo.repo_id.lstrip(os.sep)}-{token}'
-        return pjoin(self.options.cache_dir, 'repos', dirname, self.cache.file)
+        dirname = f"{repo.repo_id.lstrip(os.sep)}-{token}"
+        return pjoin(self.options.cache_dir, "repos", dirname, self.cache.file)
 
     def load_cache(self, path, fallback=None):
         cache = fallback
         try:
-            with open(path, 'rb') as f:
+            with open(path, "rb") as f:
                 cache = pickle.load(f)
             if cache.version != self.cache.version:
                 logger.debug(
-                    'forcing %s cache regen due to outdated version', self.cache.type)
+                    "forcing %s cache regen due to outdated version", self.cache.type
+                )
                 os.remove(path)
                 cache = fallback
         except IGNORED_EXCEPTIONS:
@@ -93,7 +95,7 @@ class CachedAddon(Addon):
         except FileNotFoundError:
             pass
         except Exception as e:
-            logger.debug('forcing %s cache regen: %s', self.cache.type, e)
+            logger.debug("forcing %s cache regen: %s", self.cache.type, e)
             os.remove(path)
             cache = fallback
         return cache
@@ -104,17 +106,18 @@ class CachedAddon(Addon):
             with AtomicWriteFile(path, binary=True) as f:
                 pickle.dump(data, f, protocol=-1)
         except IOError as e:
-            msg = f'failed dumping {self.cache.type} cache: {path!r}: {e.strerror}'
+            msg = f"failed dumping {self.cache.type} cache: {path!r}: {e.strerror}"
             raise PkgcheckUserException(msg)
 
     @klass.jit_attr
     def existing_caches(self):
         """Mapping of all existing cache types to file paths."""
         caches_map = {}
-        repos_dir = pjoin(self.options.cache_dir, 'repos')
-        for cache in sorted(self.caches.values(), key=attrgetter('type')):
-            caches_map[cache.type] = tuple(sorted(
-                pathlib.Path(repos_dir).rglob(cache.file)))
+        repos_dir = pjoin(self.options.cache_dir, "repos")
+        for cache in sorted(self.caches.values(), key=attrgetter("type")):
+            caches_map[cache.type] = tuple(
+                sorted(pathlib.Path(repos_dir).rglob(cache.file))
+            )
         return ImmutableDict(caches_map)
 
     def remove_caches(self):
@@ -125,14 +128,14 @@ class CachedAddon(Addon):
             except FileNotFoundError:
                 pass
             except IOError as e:
-                raise PkgcheckUserException(f'failed removing cache dir: {e}')
+                raise PkgcheckUserException(f"failed removing cache dir: {e}")
         else:
             try:
                 for cache_type, paths in self.existing_caches.items():
                     if self.options.cache.get(cache_type, False):
                         for path in paths:
                             if self.options.dry_run:
-                                print(f'Would remove {path}')
+                                print(f"Would remove {path}")
                             else:
                                 os.unlink(path)
                                 # remove empty cache dirs
@@ -145,4 +148,6 @@ class CachedAddon(Addon):
                                         continue
                                     raise
             except IOError as e:
-                raise PkgcheckUserException(f'failed removing {cache_type} cache: {path!r}: {e}')
+                raise PkgcheckUserException(
+                    f"failed removing {cache_type} cache: {path!r}: {e}"
+                )

@@ -79,11 +79,16 @@ class PackageUpdatesCheck(RepoCheck):
     """Scan profiles/updates/* for outdated entries and other issues."""
 
     _source = (sources.EmptySource, (base.profiles_scope,))
-    known_results = frozenset([
-        MultiMovePackageUpdate, OldMultiMovePackageUpdate,
-        OldPackageUpdate, MovedPackageUpdate, BadPackageUpdate,
-        RedundantPackageUpdate,
-    ])
+    known_results = frozenset(
+        [
+            MultiMovePackageUpdate,
+            OldMultiMovePackageUpdate,
+            OldPackageUpdate,
+            MovedPackageUpdate,
+            BadPackageUpdate,
+            RedundantPackageUpdate,
+        ]
+    )
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -92,8 +97,8 @@ class PackageUpdatesCheck(RepoCheck):
 
     def finish(self):
         logmap = (
-            base.LogMap('pkgcore.log.logger.warning', MovedPackageUpdate),
-            base.LogMap('pkgcore.log.logger.error', BadPackageUpdate),
+            base.LogMap("pkgcore.log.logger.warning", MovedPackageUpdate),
+            base.LogMap("pkgcore.log.logger.error", BadPackageUpdate),
         )
 
         # convert log warnings/errors into reports
@@ -106,14 +111,17 @@ class PackageUpdatesCheck(RepoCheck):
         old_slotmove_updates = {}
 
         for pkg, updates in repo_updates.items():
-            move_updates = [x for x in updates if x[0] == 'move']
-            slotmove_updates = [x for x in updates if x[0] == 'slotmove']
+            move_updates = [x for x in updates if x[0] == "move"]
+            slotmove_updates = [x for x in updates if x[0] == "slotmove"]
 
             # check for multi-updates, a -> b, b -> c, ...
             if len(move_updates) > 1:
                 # the most recent move should override all the older entries,
                 # meaning only a single report for the entire chain should created
-                multi_move_updates[move_updates[-1][2]] = (pkg, [x[2] for x in move_updates])
+                multi_move_updates[move_updates[-1][2]] = (
+                    pkg,
+                    [x[2] for x in move_updates],
+                )
             else:
                 # scan updates for old entries with removed packages
                 for x in move_updates:
@@ -126,7 +134,12 @@ class PackageUpdatesCheck(RepoCheck):
             # scan updates for old entries with removed packages
             for x in slotmove_updates:
                 _, pkg, newslot = x
-                orig_line = ('slotmove', str(pkg)[:-(len(pkg.slot) + 1)], pkg.slot, newslot)
+                orig_line = (
+                    "slotmove",
+                    str(pkg)[: -(len(pkg.slot) + 1)],
+                    pkg.slot,
+                    newslot,
+                )
                 if not self.search_repo.match(pkg.unversioned_atom):
                     # reproduce updates file line data for result output
                     old_slotmove_updates[pkg.key] = orig_line
@@ -160,8 +173,8 @@ class UnusedLicenses(results.Warning):
     @property
     def desc(self):
         s = pluralism(self.licenses)
-        licenses = ', '.join(self.licenses)
-        return f'unused license{s}: {licenses}'
+        licenses = ", ".join(self.licenses)
+        return f"unused license{s}: {licenses}"
 
 
 class UnusedLicensesCheck(RepoCheck):
@@ -199,8 +212,8 @@ class UnusedMirrors(results.Warning):
     @property
     def desc(self):
         s = pluralism(self.mirrors)
-        mirrors = ', '.join(self.mirrors)
-        return f'unused mirror{s}: {mirrors}'
+        mirrors = ", ".join(self.mirrors)
+        return f"unused mirror{s}: {mirrors}"
 
 
 class UnusedMirrorsCheck(MirrorsCheck, RepoCheck):
@@ -213,7 +226,9 @@ class UnusedMirrorsCheck(MirrorsCheck, RepoCheck):
         master_mirrors = set()
         for repo in self.options.target_repo.masters:
             master_mirrors.update(repo.mirrors.keys())
-        self.unused_mirrors = set(self.options.target_repo.mirrors.keys()) - master_mirrors
+        self.unused_mirrors = (
+            set(self.options.target_repo.mirrors.keys()) - master_mirrors
+        )
 
     def feed(self, pkg):
         if self.unused_mirrors:
@@ -234,9 +249,9 @@ class UnusedEclasses(results.Warning):
 
     @property
     def desc(self):
-        es = pluralism(self.eclasses, plural='es')
-        eclasses = ', '.join(self.eclasses)
-        return f'unused eclass{es}: {eclasses}'
+        es = pluralism(self.eclasses, plural="es")
+        eclasses = ", ".join(self.eclasses)
+        return f"unused eclass{es}: {eclasses}"
 
 
 class UnusedEclassesCheck(RepoCheck):
@@ -253,8 +268,9 @@ class UnusedEclassesCheck(RepoCheck):
         master_eclasses = set()
         for repo in self.options.target_repo.masters:
             master_eclasses.update(repo.eclass_cache.eclasses.keys())
-        self.unused_eclasses = set(
-            self.options.target_repo.eclass_cache.eclasses.keys()) - master_eclasses
+        self.unused_eclasses = (
+            set(self.options.target_repo.eclass_cache.eclasses.keys()) - master_eclasses
+        )
 
     def feed(self, pkg):
         self.unused_eclasses.difference_update(pkg.inherited)
@@ -276,8 +292,8 @@ class UnknownLicenses(results.Warning):
     @property
     def desc(self):
         s = pluralism(self.licenses)
-        licenses = ', '.join(self.licenses)
-        return f'license group {self.group!r} has unknown license{s}: [ {licenses} ]'
+        licenses = ", ".join(self.licenses)
+        return f"license group {self.group!r} has unknown license{s}: [ {licenses} ]"
 
 
 class LicenseGroupsCheck(RepoCheck):
@@ -307,10 +323,10 @@ class PotentialLocalUse(results.Info):
     @property
     def desc(self):
         s = pluralism(self.pkgs)
-        pkgs = ', '.join(self.pkgs)
+        pkgs = ", ".join(self.pkgs)
         return (
-            f'global USE flag {self.flag!r} is a potential local, '
-            f'used by {len(self.pkgs)} package{s}: {pkgs}'
+            f"global USE flag {self.flag!r} is a potential local, "
+            f"used by {len(self.pkgs)} package{s}: {pkgs}"
         )
 
 
@@ -324,8 +340,8 @@ class UnusedGlobalUse(results.Warning):
     @property
     def desc(self):
         s = pluralism(self.flags)
-        flags = ', '.join(self.flags)
-        return f'use.desc unused flag{s}: {flags}'
+        flags = ", ".join(self.flags)
+        return f"use.desc unused flag{s}: {flags}"
 
 
 class UnusedGlobalUseExpand(results.Warning):
@@ -338,8 +354,8 @@ class UnusedGlobalUseExpand(results.Warning):
     @property
     def desc(self):
         s = pluralism(self.flags)
-        flags = ', '.join(self.flags)
-        return f'unused flag{s}: {flags}'
+        flags = ", ".join(self.flags)
+        return f"unused flag{s}: {flags}"
 
 
 class PotentialGlobalUse(results.Info):
@@ -354,7 +370,8 @@ class PotentialGlobalUse(results.Info):
     def desc(self):
         return (
             f"local USE flag {self.flag!r} is a potential global "
-            f"used by {len(self.pkgs)} packages: {', '.join(self.pkgs)}")
+            f"used by {len(self.pkgs)} packages: {', '.join(self.pkgs)}"
+        )
 
 
 def _dfs(graph, start, visited=None):
@@ -369,11 +386,20 @@ def _dfs(graph, start, visited=None):
 class GlobalUseCheck(RepoCheck):
     """Check global USE and USE_EXPAND flags for various issues."""
 
-    _source = (sources.RepositoryRepoSource, (), (('source', sources.PackageRepoSource),))
+    _source = (
+        sources.RepositoryRepoSource,
+        (),
+        (("source", sources.PackageRepoSource),),
+    )
     required_addons = (addons.UseAddon,)
-    known_results = frozenset([
-        PotentialLocalUse, PotentialGlobalUse, UnusedGlobalUse, UnusedGlobalUseExpand,
-    ])
+    known_results = frozenset(
+        [
+            PotentialLocalUse,
+            PotentialGlobalUse,
+            UnusedGlobalUse,
+            UnusedGlobalUseExpand,
+        ]
+    )
 
     def __init__(self, *args, use_addon):
         super().__init__(*args)
@@ -394,7 +420,7 @@ class GlobalUseCheck(RepoCheck):
         # calculate USE flag description difference ratios
         diffs = {}
         for i, (i_pkg, i_desc) in enumerate(pkgs):
-            for j, (j_pkg, j_desc) in enumerate(pkgs[i + 1:]):
+            for j, (j_pkg, j_desc) in enumerate(pkgs[i + 1 :]):
                 diffs[(i, i + j + 1)] = SequenceMatcher(None, i_desc, j_desc).ratio()
 
         # create an adjacency list using all closely matching flags pairs
@@ -424,11 +450,12 @@ class GlobalUseCheck(RepoCheck):
                 yield [pkgs[i][0] for i in component]
 
     def finish(self):
-        repo_global_use = {
-            flag for matcher, (flag, desc) in self.repo.config.use_desc}
+        repo_global_use = {flag for matcher, (flag, desc) in self.repo.config.use_desc}
         repo_global_use_expand = {
-            flag for use_expand in self.repo.config.use_expand_desc.values()
-            for flag, desc in use_expand}
+            flag
+            for use_expand in self.repo.config.use_expand_desc.values()
+            for flag, desc in use_expand
+        }
         repo_local_use = self.repo.config.use_local_desc
         unused_global_use = []
         unused_global_use_expand = []
@@ -463,7 +490,9 @@ class GlobalUseCheck(RepoCheck):
             for matching_pkgs in self._similar_flags(pkgs):
                 potential_globals.append((flag, matching_pkgs))
 
-        for flag, pkgs in sorted(potential_globals, key=lambda x: len(x[1]), reverse=True):
+        for flag, pkgs in sorted(
+            potential_globals, key=lambda x: len(x[1]), reverse=True
+        ):
             pkgs = sorted(map(str, pkgs))
             yield PotentialGlobalUse(flag, pkgs)
 
@@ -481,7 +510,8 @@ class MissingChksum(results.VersionResult, results.Warning):
     def desc(self):
         return (
             f"{self.filename!r} missing required chksums: "
-            f"{', '.join(self.missing)}; has chksums: {', '.join(self.existing)}")
+            f"{', '.join(self.missing)}; has chksums: {', '.join(self.existing)}"
+        )
 
 
 class DeprecatedChksum(results.VersionResult, results.Warning):
@@ -495,8 +525,8 @@ class DeprecatedChksum(results.VersionResult, results.Warning):
     @property
     def desc(self):
         s = pluralism(self.deprecated)
-        deprecated = ', '.join(self.deprecated)
-        return f'{self.filename!r} has deprecated checksum{s}: {deprecated}'
+        deprecated = ", ".join(self.deprecated)
+        return f"{self.filename!r} has deprecated checksum{s}: {deprecated}"
 
 
 class MissingManifest(results.VersionResult, results.Error):
@@ -509,8 +539,8 @@ class MissingManifest(results.VersionResult, results.Error):
     @property
     def desc(self):
         s = pluralism(self.files)
-        files = ', '.join(self.files)
-        return f'distfile{s} missing from Manifest: [ {files} ]'
+        files = ", ".join(self.files)
+        return f"distfile{s} missing from Manifest: [ {files} ]"
 
 
 class UnknownManifest(results.PackageResult, results.Warning):
@@ -523,8 +553,8 @@ class UnknownManifest(results.PackageResult, results.Warning):
     @property
     def desc(self):
         s = pluralism(self.files)
-        files = ', '.join(self.files)
-        return f'unknown distfile{s} in Manifest: [ {files} ]'
+        files = ", ".join(self.files)
+        return f"unknown distfile{s} in Manifest: [ {files} ]"
 
 
 class UnnecessaryManifest(results.PackageResult, results.Warning):
@@ -537,14 +567,14 @@ class UnnecessaryManifest(results.PackageResult, results.Warning):
     @property
     def desc(self):
         s = pluralism(self.files)
-        files = ', '.join(self.files)
-        return f'unnecessary file{s} in Manifest: [ {files} ]'
+        files = ", ".join(self.files)
+        return f"unnecessary file{s} in Manifest: [ {files} ]"
 
 
 class InvalidManifest(results.MetadataError, results.PackageResult):
     """Package's Manifest file is invalid."""
 
-    attr = 'manifest'
+    attr = "manifest"
 
 
 class ManifestCheck(Check):
@@ -556,19 +586,27 @@ class ManifestCheck(Check):
 
     required_addons = (addons.UseAddon,)
     _source = sources.PackageRepoSource
-    known_results = frozenset([
-        MissingChksum, MissingManifest, UnknownManifest, UnnecessaryManifest,
-        DeprecatedChksum, InvalidManifest,
-    ])
+    known_results = frozenset(
+        [
+            MissingChksum,
+            MissingManifest,
+            UnknownManifest,
+            UnnecessaryManifest,
+            DeprecatedChksum,
+            InvalidManifest,
+        ]
+    )
 
     def __init__(self, *args, use_addon):
         super().__init__(*args)
         repo = self.options.target_repo
         self.preferred_checksums = frozenset(
-            repo.config.manifests.hashes if hasattr(repo, 'config') else ())
+            repo.config.manifests.hashes if hasattr(repo, "config") else ()
+        )
         self.required_checksums = frozenset(
-            repo.config.manifests.required_hashes if hasattr(repo, 'config') else ())
-        self.iuse_filter = use_addon.get_filter('fetchables')
+            repo.config.manifests.required_hashes if hasattr(repo, "config") else ()
+        )
+        self.iuse_filter = use_addon.get_filter("fetchables")
 
     def feed(self, pkgset):
         pkg_manifest = pkgset[0].manifest
@@ -577,8 +615,12 @@ class ManifestCheck(Check):
         for pkg in pkgset:
             pkg.release_cached_data()
             fetchables, _ = self.iuse_filter(
-                (fetch.fetchable,), pkg,
-                pkg.generate_fetchables(allow_missing_checksums=True, ignore_unknown_mirrors=True))
+                (fetch.fetchable,),
+                pkg,
+                pkg.generate_fetchables(
+                    allow_missing_checksums=True, ignore_unknown_mirrors=True
+                ),
+            )
             fetchables = set(fetchables)
             pkg.release_cached_data()
 
@@ -593,16 +635,23 @@ class ManifestCheck(Check):
                 missing = self.required_checksums.difference(f_inst.chksums)
                 if f_inst.filename not in missing_manifests and missing:
                     yield MissingChksum(
-                        f_inst.filename, sorted(missing),
-                        sorted(f_inst.chksums), pkg=pkg)
-                elif f_inst.chksums and self.preferred_checksums != frozenset(f_inst.chksums):
-                    deprecated = set(f_inst.chksums).difference(self.preferred_checksums)
+                        f_inst.filename,
+                        sorted(missing),
+                        sorted(f_inst.chksums),
+                        pkg=pkg,
+                    )
+                elif f_inst.chksums and self.preferred_checksums != frozenset(
+                    f_inst.chksums
+                ):
+                    deprecated = set(f_inst.chksums).difference(
+                        self.preferred_checksums
+                    )
                     yield DeprecatedChksum(f_inst.filename, sorted(deprecated), pkg=pkg)
                 seen.add(f_inst.filename)
 
         if pkg_manifest.thin:
             unnecessary_manifests = []
-            for attr in ('aux_files', 'ebuilds', 'misc'):
+            for attr in ("aux_files", "ebuilds", "misc"):
                 unnecessary_manifests.extend(getattr(pkg_manifest, attr, []))
             if unnecessary_manifests:
                 yield UnnecessaryManifest(sorted(unnecessary_manifests), pkg=pkgset[0])
@@ -624,12 +673,12 @@ class ConflictingChksums(results.VersionResult, results.Error):
     @property
     def desc(self):
         s = pluralism(self.chksums)
-        chksums = ', '.join(self.chksums)
+        chksums = ", ".join(self.chksums)
         pkgs_s = pluralism(self.pkgs)
-        pkgs = ', '.join(self.pkgs)
+        pkgs = ", ".join(self.pkgs)
         return (
-            f'distfile {self.filename!r} has different checksum{s} '
-            f'({chksums}) for package{pkgs_s}: {pkgs}'
+            f"distfile {self.filename!r} has different checksum{s} "
+            f"({chksums}) for package{pkgs_s}: {pkgs}"
         )
 
 
@@ -644,9 +693,9 @@ class MatchingChksums(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        msg = f'distfile {self.filename!r} matches checksums for {self.orig_file!r}'
-        if f'{self.category}/{self.package}' != self.orig_pkg:
-            msg += f' from {self.orig_pkg}'
+        msg = f"distfile {self.filename!r} matches checksums for {self.orig_file!r}"
+        if f"{self.category}/{self.package}" != self.orig_pkg:
+            msg += f" from {self.orig_pkg}"
         return msg
 
 
@@ -657,7 +706,11 @@ class ManifestCollisionCheck(Check):
     different filenames with matching checksums.
     """
 
-    _source = (sources.RepositoryRepoSource, (), (('source', sources.PackageRepoSource),))
+    _source = (
+        sources.RepositoryRepoSource,
+        (),
+        (("source", sources.PackageRepoSource),),
+    )
     known_results = frozenset([ConflictingChksums, MatchingChksums])
 
     def __init__(self, *args):
@@ -665,15 +718,14 @@ class ManifestCollisionCheck(Check):
         self.seen_files = {}
         self.seen_chksums = {}
         # ignore go.mod false positives (issue #228)
-        self._ignored_files_re = re.compile(r'^.*%2F@v.*\.mod$')
+        self._ignored_files_re = re.compile(r"^.*%2F@v.*\.mod$")
 
     def _conflicts(self, pkg):
         """Check for similarly named distfiles with different checksums."""
         for filename, chksums in pkg.manifest.distfiles.items():
             existing = self.seen_files.get(filename)
             if existing is None:
-                self.seen_files[filename] = (
-                    [pkg.key], dict(chksums.items()))
+                self.seen_files[filename] = ([pkg.key], dict(chksums.items()))
                 continue
             seen_pkgs, seen_chksums = existing
             conflicting_chksums = []
@@ -683,7 +735,9 @@ class ManifestCollisionCheck(Check):
                     conflicting_chksums.append(chf_type)
             if conflicting_chksums:
                 pkgs = map(str, sorted(seen_pkgs))
-                yield ConflictingChksums(filename, sorted(conflicting_chksums), pkgs, pkg=pkg)
+                yield ConflictingChksums(
+                    filename, sorted(conflicting_chksums), pkgs, pkg=pkg
+                )
             else:
                 seen_chksums.update(chksums)
                 seen_pkgs.append(pkg.key)

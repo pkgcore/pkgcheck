@@ -12,8 +12,8 @@ from .. import addons, bash
 from .. import results, sources
 from . import Check
 
-PREFIX_VARIABLES = ('EROOT', 'ED', 'EPREFIX')
-PATH_VARIABLES = ('BROOT', 'ROOT', 'D') + PREFIX_VARIABLES
+PREFIX_VARIABLES = ("EROOT", "ED", "EPREFIX")
+PATH_VARIABLES = ("BROOT", "ROOT", "D") + PREFIX_VARIABLES
 
 
 class _CommandResult(results.LineResult):
@@ -25,13 +25,13 @@ class _CommandResult(results.LineResult):
 
     @property
     def usage_desc(self):
-        return f'{self.command!r}'
+        return f"{self.command!r}"
 
     @property
     def desc(self):
-        s = f'{self.usage_desc}, used on line {self.lineno}'
+        s = f"{self.usage_desc}, used on line {self.lineno}"
         if self.line != self.command:
-            s += f': {self.line!r}'
+            s += f": {self.line!r}"
         return s
 
 
@@ -46,19 +46,19 @@ class _EapiCommandResult(_CommandResult):
 
     @property
     def usage_desc(self):
-        return f'{self.command!r} {self._status} in EAPI {self.eapi}'
+        return f"{self.command!r} {self._status} in EAPI {self.eapi}"
 
 
 class DeprecatedEapiCommand(_EapiCommandResult, results.Warning):
     """Ebuild uses a deprecated EAPI command."""
 
-    _status = 'deprecated'
+    _status = "deprecated"
 
 
 class BannedEapiCommand(_EapiCommandResult, results.Error):
     """Ebuild uses a banned EAPI command."""
 
-    _status = 'banned'
+    _status = "banned"
 
 
 class BadCommandsCheck(Check):
@@ -71,12 +71,16 @@ class BadCommandsCheck(Check):
         for func_node, _ in bash.func_query.captures(pkg.tree.root_node):
             for node, _ in bash.cmd_query.captures(func_node):
                 call = pkg.node_str(node)
-                name = pkg.node_str(node.child_by_field_name('name'))
+                name = pkg.node_str(node.child_by_field_name("name"))
                 lineno, colno = node.start_point
                 if name in pkg.eapi.bash_cmds_banned:
-                    yield BannedEapiCommand(name, line=call, lineno=lineno+1, eapi=pkg.eapi, pkg=pkg)
+                    yield BannedEapiCommand(
+                        name, line=call, lineno=lineno + 1, eapi=pkg.eapi, pkg=pkg
+                    )
                 elif name in pkg.eapi.bash_cmds_deprecated:
-                    yield DeprecatedEapiCommand(name, line=call, lineno=lineno+1, eapi=pkg.eapi, pkg=pkg)
+                    yield DeprecatedEapiCommand(
+                        name, line=call, lineno=lineno + 1, eapi=pkg.eapi, pkg=pkg
+                    )
 
 
 class EendMissingArg(results.LineResult, results.Warning):
@@ -84,7 +88,7 @@ class EendMissingArg(results.LineResult, results.Warning):
 
     @property
     def desc(self):
-        return f'eend with no arguments, on line {self.lineno}'
+        return f"eend with no arguments, on line {self.lineno}"
 
 
 class EendMissingArgCheck(Check):
@@ -99,7 +103,7 @@ class EendMissingArgCheck(Check):
                 line = pkg.node_str(node)
                 if line == "eend":
                     lineno, _ = node.start_point
-                    yield EendMissingArg(line=line, lineno=lineno+1, pkg=pkg)
+                    yield EendMissingArg(line=line, lineno=lineno + 1, pkg=pkg)
 
 
 class MissingSlash(results.LinesResult, results.Error):
@@ -111,7 +115,7 @@ class MissingSlash(results.LinesResult, results.Error):
 
     @property
     def desc(self):
-        return f'{self.match} missing trailing slash {self.lines_str}'
+        return f"{self.match} missing trailing slash {self.lines_str}"
 
 
 class UnnecessarySlashStrip(results.LinesResult, results.Style):
@@ -123,7 +127,7 @@ class UnnecessarySlashStrip(results.LinesResult, results.Style):
 
     @property
     def desc(self):
-        return f'{self.match} unnecessary slash strip {self.lines_str}'
+        return f"{self.match} unnecessary slash strip {self.lines_str}"
 
 
 class DoublePrefixInPath(results.LinesResult, results.Error):
@@ -143,7 +147,9 @@ class DoublePrefixInPath(results.LinesResult, results.Error):
 
     @property
     def desc(self):
-        return f'{self.match}: concatenates two paths containing EPREFIX {self.lines_str}'
+        return (
+            f"{self.match}: concatenates two paths containing EPREFIX {self.lines_str}"
+        )
 
 
 class PathVariablesCheck(Check):
@@ -152,63 +158,86 @@ class PathVariablesCheck(Check):
     _source = sources.EbuildFileRepoSource
     known_results = frozenset([MissingSlash, UnnecessarySlashStrip, DoublePrefixInPath])
     prefixed_dir_functions = (
-        'insinto', 'exeinto',
-        'dodir', 'keepdir',
-        'fowners', 'fperms',
+        "insinto",
+        "exeinto",
+        "dodir",
+        "keepdir",
+        "fowners",
+        "fperms",
         # java-pkg-2
-        'java-pkg_jarinto', 'java-pkg_sointo',
+        "java-pkg_jarinto",
+        "java-pkg_sointo",
         # python-utils-r1
-        'python_scriptinto', 'python_moduleinto',
+        "python_scriptinto",
+        "python_moduleinto",
     )
     # TODO: add variables to mark this status in the eclasses in order to pull
     # this data from parsed eclass docs
     prefixed_getters = (
         # bash-completion-r1.eclass
-        'get_bashcompdir', 'get_bashhelpersdir',
+        "get_bashcompdir",
+        "get_bashhelpersdir",
         # db-use.eclass
-        'db_includedir',
+        "db_includedir",
         # golang-base.eclass
-        'get_golibdir_gopath',
+        "get_golibdir_gopath",
         # llvm.eclass
-        'get_llvm_prefix',
+        "get_llvm_prefix",
         # python-utils-r1.eclass
-        'python_get_sitedir', 'python_get_includedir',
-        'python_get_library_path', 'python_get_scriptdir',
+        "python_get_sitedir",
+        "python_get_includedir",
+        "python_get_library_path",
+        "python_get_scriptdir",
         # qmake-utils.eclass
-        'qt4_get_bindir', 'qt5_get_bindir',
+        "qt4_get_bindir",
+        "qt5_get_bindir",
         # s6.eclass
-        's6_get_servicedir',
+        "s6_get_servicedir",
         # systemd.eclass
-        'systemd_get_systemunitdir', 'systemd_get_userunitdir',
-        'systemd_get_utildir', 'systemd_get_systemgeneratordir',
+        "systemd_get_systemunitdir",
+        "systemd_get_userunitdir",
+        "systemd_get_utildir",
+        "systemd_get_systemgeneratordir",
     )
     prefixed_rhs_variables = (
         # catch silly ${ED}${EPREFIX} mistake ;-)
-        'EPREFIX',
+        "EPREFIX",
         # python-utils-r1.eclass
-        'PYTHON', 'PYTHON_SITEDIR', 'PYTHON_INCLUDEDIR', 'PYTHON_LIBPATH',
-        'PYTHON_CONFIG', 'PYTHON_SCRIPTDIR',
+        "PYTHON",
+        "PYTHON_SITEDIR",
+        "PYTHON_INCLUDEDIR",
+        "PYTHON_LIBPATH",
+        "PYTHON_CONFIG",
+        "PYTHON_SCRIPTDIR",
     )
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.missing_regex = re.compile(r'(\${(%s)})"?\w+/' % r'|'.join(PATH_VARIABLES))
-        self.unnecessary_regex = re.compile(r'(\${(%s)%%/})' % r'|'.join(PATH_VARIABLES))
+        self.missing_regex = re.compile(r'(\${(%s)})"?\w+/' % r"|".join(PATH_VARIABLES))
+        self.unnecessary_regex = re.compile(
+            r"(\${(%s)%%/})" % r"|".join(PATH_VARIABLES)
+        )
         self.double_prefix_regex = re.compile(
-            r'(\${(%s)(%%/)?}/?\$(\((%s)\)|{(%s)}))' % (
-                r'|'.join(PREFIX_VARIABLES),
-                r'|'.join(self.prefixed_getters),
-                r'|'.join(self.prefixed_rhs_variables)))
+            r"(\${(%s)(%%/)?}/?\$(\((%s)\)|{(%s)}))"
+            % (
+                r"|".join(PREFIX_VARIABLES),
+                r"|".join(self.prefixed_getters),
+                r"|".join(self.prefixed_rhs_variables),
+            )
+        )
         self.double_prefix_func_regex = re.compile(
-            r'\b(%s)\s[^&|;]*\$(\((%s)\)|{(%s)})' % (
-                r'|'.join(self.prefixed_dir_functions),
-                r'|'.join(self.prefixed_getters),
-                r'|'.join(self.prefixed_rhs_variables)))
+            r"\b(%s)\s[^&|;]*\$(\((%s)\)|{(%s)})"
+            % (
+                r"|".join(self.prefixed_dir_functions),
+                r"|".join(self.prefixed_getters),
+                r"|".join(self.prefixed_rhs_variables),
+            )
+        )
         # do not catch ${foo#${EPREFIX}} and similar
         self.double_prefix_func_false_positive_regex = re.compile(
-            r'.*?[#]["]?\$(\((%s)\)|{(%s)})' % (
-                r'|'.join(self.prefixed_getters),
-                r'|'.join(self.prefixed_rhs_variables)))
+            r'.*?[#]["]?\$(\((%s)\)|{(%s)})'
+            % (r"|".join(self.prefixed_getters), r"|".join(self.prefixed_rhs_variables))
+        )
 
     def feed(self, pkg):
         missing = defaultdict(list)
@@ -221,11 +250,13 @@ class PathVariablesCheck(Check):
                 continue
 
             # flag double path prefix usage on uncommented lines only
-            if line[0] != '#':
+            if line[0] != "#":
                 if mo := self.double_prefix_regex.search(line):
                     double_prefix[mo.group(1)].append(lineno)
                 if mo := self.double_prefix_func_regex.search(line):
-                    if not self.double_prefix_func_false_positive_regex.match(mo.group(0)):
+                    if not self.double_prefix_func_false_positive_regex.match(
+                        mo.group(0)
+                    ):
                         double_prefix[mo.group(0)].append(lineno)
 
             # skip EAPIs that don't require trailing slashes
@@ -262,22 +293,26 @@ class AbsoluteSymlinkCheck(Check):
     _source = sources.EbuildFileRepoSource
     known_results = frozenset([AbsoluteSymlink])
 
-    DIRS = ('bin', 'etc', 'lib', 'opt', 'sbin', 'srv', 'usr', 'var')
+    DIRS = ("bin", "etc", "lib", "opt", "sbin", "srv", "usr", "var")
 
     def __init__(self, *args):
         super().__init__(*args)
-        dirs = '|'.join(self.DIRS)
-        path_vars = '|'.join(PATH_VARIABLES)
+        dirs = "|".join(self.DIRS)
+        path_vars = "|".join(PATH_VARIABLES)
         prefixed_regex = rf'"\${{({path_vars})(%/)?}}(?P<cp>")?(?(cp)\S*|.*?")'
         non_prefixed_regex = rf'(?P<op>["\'])?/({dirs})(?(op).*?(?P=op)|\S*)'
-        self.regex = re.compile(rf'^\s*(?P<cmd>dosym\s+({prefixed_regex}|{non_prefixed_regex}))')
+        self.regex = re.compile(
+            rf"^\s*(?P<cmd>dosym\s+({prefixed_regex}|{non_prefixed_regex}))"
+        )
 
     def feed(self, pkg):
         for lineno, line in enumerate(pkg.lines, 1):
             if not line.strip():
                 continue
             if mo := self.regex.match(line):
-                yield AbsoluteSymlink(mo.group('cmd'), line=line, lineno=lineno, pkg=pkg)
+                yield AbsoluteSymlink(
+                    mo.group("cmd"), line=line, lineno=lineno, pkg=pkg
+                )
 
 
 class DeprecatedInsinto(results.LineResult, results.Warning):
@@ -290,8 +325,8 @@ class DeprecatedInsinto(results.LineResult, results.Warning):
     @property
     def desc(self):
         return (
-            f'deprecated insinto usage (use {self.cmd} instead), '
-            f'line {self.lineno}: {self.line}'
+            f"deprecated insinto usage (use {self.cmd} instead), "
+            f"line {self.lineno}: {self.line}"
         )
 
 
@@ -301,21 +336,25 @@ class InsintoCheck(Check):
     _source = sources.EbuildFileRepoSource
     known_results = frozenset([DeprecatedInsinto])
 
-    path_mapping = ImmutableDict({
-        '/etc/conf.d': 'doconfd or newconfd',
-        '/etc/env.d': 'doenvd or newenvd',
-        '/etc/init.d': 'doinitd or newinitd',
-        '/etc/pam.d': 'dopamd or newpamd from pam.eclass',
-        '/usr/share/applications': 'domenu or newmenu from desktop.eclass',
-    })
+    path_mapping = ImmutableDict(
+        {
+            "/etc/conf.d": "doconfd or newconfd",
+            "/etc/env.d": "doenvd or newenvd",
+            "/etc/init.d": "doinitd or newinitd",
+            "/etc/pam.d": "dopamd or newpamd from pam.eclass",
+            "/usr/share/applications": "domenu or newmenu from desktop.eclass",
+        }
+    )
 
     def __init__(self, *args):
         super().__init__(*args)
-        paths = '|'.join(s.replace('/', '/+') + '/?' for s in self.path_mapping)
+        paths = "|".join(s.replace("/", "/+") + "/?" for s in self.path_mapping)
         self._insinto_re = re.compile(
-            rf'(?P<insinto>insinto[ \t]+(?P<path>{paths})(?!/\w+))(?:$|[/ \t])')
+            rf"(?P<insinto>insinto[ \t]+(?P<path>{paths})(?!/\w+))(?:$|[/ \t])"
+        )
         self._insinto_doc_re = re.compile(
-            r'(?P<insinto>insinto[ \t]+/usr/share/doc/(")?\$\{PF?\}(?(2)\2)(/\w+)*)(?:$|[/ \t])')
+            r'(?P<insinto>insinto[ \t]+/usr/share/doc/(")?\$\{PF?\}(?(2)\2)(/\w+)*)(?:$|[/ \t])'
+        )
 
     def feed(self, pkg):
         for lineno, line in enumerate(pkg.lines, 1):
@@ -323,10 +362,11 @@ class InsintoCheck(Check):
                 continue
             matches = self._insinto_re.search(line)
             if matches is not None:
-                path = re.sub('//+', '/', matches.group('path'))
-                cmd = self.path_mapping[path.rstrip('/')]
+                path = re.sub("//+", "/", matches.group("path"))
+                cmd = self.path_mapping[path.rstrip("/")]
                 yield DeprecatedInsinto(
-                    cmd, line=matches.group('insinto'), lineno=lineno, pkg=pkg)
+                    cmd, line=matches.group("insinto"), lineno=lineno, pkg=pkg
+                )
                 continue
             # Check for insinto usage that should be replaced with
             # docinto/dodoc [-r] under supported EAPIs.
@@ -334,8 +374,11 @@ class InsintoCheck(Check):
                 matches = self._insinto_doc_re.search(line)
                 if matches is not None:
                     yield DeprecatedInsinto(
-                        'docinto/dodoc', line=matches.group('insinto'),
-                        lineno=lineno, pkg=pkg)
+                        "docinto/dodoc",
+                        line=matches.group("insinto"),
+                        lineno=lineno,
+                        pkg=pkg,
+                    )
 
 
 class ObsoleteUri(results.VersionResult, results.Style):
@@ -356,8 +399,10 @@ class ObsoleteUri(results.VersionResult, results.Style):
 
     @property
     def desc(self):
-        return (f"obsolete fetch URI: {self.uri} on line "
-                f"{self.line}, should be replaced by: {self.replacement}")
+        return (
+            f"obsolete fetch URI: {self.uri} on line "
+            f"{self.line}, should be replaced by: {self.replacement}"
+        )
 
 
 class ObsoleteUriCheck(Check):
@@ -367,27 +412,33 @@ class ObsoleteUriCheck(Check):
     known_results = frozenset([ObsoleteUri])
 
     REGEXPS = (
-        (r'.*\b(?P<uri>(?P<prefix>https?://github\.com/.*?/.*?/)'
-         r'(?:tar|zip)ball(?P<ref>\S*))',
-         r'\g<prefix>archive\g<ref>.tar.gz'),
-        (r'.*\b(?P<uri>(?P<prefix>https?://gitlab\.com/.*?/(?P<pkg>.*?)/)'
-         r'repository/archive\.(?P<format>tar|tar\.gz|tar\.bz2|zip)'
-         r'\?ref=(?P<ref>\S*))',
-         r'\g<prefix>-/archive/\g<ref>/\g<pkg>-\g<ref>.\g<format>'),
+        (
+            r".*\b(?P<uri>(?P<prefix>https?://github\.com/.*?/.*?/)"
+            r"(?:tar|zip)ball(?P<ref>\S*))",
+            r"\g<prefix>archive\g<ref>.tar.gz",
+        ),
+        (
+            r".*\b(?P<uri>(?P<prefix>https?://gitlab\.com/.*?/(?P<pkg>.*?)/)"
+            r"repository/archive\.(?P<format>tar|tar\.gz|tar\.bz2|zip)"
+            r"\?ref=(?P<ref>\S*))",
+            r"\g<prefix>-/archive/\g<ref>/\g<pkg>-\g<ref>.\g<format>",
+        ),
     )
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.regexes = tuple((re.compile(regexp), repl) for regexp, repl in self.REGEXPS)
+        self.regexes = tuple(
+            (re.compile(regexp), repl) for regexp, repl in self.REGEXPS
+        )
 
     def feed(self, pkg):
         for lineno, line in enumerate(pkg.lines, 1):
-            if not line.strip() or line.startswith('#'):
+            if not line.strip() or line.startswith("#"):
                 continue
             # searching for multiple matches on a single line is too slow
             for regexp, repl in self.regexes:
                 if mo := regexp.match(line):
-                    uri = mo.group('uri')
+                    uri = mo.group("uri")
                     yield ObsoleteUri(lineno, uri, regexp.sub(repl, uri), pkg=pkg)
 
 
@@ -405,8 +456,10 @@ class BetterCompressionUri(results.LineResult, results.Style):
 
     @property
     def desc(self):
-        return (f"line {self.lineno}: better compression URI using extension "
-                f"{self.replacement!r} for {self.line!r}")
+        return (
+            f"line {self.lineno}: better compression URI using extension "
+            f"{self.replacement!r} for {self.line!r}"
+        )
 
 
 class BetterCompressionCheck(Check):
@@ -416,23 +469,29 @@ class BetterCompressionCheck(Check):
     known_results = frozenset([BetterCompressionUri])
 
     REGEXPS = (
-        (r'.*\b(?P<uri>https?://[^/]*?gitlab[^/]*?/.*/-/archive/.*?/\S*\.(?:tar\.gz|tar(?!.bz2)|zip))',
-         '.tar.bz2'),
+        (
+            r".*\b(?P<uri>https?://[^/]*?gitlab[^/]*?/.*/-/archive/.*?/\S*\.(?:tar\.gz|tar(?!.bz2)|zip))",
+            ".tar.bz2",
+        ),
     )
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.regexes = tuple((re.compile(regexp), repl) for regexp, repl in self.REGEXPS)
+        self.regexes = tuple(
+            (re.compile(regexp), repl) for regexp, repl in self.REGEXPS
+        )
 
     def feed(self, pkg):
         for lineno, line in enumerate(pkg.lines, 1):
-            if not line.strip() or line.startswith('#'):
+            if not line.strip() or line.startswith("#"):
                 continue
             # searching for multiple matches on a single line is too slow
             for regexp, replacement in self.regexes:
                 if mo := regexp.match(line):
-                    uri = mo.group('uri')
-                    yield BetterCompressionUri(replacement, lineno=lineno, line=uri, pkg=pkg)
+                    uri = mo.group("uri")
+                    yield BetterCompressionUri(
+                        replacement, lineno=lineno, line=uri, pkg=pkg
+                    )
 
 
 class HomepageInSrcUri(results.VersionResult, results.Style):
@@ -445,7 +504,7 @@ class HomepageInSrcUri(results.VersionResult, results.Style):
 
     @property
     def desc(self):
-        return '${HOMEPAGE} in SRC_URI'
+        return "${HOMEPAGE} in SRC_URI"
 
 
 class StaticSrcUri(results.VersionResult, results.Style):
@@ -462,7 +521,7 @@ class StaticSrcUri(results.VersionResult, results.Style):
 
     @property
     def desc(self):
-        return f'{self.static_str!r} in SRC_URI, replace with {self.replacement}'
+        return f"{self.static_str!r} in SRC_URI, replace with {self.replacement}"
 
 
 class ReferenceInMetadataVar(results.VersionResult, results.Style):
@@ -491,8 +550,8 @@ class ReferenceInMetadataVar(results.VersionResult, results.Style):
     @property
     def desc(self):
         s = pluralism(self.refs)
-        refs = ', '.join(self.refs)
-        return f'{self.variable} includes variable{s}: {refs}'
+        refs = ", ".join(self.refs)
+        return f"{self.variable} includes variable{s}: {refs}"
 
 
 class MultipleKeywordsLines(results.LinesResult, results.Style):
@@ -530,13 +589,14 @@ class MetadataVarCheck(Check):
     """Scan various globally assigned metadata variables for issues."""
 
     _source = sources.EbuildParseRepoSource
-    known_results = frozenset([
-        HomepageInSrcUri, StaticSrcUri, ReferenceInMetadataVar, MultipleKeywordsLines])
+    known_results = frozenset(
+        [HomepageInSrcUri, StaticSrcUri, ReferenceInMetadataVar, MultipleKeywordsLines]
+    )
 
     # mapping between registered variables and verification methods
     known_variables = {}
 
-    @verify_vars('HOMEPAGE', 'KEYWORDS')
+    @verify_vars("HOMEPAGE", "KEYWORDS")
     def _raw_text(self, var, node, value, pkg):
         matches = []
         for var_node, _ in bash.var_query.captures(node):
@@ -544,12 +604,12 @@ class MetadataVarCheck(Check):
         if matches:
             yield ReferenceInMetadataVar(var, stable_unique(matches), pkg=pkg)
 
-    @verify_vars('LICENSE')
+    @verify_vars("LICENSE")
     def _raw_text_license(self, var, node, value, pkg):
         matches = []
         for var_node, _ in bash.var_query.captures(node):
             var_str = pkg.node_str(var_node.parent).strip()
-            if var_str in ['$LICENSE', '${LICENSE}']:
+            if var_str in ["$LICENSE", "${LICENSE}"]:
                 continue  # LICENSE in LICENSE is ok
             matches.append(var_str)
         if matches:
@@ -557,47 +617,58 @@ class MetadataVarCheck(Check):
 
     def build_src_uri_variants_regex(self, pkg):
         p, pv = pkg.P, pkg.PV
-        replacements = {
-            p: '${P}',
-            pv: '${PV}'
-        }
+        replacements = {p: "${P}", pv: "${PV}"}
         replacements.setdefault(p.capitalize(), "${P^}")
         replacements.setdefault(p.upper(), "${P^^}")
 
         for value, replacement in tuple(replacements.items()):
-            replacements.setdefault(value.replace('.', ''), replacement.replace('}', '//.}'))
-            replacements.setdefault(value.replace('.', '_'), replacement.replace('}', '//./_}'))
-            replacements.setdefault(value.replace('.', '-'), replacement.replace('}', '//./-}'))
+            replacements.setdefault(
+                value.replace(".", ""), replacement.replace("}", "//.}")
+            )
+            replacements.setdefault(
+                value.replace(".", "_"), replacement.replace("}", "//./_}")
+            )
+            replacements.setdefault(
+                value.replace(".", "-"), replacement.replace("}", "//./-}")
+            )
 
         pos = 0
-        positions = [pos := pv.find('.', pos+1) for _ in range(pv.count('.'))]
+        positions = [pos := pv.find(".", pos + 1) for _ in range(pv.count("."))]
 
-        for sep in ('', '-', '_'):
-            replacements.setdefault(pv.replace('.', sep, 1), f"$(ver_rs 1 {sep!r})")
-            for count in range(2, pv.count('.')):
-                replacements.setdefault(pv.replace('.', sep, count), f"$(ver_rs 1-{count} {sep!r})")
+        for sep in ("", "-", "_"):
+            replacements.setdefault(pv.replace(".", sep, 1), f"$(ver_rs 1 {sep!r})")
+            for count in range(2, pv.count(".")):
+                replacements.setdefault(
+                    pv.replace(".", sep, count), f"$(ver_rs 1-{count} {sep!r})"
+                )
 
         for pos, index in enumerate(positions[1:], start=2):
             replacements.setdefault(pv[:index], f"$(ver_cut 1-{pos})")
 
         replacements = sorted(replacements.items(), key=lambda x: -len(x[0]))
 
-        return tuple(zip(*replacements))[1], '|'.join(
-            rf'(?P<r{index}>{re.escape(s)})'
+        return tuple(zip(*replacements))[1], "|".join(
+            rf"(?P<r{index}>{re.escape(s)})"
             for index, (s, _) in enumerate(replacements)
         )
 
-    @verify_vars('SRC_URI')
+    @verify_vars("SRC_URI")
     def _src_uri(self, var, node, value, pkg):
-        if '${HOMEPAGE}' in value:
+        if "${HOMEPAGE}" in value:
             yield HomepageInSrcUri(pkg=pkg)
 
         replacements, regex = self.build_src_uri_variants_regex(pkg)
-        static_src_uri_re = rf'(?:/|{re.escape(pkg.PN)}[-._]?|->\s*)[v]?(?P<static_str>({regex}))'
+        static_src_uri_re = (
+            rf"(?:/|{re.escape(pkg.PN)}[-._]?|->\s*)[v]?(?P<static_str>({regex}))"
+        )
         static_urls = {}
         for match in re.finditer(static_src_uri_re, value):
-            relevant = {key: value for key, value in match.groupdict().items() if value is not None}
-            static_str = relevant.pop('static_str')
+            relevant = {
+                key: value
+                for key, value in match.groupdict().items()
+                if value is not None
+            }
+            static_str = relevant.pop("static_str")
             assert len(relevant) == 1
             key = int(tuple(relevant.keys())[0][1:])
             static_urls[static_str] = replacements[key]
@@ -608,15 +679,17 @@ class MetadataVarCheck(Check):
     def feed(self, pkg):
         keywords_lines = set()
         for node in pkg.global_query(bash.var_assign_query):
-            name = pkg.node_str(node.child_by_field_name('name'))
+            name = pkg.node_str(node.child_by_field_name("name"))
             if name in self.known_variables:
                 # RHS value node should be last
                 val_node = node.children[-1]
                 val_str = pkg.node_str(val_node)
-                if name == 'KEYWORDS':
+                if name == "KEYWORDS":
                     keywords_lines.add(node.start_point[0] + 1)
                     keywords_lines.add(node.end_point[0] + 1)
-                yield from self.known_variables[name](self, name, val_node, val_str, pkg)
+                yield from self.known_variables[name](
+                    self, name, val_node, val_str, pkg
+                )
 
         if len(keywords_lines) > 1:
             yield MultipleKeywordsLines(sorted(keywords_lines), pkg=pkg)
@@ -633,7 +706,7 @@ class MissingInherits(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        return f'{self.eclass}: missing inherit usage: {repr(self.usage)}, line {self.lineno}'
+        return f"{self.eclass}: missing inherit usage: {repr(self.usage)}, line {self.lineno}"
 
 
 class IndirectInherits(results.VersionResult, results.Warning):
@@ -651,7 +724,7 @@ class IndirectInherits(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        return f'{self.eclass}: indirect inherit usage: {repr(self.usage)}, line {self.lineno}'
+        return f"{self.eclass}: indirect inherit usage: {repr(self.usage)}, line {self.lineno}"
 
 
 class UnusedInherits(results.VersionResult, results.Warning):
@@ -663,9 +736,9 @@ class UnusedInherits(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        es = pluralism(self.eclasses, plural='es')
-        eclasses = ', '.join(self.eclasses)
-        return f'unused eclass{es}: {eclasses}'
+        es = pluralism(self.eclasses, plural="es")
+        eclasses = ", ".join(self.eclasses)
+        return f"unused eclass{es}: {eclasses}"
 
 
 class InternalEclassUsage(results.VersionResult, results.Warning):
@@ -679,7 +752,7 @@ class InternalEclassUsage(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        return f'{self.eclass}: internal usage: {repr(self.usage)}, line {self.lineno}'
+        return f"{self.eclass}: internal usage: {repr(self.usage)}, line {self.lineno}"
 
 
 class InheritsCheck(Check):
@@ -690,8 +763,9 @@ class InheritsCheck(Check):
     """
 
     _source = sources.EbuildParseRepoSource
-    known_results = frozenset([
-        MissingInherits, IndirectInherits, UnusedInherits, InternalEclassUsage])
+    known_results = frozenset(
+        [MissingInherits, IndirectInherits, UnusedInherits, InternalEclassUsage]
+    )
     required_addons = (addons.eclass.EclassAddon,)
 
     def __init__(self, *args, eclass_addon):
@@ -703,7 +777,8 @@ class InheritsCheck(Check):
         # register internal and exported funcs/vars for all eclasses
         for eclass, eclass_obj in self.eclass_cache.items():
             self.internals[eclass] = (
-                eclass_obj.internal_function_names | eclass_obj.internal_variable_names)
+                eclass_obj.internal_function_names | eclass_obj.internal_variable_names
+            )
             for name in eclass_obj.exported_function_names:
                 self.exported.setdefault(name, set()).add(eclass)
             # Don't use all exported vars in order to avoid
@@ -717,8 +792,10 @@ class InheritsCheck(Check):
         for eapi in EAPI.known_eapis.values():
             s = set(eapi.bash_cmds_internal | eapi.bash_cmds_deprecated)
             s.update(
-                x for x in (eapi.bash_funcs | eapi.bash_funcs_global)
-                if not x.startswith('_'))
+                x
+                for x in (eapi.bash_funcs | eapi.bash_funcs_global)
+                if not x.startswith("_")
+            )
             self.eapi_funcs[eapi] = frozenset(s)
 
         # register EAPI-related vars to ignore
@@ -751,7 +828,7 @@ class InheritsCheck(Check):
         # register variables assigned in ebuilds
         assigned_vars = dict()
         for node, _ in bash.var_assign_query.captures(pkg.tree.root_node):
-            name = pkg.node_str(node.child_by_field_name('name'))
+            name = pkg.node_str(node.child_by_field_name("name"))
             if eclass := self.get_eclass(name, pkg):
                 assigned_vars[name] = eclass
 
@@ -759,8 +836,8 @@ class InheritsCheck(Check):
         used = defaultdict(list)
         for node, _ in bash.cmd_query.captures(pkg.tree.root_node):
             call = pkg.node_str(node)
-            name = pkg.node_str(node.child_by_field_name('name'))
-            if name == 'inherit':
+            name = pkg.node_str(node.child_by_field_name("name"))
+            if name == "inherit":
                 # register conditional eclasses
                 eclasses = call.split()[1:]
                 if not pkg.inherited.intersection(eclasses):
@@ -770,12 +847,12 @@ class InheritsCheck(Check):
             elif name not in self.eapi_funcs[pkg.eapi] | assigned_vars.keys():
                 lineno, colno = node.start_point
                 if eclass := self.get_eclass(name, pkg):
-                    used[eclass].append((lineno + 1, name, call.split('\n', 1)[0]))
+                    used[eclass].append((lineno + 1, name, call.split("\n", 1)[0]))
 
         # match captured variables with eclasses
         for node, _ in bash.var_query.captures(pkg.tree.root_node):
             name = pkg.node_str(node)
-            if node.parent.type == 'unset_command':
+            if node.parent.type == "unset_command":
                 continue
             if name not in self.eapi_vars[pkg.eapi] | assigned_vars.keys():
                 lineno, colno = node.start_point
@@ -783,7 +860,9 @@ class InheritsCheck(Check):
                     used[eclass].append((lineno + 1, name, name))
 
         # allowed indirect inherits
-        indirect_allowed = set().union(*(self.eclass_cache[x].provides for x in pkg.inherit))
+        indirect_allowed = set().union(
+            *(self.eclass_cache[x].provides for x in pkg.inherit)
+        )
         # missing inherits
         missing = used.keys() - pkg.inherit - indirect_allowed - conditional
 
@@ -793,7 +872,8 @@ class InheritsCheck(Check):
             phases = [pkg.eapi.phases[x] for x in pkg.defined_phases]
             for eclass in list(unused):
                 if self.eclass_cache[eclass].exported_function_names.intersection(
-                        f'{eclass}_{phase}' for phase in phases):
+                    f"{eclass}_{phase}" for phase in phases
+                ):
                     unused.discard(eclass)
 
         for eclass in list(unused):
@@ -802,8 +882,12 @@ class InheritsCheck(Check):
                 unused.discard(eclass)
             else:
                 exported_eclass_keys = pkg.eapi.eclass_keys.intersection(
-                    self.eclass_cache[eclass].exported_variable_names)
-                if not self.eclass_cache[eclass].exported_function_names and exported_eclass_keys:
+                    self.eclass_cache[eclass].exported_variable_names
+                )
+                if (
+                    not self.eclass_cache[eclass].exported_function_names
+                    and exported_eclass_keys
+                ):
                     # ignore eclasses that export ebuild metadata (e.g.
                     # SRC_URI, S, ...) and no functions
                     unused.discard(eclass)
@@ -844,15 +928,38 @@ class ReadonlyVariableCheck(Check):
     known_results = frozenset([ReadonlyVariable])
 
     # https://devmanual.gentoo.org/ebuild-writing/variables/#predefined-read-only-variables
-    readonly_vars = frozenset([
-        'P', 'PN', 'PV', 'PR', 'PVR', 'PF', 'A', 'CATEGORY', 'FILESDIR', 'WORKDIR',
-        'T', 'D', 'HOME', 'ROOT', 'DISTDIR', 'EPREFIX', 'ED', 'EROOT', 'SYSROOT',
-        'ESYSROOT', 'BROOT', 'MERGE_TYPE', 'REPLACING_VERSIONS', 'REPLACED_BY_VERSION',
-    ])
+    readonly_vars = frozenset(
+        [
+            "P",
+            "PN",
+            "PV",
+            "PR",
+            "PVR",
+            "PF",
+            "A",
+            "CATEGORY",
+            "FILESDIR",
+            "WORKDIR",
+            "T",
+            "D",
+            "HOME",
+            "ROOT",
+            "DISTDIR",
+            "EPREFIX",
+            "ED",
+            "EROOT",
+            "SYSROOT",
+            "ESYSROOT",
+            "BROOT",
+            "MERGE_TYPE",
+            "REPLACING_VERSIONS",
+            "REPLACED_BY_VERSION",
+        ]
+    )
 
     def feed(self, pkg):
         for node in pkg.global_query(bash.var_assign_query):
-            name = pkg.node_str(node.child_by_field_name('name'))
+            name = pkg.node_str(node.child_by_field_name("name"))
             if name in self.readonly_vars:
                 call = pkg.node_str(node)
                 lineno, colno = node.start_point
@@ -862,7 +969,7 @@ class ReadonlyVariableCheck(Check):
 class VariableScope(results.BaseLinesResult, results.AliasResult, results.Warning):
     """Variable used outside its defined scope."""
 
-    _name = 'VariableScope'
+    _name = "VariableScope"
 
     def __init__(self, variable, func, **kwargs):
         super().__init__(**kwargs)
@@ -871,7 +978,7 @@ class VariableScope(results.BaseLinesResult, results.AliasResult, results.Warnin
 
     @property
     def desc(self):
-        return f'variable {self.variable!r} used in {self.func!r} {self.lines_str}'
+        return f"variable {self.variable!r} used in {self.func!r} {self.lines_str}"
 
 
 class EbuildVariableScope(VariableScope, results.VersionResult):
@@ -885,28 +992,30 @@ class VariableScopeCheck(Check):
     known_results = frozenset([EbuildVariableScope])
 
     # see https://projects.gentoo.org/pms/7/pms.html#x1-10900011.1
-    variable_map = ImmutableDict({
-        'A': ('src_', 'pkg_nofetch'),
-        'AA': ('src_', 'pkg_nofetch'),
-        'FILESDIR': 'src_',
-        'DISTDIR': 'src_',
-        'WORKDIR': 'src_',
-        'S': 'src_',
-        'PORTDIR': 'src_',
-        'ECLASSDIR': 'src_',
-        'ROOT': 'pkg_',
-        'EROOT': 'pkg_',
-        'SYSROOT': ('src_', 'pkg_setup'),
-        'ESYSROOT': ('src_', 'pkg_setup'),
-        'BROOT': ('src_', 'pkg_setup'),
-        'D': ('src_install', 'pkg_preinst', 'pkg_postint'),
-        'ED': ('src_install', 'pkg_preinst', 'pkg_postint'),
-        'DESTTREE': 'src_install',
-        'INSDESTTREE': 'src_install',
-        'MERGE_TYPE': 'pkg_',
-        'REPLACING_VERSIONS': 'pkg_',
-        'REPLACED_BY_VERSION': ('pkg_prerm', 'pkg_postrm'),
-    })
+    variable_map = ImmutableDict(
+        {
+            "A": ("src_", "pkg_nofetch"),
+            "AA": ("src_", "pkg_nofetch"),
+            "FILESDIR": "src_",
+            "DISTDIR": "src_",
+            "WORKDIR": "src_",
+            "S": "src_",
+            "PORTDIR": "src_",
+            "ECLASSDIR": "src_",
+            "ROOT": "pkg_",
+            "EROOT": "pkg_",
+            "SYSROOT": ("src_", "pkg_setup"),
+            "ESYSROOT": ("src_", "pkg_setup"),
+            "BROOT": ("src_", "pkg_setup"),
+            "D": ("src_install", "pkg_preinst", "pkg_postint"),
+            "ED": ("src_install", "pkg_preinst", "pkg_postint"),
+            "DESTTREE": "src_install",
+            "INSDESTTREE": "src_install",
+            "MERGE_TYPE": "pkg_",
+            "REPLACING_VERSIONS": "pkg_",
+            "REPLACED_BY_VERSION": ("pkg_prerm", "pkg_postrm"),
+        }
+    )
 
     # mapping of bad variables for each EAPI phase function
     scoped_vars = {}
@@ -914,12 +1023,14 @@ class VariableScopeCheck(Check):
         for variable, allowed_scopes in variable_map.items():
             for phase in eapi.phases_rev:
                 if not phase.startswith(allowed_scopes):
-                    scoped_vars.setdefault(eapi, {}).setdefault(phase, set()).add(variable)
+                    scoped_vars.setdefault(eapi, {}).setdefault(phase, set()).add(
+                        variable
+                    )
     scoped_vars = ImmutableDict(scoped_vars)
 
     def feed(self, pkg):
         for func_node, _ in bash.func_query.captures(pkg.tree.root_node):
-            func_name = pkg.node_str(func_node.child_by_field_name('name'))
+            func_name = pkg.node_str(func_node.child_by_field_name("name"))
             if variables := self.scoped_vars[pkg.eapi].get(func_name):
                 usage = defaultdict(set)
                 for var_node, _ in bash.var_query.captures(func_node):
@@ -928,7 +1039,9 @@ class VariableScopeCheck(Check):
                         lineno, colno = var_node.start_point
                         usage[var_name].add(lineno + 1)
                 for var, lines in sorted(usage.items()):
-                    yield EbuildVariableScope(var, func_name, lines=sorted(lines), pkg=pkg)
+                    yield EbuildVariableScope(
+                        var, func_name, lines=sorted(lines), pkg=pkg
+                    )
 
 
 class RedundantDodir(results.LineResult, results.Style):
@@ -951,23 +1064,26 @@ class RedundantDodirCheck(Check):
 
     def __init__(self, *args):
         super().__init__(*args)
-        cmds = r'|'.join(('insinto', 'exeinto', 'docinto'))
-        self.cmds_regex = re.compile(rf'^\s*(?P<cmd>({cmds}))\s+(?P<path>\S+)')
-        self.dodir_regex = re.compile(r'^\s*(?P<call>dodir\s+(?P<path>\S+))')
+        cmds = r"|".join(("insinto", "exeinto", "docinto"))
+        self.cmds_regex = re.compile(rf"^\s*(?P<cmd>({cmds}))\s+(?P<path>\S+)")
+        self.dodir_regex = re.compile(r"^\s*(?P<call>dodir\s+(?P<path>\S+))")
 
     def feed(self, pkg):
         lines = enumerate(pkg.lines, 1)
         for lineno, line in lines:
             line = line.strip()
-            if not line or line[0] == '#':
+            if not line or line[0] == "#":
                 continue
             if dodir := self.dodir_regex.match(line):
                 lineno, line = next(lines)
                 if cmd := self.cmds_regex.match(line):
-                    if dodir.group('path') == cmd.group('path'):
+                    if dodir.group("path") == cmd.group("path"):
                         yield RedundantDodir(
-                            cmd.group('cmd'), line=dodir.group('call'),
-                            lineno=lineno - 1, pkg=pkg)
+                            cmd.group("cmd"),
+                            line=dodir.group("call"),
+                            lineno=lineno - 1,
+                            pkg=pkg,
+                        )
 
 
 class UnquotedVariable(results.BaseLinesResult, results.AliasResult, results.Warning):
@@ -977,7 +1093,7 @@ class UnquotedVariable(results.BaseLinesResult, results.AliasResult, results.War
     contexts.
     """
 
-    _name = 'UnquotedVariable'
+    _name = "UnquotedVariable"
 
     def __init__(self, variable, **kwargs):
         super().__init__(**kwargs)
@@ -985,7 +1101,7 @@ class UnquotedVariable(results.BaseLinesResult, results.AliasResult, results.War
 
     @property
     def desc(self):
-        return f'unquoted variable {self.variable} {self.lines_str}'
+        return f"unquoted variable {self.variable} {self.lines_str}"
 
 
 class EbuildUnquotedVariable(UnquotedVariable, results.VersionResult):
@@ -997,48 +1113,65 @@ class EclassUnquotedVariable(UnquotedVariable, results.EclassResult):
 
     @property
     def desc(self):
-        return f'{self.eclass}: {super().desc}'
+        return f"{self.eclass}: {super().desc}"
 
 
 class _UnquotedVariablesCheck(Check):
     """Scan files for variables that should be quoted like D, FILESDIR, etc."""
 
-    message_commands = frozenset({
-        "die", "echo", "eerror", "einfo", "elog", "eqawarn", "ewarn", ":"
-    })
-    var_names = frozenset({
-        "D", "DISTDIR", "FILESDIR", "S", "T", "ROOT", "BROOT", "WORKDIR", "ED",
-        "EPREFIX", "EROOT", "SYSROOT", "ESYSROOT", "TMPDIR", "HOME",
-        # variables for multibuild.eclass
-        "BUILD_DIR",
-    })
+    message_commands = frozenset(
+        {"die", "echo", "eerror", "einfo", "elog", "eqawarn", "ewarn", ":"}
+    )
+    var_names = frozenset(
+        {
+            "D",
+            "DISTDIR",
+            "FILESDIR",
+            "S",
+            "T",
+            "ROOT",
+            "BROOT",
+            "WORKDIR",
+            "ED",
+            "EPREFIX",
+            "EROOT",
+            "SYSROOT",
+            "ESYSROOT",
+            "TMPDIR",
+            "HOME",
+            # variables for multibuild.eclass
+            "BUILD_DIR",
+        }
+    )
 
-    node_types_ok = frozenset({
-        # Variable is sitting in a string, all good
-        'string',
-        # Variable is part of a shell assignment, and does not need to be
-        # quoted. for example S=${WORKDIR}/${PN} is ok.
-        'variable_assignment',
-        # Variable is being used in a unset command.
-        'unset_command',
-        # Variable is part of declaring variables, and does not need to be
-        # quoted. for example local TMPDIR is ok.
-        'declaration_command',
-        # Variable sits inside a [[ ]] test command and it's OK not to be quoted
-        'test_command',
-        # Variable is being used in a heredoc body, no need to specify quotes.
-        'heredoc_body',
-    })
+    node_types_ok = frozenset(
+        {
+            # Variable is sitting in a string, all good
+            "string",
+            # Variable is part of a shell assignment, and does not need to be
+            # quoted. for example S=${WORKDIR}/${PN} is ok.
+            "variable_assignment",
+            # Variable is being used in a unset command.
+            "unset_command",
+            # Variable is part of declaring variables, and does not need to be
+            # quoted. for example local TMPDIR is ok.
+            "declaration_command",
+            # Variable sits inside a [[ ]] test command and it's OK not to be quoted
+            "test_command",
+            # Variable is being used in a heredoc body, no need to specify quotes.
+            "heredoc_body",
+        }
+    )
 
     def _var_needs_quotes(self, pkg, node):
         pnode = node.parent
         while pnode != node:
             if pnode.type in self.node_types_ok:
                 return False
-            elif pnode.type == 'command':
-                cmd = pkg.node_str(pnode.child_by_field_name('name'))
+            elif pnode.type == "command":
+                cmd = pkg.node_str(pnode.child_by_field_name("name"))
                 return cmd not in self.message_commands
-            elif pnode.type in 'array':
+            elif pnode.type in "array":
                 # Variable is sitting unquoted in an array
                 return True
             pnode = pnode.parent
@@ -1058,7 +1191,7 @@ class _UnquotedVariablesCheck(Check):
             if var_name in self.var_names:
                 if self._var_needs_quotes(item, var_node):
                     lineno, _ = var_node.start_point
-                    hits[var_name].add(lineno+1)
+                    hits[var_name].add(lineno + 1)
         for var_name, lines in hits.items():
             yield var_name, sorted(lines)
 
@@ -1094,7 +1227,7 @@ class ExcessiveLineLength(results.LinesResult, results.Style):
 
     @property
     def desc(self):
-        return f'excessive line length (over {self.line_length} characters) {self.lines_str}'
+        return f"excessive line length (over {self.line_length} characters) {self.lines_str}"
 
 
 class LineLengthCheck(Check):
@@ -1105,8 +1238,8 @@ class LineLengthCheck(Check):
 
     def __init__(self, options, **kwargs):
         super().__init__(options, **kwargs)
-        self.exception = re.compile(r'\s*(?:DESCRIPTION|KEYWORDS|IUSE)=')
-        str_length = f'[^\'\"]{{{ExcessiveLineLength.word_length},}}'
+        self.exception = re.compile(r"\s*(?:DESCRIPTION|KEYWORDS|IUSE)=")
+        str_length = f"[^'\"]{{{ExcessiveLineLength.word_length},}}"
         self.long_string = re.compile(rf'"{str_length}"|\'{str_length}\'')
 
     def feed(self, pkg):
@@ -1115,11 +1248,11 @@ class LineLengthCheck(Check):
             if len(line) <= ExcessiveLineLength.line_length:
                 continue
             if self.exception.match(line):
-                continue # exception variables which are fine to be long
+                continue  # exception variables which are fine to be long
             if max(map(len, line.split())) > ExcessiveLineLength.word_length:
-                continue # if one part of the line is very long word
+                continue  # if one part of the line is very long word
             if self.long_string.search(line):
-                continue # skip lines with long quoted string
+                continue  # skip lines with long quoted string
             lines.append(lineno)
         if lines:
             yield ExcessiveLineLength(lines=lines, pkg=pkg)
@@ -1134,7 +1267,7 @@ class InstallCompressedManpage(results.LineResult, results.Warning):
 
     @property
     def desc(self):
-        return f'line {self.lineno}: compressed manpage {self.line!r} passed to {self.func}'
+        return f"line {self.lineno}: compressed manpage {self.line!r} passed to {self.func}"
 
 
 class InstallCompressedInfo(results.LineResult, results.Warning):
@@ -1146,7 +1279,9 @@ class InstallCompressedInfo(results.LineResult, results.Warning):
 
     @property
     def desc(self):
-        return f'line {self.lineno}: compressed info {self.line!r} passed to {self.func}'
+        return (
+            f"line {self.lineno}: compressed info {self.line!r} passed to {self.func}"
+        )
 
 
 class DoCompressedFilesCheck(Check):
@@ -1155,23 +1290,37 @@ class DoCompressedFilesCheck(Check):
     _source = sources.EbuildParseRepoSource
     known_results = frozenset([InstallCompressedManpage, InstallCompressedInfo])
 
-    compresion_extentions = ('.Z', '.gz', '.bz2', '.lzma', '.lz', '.lzo', '.lz4', '.xz', '.zst')
-    functions = ImmutableDict({
-        'doman': InstallCompressedManpage,
-        'newman': InstallCompressedManpage,
-        'doinfo': InstallCompressedInfo,
-    })
+    compresion_extentions = (
+        ".Z",
+        ".gz",
+        ".bz2",
+        ".lzma",
+        ".lz",
+        ".lzo",
+        ".lz4",
+        ".xz",
+        ".zst",
+    )
+    functions = ImmutableDict(
+        {
+            "doman": InstallCompressedManpage,
+            "newman": InstallCompressedManpage,
+            "doinfo": InstallCompressedInfo,
+        }
+    )
 
     def feed(self, pkg):
         for node, _ in bash.cmd_query.captures(pkg.tree.root_node):
-            call_name = pkg.node_str(node.child_by_field_name('name'))
+            call_name = pkg.node_str(node.child_by_field_name("name"))
             if call_name not in self.functions:
                 continue
             for arg in node.children[1:]:
-                arg_name = pkg.node_str(arg).strip('\'\"')
+                arg_name = pkg.node_str(arg).strip("'\"")
                 lineno, _ = arg.start_point
                 if arg_name.endswith(self.compresion_extentions):
-                    yield self.functions[call_name](call_name, lineno=lineno+1, line=arg_name, pkg=pkg)
+                    yield self.functions[call_name](
+                        call_name, lineno=lineno + 1, line=arg_name, pkg=pkg
+                    )
 
 
 class NonPosixHeadTailUsage(results.LineResult, results.Warning):
@@ -1183,13 +1332,14 @@ class NonPosixHeadTailUsage(results.LineResult, results.Warning):
 
     .. [#] https://devmanual.gentoo.org/tools-reference/head-and-tail/index.html
     """
+
     def __init__(self, command, **kwargs):
         super().__init__(**kwargs)
         self.command = command
 
     @property
     def desc(self):
-        return f'line {self.lineno}: non-posix usage of {self.command!r}: {self.line!r}'
+        return f"line {self.lineno}: non-posix usage of {self.command!r}: {self.line!r}"
 
 
 class NonPosixCheck(Check):
@@ -1200,21 +1350,26 @@ class NonPosixCheck(Check):
 
     def __init__(self, options, **kwargs):
         super().__init__(options, **kwargs)
-        self.re_head_tail = re.compile(r'[+-]\d+')
+        self.re_head_tail = re.compile(r"[+-]\d+")
 
     def check_head_tail(self, pkg, call_node, call_name):
-        prev_arg = ''
+        prev_arg = ""
         for arg in map(pkg.node_str, call_node.children[1:]):
-            if (self.re_head_tail.match(arg) and
-                not (prev_arg.startswith('-') and prev_arg.endswith(('n', 'c')))):
+            if self.re_head_tail.match(arg) and not (
+                prev_arg.startswith("-") and prev_arg.endswith(("n", "c"))
+            ):
                 lineno, _ = call_node.start_point
-                yield NonPosixHeadTailUsage(f'{call_name} {arg}',
-                    lineno=lineno+1, line=pkg.node_str(call_node), pkg=pkg)
+                yield NonPosixHeadTailUsage(
+                    f"{call_name} {arg}",
+                    lineno=lineno + 1,
+                    line=pkg.node_str(call_node),
+                    pkg=pkg,
+                )
                 break
             prev_arg = arg
 
     def feed(self, pkg):
         for call_node, _ in bash.cmd_query.captures(pkg.tree.root_node):
-            call_name = pkg.node_str(call_node.child_by_field_name('name'))
-            if call_name in ('head', 'tail'):
+            call_name = pkg.node_str(call_node.child_by_field_name("name"))
+            if call_name in ("head", "tail"):
                 yield from self.check_head_tail(pkg, call_node, call_name)

@@ -4,7 +4,7 @@ from requests.models import Response
 
 r = Response()
 r.status_code = 404
-r.reason = 'Not Found'
-r.url = 'https://pecl.php.net/package/pkgcheck'
+r.reason = "Not Found"
+r.url = "https://pecl.php.net/package/pkgcheck"
 r.raw = io.StringIO()
 responses = [r]

@@ -30,7 +30,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-_control_chars = b'\n\r\t\f\b'
+_control_chars = b"\n\r\t\f\b"
 _printable_ascii = _control_chars + bytes(range(32, 127))
 _printable_high_ascii = bytes(range(127, 256))
 
@@ -51,7 +51,7 @@ def is_binary(path, blocksize=1024):
     :returns: True if appears to be a binary, otherwise False.
     """
     try:
-        with open(path, 'rb') as f:
+        with open(path, "rb") as f:
             byte_str = f.read(blocksize)
     except IOError:
         return False
@@ -75,9 +75,8 @@ def is_binary(path, blocksize=1024):
     high_chars = byte_str.translate(None, _printable_high_ascii)
     nontext_ratio2 = len(high_chars) / len(byte_str)
 
-    is_likely_binary = (
-        (nontext_ratio1 > 0.3 and nontext_ratio2 < 0.05) or
-        (nontext_ratio1 > 0.8 and nontext_ratio2 > 0.8)
+    is_likely_binary = (nontext_ratio1 > 0.3 and nontext_ratio2 < 0.05) or (
+        nontext_ratio1 > 0.8 and nontext_ratio2 > 0.8
     )
 
     decodable = False
@@ -91,9 +90,9 @@ def is_binary(path, blocksize=1024):
 
         # guess character encoding using chardet
         detected_encoding = chardet.detect(byte_str)
-        if detected_encoding['confidence'] > 0.8:
+        if detected_encoding["confidence"] > 0.8:
             try:
-                byte_str.decode(encoding=detected_encoding['encoding'])
+                byte_str.decode(encoding=detected_encoding["encoding"])
                 decodable = True
             except (UnicodeDecodeError, LookupError):
                 pass
@@ -101,6 +100,6 @@ def is_binary(path, blocksize=1024):
     # finally use all the checks to decide binary or text
     if decodable:
         return False
-    if is_likely_binary or b'\x00' in byte_str:
+    if is_likely_binary or b"\x00" in byte_str:
         return True
     return False

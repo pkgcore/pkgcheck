@@ -21,15 +21,17 @@ except ImportError:  # pragma: no cover
 
 def _find_modules(module):  # pragma: no cover
     """Generator of all public modules under a given module."""
-    if getattr(module, '__path__', False):
-        for _imp, name, _ in pkgutil.walk_packages(module.__path__, module.__name__ + '.'):
+    if getattr(module, "__path__", False):
+        for _imp, name, _ in pkgutil.walk_packages(
+            module.__path__, module.__name__ + "."
+        ):
             # skip "private" modules
-            if name.rsplit('.', 1)[1][0] == '_':
+            if name.rsplit(".", 1)[1][0] == "_":
                 continue
             try:
                 yield import_module(name)
             except ImportError as e:
-                raise Exception(f'failed importing {name!r}: {e}')
+                raise Exception(f"failed importing {name!r}: {e}")
     else:
         yield module
 
@@ -37,27 +39,33 @@ def _find_modules(module):  # pragma: no cover
 def _find_classes(module, matching_cls, skip=()):  # pragma: no cover
     """Generator of all subclasses of a selected class under a given module."""
     for _name, cls in inspect.getmembers(module):
-        if (inspect.isclass(cls) and issubclass(cls, matching_cls)
-                and cls.__name__[0] != '_' and cls not in skip):
+        if (
+            inspect.isclass(cls)
+            and issubclass(cls, matching_cls)
+            and cls.__name__[0] != "_"
+            and cls not in skip
+        ):
             yield cls
 
 
 def _find_obj_classes(module_name, target_cls):  # pragma: no cover
     """Determine mapping of object class names to class objects."""
-    module = import_module(f'.{module_name}', 'pkgcheck')
-    cls_module, cls_name = target_cls.rsplit('.', 1)
-    matching_cls = getattr(import_module(f'.{cls_module}', 'pkgcheck'), cls_name)
+    module = import_module(f".{module_name}", "pkgcheck")
+    cls_module, cls_name = target_cls.rsplit(".", 1)
+    matching_cls = getattr(import_module(f".{cls_module}", "pkgcheck"), cls_name)
 
     # skip top-level, base classes
     base_classes = {matching_cls}
-    if os.path.basename(module.__file__) == '__init__.py':
+    if os.path.basename(module.__file__) == "__init__.py":
         base_classes.update(_find_classes(module, matching_cls))
 
     classes = {}
     for m in _find_modules(module):
         for cls in _find_classes(m, matching_cls, skip=base_classes):
             if cls.__name__ in classes and classes[cls.__name__] != cls:
-                raise Exception(f'object name overlap: {cls} and {classes[cls.__name__]}')
+                raise Exception(
+                    f"object name overlap: {cls} and {classes[cls.__name__]}"
+                )
             classes[cls.__name__] = cls
 
     return classes
@@ -120,7 +128,7 @@ def _keyword_alias(alias=None):
         def __set_name__(self, cls, name):
             key = alias if alias is not None else name
             cls._alias_keywords.add(key)
-            jit_attr = klass.jit_attr_named(f'_{self.func.__name__}')
+            jit_attr = klass.jit_attr_named(f"_{self.func.__name__}")
             func = jit_attr(partial(self.func))
             setattr(cls, name, func)
 
@@ -136,6 +144,7 @@ class _KeywordsLazyDict(_LazyDict):
     def aliases(self):
         """Mapping of aliases to their respective mappings."""
         from . import results
+
         alias_map = {x: getattr(self, x) for x in self._alias_keywords}
         # support class-based aliasing
         for k, v in self._dict.items():
@@ -147,24 +156,28 @@ class _KeywordsLazyDict(_LazyDict):
     def error(self):
         """Mapping of all error level keywords."""
         from . import results
+
         return ImmutableDict(self.select(results.Error))
 
     @_keyword_alias()
     def warning(self):
         """Mapping of all warning level keywords."""
         from . import results
+
         return ImmutableDict(self.select(results.Warning))
 
     @_keyword_alias()
     def style(self):
         """Mapping of all style level keywords."""
         from . import results
+
         return ImmutableDict(self.select(results.Style))
 
     @_keyword_alias()
     def info(self):
         """Mapping of all info level keywords."""
         from . import results
+
         return ImmutableDict(self.select(results.Info))
 
     @klass.jit_attr
@@ -180,11 +193,16 @@ class _ChecksLazyDict(_LazyDict):
     def default(self):
         """Mapping of all default-enabled checks."""
         from . import checks
-        return ImmutableDict({
-            k: v for k, v in self._dict.items()
-            if not issubclass(v, checks.OptionalCheck)})
+
+        return ImmutableDict(
+            {
+                k: v
+                for k, v in self._dict.items()
+                if not issubclass(v, checks.OptionalCheck)
+            }
+        )
 
 
-KEYWORDS = _KeywordsLazyDict('KEYWORDS', ('checks', 'results.Result'))
-CHECKS = _ChecksLazyDict('CHECKS', ('checks', 'checks.Check'))
-REPORTERS = _LazyDict('REPORTERS', ('reporters', 'reporters.Reporter'))
+KEYWORDS = _KeywordsLazyDict("KEYWORDS", ("checks", "results.Result"))
+CHECKS = _ChecksLazyDict("CHECKS", ("checks", "checks.Check"))
+REPORTERS = _LazyDict("REPORTERS", ("reporters", "reporters.Reporter"))

@@ -20,10 +20,12 @@ from . import argparse_actions
 from .argparsers import repo_argparser, reporter_argparser
 
 config_argparser = arghparse.ArgumentParser(suppress=True)
-config_options = config_argparser.add_argument_group('config options')
+config_options = config_argparser.add_argument_group("config options")
 config_options.add_argument(
-    '--config', action=argparse_actions.ConfigArg, dest='config_file',
-    help='use custom pkgcheck scan settings file',
+    "--config",
+    action=argparse_actions.ConfigArg,
+    dest="config_file",
+    help="use custom pkgcheck scan settings file",
     docs="""
         Load custom pkgcheck scan settings from a given file.
 
@@ -32,21 +34,31 @@ config_options.add_argument(
 
         It's also possible to disable all types of settings loading by
         specifying an argument of 'false' or 'no'.
-    """)
+    """,
+)
 
 
 scan = arghparse.ArgumentParser(
-    prog='pkgcheck scan', description='scan targets for QA issues',
-    parents=(config_argparser, repo_argparser, reporter_argparser))
+    prog="pkgcheck scan",
+    description="scan targets for QA issues",
+    parents=(config_argparser, repo_argparser, reporter_argparser),
+)
 scan.add_argument(
-    'targets', metavar='TARGET', nargs='*', action=arghparse.ParseNonblockingStdin,
-    help='optional targets')
+    "targets",
+    metavar="TARGET",
+    nargs="*",
+    action=arghparse.ParseNonblockingStdin,
+    help="optional targets",
+)
 
-main_options = scan.add_argument_group('main options')
+main_options = scan.add_argument_group("main options")
 main_options.add_argument(
-    '-f', '--filter',
-    action=arghparse.Delayed, target=argparse_actions.FilterArgs, priority=99,
-    help='limit targeted packages for scanning',
+    "-f",
+    "--filter",
+    action=arghparse.Delayed,
+    target=argparse_actions.FilterArgs,
+    priority=99,
+    help="limit targeted packages for scanning",
     docs="""
         Support limiting targeted packages for scanning using a chosen filter.
 
@@ -62,23 +74,31 @@ main_options.add_argument(
         network-related checks are filtered to avoid redundant or unnecessary
         server requests. In order to forcibly disable all filtering use the
         'no' argument.
-    """)
+    """,
+)
 main_options.add_argument(
-    '-j', '--jobs', type=arghparse.positive_int,
-    help='number of checks to run in parallel',
+    "-j",
+    "--jobs",
+    type=arghparse.positive_int,
+    help="number of checks to run in parallel",
     docs="""
         Number of checks to run in parallel, defaults to using all available
         processors.
-    """)
+    """,
+)
 main_options.add_argument(
-    '-t', '--tasks', type=arghparse.positive_int,
-    help='number of asynchronous tasks to run concurrently',
+    "-t",
+    "--tasks",
+    type=arghparse.positive_int,
+    help="number of asynchronous tasks to run concurrently",
     docs="""
         Number of asynchronous tasks to run concurrently (defaults to 5 * CPU count).
-    """)
+    """,
+)
 main_options.add_argument(
-    '--cache', action=argparse_actions.CacheNegations,
-    help='forcibly enable/disable caches',
+    "--cache",
+    action=argparse_actions.CacheNegations,
+    help="forcibly enable/disable caches",
     docs="""
         All cache types are enabled by default, this option explicitly sets
         which caches will be generated and used during scanning.
@@ -97,14 +117,22 @@ main_options.add_argument(
 
         When disabled, no caches will be saved to disk and results requiring
         caches (e.g. git-related checks) will be skipped.
-    """)
+    """,
+)
 main_options.add_argument(
-    '--cache-dir', type=arghparse.create_dir, default=const.USER_CACHE_DIR,
-    help='directory to use for storing cache files')
+    "--cache-dir",
+    type=arghparse.create_dir,
+    default=const.USER_CACHE_DIR,
+    help="directory to use for storing cache files",
+)
 main_options.add_argument(
-    '--exit', metavar='ITEM', dest='exit_keywords',
-    action=argparse_actions.ExitArgs, nargs='?', default=(),
-    help='checksets, checks, or keywords that trigger an error exit status',
+    "--exit",
+    metavar="ITEM",
+    dest="exit_keywords",
+    action=argparse_actions.ExitArgs,
+    nargs="?",
+    default=(),
+    help="checksets, checks, or keywords that trigger an error exit status",
     docs="""
         Comma-separated list of checksets, checks, or keywords to enable and
         disable that trigger an exit status failure. Checkset and check
@@ -116,17 +144,25 @@ main_options.add_argument(
         To specify disabled keywords prefix them with ``-``. Also, the special
         arguments of ``error``, ``warning``, ``style``, and ``info`` correspond
         to the related keyword groups.
-    """)
+    """,
+)
 
 
-check_options = scan.add_argument_group('check selection')
+check_options = scan.add_argument_group("check selection")
 check_options.add_argument(
-    '--net', nargs=0,
-    action=arghparse.Delayed, target=argparse_actions.EnableNet, priority=-1,
-    help='enable checks that require network access')
+    "--net",
+    nargs=0,
+    action=arghparse.Delayed,
+    target=argparse_actions.EnableNet,
+    priority=-1,
+    help="enable checks that require network access",
+)
 check_options.add_argument(
-    '-C', '--checksets', metavar='CHECKSET', action=argparse_actions.ChecksetArgs,
-    help='scan using a configured set of check/keyword args',
+    "-C",
+    "--checksets",
+    metavar="CHECKSET",
+    action=argparse_actions.ChecksetArgs,
+    help="scan using a configured set of check/keyword args",
     docs="""
         Comma-separated list of checksets to enable and disable for
         scanning.
@@ -137,11 +173,18 @@ check_options.add_argument(
         All network-related checks (which are disabled by default)
         can be enabled using ``-C net``. This allows for easily running only
         network checks without having to explicitly list them.
-    """)
+    """,
+)
 check_options.add_argument(
-    '-s', '--scopes', metavar='SCOPE', dest='selected_scopes', default=(),
-    action=arghparse.Delayed, target=argparse_actions.ScopeArgs, priority=51,
-    help='limit checks to run by scope',
+    "-s",
+    "--scopes",
+    metavar="SCOPE",
+    dest="selected_scopes",
+    default=(),
+    action=arghparse.Delayed,
+    target=argparse_actions.ScopeArgs,
+    priority=51,
+    help="limit checks to run by scope",
     docs="""
         Comma-separated list of scopes to enable and disable for scanning. Any
         scopes specified in this fashion will affect the checks that get
@@ -149,11 +192,19 @@ check_options.add_argument(
         enabled will cause only repo-level checks to run.
 
         Available scopes: %s
-    """ % (', '.join(base.scopes)))
+    """
+    % (", ".join(base.scopes)),
+)
 check_options.add_argument(
-    '-c', '--checks', metavar='CHECK', dest='selected_checks', default=(),
-    action=arghparse.Delayed, target=argparse_actions.CheckArgs, priority=52,
-    help='limit checks to run',
+    "-c",
+    "--checks",
+    metavar="CHECK",
+    dest="selected_checks",
+    default=(),
+    action=arghparse.Delayed,
+    target=argparse_actions.CheckArgs,
+    priority=52,
+    help="limit checks to run",
     docs="""
         Comma-separated list of checks to enable and disable for
         scanning. Any checks specified in this fashion will be the
@@ -169,11 +220,18 @@ check_options.add_argument(
         optional checks in addition to the default set.
 
         Use ``pkgcheck show --checks`` see all available checks.
-    """)
+    """,
+)
 check_options.add_argument(
-    '-k', '--keywords', metavar='KEYWORD', dest='selected_keywords', default=(),
-    action=arghparse.Delayed, target=argparse_actions.KeywordArgs, priority=53,
-    help='limit keywords to scan for',
+    "-k",
+    "--keywords",
+    metavar="KEYWORD",
+    dest="selected_keywords",
+    default=(),
+    action=arghparse.Delayed,
+    target=argparse_actions.KeywordArgs,
+    priority=53,
+    help="limit keywords to scan for",
     docs="""
         Comma-separated list of keywords to enable and disable for
         scanning. Any keywords specified in this fashion will be the
@@ -189,9 +247,10 @@ check_options.add_argument(
         scan for errors use ``-k error``.
 
         Use ``pkgcheck show --keywords`` to see available options.
-    """)
+    """,
+)
 
-scan.plugin = scan.add_argument_group('plugin options')
+scan.plugin = scan.add_argument_group("plugin options")
 
 
 def _determine_target_repo(namespace):
@@ -226,16 +285,17 @@ def _determine_target_repo(namespace):
     # determine if CWD is inside an unconfigured repo
     try:
         repo = namespace.domain.find_repo(
-            target_dir, config=namespace.config, configure=False)
+            target_dir, config=namespace.config, configure=False
+        )
     except (repo_errors.InitializationError, IOError) as e:
         raise argparse.ArgumentError(None, str(e))
 
     # fallback to the default repo
     if repo is None:
-        repo = namespace.config.get_default('repo')
+        repo = namespace.config.get_default("repo")
         # if the bundled stub repo is the default, no default repo exists
-        if repo is None or repo.location == pjoin(pkgcore_const.DATA_PATH, 'stubrepo'):
-            raise argparse.ArgumentError(None, 'no default repo found')
+        if repo is None or repo.location == pjoin(pkgcore_const.DATA_PATH, "stubrepo"):
+            raise argparse.ArgumentError(None, "no default repo found")
 
     return repo
 
@@ -252,7 +312,9 @@ def _path_restrict(path, repo):
     path = os.path.realpath(path)
 
     restrictions = repo.path_restrict(path)[1:]
-    restrict = packages.AndRestriction(*restrictions) if restrictions else packages.AlwaysTrue
+    restrict = (
+        packages.AndRestriction(*restrictions) if restrictions else packages.AlwaysTrue
+    )
 
     # allow location specific scopes to override the path restrict scope
     for scope in (x for x in base.scopes.values() if x.level == 0):
@@ -268,9 +330,10 @@ def _path_restrict(path, repo):
 def _restrict_to_scope(restrict):
     """Determine a given restriction's scope level."""
     for scope, attrs in (
-            (base.version_scope, ['fullver', 'version', 'rev']),
-            (base.package_scope, ['package']),
-            (base.category_scope, ['category'])):
+        (base.version_scope, ["fullver", "version", "rev"]),
+        (base.package_scope, ["package"]),
+        (base.category_scope, ["category"]),
+    ):
         if any(collect_package_restrictions(restrict, attrs)):
             return scope
     return base.repo_scope
@@ -300,12 +363,14 @@ def _setup_scan(parser, namespace, args):
     config_parser = ConfigFileParser(parser)
     # always load settings from bundled config
     namespace = config_parser.parse_config_options(
-        namespace, configs=[const.BUNDLED_CONF_FILE])
+        namespace, configs=[const.BUNDLED_CONF_FILE]
+    )
 
     # load default args from system/user configs if config-loading is allowed
     if namespace.config_file is None:
         namespace = config_parser.parse_config_options(
-            namespace, configs=ConfigFileParser.default_configs)
+            namespace, configs=ConfigFileParser.default_configs
+        )
 
     # TODO: Limit to parsing repo and targets options here so all args don't
     # have to be parsed twice, will probably require a custom snakeoil
@@ -325,14 +390,16 @@ def _setup_scan(parser, namespace, args):
         namespace.target_repo = _determine_target_repo(namespace)
 
     # determine if we're running in the gentoo repo or a clone
-    namespace.gentoo_repo = 'gentoo' in namespace.target_repo.aliases
+    namespace.gentoo_repo = "gentoo" in namespace.target_repo.aliases
 
     # multiplex of target repo and its masters used for package existence queries
     namespace.search_repo = multiplex.tree(*namespace.target_repo.trees)
 
     if namespace.config_file is not False:
         # support loading repo-specific config settings from metadata/pkgcheck.conf
-        repo_config_file = os.path.join(namespace.target_repo.location, 'metadata', 'pkgcheck.conf')
+        repo_config_file = os.path.join(
+            namespace.target_repo.location, "metadata", "pkgcheck.conf"
+        )
         configs = [repo_config_file]
         # custom user settings take precedence over previous configs
         if namespace.config_file:
@@ -340,9 +407,11 @@ def _setup_scan(parser, namespace, args):
         namespace = config_parser.parse_config_options(namespace, configs=configs)
 
     # load repo-specific args from config if they exist
-    namespace = config_parser.parse_config_sections(namespace, namespace.target_repo.aliases)
+    namespace = config_parser.parse_config_sections(
+        namespace, namespace.target_repo.aliases
+    )
 
-    if os.getenv('NOCOLOR'):
+    if os.getenv("NOCOLOR"):
         namespace.color = False
 
     return namespace, args
@@ -356,10 +425,10 @@ def generate_restricts(repo, targets):
         path = os.path.realpath(target)
         # prefer path restrictions if it's in the target repo
         if os.path.exists(path) and path in repo:
-            if path.endswith('.eclass'):
+            if path.endswith(".eclass"):
                 # direct eclass file targets
                 yield base.eclass_scope, os.path.basename(path)[:-7]
-            elif path.startswith(profiles_base) and path[len(profiles_base):]:
+            elif path.startswith(profiles_base) and path[len(profiles_base) :]:
                 if os.path.isdir(path):
                     # descend into profiles dir targets
                     for root, _dirs, files in os.walk(path):
@@ -381,44 +450,47 @@ def generate_restricts(repo, targets):
                 # use path-based error for path-based targets
                 if os.path.exists(path) or os.path.isabs(target):
                     raise PkgcheckUserException(
-                        f"{repo.repo_id!r} repo doesn't contain: {target!r}")
+                        f"{repo.repo_id!r} repo doesn't contain: {target!r}"
+                    )
                 raise PkgcheckUserException(str(e))
 
 
-@scan.bind_delayed_default(1000, 'jobs')
+@scan.bind_delayed_default(1000, "jobs")
 def _default_jobs(namespace, attr):
     """Extract jobs count from MAKEOPTS."""
     parser = argparse.ArgumentParser()
-    parser.add_argument('-j', '--jobs', type=arghparse.positive_int, default=os.cpu_count())
-    makeopts, _ = parser.parse_known_args(shlex.split(os.getenv('MAKEOPTS', '')))
+    parser.add_argument(
+        "-j", "--jobs", type=arghparse.positive_int, default=os.cpu_count()
+    )
+    makeopts, _ = parser.parse_known_args(shlex.split(os.getenv("MAKEOPTS", "")))
     setattr(namespace, attr, makeopts.jobs)
 
 
-@scan.bind_delayed_default(1001, 'tasks')
+@scan.bind_delayed_default(1001, "tasks")
 def _default_tasks(namespace, attr):
     """Set based on jobs count."""
     setattr(namespace, attr, namespace.jobs * 5)
 
 
-@scan.bind_delayed_default(1000, 'filter')
+@scan.bind_delayed_default(1000, "filter")
 def _default_filter(namespace, attr):
     """Use source filtering for keywords requesting it by default."""
     setattr(namespace, attr, objects.KEYWORDS.filter)
 
 
-@scan.bind_delayed_default(1000, 'enabled_checks')
+@scan.bind_delayed_default(1000, "enabled_checks")
 def _default_enabled_checks(namespace, attr):
     """All non-optional checks are run by default."""
     setattr(namespace, attr, set(objects.CHECKS.default.values()))
 
 
-@scan.bind_delayed_default(1000, 'filtered_keywords')
+@scan.bind_delayed_default(1000, "filtered_keywords")
 def _default_filtered_keywords(namespace, attr):
     """Enable all keywords to be shown by default."""
     setattr(namespace, attr, set(objects.KEYWORDS.values()))
 
 
-@scan.bind_delayed_default(9999, 'restrictions')
+@scan.bind_delayed_default(9999, "restrictions")
 def _determine_restrictions(namespace, attr):
     """Determine restrictions for untargeted scans and generate collapsed restriction for targeted scans."""
     if namespace.targets:
@@ -426,9 +498,11 @@ def _determine_restrictions(namespace, attr):
         # piped-in targets are read. This avoids pickling overhead and having
         # to support pickleable check instances under the parallelized check
         # running pipeline.
-        restrictions = list(generate_restricts(namespace.target_repo, namespace.targets))
+        restrictions = list(
+            generate_restricts(namespace.target_repo, namespace.targets)
+        )
         if not restrictions:
-            raise PkgcheckUserException('no targets')
+            raise PkgcheckUserException("no targets")
     else:
         if namespace.cwd in namespace.target_repo:
             scope, restrict = _path_restrict(namespace.cwd, namespace.target_repo)
@@ -445,7 +519,7 @@ def _determine_restrictions(namespace, attr):
 def _scan(options, out, err):
     with ExitStack() as stack:
         reporter = options.reporter(out)
-        for c in options.pop('contexts') + [reporter]:
+        for c in options.pop("contexts") + [reporter]:
             stack.enter_context(c)
         pipe = Pipeline(options)
         for result in pipe:

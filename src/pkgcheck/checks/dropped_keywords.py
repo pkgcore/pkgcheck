@@ -13,7 +13,7 @@ class DroppedKeywords(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        return ', '.join(self.arches)
+        return ", ".join(self.arches)
 
 
 class DroppedKeywordsCheck(Check):
@@ -36,16 +36,20 @@ class DroppedKeywordsCheck(Check):
         for pkg in pkgset:
             pkg_arches = {x.lstrip("~-") for x in pkg.keywords}
             # special keywords -*, *, and ~* override all dropped keywords
-            if '*' in pkg_arches:
+            if "*" in pkg_arches:
                 drops = set()
             else:
-                drops = previous_arches.difference(pkg_arches) | seen_arches.difference(pkg_arches)
+                drops = previous_arches.difference(pkg_arches) | seen_arches.difference(
+                    pkg_arches
+                )
             for key in drops:
                 if key in self.options.arches:
                     changes[key].append(pkg)
             if changes:
                 # ignore missing arches on previous versions that were re-enabled
-                disabled_arches = {x.lstrip("-") for x in pkg.keywords if x.startswith('-')}
+                disabled_arches = {
+                    x.lstrip("-") for x in pkg.keywords if x.startswith("-")
+                }
                 adds = pkg_arches.difference(previous_arches) - disabled_arches
                 for key in adds:
                     if key in changes:

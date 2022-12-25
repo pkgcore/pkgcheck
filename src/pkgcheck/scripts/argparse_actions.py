@@ -16,7 +16,7 @@ class ConfigArg(argparse._StoreAction):
     """Store config path string or False when explicitly disabled."""
 
     def __call__(self, parser, namespace, values, option_string=None):
-        if values.lower() in ('false', 'no', 'n'):
+        if values.lower() in ("false", "no", "n"):
             values = False
         setattr(namespace, self.dest, values)
 
@@ -30,13 +30,13 @@ def object_to_keywords(namespace, obj):
     elif obj in namespace.config_checksets:
         yield from chain(*ChecksetArgs.checksets_to_keywords(namespace, [obj]))
     else:
-        raise ValueError(f'unknown checkset, check, or keyword: {obj!r}')
+        raise ValueError(f"unknown checkset, check, or keyword: {obj!r}")
 
 
 class FilterArgs(arghparse.CommaSeparatedValues):
     """Apply filters to an entire scan or specific checks/keywords."""
 
-    known_filters = frozenset(['latest'])
+    known_filters = frozenset(["latest"])
 
     def __call__(self, parser, namespace, values, option_string=None):
         values = self.parse_values(values)
@@ -44,14 +44,14 @@ class FilterArgs(arghparse.CommaSeparatedValues):
         disabled = False
 
         for val in values:
-            if ':' in val:
-                filter_type, target = val.split(':')
+            if ":" in val:
+                filter_type, target = val.split(":")
                 try:
                     keywords = object_to_keywords(namespace, target)
                     filter_map.update({x: filter_type for x in keywords})
                 except ValueError as e:
                     raise argparse.ArgumentError(self, str(e))
-            elif val.lower() in ('false', 'no', 'n'):
+            elif val.lower() in ("false", "no", "n"):
                 # disable all filters
                 disabled = True
                 break
@@ -63,19 +63,24 @@ class FilterArgs(arghparse.CommaSeparatedValues):
         # validate selected filters
         if unknown := set(filter_map.values()) - self.known_filters:
             s = pluralism(unknown)
-            unknown = ', '.join(map(repr, unknown))
-            available = ', '.join(sorted(self.known_filters))
+            unknown = ", ".join(map(repr, unknown))
+            available = ", ".join(sorted(self.known_filters))
             raise argparse.ArgumentError(
-                self, f'unknown filter{s}: {unknown} (available: {available})')
+                self, f"unknown filter{s}: {unknown} (available: {available})"
+            )
 
         filters = {}
         if not disabled:
             # pull default filters
             filters.update(objects.KEYWORDS.filter)
             # ignore invalid keywords -- only keywords version scope and higher are affected
-            filters.update({
-                objects.KEYWORDS[k]: v for k, v in filter_map.items()
-                if objects.KEYWORDS[k].scope >= base.version_scope})
+            filters.update(
+                {
+                    objects.KEYWORDS[k]: v
+                    for k, v in filter_map.items()
+                    if objects.KEYWORDS[k].scope >= base.version_scope
+                }
+            )
 
         setattr(namespace, self.dest, ImmutableDict(filters))
 
@@ -104,20 +109,21 @@ class CacheNegations(arghparse.CommaSeparatedNegations):
     def parse_values(self, values):
         all_cache_types = {cache.type for cache in CachedAddon.caches.values()}
         disabled, enabled = [], list(all_cache_types)
-        if values is None or values.lower() in ('y', 'yes', 'true'):
+        if values is None or values.lower() in ("y", "yes", "true"):
             pass
-        elif values.lower() in ('n', 'no', 'false'):
+        elif values.lower() in ("n", "no", "false"):
             disabled = list(all_cache_types)
         else:
             disabled, enabled = super().parse_values(values)
         disabled = set(disabled)
         enabled = set(enabled) if enabled else all_cache_types
         if unknown := (disabled | enabled) - all_cache_types:
-            unknowns = ', '.join(map(repr, unknown))
-            choices = ', '.join(map(repr, sorted(self.caches)))
+            unknowns = ", ".join(map(repr, unknown))
+            choices = ", ".join(map(repr, sorted(self.caches)))
             s = pluralism(unknown)
             raise argparse.ArgumentError(
-                self, f'unknown cache type{s}: {unknowns} (choose from {choices})')
+                self, f"unknown cache type{s}: {unknowns} (choose from {choices})"
+            )
         enabled = set(enabled).difference(disabled)
         return enabled
 
@@ -135,8 +141,8 @@ class ChecksetArgs(arghparse.CommaSeparatedNegations):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.aliases = {
-            'all': list(objects.CHECKS.values()),
-            'net': list(objects.CHECKS.select(NetworkCheck).values()),
+            "all": list(objects.CHECKS.values()),
+            "net": list(objects.CHECKS.select(NetworkCheck).values()),
         }
 
     def expand_aliases(self, args):
@@ -157,7 +163,7 @@ class ChecksetArgs(arghparse.CommaSeparatedNegations):
         for arg in args:
             for x in namespace.config_checksets[arg]:
                 # determine if checkset item is disabled or enabled
-                if x[0] == '-':
+                if x[0] == "-":
                     x = x[1:]
                     keywords = disabled
                 else:
@@ -168,7 +174,9 @@ class ChecksetArgs(arghparse.CommaSeparatedNegations):
                 elif x in objects.KEYWORDS:
                     keywords.append(x)
                 else:
-                    raise ValueError(f'{arg!r} checkset, unknown check or keyword: {x!r}')
+                    raise ValueError(
+                        f"{arg!r} checkset, unknown check or keyword: {x!r}"
+                    )
         return disabled, enabled
 
     def __call__(self, parser, namespace, values, option_string=None):
@@ -177,11 +185,12 @@ class ChecksetArgs(arghparse.CommaSeparatedNegations):
 
         # validate selected checksets
         if unknown := set(disabled + enabled) - set(self.aliases) - set(checksets):
-            unknown_str = ', '.join(map(repr, unknown))
-            available = ', '.join(sorted(chain(checksets, self.aliases)))
+            unknown_str = ", ".join(map(repr, unknown))
+            available = ", ".join(sorted(chain(checksets, self.aliases)))
             s = pluralism(unknown)
             raise argparse.ArgumentError(
-                self, f'unknown checkset{s}: {unknown_str} (available: {available})')
+                self, f"unknown checkset{s}: {unknown_str} (available: {available})"
+            )
 
         # expand aliases into keywords
         disabled, disabled_aliases = self.expand_aliases(disabled)
@@ -197,18 +206,22 @@ class ChecksetArgs(arghparse.CommaSeparatedNegations):
         # Convert double negatives into positives, e.g. disabling a checkset
         # containing a disabled keyword enables the keyword.
         disabled_keywords = set(disabled_aliases + disabled[1] + enabled[0])
-        enabled_keywords = set(enabled_aliases + disabled[0] + enabled[1]) - disabled_keywords
+        enabled_keywords = (
+            set(enabled_aliases + disabled[0] + enabled[1]) - disabled_keywords
+        )
 
         # parse check/keyword args related to checksets
         args = []
         if enabled_keywords:
             keywords_set = {objects.KEYWORDS[x] for x in enabled_keywords}
-            checks = ','.join(
-                k for k, v in objects.CHECKS.items()
-                if v.known_results.intersection(keywords_set))
-            args.append(f'--checks={checks}')
-        keywords = ','.join(enabled_keywords | {f'-{x}' for x in disabled_keywords})
-        args.append(f'--keywords={keywords}')
+            checks = ",".join(
+                k
+                for k, v in objects.CHECKS.items()
+                if v.known_results.intersection(keywords_set)
+            )
+            args.append(f"--checks={checks}")
+        keywords = ",".join(enabled_keywords | {f"-{x}" for x in disabled_keywords})
+        args.append(f"--keywords={keywords}")
         parser._parse_known_args(args, namespace)
 
 
@@ -220,21 +233,24 @@ class ScopeArgs(arghparse.CommaSeparatedNegations):
 
         # validate selected scopes
         if unknown_scopes := set(disabled + enabled) - set(base.scopes):
-            unknown = ', '.join(map(repr, unknown_scopes))
-            available = ', '.join(base.scopes)
+            unknown = ", ".join(map(repr, unknown_scopes))
+            available = ", ".join(base.scopes)
             s = pluralism(unknown_scopes)
             raise argparse.ArgumentError(
-                self, f'unknown scope{s}: {unknown} (available: {available})')
+                self, f"unknown scope{s}: {unknown} (available: {available})"
+            )
 
         disabled = set(chain.from_iterable(base.scopes[x] for x in disabled))
         enabled = set(chain.from_iterable(base.scopes[x] for x in enabled))
 
         if enabled:
             namespace.enabled_checks = {
-                c for c in objects.CHECKS.values() if c.scope in enabled}
+                c for c in objects.CHECKS.values() if c.scope in enabled
+            }
         if disabled:
             namespace.enabled_checks.difference_update(
-                c for c in objects.CHECKS.values() if c.scope in disabled)
+                c for c in objects.CHECKS.values() if c.scope in disabled
+            )
 
         setattr(namespace, self.dest, frozenset(enabled))
 
@@ -246,10 +262,12 @@ class CheckArgs(arghparse.CommaSeparatedElements):
         subtractive, neutral, additive = self.parse_values(values)
 
         # validate selected checks
-        if unknown_checks := set(subtractive + neutral + additive) - set(objects.CHECKS):
-            unknown = ', '.join(map(repr, unknown_checks))
+        if unknown_checks := set(subtractive + neutral + additive) - set(
+            objects.CHECKS
+        ):
+            unknown = ", ".join(map(repr, unknown_checks))
             s = pluralism(unknown_checks)
-            raise argparse.ArgumentError(self, f'unknown check{s}: {unknown}')
+            raise argparse.ArgumentError(self, f"unknown check{s}: {unknown}")
 
         if neutral:
             # replace the default check set
@@ -260,7 +278,8 @@ class CheckArgs(arghparse.CommaSeparatedElements):
         if subtractive:
             # remove from the default check set
             namespace.enabled_checks.difference_update(
-                objects.CHECKS[c] for c in subtractive)
+                objects.CHECKS[c] for c in subtractive
+            )
 
         setattr(namespace, self.dest, frozenset(neutral + additive))
 
@@ -278,9 +297,9 @@ class KeywordArgs(arghparse.CommaSeparatedNegations):
 
         # validate selected keywords
         if unknown_keywords := set(disabled + enabled) - set(objects.KEYWORDS):
-            unknown = ', '.join(map(repr, unknown_keywords))
+            unknown = ", ".join(map(repr, unknown_keywords))
             s = pluralism(unknown_keywords)
-            raise argparse.ArgumentError(self, f'unknown keyword{s}: {unknown}')
+            raise argparse.ArgumentError(self, f"unknown keyword{s}: {unknown}")
 
         # create keyword instance sets
         disabled_keywords = {objects.KEYWORDS[k] for k in disabled}
@@ -293,7 +312,8 @@ class KeywordArgs(arghparse.CommaSeparatedNegations):
                 if check.known_results.issubset(disabled_keywords):
                     namespace.enabled_checks.discard(check)
             enabled_keywords = set().union(
-                *(c.known_results for c in namespace.enabled_checks))
+                *(c.known_results for c in namespace.enabled_checks)
+            )
 
         namespace.filtered_keywords = enabled_keywords - disabled_keywords
         # restrict enabled checks if none have been selected
@@ -305,7 +325,7 @@ class KeywordArgs(arghparse.CommaSeparatedNegations):
 
         # check if experimental profiles are required for explicitly selected keywords
         for r in namespace.filtered_keywords:
-            if r.name in enabled and r._profile == 'exp':
+            if r.name in enabled and r._profile == "exp":
                 namespace.exp_profiles_required = True
                 break
 
@@ -331,17 +351,23 @@ class ExitArgs(arghparse.CommaSeparatedElements):
     def __call__(self, parser, namespace, values, option_string=None):
         # default to using error results if no keywords are selected
         if values is None:
-            values = 'error'
+            values = "error"
 
         subtractive, neutral, additive = self.parse_values(values)
 
         # default to using error results if no neutral keywords are selected
         if not neutral:
-            neutral.append('error')
+            neutral.append("error")
 
         # expand args to keyword objects
-        keywords = {objects.KEYWORDS[x] for x in self.args_to_keywords(namespace, neutral)}
-        keywords.update(objects.KEYWORDS[x] for x in self.args_to_keywords(namespace, additive))
-        keywords.difference_update(objects.KEYWORDS[x] for x in self.args_to_keywords(namespace, subtractive))
+        keywords = {
+            objects.KEYWORDS[x] for x in self.args_to_keywords(namespace, neutral)
+        }
+        keywords.update(
+            objects.KEYWORDS[x] for x in self.args_to_keywords(namespace, additive)
+        )
+        keywords.difference_update(
+            objects.KEYWORDS[x] for x in self.args_to_keywords(namespace, subtractive)
+        )
 
         setattr(namespace, self.dest, frozenset(keywords))

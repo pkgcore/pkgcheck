@@ -14,9 +14,9 @@ from . import Check, GentooRepoCheck
 
 # allowed filename characters: "a-zA-Z0-9._-+:"
 allowed_filename_chars = set()
-allowed_filename_chars.update(chr(x) for x in range(ord('a'), ord('z') + 1))
-allowed_filename_chars.update(chr(x) for x in range(ord('A'), ord('Z') + 1))
-allowed_filename_chars.update(chr(x) for x in range(ord('0'), ord('9') + 1))
+allowed_filename_chars.update(chr(x) for x in range(ord("a"), ord("z") + 1))
+allowed_filename_chars.update(chr(x) for x in range(ord("A"), ord("Z") + 1))
+allowed_filename_chars.update(chr(x) for x in range(ord("0"), ord("9") + 1))
 allowed_filename_chars.update([".", "-", "_", "+", ":"])
 
 
@@ -30,8 +30,8 @@ class MismatchedPN(results.PackageResult, results.Error):
     @property
     def desc(self):
         s = pluralism(self.ebuilds)
-        ebuilds = ', '.join(self.ebuilds)
-        return f'mismatched package name{s}: [ {ebuilds} ]'
+        ebuilds = ", ".join(self.ebuilds)
+        return f"mismatched package name{s}: [ {ebuilds} ]"
 
 
 class InvalidPN(results.PackageResult, results.Error):
@@ -44,8 +44,8 @@ class InvalidPN(results.PackageResult, results.Error):
     @property
     def desc(self):
         s = pluralism(self.ebuilds)
-        ebuilds = ', '.join(self.ebuilds)
-        return f'invalid package name{s}: [ {ebuilds} ]'
+        ebuilds = ", ".join(self.ebuilds)
+        return f"invalid package name{s}: [ {ebuilds} ]"
 
 
 class EqualVersions(results.PackageResult, results.Error):
@@ -74,8 +74,8 @@ class DuplicateFiles(results.PackageResult, results.Warning):
 
     @property
     def desc(self):
-        files = ', '.join(map(repr, self.files))
-        return f'duplicate identical files in FILESDIR: {files}'
+        files = ", ".join(map(repr, self.files))
+        return f"duplicate identical files in FILESDIR: {files}"
 
 
 class EmptyFile(results.PackageResult, results.Warning):
@@ -87,7 +87,7 @@ class EmptyFile(results.PackageResult, results.Warning):
 
     @property
     def desc(self):
-        return f'empty file in FILESDIR: {self.filename!r}'
+        return f"empty file in FILESDIR: {self.filename!r}"
 
 
 class ExecutableFile(results.PackageResult, results.Warning):
@@ -99,7 +99,7 @@ class ExecutableFile(results.PackageResult, results.Warning):
 
     @property
     def desc(self):
-        return f'unnecessary executable bit: {self.filename!r}'
+        return f"unnecessary executable bit: {self.filename!r}"
 
 
 class UnknownPkgDirEntry(results.PackageResult, results.Warning):
@@ -115,9 +115,9 @@ class UnknownPkgDirEntry(results.PackageResult, results.Warning):
 
     @property
     def desc(self):
-        files = ', '.join(map(repr, self.filenames))
-        y = pluralism(self.filenames, singular='y', plural='ies')
-        return f'unknown entr{y}: {files}'
+        files = ", ".join(map(repr, self.filenames))
+        y = pluralism(self.filenames, singular="y", plural="ies")
+        return f"unknown entr{y}: {files}"
 
 
 class SizeViolation(results.PackageResult, results.Warning):
@@ -132,8 +132,10 @@ class SizeViolation(results.PackageResult, results.Warning):
 
     @property
     def desc(self):
-        return (f'{self.filename!r} exceeds {sizeof_fmt(self.limit)} in size; '
-                f'{sizeof_fmt(self.size)} total')
+        return (
+            f"{self.filename!r} exceeds {sizeof_fmt(self.limit)} in size; "
+            f"{sizeof_fmt(self.size)} total"
+        )
 
 
 class TotalSizeViolation(results.PackageResult, results.Warning):
@@ -147,8 +149,10 @@ class TotalSizeViolation(results.PackageResult, results.Warning):
 
     @property
     def desc(self):
-        return (f'files/ directory exceeds {sizeof_fmt(self.limit)} in size; '
-                f'{sizeof_fmt(self.size)} total')
+        return (
+            f"files/ directory exceeds {sizeof_fmt(self.limit)} in size; "
+            f"{sizeof_fmt(self.size)} total"
+        )
 
 
 class BannedCharacter(results.PackageResult, results.Error):
@@ -167,8 +171,8 @@ class BannedCharacter(results.PackageResult, results.Error):
     @property
     def desc(self):
         s = pluralism(self.chars)
-        chars = ', '.join(map(repr, self.chars))
-        return f'filename {self.filename!r} character{s} outside allowed set: {chars}'
+        chars = ", ".join(map(repr, self.chars))
+        return f"filename {self.filename!r} character{s} outside allowed set: {chars}"
 
 
 class InvalidUTF8(results.PackageResult, results.Error):
@@ -187,17 +191,27 @@ class InvalidUTF8(results.PackageResult, results.Error):
 class PkgDirCheck(Check):
     """Scan ebuild directory for various file-related issues."""
 
-    _source = (sources.PackageRepoSource, (), (('source', sources.RawRepoSource),))
+    _source = (sources.PackageRepoSource, (), (("source", sources.RawRepoSource),))
 
     ignore_dirs = frozenset(["cvs", ".svn", ".bzr"])
     required_addons = (addons.git.GitAddon,)
-    known_results = frozenset([
-        DuplicateFiles, EmptyFile, ExecutableFile, UnknownPkgDirEntry, SizeViolation,
-        BannedCharacter, InvalidUTF8, MismatchedPN, InvalidPN, TotalSizeViolation,
-    ])
+    known_results = frozenset(
+        [
+            DuplicateFiles,
+            EmptyFile,
+            ExecutableFile,
+            UnknownPkgDirEntry,
+            SizeViolation,
+            BannedCharacter,
+            InvalidUTF8,
+            MismatchedPN,
+            InvalidPN,
+            TotalSizeViolation,
+        ]
+    )
 
     # TODO: put some 'preferred algorithms by purpose' into snakeoil?
-    digest_algo = 'sha256'
+    digest_algo = "sha256"
 
     def __init__(self, *args, git_addon):
         super().__init__(*args)
@@ -206,7 +220,7 @@ class PkgDirCheck(Check):
     def feed(self, pkgset):
         pkg = pkgset[0]
         pkg_path = pjoin(self.options.target_repo.location, pkg.category, pkg.package)
-        ebuild_ext = '.ebuild'
+        ebuild_ext = ".ebuild"
         mismatched = []
         invalid = []
         unknown = []
@@ -228,20 +242,23 @@ class PkgDirCheck(Check):
 
             if filename.endswith(ebuild_ext):
                 try:
-                    with open(path, mode='rb') as f:
+                    with open(path, mode="rb") as f:
                         f.read(8192).decode()
                 except UnicodeDecodeError as e:
                     yield InvalidUTF8(filename, str(e), pkg=pkg)
 
-                pkg_name = os.path.basename(filename[:-len(ebuild_ext)])
+                pkg_name = os.path.basename(filename[: -len(ebuild_ext)])
                 try:
-                    pkg_atom = atom_cls(f'={pkg.category}/{pkg_name}')
+                    pkg_atom = atom_cls(f"={pkg.category}/{pkg_name}")
                     if pkg_atom.package != os.path.basename(pkg_path):
                         mismatched.append(pkg_name)
                 except MalformedAtom:
                     invalid.append(pkg_name)
-            elif (self.options.gentoo_repo and
-                    filename not in ('Manifest', 'metadata.xml', 'files')):
+            elif self.options.gentoo_repo and filename not in (
+                "Manifest",
+                "metadata.xml",
+                "files",
+            ):
                 unknown.append(filename)
 
         if mismatched:
@@ -254,7 +271,7 @@ class PkgDirCheck(Check):
         files_by_size = defaultdict(list)
         pkg_path_len = len(pkg_path) + 1
         total_size = 0
-        for root, dirs, files in os.walk(pjoin(pkg_path, 'files')):
+        for root, dirs, files in os.walk(pjoin(pkg_path, "files")):
             # don't visit any ignored directories
             for d in self.ignore_dirs.intersection(dirs):
                 dirs.remove(d)
@@ -270,14 +287,18 @@ class PkgDirCheck(Check):
                     if file_stat.st_size == 0:
                         yield EmptyFile(pjoin(base_dir, filename), pkg=pkg)
                     else:
-                        files_by_size[file_stat.st_size].append(pjoin(base_dir, filename))
+                        files_by_size[file_stat.st_size].append(
+                            pjoin(base_dir, filename)
+                        )
                         total_size += file_stat.st_size
                         if file_stat.st_size > SizeViolation.limit:
                             yield SizeViolation(
-                                pjoin(base_dir, filename), file_stat.st_size, pkg=pkg)
+                                pjoin(base_dir, filename), file_stat.st_size, pkg=pkg
+                            )
                     if banned_chars := set(filename) - allowed_filename_chars:
                         yield BannedCharacter(
-                            pjoin(base_dir, filename), sorted(banned_chars), pkg=pkg)
+                            pjoin(base_dir, filename), sorted(banned_chars), pkg=pkg
+                        )
 
         if total_size > TotalSizeViolation.limit:
             yield TotalSizeViolation(total_size, pkg=pkg)
@@ -309,7 +330,9 @@ class EqualVersionsCheck(Check):
             except IndexError:
                 break
             if pkg_a.versioned_atom == pkg_b.versioned_atom:
-                equal_versions[pkg_a.versioned_atom].update([pkg_a.fullver, pkg_b.fullver])
+                equal_versions[pkg_a.versioned_atom].update(
+                    [pkg_a.fullver, pkg_b.fullver]
+                )
         for pkg, versions in equal_versions.items():
             yield EqualVersions(sorted(versions), pkg=pkg)
 
@@ -324,9 +347,9 @@ class LiveOnlyPackage(results.PackageResult, results.Warning):
     @property
     def desc(self):
         if self.age < 365:
-            return f'all versions are VCS-based added over {self.age} days ago'
+            return f"all versions are VCS-based added over {self.age} days ago"
         years = round(self.age / 365, 2)
-        return f'all versions are VCS-based added over {years} years ago'
+        return f"all versions are VCS-based added over {years} years ago"
 
 
 class LiveOnlyCheck(GentooRepoCheck):

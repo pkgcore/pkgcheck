@@ -4,9 +4,9 @@ from .api import keywords, scan
 from .base import PkgcheckException
 from .results import Result
 
-__all__ = ('keywords', 'scan', 'PkgcheckException', 'Result')
-__title__ = 'pkgcheck'
-__version__ = '0.10.20'
+__all__ = ("keywords", "scan", "PkgcheckException", "Result")
+__title__ = "pkgcheck"
+__version__ = "0.10.20"
 
 
 def __getattr__(name):
@@ -15,9 +15,9 @@ def __getattr__(name):
         return keywords[name]
 
     try:
-        return _import('.' + name, __name__)
+        return _import("." + name, __name__)
     except ImportError:
-        raise AttributeError(f'module {__name__} has no attribute {name}')
+        raise AttributeError(f"module {__name__} has no attribute {name}")
 
 
 def __dir__():

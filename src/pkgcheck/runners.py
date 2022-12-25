@@ -31,7 +31,7 @@ class CheckRunner:
 class SyncCheckRunner(CheckRunner):
     """Generic runner for synchronous checks."""
 
-    type = 'sync'
+    type = "sync"
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -43,7 +43,8 @@ class SyncCheckRunner(CheckRunner):
         # only report metadata errors for version-scoped sources
         if self.source.scope == base.version_scope:
             self.source.itermatch = partial(
-                self.source.itermatch, error_callback=self._metadata_error_cb)
+                self.source.itermatch, error_callback=self._metadata_error_cb
+            )
 
     def _metadata_error_cb(self, e, check=None):
         """Callback handling MetadataError results."""
@@ -58,7 +59,7 @@ class SyncCheckRunner(CheckRunner):
         # so they can be noticed and fixed.
         result_cls = MetadataError.results[e.attr]
         if result_cls in known_results:
-            error_str = ': '.join(e.msg().split('\n'))
+            error_str = ": ".join(e.msg().split("\n"))
             result = result_cls(e.attr, error_str, pkg=e.pkg)
             self._metadata_errors.append((e.pkg, result))
 
@@ -98,7 +99,7 @@ class SequentialCheckRunner(SyncCheckRunner):
     Checks that must not be run in parallel, will be run on the main process.
     """
 
-    type = 'sequential'
+    type = "sequential"
 
 
 class AsyncCheckRunner(CheckRunner):
@@ -109,7 +110,7 @@ class AsyncCheckRunner(CheckRunner):
     on completion.
     """
 
-    type = 'async'
+    type = "async"
 
     def schedule(self, executor, futures, restrict=packages.AlwaysTrue):
         """Schedule all checks to run via the given executor."""

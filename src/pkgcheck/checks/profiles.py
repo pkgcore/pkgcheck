@@ -25,7 +25,7 @@ class UnknownProfilePackage(results.ProfilesResult, results.Warning):
 
     @property
     def desc(self):
-        return f'{self.path!r}: unknown package: {self.atom!r}'
+        return f"{self.path!r}: unknown package: {self.atom!r}"
 
 
 class UnmatchedProfilePackageUnmask(results.ProfilesResult, results.Warning):
@@ -42,7 +42,7 @@ class UnmatchedProfilePackageUnmask(results.ProfilesResult, results.Warning):
 
     @property
     def desc(self):
-        return f'{self.path!r}: unmask of not masked package: {self.atom!r}'
+        return f"{self.path!r}: unmask of not masked package: {self.atom!r}"
 
 
 class UnknownProfilePackageUse(results.ProfilesResult, results.Warning):
@@ -57,9 +57,9 @@ class UnknownProfilePackageUse(results.ProfilesResult, results.Warning):
     @property
     def desc(self):
         s = pluralism(self.flags)
-        flags = ', '.join(self.flags)
-        atom = f'{self.atom}[{flags}]'
-        return f'{self.path!r}: unknown package USE flag{s}: {atom!r}'
+        flags = ", ".join(self.flags)
+        atom = f"{self.atom}[{flags}]"
+        return f"{self.path!r}: unknown package USE flag{s}: {atom!r}"
 
 
 class UnknownProfileUse(results.ProfilesResult, results.Warning):
@@ -73,8 +73,8 @@ class UnknownProfileUse(results.ProfilesResult, results.Warning):
     @property
     def desc(self):
         s = pluralism(self.flags)
-        flags = ', '.join(map(repr, self.flags))
-        return f'{self.path!r}: unknown USE flag{s}: {flags}'
+        flags = ", ".join(map(repr, self.flags))
+        return f"{self.path!r}: unknown USE flag{s}: {flags}"
 
 
 class UnknownProfilePackageKeywords(results.ProfilesResult, results.Warning):
@@ -89,8 +89,8 @@ class UnknownProfilePackageKeywords(results.ProfilesResult, results.Warning):
     @property
     def desc(self):
         s = pluralism(self.keywords)
-        keywords = ', '.join(map(repr, self.keywords))
-        return f'{self.path!r}: unknown package keyword{s}: {self.atom}: {keywords}'
+        keywords = ", ".join(map(repr, self.keywords))
+        return f"{self.path!r}: unknown package keyword{s}: {self.atom}: {keywords}"
 
 
 class UnknownProfileUseExpand(results.ProfilesResult, results.Warning):
@@ -104,8 +104,8 @@ class UnknownProfileUseExpand(results.ProfilesResult, results.Warning):
     @property
     def desc(self):
         s = pluralism(self.groups)
-        groups = ', '.join(self.groups)
-        return f'{self.path!r}: unknown USE_EXPAND group{s}: {groups}'
+        groups = ", ".join(self.groups)
+        return f"{self.path!r}: unknown USE_EXPAND group{s}: {groups}"
 
 
 class ProfileWarning(results.ProfilesResult, results.LogWarning):
@@ -118,8 +118,8 @@ class ProfileError(results.ProfilesResult, results.LogError):
 
 # mapping of profile log levels to result classes
 _logmap = (
-    base.LogMap('pkgcore.log.logger.warning', ProfileWarning),
-    base.LogMap('pkgcore.log.logger.error', ProfileError),
+    base.LogMap("pkgcore.log.logger.warning", ProfileWarning),
+    base.LogMap("pkgcore.log.logger.error", ProfileError),
 )
 
 
@@ -145,12 +145,18 @@ class ProfilesCheck(Check):
 
     _source = sources.ProfilesRepoSource
     required_addons = (addons.UseAddon, addons.KeywordsAddon)
-    known_results = frozenset([
-        UnknownProfilePackage, UnmatchedProfilePackageUnmask,
-        UnknownProfilePackageUse, UnknownProfileUse,
-        UnknownProfilePackageKeywords, UnknownProfileUseExpand,
-        ProfileWarning, ProfileError,
-    ])
+    known_results = frozenset(
+        [
+            UnknownProfilePackage,
+            UnmatchedProfilePackageUnmask,
+            UnknownProfilePackageUse,
+            UnknownProfileUse,
+            UnknownProfilePackageKeywords,
+            UnknownProfileUseExpand,
+            ProfileWarning,
+            ProfileError,
+        ]
+    )
 
     # mapping between known files and verification methods
     known_files = {}
@@ -161,20 +167,24 @@ class ProfilesCheck(Check):
         self.keywords = keywords_addon
         self.search_repo = self.options.search_repo
         self.profiles_dir = repo.config.profiles_base
-        self.use_expand_groups = frozenset(x.upper() for x in repo.config.use_expand_desc)
+        self.use_expand_groups = frozenset(
+            x.upper() for x in repo.config.use_expand_desc
+        )
 
         local_iuse = {use for _pkg, (use, _desc) in repo.config.use_local_desc}
         self.available_iuse = frozenset(
-            local_iuse | use_addon.global_iuse |
-            use_addon.global_iuse_expand | use_addon.global_iuse_implicit)
+            local_iuse
+            | use_addon.global_iuse
+            | use_addon.global_iuse_expand
+            | use_addon.global_iuse_implicit
+        )
 
-    @verify_files(('parent', 'parents'),
-                  ('eapi', 'eapi'))
+    @verify_files(("parent", "parents"), ("eapi", "eapi"))
     def _pull_attr(self, *args):
         """Verification only needs to pull the profile attr."""
         yield from ()
 
-    @verify_files(('deprecated', 'deprecated'))
+    @verify_files(("deprecated", "deprecated"))
     def _deprecated(self, filename, node, vals):
         # make sure replacement profile exists
         if vals is not None:
@@ -183,47 +193,59 @@ class ProfilesCheck(Check):
                 addons.profiles.ProfileNode(pjoin(self.profiles_dir, replacement))
             except profiles_mod.ProfileError:
                 yield ProfileError(
-                    f'nonexistent replacement {replacement!r} '
-                    f'for deprecated profile: {node.name!r}')
+                    f"nonexistent replacement {replacement!r} "
+                    f"for deprecated profile: {node.name!r}"
+                )
 
     # non-spec files
-    @verify_files(('package.keywords', 'keywords'),
-                  ('package.accept_keywords', 'accept_keywords'))
+    @verify_files(
+        ("package.keywords", "keywords"), ("package.accept_keywords", "accept_keywords")
+    )
     def _pkg_keywords(self, filename, node, vals):
         for atom, keywords in vals:
             if invalid := sorted(set(keywords) - self.keywords.valid):
                 yield UnknownProfilePackageKeywords(
-                    pjoin(node.name, filename), atom, invalid)
+                    pjoin(node.name, filename), atom, invalid
+                )
 
-    @verify_files(('use.force', 'use_force'),
-                  ('use.stable.force', 'use_stable_force'),
-                  ('use.mask', 'use_mask'),
-                  ('use.stable.mask', 'use_stable_mask'))
+    @verify_files(
+        ("use.force", "use_force"),
+        ("use.stable.force", "use_stable_force"),
+        ("use.mask", "use_mask"),
+        ("use.stable.mask", "use_stable_mask"),
+    )
     def _use(self, filename, node, vals):
         # TODO: give ChunkedDataDict some dict view methods
         d = vals.render_to_dict()
         for _, entries in d.items():
             for _, disabled, enabled in entries:
                 if unknown_disabled := set(disabled) - self.available_iuse:
-                    flags = ('-' + u for u in unknown_disabled)
-                    yield UnknownProfileUse(
-                        pjoin(node.name, filename), flags)
+                    flags = ("-" + u for u in unknown_disabled)
+                    yield UnknownProfileUse(pjoin(node.name, filename), flags)
                 if unknown_enabled := set(enabled) - self.available_iuse:
-                    yield UnknownProfileUse(
-                        pjoin(node.name, filename), unknown_enabled)
+                    yield UnknownProfileUse(pjoin(node.name, filename), unknown_enabled)
 
-    @verify_files(('packages', 'packages'),
-                  ('package.unmask', 'unmasks'),
-                  ('package.deprecated', 'pkg_deprecated'))
+    @verify_files(
+        ("packages", "packages"),
+        ("package.unmask", "unmasks"),
+        ("package.deprecated", "pkg_deprecated"),
+    )
     def _pkg_atoms(self, filename, node, vals):
         for x in iflatten_instance(vals, atom_cls):
             if not self.search_repo.match(x):
                 yield UnknownProfilePackage(pjoin(node.name, filename), x)
 
-    @verify_files(('package.mask', 'masks'),)
+    @verify_files(
+        ("package.mask", "masks"),
+    )
     def _pkg_masks(self, filename, node, vals):
-        all_masked = set().union(*(masked[1]
-            for p in profiles_mod.ProfileStack(node.path).stack if (masked := p.masks)))
+        all_masked = set().union(
+            *(
+                masked[1]
+                for p in profiles_mod.ProfileStack(node.path).stack
+                if (masked := p.masks)
+            )
+        )
 
         unmasked, masked = vals
         for x in masked:
@@ -235,11 +257,13 @@ class ProfilesCheck(Check):
             elif x not in all_masked:
                 yield UnmatchedProfilePackageUnmask(pjoin(node.name, filename), x)
 
-    @verify_files(('package.use', 'pkg_use'),
-                  ('package.use.force', 'pkg_use_force'),
-                  ('package.use.stable.force', 'pkg_use_stable_force'),
-                  ('package.use.mask', 'pkg_use_mask'),
-                  ('package.use.stable.mask', 'pkg_use_stable_mask'))
+    @verify_files(
+        ("package.use", "pkg_use"),
+        ("package.use.force", "pkg_use_force"),
+        ("package.use.stable.force", "pkg_use_stable_force"),
+        ("package.use.mask", "pkg_use_mask"),
+        ("package.use.stable.mask", "pkg_use_stable_mask"),
+    )
     def _pkg_use(self, filename, node, vals):
         # TODO: give ChunkedDataDict some dict view methods
         d = vals
@@ -251,21 +275,24 @@ class ProfilesCheck(Check):
                 if pkgs := self.search_repo.match(a):
                     available = {u for pkg in pkgs for u in pkg.iuse_stripped}
                     if unknown_disabled := set(disabled) - available:
-                        flags = ('-' + u for u in unknown_disabled)
+                        flags = ("-" + u for u in unknown_disabled)
                         yield UnknownProfilePackageUse(
-                            pjoin(node.name, filename), a, flags)
+                            pjoin(node.name, filename), a, flags
+                        )
                     if unknown_enabled := set(enabled) - available:
                         yield UnknownProfilePackageUse(
-                            pjoin(node.name, filename), a, unknown_enabled)
+                            pjoin(node.name, filename), a, unknown_enabled
+                        )
                 else:
-                    yield UnknownProfilePackage(
-                        pjoin(node.name, filename), a)
+                    yield UnknownProfilePackage(pjoin(node.name, filename), a)
 
-    @verify_files(('make.defaults', 'make_defaults'))
+    @verify_files(("make.defaults", "make_defaults"))
     def _make_defaults(self, filename, node, vals):
-        if defined := set(vals.get('USE_EXPAND', '').split()):
+        if defined := set(vals.get("USE_EXPAND", "").split()):
             if unknown := defined - self.use_expand_groups:
-                yield UnknownProfileUseExpand(pjoin(node.name, filename), sorted(unknown))
+                yield UnknownProfileUseExpand(
+                    pjoin(node.name, filename), sorted(unknown)
+                )
 
     def feed(self, profile):
         for f in profile.files.intersection(self.known_files):
@@ -286,8 +313,8 @@ class UnusedProfileDirs(results.ProfilesResult, results.Warning):
     @property
     def desc(self):
         s = pluralism(self.dirs)
-        dirs = ', '.join(map(repr, self.dirs))
-        return f'unused profile dir{s}: {dirs}'
+        dirs = ", ".join(map(repr, self.dirs))
+        return f"unused profile dir{s}: {dirs}"
 
 
 class ArchesWithoutProfiles(results.ProfilesResult, results.Warning):
@@ -299,9 +326,9 @@ class ArchesWithoutProfiles(results.ProfilesResult, results.Warning):
 
     @property
     def desc(self):
-        es = pluralism(self.arches, plural='es')
-        arches = ', '.join(self.arches)
-        return f'arch{es} without profiles: {arches}'
+        es = pluralism(self.arches, plural="es")
+        arches = ", ".join(self.arches)
+        return f"arch{es} without profiles: {arches}"
 
 
 class NonexistentProfilePath(results.ProfilesResult, results.Error):
@@ -313,7 +340,7 @@ class NonexistentProfilePath(results.ProfilesResult, results.Error):
 
     @property
     def desc(self):
-        return f'nonexistent profile path: {self.path!r}'
+        return f"nonexistent profile path: {self.path!r}"
 
 
 class LaggingProfileEapi(results.ProfilesResult, results.Warning):
@@ -329,8 +356,8 @@ class LaggingProfileEapi(results.ProfilesResult, results.Warning):
     @property
     def desc(self):
         return (
-            f'{self.profile!r} profile has EAPI {self.eapi}, '
-            f'{self.parent!r} parent has EAPI {self.parent_eapi}'
+            f"{self.profile!r} profile has EAPI {self.eapi}, "
+            f"{self.parent!r} parent has EAPI {self.parent_eapi}"
         )
 
 
@@ -352,13 +379,13 @@ class _ProfileEapiResult(results.ProfilesResult):
 class BannedProfileEapi(_ProfileEapiResult, results.Error):
     """Profile has an EAPI that is banned in the repository."""
 
-    _type = 'banned'
+    _type = "banned"
 
 
 class DeprecatedProfileEapi(_ProfileEapiResult, results.Warning):
     """Profile has an EAPI that is deprecated in the repository."""
 
-    _type = 'deprecated'
+    _type = "deprecated"
 
 
 class UnknownCategoryDirs(results.ProfilesResult, results.Warning):
@@ -373,9 +400,9 @@ class UnknownCategoryDirs(results.ProfilesResult, results.Warning):
 
     @property
     def desc(self):
-        dirs = ', '.join(self.dirs)
+        dirs = ", ".join(self.dirs)
         s = pluralism(self.dirs)
-        return f'unknown category dir{s}: {dirs}'
+        return f"unknown category dir{s}: {dirs}"
 
 
 class NonexistentCategories(results.ProfilesResult, results.Warning):
@@ -387,9 +414,9 @@ class NonexistentCategories(results.ProfilesResult, results.Warning):
 
     @property
     def desc(self):
-        categories = ', '.join(self.categories)
-        ies = pluralism(self.categories, singular='y', plural='ies')
-        return f'nonexistent profiles/categories entr{ies}: {categories}'
+        categories = ", ".join(self.categories)
+        ies = pluralism(self.categories, singular="y", plural="ies")
+        return f"nonexistent profiles/categories entr{ies}: {categories}"
 
 
 def dir_parents(path):
@@ -399,11 +426,11 @@ def dir_parents(path):
     >>> list(dir_parents('/root/foo/bar/baz'))
     ['root/foo/bar', 'root/foo', 'root']
     """
-    path = os.path.normpath(path.strip('/'))
+    path = os.path.normpath(path.strip("/"))
     while path:
         yield path
         dirname, _basename = os.path.split(path)
-        path = dirname.rstrip('/')
+        path = dirname.rstrip("/")
 
 
 class RepoProfilesCheck(RepoCheck):
@@ -415,14 +442,23 @@ class RepoProfilesCheck(RepoCheck):
 
     _source = (sources.EmptySource, (base.profiles_scope,))
     required_addons = (addons.profiles.ProfileAddon,)
-    known_results = frozenset([
-        ArchesWithoutProfiles, UnusedProfileDirs, NonexistentProfilePath,
-        UnknownCategoryDirs, NonexistentCategories, LaggingProfileEapi,
-        ProfileError, ProfileWarning, BannedProfileEapi, DeprecatedProfileEapi,
-    ])
+    known_results = frozenset(
+        [
+            ArchesWithoutProfiles,
+            UnusedProfileDirs,
+            NonexistentProfilePath,
+            UnknownCategoryDirs,
+            NonexistentCategories,
+            LaggingProfileEapi,
+            ProfileError,
+            ProfileWarning,
+            BannedProfileEapi,
+            DeprecatedProfileEapi,
+        ]
+    )
 
     # known profile status types for the gentoo repo
-    known_profile_statuses = frozenset(['stable', 'dev', 'exp'])
+    known_profile_statuses = frozenset(["stable", "dev", "exp"])
 
     def __init__(self, *args, profile_addon):
         super().__init__(*args)
@@ -433,17 +469,23 @@ class RepoProfilesCheck(RepoCheck):
 
     def finish(self):
         if self.options.gentoo_repo:
-            if unknown_category_dirs := set(self.repo.category_dirs).difference(self.repo.categories):
+            if unknown_category_dirs := set(self.repo.category_dirs).difference(
+                self.repo.categories
+            ):
                 yield UnknownCategoryDirs(sorted(unknown_category_dirs))
-        if nonexistent_categories := set(self.repo.config.categories).difference(self.repo.category_dirs):
+        if nonexistent_categories := set(self.repo.config.categories).difference(
+            self.repo.category_dirs
+        ):
             yield NonexistentCategories(sorted(nonexistent_categories))
-        if arches_without_profiles := set(self.arches) - set(self.repo.profiles.arches()):
+        if arches_without_profiles := set(self.arches) - set(
+            self.repo.profiles.arches()
+        ):
             yield ArchesWithoutProfiles(sorted(arches_without_profiles))
 
-        root_profile_dirs = {'embedded'}
+        root_profile_dirs = {"embedded"}
         available_profile_dirs = set()
         for root, _dirs, _files in os.walk(self.profiles_dir):
-            if d := root[len(self.profiles_dir):].lstrip('/'):
+            if d := root[len(self.profiles_dir) :].lstrip("/"):
                 available_profile_dirs.add(d)
         available_profile_dirs -= self.non_profile_dirs | root_profile_dirs
 
@@ -456,8 +498,11 @@ class RepoProfilesCheck(RepoCheck):
         # forcibly parse profiles.desc and convert log warnings/errors into reports
         with base.LogReports(*_logmap) as log_reports:
             profiles = Profiles.parse(
-                self.profiles_dir, self.repo.repo_id,
-                known_status=known_profile_statuses, known_arch=self.arches)
+                self.profiles_dir,
+                self.repo.repo_id,
+                known_status=known_profile_statuses,
+                known_arch=self.arches,
+            )
         yield from log_reports
 
         banned_eapis = self.repo.config.profile_eapis_banned
@@ -475,7 +520,10 @@ class RepoProfilesCheck(RepoCheck):
                 continue
             for parent in profile.stack:
                 seen_profile_dirs.update(dir_parents(parent.name))
-                if profile.eapi is not parent.eapi and profile.eapi in parent.eapi.inherits:
+                if (
+                    profile.eapi is not parent.eapi
+                    and profile.eapi in parent.eapi.inherits
+                ):
                     lagging_profile_eapi[profile].append(parent)
                 if str(parent.eapi) in banned_eapis:
                     banned_profile_eapi.add(parent)
@@ -485,7 +533,8 @@ class RepoProfilesCheck(RepoCheck):
         for profile, parents in lagging_profile_eapi.items():
             parent = parents[-1]
             yield LaggingProfileEapi(
-                profile.name, str(profile.eapi), parent.name, str(parent.eapi))
+                profile.name, str(profile.eapi), parent.name, str(parent.eapi)
+            )
         for profile in banned_profile_eapi:
             yield BannedProfileEapi(profile.name, profile.eapi)
         for profile in deprecated_profile_eapi:

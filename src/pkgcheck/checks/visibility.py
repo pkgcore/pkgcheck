@@ -12,30 +12,47 @@ from . import Check
 
 
 class FakeConfigurable:
-    "Package wrapper binding profile data."""
+    "Package wrapper binding profile data." ""
 
     configurable = True
-    __slots__ = ('use', 'iuse', '_forced_use', '_masked_use', '_pkg_use', '_raw_pkg', '_profile')
+    __slots__ = (
+        "use",
+        "iuse",
+        "_forced_use",
+        "_masked_use",
+        "_pkg_use",
+        "_raw_pkg",
+        "_profile",
+    )
 
     def __init__(self, pkg, profile):
-        object.__setattr__(self, '_raw_pkg', pkg)
-        object.__setattr__(self, '_profile', profile)
+        object.__setattr__(self, "_raw_pkg", pkg)
+        object.__setattr__(self, "_profile", profile)
 
         object.__setattr__(
-            self, '_forced_use', self._profile.forced_use.pull_data(self._raw_pkg))
+            self, "_forced_use", self._profile.forced_use.pull_data(self._raw_pkg)
+        )
         object.__setattr__(
-            self, '_masked_use', self._profile.masked_use.pull_data(self._raw_pkg))
+            self, "_masked_use", self._profile.masked_use.pull_data(self._raw_pkg)
+        )
         object.__setattr__(
-            self, '_pkg_use', self._profile.pkg_use.pull_data(self._raw_pkg))
-        use_defaults = {x[1:] for x in pkg.iuse if x[0] == '+'}
-        enabled_use = (use_defaults | profile.use | self._pkg_use | self._forced_use) - self._masked_use
+            self, "_pkg_use", self._profile.pkg_use.pull_data(self._raw_pkg)
+        )
+        use_defaults = {x[1:] for x in pkg.iuse if x[0] == "+"}
+        enabled_use = (
+            use_defaults | profile.use | self._pkg_use | self._forced_use
+        ) - self._masked_use
         object.__setattr__(
-            self, 'use', frozenset(enabled_use & (profile.iuse_effective | pkg.iuse_effective)))
+            self,
+            "use",
+            frozenset(enabled_use & (profile.iuse_effective | pkg.iuse_effective)),
+        )
         object.__setattr__(
-            self, 'iuse', frozenset(profile.iuse_effective.union(pkg.iuse_stripped)))
+            self, "iuse", frozenset(profile.iuse_effective.union(pkg.iuse_stripped))
+        )
 
     def request_enable(self, attr, *vals):
-        if attr != 'use':
+        if attr != "use":
             return False
 
         set_vals = frozenset(vals)
@@ -47,7 +64,7 @@ class FakeConfigurable:
         return set_vals.isdisjoint(self._masked_use)
 
     def request_disable(self, attr, *vals):
-        if attr != 'use':
+        if attr != "use":
             return False
 
         set_vals = frozenset(vals)
@@ -70,7 +87,7 @@ class FakeConfigurable:
     __getattr__ = klass.GetAttrProxy("_raw_pkg")
 
     def __setattr__(self, attr, val):
-        raise AttributeError(self, 'is immutable')
+        raise AttributeError(self, "is immutable")
 
 
 class _BlockMemoryExhaustion(Exception):
@@ -78,10 +95,13 @@ class _BlockMemoryExhaustion(Exception):
 
 
 # This is fast path code, hence the seperated implementations.
-if getattr(atom, '_TRANSITIVE_USE_ATOM_BUG_IS_FIXED', False):
+if getattr(atom, "_TRANSITIVE_USE_ATOM_BUG_IS_FIXED", False):
+
     def _eapi2_flatten(val):
         return isinstance(val, atom) and not isinstance(val, transitive_use_atom)
+
 else:
+
     def _eapi2_flatten(val):
         if isinstance(val, transitive_use_atom):
             if len([x for x in val.use if x.endswith("?")]) > 16:
@@ -107,13 +127,13 @@ class VisibleVcsPkg(results.VersionResult, results.Warning):
     @property
     def desc(self):
         if self.num_profiles is not None and self.num_profiles > 1:
-            num_profiles = f' ({self.num_profiles} total)'
+            num_profiles = f" ({self.num_profiles} total)"
         else:
-            num_profiles = ''
+            num_profiles = ""
 
         return (
             f'VCS version visible for KEYWORDS="{self.arch}", '
-            f'profile {self.profile}{num_profiles}'
+            f"profile {self.profile}{num_profiles}"
         )
 
 
@@ -128,8 +148,8 @@ class NonexistentDeps(results.VersionResult, results.Warning):
     @property
     def desc(self):
         s = pluralism(self.nonexistent)
-        nonexistent = ', '.join(self.nonexistent)
-        return f'{self.attr}: nonexistent package{s}: {nonexistent}'
+        nonexistent = ", ".join(self.nonexistent)
+        return f"{self.attr}: nonexistent package{s}: {nonexistent}"
 
 
 class UncheckableDep(results.VersionResult, results.Warning):
@@ -147,8 +167,17 @@ class UncheckableDep(results.VersionResult, results.Warning):
 class NonsolvableDeps(results.VersionResult, results.AliasResult, results.Error):
     """No potential solution for a depset attribute."""
 
-    def __init__(self, attr, keyword, profile, deps, profile_status,
-                 profile_deprecated, num_profiles=None, **kwargs):
+    def __init__(
+        self,
+        attr,
+        keyword,
+        profile,
+        deps,
+        profile_status,
+        profile_deprecated,
+        num_profiles=None,
+        **kwargs,
+    ):
         super().__init__(**kwargs)
         self.attr = attr
         self.keyword = keyword
@@ -160,12 +189,12 @@ class NonsolvableDeps(results.VersionResult, results.AliasResult, results.Error)
 
     @property
     def desc(self):
-        profile_status = 'deprecated ' if self.profile_deprecated else ''
-        profile_status += self.profile_status or 'custom'
+        profile_status = "deprecated " if self.profile_deprecated else ""
+        profile_status += self.profile_status or "custom"
         if self.num_profiles is not None and self.num_profiles > 1:
-            num_profiles = f' ({self.num_profiles} total)'
+            num_profiles = f" ({self.num_profiles} total)"
         else:
-            num_profiles = ''
+            num_profiles = ""
 
         return (
             f"nonsolvable depset({self.attr}) keyword({self.keyword}) "
@@ -186,7 +215,7 @@ class NonsolvableDepsInExp(NonsolvableDeps):
     """No potential solution for dependency on exp profile."""
 
     # results require experimental profiles to be enabled
-    _profile = 'exp'
+    _profile = "exp"
 
 
 class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
@@ -198,18 +227,24 @@ class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
     """
 
     required_addons = (addons.profiles.ProfileAddon,)
-    known_results = frozenset([
-        VisibleVcsPkg, NonexistentDeps, UncheckableDep,
-        NonsolvableDepsInStable, NonsolvableDepsInDev, NonsolvableDepsInExp,
-    ])
+    known_results = frozenset(
+        [
+            VisibleVcsPkg,
+            NonexistentDeps,
+            UncheckableDep,
+            NonsolvableDepsInStable,
+            NonsolvableDepsInDev,
+            NonsolvableDepsInExp,
+        ]
+    )
 
     def __init__(self, *args, profile_addon):
         super().__init__(*args, profile_addon=profile_addon)
         self.profiles = profile_addon
         self.report_cls_map = {
-            'stable': NonsolvableDepsInStable,
-            'dev': NonsolvableDepsInDev,
-            'exp': NonsolvableDepsInExp,
+            "stable": NonsolvableDepsInStable,
+            "dev": NonsolvableDepsInDev,
+            "exp": NonsolvableDepsInExp,
         }
 
     def feed(self, pkg):
@@ -239,7 +274,8 @@ class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
                             self.query_cache[node] = ()
                         else:
                             matches = caching_iter(
-                                self.options.search_repo.itermatch(node))
+                                self.options.search_repo.itermatch(node)
+                            )
                             if matches:
                                 self.query_cache[node] = matches
                                 if orig_node is not node:
@@ -263,10 +299,10 @@ class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
                 continue
             depset = getattr(pkg, attr)
             profile_failures = defaultdict(lambda: defaultdict(set))
-            for edepset, profiles in self.collapse_evaluate_depset(
-                    pkg, attr, depset):
+            for edepset, profiles in self.collapse_evaluate_depset(pkg, attr, depset):
                 for profile, failures in self.process_depset(
-                        pkg, attr, depset, edepset, profiles):
+                    pkg, attr, depset, edepset, profiles
+                ):
                     failures = tuple(map(str, sorted(stable_unique(failures))))
                     profile_failures[failures][profile.status].add(profile)
 
@@ -276,24 +312,38 @@ class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
                     for failures, profiles in profile_failures.items():
                         for profile_status, cls in self.report_cls_map.items():
                             for profile in sorted(
-                                    profiles.get(profile_status, ()),
-                                    key=attrgetter('key', 'name')):
+                                profiles.get(profile_status, ()),
+                                key=attrgetter("key", "name"),
+                            ):
                                 yield cls(
-                                    attr, profile.key, profile.name, failures,
-                                    profile_status, profile.deprecated, pkg=pkg)
+                                    attr,
+                                    profile.key,
+                                    profile.name,
+                                    failures,
+                                    profile_status,
+                                    profile.deprecated,
+                                    pkg=pkg,
+                                )
                 else:
                     # only report one failure per depset per profile type in regular mode
                     for failures, profiles in profile_failures.items():
                         for profile_status, cls in self.report_cls_map.items():
                             status_profiles = sorted(
                                 profiles.get(profile_status, ()),
-                                key=attrgetter('key', 'name'))
+                                key=attrgetter("key", "name"),
+                            )
                             if status_profiles:
                                 profile = status_profiles[0]
                                 yield cls(
-                                    attr, profile.key, profile.name,
-                                    failures, profile_status,
-                                    profile.deprecated, len(status_profiles), pkg=pkg)
+                                    attr,
+                                    profile.key,
+                                    profile.name,
+                                    failures,
+                                    profile_status,
+                                    profile.deprecated,
+                                    len(status_profiles),
+                                    pkg=pkg,
+                                )
 
     def check_visibility_vcs(self, pkg):
         visible = []

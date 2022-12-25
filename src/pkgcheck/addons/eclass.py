@@ -49,8 +49,9 @@ class EclassAddon(caches.CachedAddon):
     """Eclass support for various checks."""
 
     # cache registry
-    cache = caches.CacheData(type='eclass', file='eclass.pickle',
-                             version=EclassDoc.ABI_VERSION)
+    cache = caches.CacheData(
+        type="eclass", file="eclass.pickle", version=EclassDoc.ABI_VERSION
+    )
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -81,7 +82,7 @@ class EclassAddon(caches.CachedAddon):
     def update_cache(self, force=False):
         """Update related cache and push updates to disk."""
         for repo in self.options.target_repo.trees:
-            eclass_dir = pjoin(repo.location, 'eclass')
+            eclass_dir = pjoin(repo.location, "eclass")
             cache_file = self.cache_file(repo)
             cache_eclasses = False
             eclasses = {}
@@ -91,15 +92,17 @@ class EclassAddon(caches.CachedAddon):
 
             # check for eclass removals
             for name in list(eclasses):
-                if not os.path.exists(pjoin(eclass_dir, f'{name}.eclass')):
+                if not os.path.exists(pjoin(eclass_dir, f"{name}.eclass")):
                     del eclasses[name]
                     cache_eclasses = True
 
             # verify the repo has eclasses
             try:
                 repo_eclasses = sorted(
-                    (x[:-7], pjoin(eclass_dir, x)) for x in os.listdir(eclass_dir)
-                    if x.endswith('.eclass'))
+                    (x[:-7], pjoin(eclass_dir, x))
+                    for x in os.listdir(eclass_dir)
+                    if x.endswith(".eclass")
+                )
             except FileNotFoundError:
                 repo_eclasses = []
 
@@ -115,8 +118,12 @@ class EclassAddon(caches.CachedAddon):
                                 raise KeyError
                         except (KeyError, AttributeError):
                             try:
-                                progress(f'{repo} -- updating eclass cache: {name:<{padding}}')
-                                eclasses[name] = EclassDoc(path, sourced=True, repo=repo)
+                                progress(
+                                    f"{repo} -- updating eclass cache: {name:<{padding}}"
+                                )
+                                eclasses[name] = EclassDoc(
+                                    path, sourced=True, repo=repo
+                                )
                                 cache_eclasses = True
                             except IOError:
                                 continue

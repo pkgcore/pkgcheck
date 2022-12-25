@@ -37,6 +37,7 @@ from . import caches
 @dataclass(frozen=True, eq=False)
 class GitCommit:
     """Git commit objects."""
+
     hash: str
     commit_time: int
     author: str
@@ -57,6 +58,7 @@ class GitCommit:
 @dataclass(frozen=True)
 class GitPkgChange:
     """Git package change objects."""
+
     atom: atom_cls
     status: str
     commit: str
@@ -82,16 +84,18 @@ class GitConfig:
 
     def __init__(self):
         fd, self.path = tempfile.mkstemp()
-        os.write(fd, b'[safe]\n\tdirectory = *\n')
+        os.write(fd, b"[safe]\n\tdirectory = *\n")
         os.close(fd)
 
     @property
     def config_env(self):
         # ignore global user and system git config, but disable safe.directory
-        return ImmutableDict({
-            'GIT_CONFIG_GLOBAL': self.path,
-            'GIT_CONFIG_SYSTEM': '',
-        })
+        return ImmutableDict(
+            {
+                "GIT_CONFIG_GLOBAL": self.path,
+                "GIT_CONFIG_SYSTEM": "",
+            }
+        )
 
     def close(self):
         os.unlink(self.path)
@@ -104,21 +108,25 @@ class GitLog:
         self._running = False
         self.git_config = GitConfig()
         self.proc = subprocess.Popen(
-            cmd, cwd=path,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self.git_config.config_env)
+            cmd,
+            cwd=path,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            env=self.git_config.config_env,
+        )
 
     def __iter__(self):
         return self
 
     def __next__(self):
         # use replacement character for non-UTF8 decoding issues (issue #166)
-        line = self.proc.stdout.readline().decode('utf-8', 'replace')
+        line = self.proc.stdout.readline().decode("utf-8", "replace")
 
         # verify git log is running as expected after pulling the first line
         if not self._running:
             if self.proc.poll() or not line:
                 error = self.proc.stderr.read().decode().strip()
-                raise GitError(f'failed running git log: {error}')
+                raise GitError(f"failed running git log: {error}")
             self._running = True
             self.git_config.close()
 
@@ -133,14 +141,14 @@ class _ParseGitRepo:
     """Generic iterator for custom git log output parsing support."""
 
     # git command to run on the targeted repo
-    _git_cmd = 'git log --name-status --diff-filter=ARMD -z'
+    _git_cmd = "git log --name-status --diff-filter=ARMD -z"
 
     # custom git log format lines, see the "PRETTY FORMATS" section of
     # the git log man page for details
     _format = ()
 
     # path regexes for git log parsing, validation is handled on instantiation
-    _ebuild_re = re.compile(r'^(?P<category>[^/]+)/[^/]+/(?P<package>[^/]+)\.ebuild$')
+    _ebuild_re = re.compile(r"^(?P<category>[^/]+)/[^/]+/(?P<package>[^/]+)\.ebuild$")
 
     def __init__(self, path, commit_range):
         self.path = os.path.realpath(path)
@@ -161,18 +169,24 @@ class _ParseGitRepo:
     @property
     def changes(self):
         """Generator of file change status with changed packages."""
-        changes = deque(next(self.git_log).strip('\x00').split('\x00'))
+        changes = deque(next(self.git_log).strip("\x00").split("\x00"))
         while changes:
             status = changes.popleft()
-            if status.startswith('R'):
+            if status.startswith("R"):
                 # matched R status change
-                status = 'R'
+                status = "R"
                 old = changes.popleft()
                 new = changes.popleft()
-                if (mo := self._ebuild_re.match(old)) and (mn := self._ebuild_re.match(new)):
+                if (mo := self._ebuild_re.match(old)) and (
+                    mn := self._ebuild_re.match(new)
+                ):
                     try:
-                        old_pkg = atom_cls(f"={mo.group('category')}/{mo.group('package')}")
-                        new_pkg = atom_cls(f"={mn.group('category')}/{mn.group('package')}")
+                        old_pkg = atom_cls(
+                            f"={mo.group('category')}/{mo.group('package')}"
+                        )
+                        new_pkg = atom_cls(
+                            f"={mn.group('category')}/{mn.group('package')}"
+                        )
                         yield status, [old_pkg, new_pkg]
                     except MalformedAtom:
                         continue
@@ -191,11 +205,11 @@ class GitRepoCommits(_ParseGitRepo):
     """Parse git log output into an iterator of commit objects."""
 
     _format = (
-        '%h',  # abbreviated commit hash
-        '%ct',  # commit timestamp
-        '%an <%ae>',  # Author Name <author@email.com>
-        '%cn <%ce>',  # Committer Name <committer@email.com>
-        '%B',  # commit message
+        "%h",  # abbreviated commit hash
+        "%ct",  # commit timestamp
+        "%an <%ae>",  # Author Name <author@email.com>
+        "%cn <%ce>",  # Committer Name <committer@email.com>
+        "%B",  # commit message
     )
 
     def __next__(self):
@@ -203,24 +217,26 @@ class GitRepoCommits(_ParseGitRepo):
         commit_time = int(next(self.git_log))
         author = next(self.git_log)
         committer = next(self.git_log)
-        message = list(takewhile(lambda x: x != '\x00', self.git_log))
+        message = list(takewhile(lambda x: x != "\x00", self.git_log))
         pkgs = defaultdict(set)
         for status, atoms in self.changes:
-            if status == 'R':
+            if status == "R":
                 old, new = atoms
-                pkgs['A'].add(new)
-                pkgs['D'].add(old)
+                pkgs["A"].add(new)
+                pkgs["D"].add(old)
             else:
                 pkgs[status].update(atoms)
-        return GitCommit(commit_hash, commit_time, author, committer, message, ImmutableDict(pkgs))
+        return GitCommit(
+            commit_hash, commit_time, author, committer, message, ImmutableDict(pkgs)
+        )
 
 
 class GitRepoPkgs(_ParseGitRepo):
     """Parse git log output into an iterator of package change objects."""
 
     _format = (
-        '%h',  # abbreviated commit hash
-        '%ct',  # commit time
+        "%h",  # abbreviated commit hash
+        "%ct",  # commit time
     )
 
     def __init__(self, *args, local=False):
@@ -234,26 +250,27 @@ class GitRepoPkgs(_ParseGitRepo):
                 return self._pkgs.popleft()
             except IndexError:
                 commit_hash = next(self.git_log)
-                commit_time = int(next(self.git_log).rstrip('\x00'))
+                commit_time = int(next(self.git_log).rstrip("\x00"))
                 self._pkg_changes(commit_hash, commit_time)
 
     def _pkg_changes(self, commit_hash, commit_time):
         """Queue package change objects from git log file changes."""
         for status, pkgs in self.changes:
-            if status == 'R':
+            if status == "R":
                 old, new = pkgs
                 if not self.local:  # treat rename as addition and removal
-                    self._pkgs.append(
-                        GitPkgChange(new, 'A', commit_hash, commit_time))
-                    self._pkgs.append(
-                        GitPkgChange(old, 'D', commit_hash, commit_time))
+                    self._pkgs.append(GitPkgChange(new, "A", commit_hash, commit_time))
+                    self._pkgs.append(GitPkgChange(old, "D", commit_hash, commit_time))
                 else:
                     # renames are split into add/remove ops at
                     # the check level for the local commits repo
-                    self._pkgs.append(GitPkgChange(
-                        new, 'R', commit_hash, commit_time, old))
+                    self._pkgs.append(
+                        GitPkgChange(new, "R", commit_hash, commit_time, old)
+                    )
             else:
-                self._pkgs.append(GitPkgChange(pkgs[0], status, commit_hash, commit_time))
+                self._pkgs.append(
+                    GitPkgChange(pkgs[0], status, commit_hash, commit_time)
+                )
 
 
 class _GitCommitPkg(cpv.VersionedCPV):
@@ -264,26 +281,31 @@ class _GitCommitPkg(cpv.VersionedCPV):
 
         # add additional attrs
         sf = object.__setattr__
-        sf(self, 'time', time)
-        sf(self, 'status', status)
-        sf(self, 'commit', commit)
-        sf(self, 'old', old)
+        sf(self, "time", time)
+        sf(self, "status", status)
+        sf(self, "commit", commit)
+        sf(self, "old", old)
 
     def old_pkg(self):
         """Create a new object from a rename commit's old atom."""
         return self.__class__(
-            self.old.category, self.old.package, self.status, self.old.version,
-            self.time, self.commit)
+            self.old.category,
+            self.old.package,
+            self.status,
+            self.old.version,
+            self.time,
+            self.commit,
+        )
 
 
 class GitChangedRepo(SimpleTree):
     """Historical git repo consisting of the latest changed packages."""
 
     # selected pkg status filter
-    _status_filter = {'A', 'R', 'M', 'D'}
+    _status_filter = {"A", "R", "M", "D"}
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault('pkg_klass', _GitCommitPkg)
+        kwargs.setdefault("pkg_klass", _GitCommitPkg)
         super().__init__(*args, **kwargs)
 
     def _get_versions(self, cp):
@@ -298,25 +320,26 @@ class GitChangedRepo(SimpleTree):
         for cp in sorter(candidates):
             yield from sorter(
                 raw_pkg_cls(cp[0], cp[1], status, *commit)
-                for status, commit in self.versions.get(cp, ()))
+                for status, commit in self.versions.get(cp, ())
+            )
 
 
 class GitModifiedRepo(GitChangedRepo):
     """Historical git repo consisting of the latest modified packages."""
 
-    _status_filter = {'A', 'M'}
+    _status_filter = {"A", "M"}
 
 
 class GitAddedRepo(GitChangedRepo):
     """Historical git repo consisting of added packages."""
 
-    _status_filter = {'A'}
+    _status_filter = {"A"}
 
 
 class GitRemovedRepo(GitChangedRepo):
     """Historical git repo consisting of removed packages."""
 
-    _status_filter = {'D'}
+    _status_filter = {"D"}
 
 
 class _ScanGit(argparse.Action):
@@ -325,11 +348,11 @@ class _ScanGit(argparse.Action):
     def __init__(self, *args, staged=False, **kwargs):
         super().__init__(*args, **kwargs)
         if staged:
-            default_ref = 'HEAD'
-            diff_cmd = ['git', 'diff-index', '--name-only', '--cached', '-z']
+            default_ref = "HEAD"
+            diff_cmd = ["git", "diff-index", "--name-only", "--cached", "-z"]
         else:
-            default_ref = 'origin..HEAD'
-            diff_cmd = ['git', 'diff-tree', '-r', '--name-only', '-z']
+            default_ref = "origin..HEAD"
+            diff_cmd = ["git", "diff-tree", "-r", "--name-only", "-z"]
 
         self.staged = staged
         self.default_ref = default_ref
@@ -340,26 +363,30 @@ class _ScanGit(argparse.Action):
         try:
             p = subprocess.run(
                 self.diff_cmd + [ref],
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                cwd=namespace.target_repo.location, check=True, encoding='utf8')
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                cwd=namespace.target_repo.location,
+                check=True,
+                encoding="utf8",
+            )
         except FileNotFoundError as e:
             parser.error(str(e))
         except subprocess.CalledProcessError as e:
             error = e.stderr.splitlines()[0]
-            parser.error(f'failed running git: {error}')
+            parser.error(f"failed running git: {error}")
 
         if not p.stdout:
             # no changes exist, exit early
             parser.exit()
 
-        eclass_re = re.compile(r'^eclass/(?P<eclass>\S+)\.eclass$')
+        eclass_re = re.compile(r"^eclass/(?P<eclass>\S+)\.eclass$")
         eclasses, profiles, pkgs = OrderedSet(), OrderedSet(), OrderedSet()
 
-        for path in p.stdout.strip('\x00').split('\x00'):
+        for path in p.stdout.strip("\x00").split("\x00"):
             path_components = path.split(os.sep)
             if mo := eclass_re.match(path):
-                eclasses.add(mo.group('eclass'))
-            elif path_components[0] == 'profiles':
+                eclasses.add(mo.group("eclass"))
+            elif path_components[0] == "profiles":
                 profiles.add(path)
             elif path_components[0] in namespace.target_repo.categories:
                 try:
@@ -384,15 +411,20 @@ class _ScanGit(argparse.Action):
 
     def __call__(self, parser, namespace, value, option_string=None):
         if namespace.targets:
-            targets = ' '.join(namespace.targets)
+            targets = " ".join(namespace.targets)
             s = pluralism(namespace.targets)
-            parser.error(f'{option_string} is mutually exclusive with target{s}: {targets}')
+            parser.error(
+                f"{option_string} is mutually exclusive with target{s}: {targets}"
+            )
 
         if not self.staged:
             # avoid circular import issues
             from .. import objects
+
             # enable git checks
-            namespace.enabled_checks.update(objects.CHECKS.select(GitCommitsCheck).values())
+            namespace.enabled_checks.update(
+                objects.CHECKS.select(GitCommitsCheck).values()
+            )
 
         # determine target ref
         ref = value if value is not None else self.default_ref
@@ -401,7 +433,9 @@ class _ScanGit(argparse.Action):
         # generate scanning restrictions
         namespace.restrictions = self.generate_restrictions(parser, namespace, ref)
         # ignore irrelevant changes during scan
-        namespace.contexts.append(GitStash(namespace.target_repo.location, staged=self.staged))
+        namespace.contexts.append(
+            GitStash(namespace.target_repo.location, staged=self.staged)
+        )
 
 
 class GitAddon(caches.CachedAddon):
@@ -422,16 +456,21 @@ class GitAddon(caches.CachedAddon):
     """
 
     # cache registry
-    cache = caches.CacheData(type='git', file='git.pickle', version=5)
+    cache = caches.CacheData(type="git", file="git.pickle", version=5)
 
     @classmethod
     def mangle_argparser(cls, parser):
-        group = parser.add_argument_group('git', docs=cls.__doc__)
+        group = parser.add_argument_group("git", docs=cls.__doc__)
         git_opts = group.add_mutually_exclusive_group()
         git_opts.add_argument(
-            '--commits', nargs='?', default=False, metavar='tree-ish',
-            action=arghparse.Delayed, target=_ScanGit, priority=10,
-            help='determine scan targets from unpushed commits',
+            "--commits",
+            nargs="?",
+            default=False,
+            metavar="tree-ish",
+            action=arghparse.Delayed,
+            target=_ScanGit,
+            priority=10,
+            help="determine scan targets from unpushed commits",
             docs="""
                 Targets are determined from the committed changes compared to a
                 given reference that defaults to the repo's origin.
@@ -440,21 +479,28 @@ class GitAddon(caches.CachedAddon):
                 the current branch compared to the branch named 'old' use
                 ``pkgcheck scan --commits old``. For two separate branches
                 named 'old' and 'new' use ``pkgcheck scan --commits old..new``.
-            """)
+            """,
+        )
         git_opts.add_argument(
-            '--staged', nargs='?', default=False, metavar='tree-ish',
-            action=arghparse.Delayed, target=partial(_ScanGit, staged=True), priority=10,
-            help='determine scan targets from staged changes',
+            "--staged",
+            nargs="?",
+            default=False,
+            metavar="tree-ish",
+            action=arghparse.Delayed,
+            target=partial(_ScanGit, staged=True),
+            priority=10,
+            help="determine scan targets from staged changes",
             docs="""
                 Targets are determined using all staged changes for the git
                 repo. Unstaged changes and untracked files are ignored by
                 temporarily stashing them during the scanning process.
-            """)
+            """,
+        )
 
     def __init__(self, *args):
         super().__init__(*args)
         try:
-            find_binary('git')
+            find_binary("git")
         except CommandNotFound:
             raise caches.CacheDisabled(self.cache)
 
@@ -465,14 +511,14 @@ class GitAddon(caches.CachedAddon):
     def _gitignore(self):
         """Load a repo's .gitignore and .git/info/exclude files for path matching."""
         patterns = []
-        for path in ('.gitignore', '.git/info/exclude'):
+        for path in (".gitignore", ".git/info/exclude"):
             try:
                 with open(pjoin(self.options.target_repo.location, path)) as f:
                     patterns.extend(f)
             except (FileNotFoundError, IOError):
                 pass
         if patterns:
-            return PathSpec.from_lines('gitwildmatch', patterns)
+            return PathSpec.from_lines("gitwildmatch", patterns)
         return None
 
     def gitignored(self, path):
@@ -489,23 +535,31 @@ class GitAddon(caches.CachedAddon):
         """Retrieve a git repo's commit hash for a specific commit object."""
         try:
             p = subprocess.run(
-                ['git', 'rev-parse', commit],
-                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                cwd=path, check=True, encoding='utf8')
+                ["git", "rev-parse", commit],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                cwd=path,
+                check=True,
+                encoding="utf8",
+            )
         except subprocess.CalledProcessError:
-            raise GitError(f'failed retrieving commit hash for git repo: {path!r}')
+            raise GitError(f"failed retrieving commit hash for git repo: {path!r}")
         return p.stdout.strip()
 
     @staticmethod
-    def _get_current_branch(path, commit='HEAD'):
+    def _get_current_branch(path, commit="HEAD"):
         """Retrieve a git repo's current branch for a specific commit object."""
         try:
             p = subprocess.run(
-                ['git', 'rev-parse', '--abbrev-ref', commit],
-                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                cwd=path, check=True, encoding='utf8')
+                ["git", "rev-parse", "--abbrev-ref", commit],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                cwd=path,
+                check=True,
+                encoding="utf8",
+            )
         except subprocess.CalledProcessError:
-            raise GitError(f'failed retrieving branch for git repo: {path!r}')
+            raise GitError(f"failed retrieving branch for git repo: {path!r}")
         return p.stdout.strip()
 
     @staticmethod
@@ -513,12 +567,16 @@ class GitAddon(caches.CachedAddon):
         """Retrieve a git repo's default branch used with origin remote."""
         try:
             p = subprocess.run(
-                ['git', 'symbolic-ref', 'refs/remotes/origin/HEAD'],
-                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                cwd=path, check=True, encoding='utf8')
+                ["git", "symbolic-ref", "refs/remotes/origin/HEAD"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                cwd=path,
+                check=True,
+                encoding="utf8",
+            )
         except subprocess.CalledProcessError:
-            raise GitError(f'failed retrieving branch for git repo: {path!r}')
-        return p.stdout.strip().split('/')[-1]
+            raise GitError(f"failed retrieving branch for git repo: {path!r}")
+        return p.stdout.strip().split("/")[-1]
 
     @staticmethod
     def pkg_history(repo, commit_range, data=None, local=False, verbosity=-1):
@@ -535,11 +593,14 @@ class GitAddon(caches.CachedAddon):
                     if local:
                         commit = (atom.fullver, pkg.commit_time, pkg.commit, pkg.old)
                     else:
-                        date = datetime.fromtimestamp(pkg.commit_time).strftime('%Y-%m-%d')
-                        progress(f'{repo} -- updating git cache: commit date: {date}')
+                        date = datetime.fromtimestamp(pkg.commit_time).strftime(
+                            "%Y-%m-%d"
+                        )
+                        progress(f"{repo} -- updating git cache: commit date: {date}")
                         commit = (atom.fullver, pkg.commit_time, pkg.commit)
                     data.setdefault(atom.category, {}).setdefault(
-                        atom.package, {}).setdefault(pkg.status, []).append(commit)
+                        atom.package, {}
+                    ).setdefault(pkg.status, []).append(commit)
         return data
 
     def update_cache(self, force=False):
@@ -551,10 +612,12 @@ class GitAddon(caches.CachedAddon):
                 # skip cache usage when not running on the default branch
                 if branch != default_branch:
                     logger.debug(
-                        'skipping %s git repo cache update on '
-                        'non-default branch %r', repo, branch)
+                        "skipping %s git repo cache update on " "non-default branch %r",
+                        repo,
+                        branch,
+                    )
                     continue
-                commit = self._get_commit_hash(repo.location, 'origin/HEAD')
+                commit = self._get_commit_hash(repo.location, "origin/HEAD")
             except GitError:
                 continue
 
@@ -567,18 +630,18 @@ class GitAddon(caches.CachedAddon):
                 git_cache = self.load_cache(cache_file)
 
             if git_cache is None or commit != git_cache.commit:
-                logger.debug('updating %s git repo cache to %s', repo, commit[:13])
+                logger.debug("updating %s git repo cache to %s", repo, commit[:13])
                 if git_cache is None:
                     data = {}
-                    commit_range = 'origin/HEAD'
+                    commit_range = "origin/HEAD"
                 else:
                     data = git_cache.data
-                    commit_range = f'{git_cache.commit}..origin/HEAD'
+                    commit_range = f"{git_cache.commit}..origin/HEAD"
 
                 try:
                     self.pkg_history(
-                        repo, commit_range, data=data,
-                        verbosity=self.options.verbosity)
+                        repo, commit_range, data=data, verbosity=self.options.verbosity
+                    )
                 except GitError as e:
                     raise PkgcheckUserException(str(e))
                 git_cache = GitCache(data, self.cache, commit=commit)
@@ -595,7 +658,7 @@ class GitAddon(caches.CachedAddon):
         git_repos = []
         for repo in self.options.target_repo.trees:
             git_cache = self._cached_repos.get(repo.location, {})
-            git_repos.append(repo_cls(git_cache, repo_id=f'{repo.repo_id}-history'))
+            git_repos.append(repo_cls(git_cache, repo_id=f"{repo.repo_id}-history"))
 
         if len(git_repos) > 1:
             return multiplex.tree(*git_repos)
@@ -606,14 +669,14 @@ class GitAddon(caches.CachedAddon):
         data = {}
 
         try:
-            origin = self._get_commit_hash(target_repo.location, 'origin/HEAD')
-            head = self._get_commit_hash(target_repo.location, 'HEAD')
+            origin = self._get_commit_hash(target_repo.location, "origin/HEAD")
+            head = self._get_commit_hash(target_repo.location, "HEAD")
             if origin != head:
-                data = self.pkg_history(target_repo, 'origin/HEAD..HEAD', local=True)
+                data = self.pkg_history(target_repo, "origin/HEAD..HEAD", local=True)
         except GitError as e:
             raise PkgcheckUserException(str(e))
 
-        repo_id = f'{target_repo.repo_id}-commits'
+        repo_id = f"{target_repo.repo_id}-commits"
         return repo_cls(data, repo_id=repo_id)
 
     def commits(self):
@@ -621,10 +684,10 @@ class GitAddon(caches.CachedAddon):
         commits = ()
 
         try:
-            origin = self._get_commit_hash(target_repo.location, 'origin/HEAD')
-            head = self._get_commit_hash(target_repo.location, 'HEAD')
+            origin = self._get_commit_hash(target_repo.location, "origin/HEAD")
+            head = self._get_commit_hash(target_repo.location, "HEAD")
             if origin != head:
-                commits = GitRepoCommits(target_repo.location, 'origin/HEAD..HEAD')
+                commits = GitRepoCommits(target_repo.location, "origin/HEAD..HEAD")
         except GitError as e:
             raise PkgcheckUserException(str(e))
 

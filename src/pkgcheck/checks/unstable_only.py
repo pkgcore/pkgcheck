@@ -18,10 +18,10 @@ class UnstableOnly(results.PackageResult, results.Info):
 
     @property
     def desc(self):
-        es = pluralism(self.arches, plural='es')
-        arches = ', '.join(self.arches)
-        versions = ', '.join(self.versions)
-        return f'for arch{es}: [ {arches} ], all versions are unstable: [ {versions} ]'
+        es = pluralism(self.arches, plural="es")
+        arches = ", ".join(self.arches)
+        versions = ", ".join(self.versions)
+        return f"for arch{es}: [ {arches} ], all versions are unstable: [ {versions} ]"
 
 
 class UnstableOnlyCheck(GentooRepoCheck):
@@ -40,9 +40,11 @@ class UnstableOnlyCheck(GentooRepoCheck):
         for arch in arches:
             self.arch_restricts[arch] = [
                 packages.PackageRestriction(
-                    "keywords", values.ContainmentMatch2((arch,))),
+                    "keywords", values.ContainmentMatch2((arch,))
+                ),
                 packages.PackageRestriction(
-                    "keywords", values.ContainmentMatch2((f"~{arch}",)))
+                    "keywords", values.ContainmentMatch2((f"~{arch}",))
+                ),
             ]
 
     def feed(self, pkgset):
@@ -62,4 +64,6 @@ class UnstableOnlyCheck(GentooRepoCheck):
         # collapse reports by available versions
         for pkgs in unstable_arches.keys():
             versions = (x.fullver for x in sorted(pkgs))
-            yield UnstableOnly(versions, sort_keywords(unstable_arches[pkgs]), pkg=pkgs[0])
+            yield UnstableOnly(
+                versions, sort_keywords(unstable_arches[pkgs]), pkg=pkgs[0]
+            )

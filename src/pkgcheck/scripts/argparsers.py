@@ -7,18 +7,25 @@ from snakeoil.cli import arghparse
 from .. import objects, reporters
 
 reporter_argparser = arghparse.ArgumentParser(suppress=True)
-reporter_options = reporter_argparser.add_argument_group('reporter options')
+reporter_options = reporter_argparser.add_argument_group("reporter options")
 reporter_options.add_argument(
-    '-R', '--reporter', action='store', default=None,
-    help='use a non-default reporter',
+    "-R",
+    "--reporter",
+    action="store",
+    default=None,
+    help="use a non-default reporter",
     docs="""
         Select a reporter to use for output.
 
         Use ``pkgcheck show --reporters`` to see available options.
-    """)
+    """,
+)
 reporter_options.add_argument(
-    '--format', dest='format_str', action='store', default=None,
-    help='format string used with FormatReporter',
+    "--format",
+    dest="format_str",
+    action="store",
+    default=None,
+    help="format string used with FormatReporter",
     docs="""
         Custom format string used to format output by FormatReporter.
 
@@ -34,34 +41,43 @@ reporter_options.add_argument(
         requested attribute expansion in the format string. In other words,
         ``--format {foo}`` will never produce any output because no result has the
         ``foo`` attribute.
-    """)
+    """,
+)
 
 
 @reporter_argparser.bind_final_check
 def _setup_reporter(parser, namespace):
     if namespace.reporter is None:
         namespace.reporter = sorted(
-            objects.REPORTERS.values(), key=attrgetter('priority'), reverse=True)[0]
+            objects.REPORTERS.values(), key=attrgetter("priority"), reverse=True
+        )[0]
     else:
         try:
             namespace.reporter = objects.REPORTERS[namespace.reporter]
         except KeyError:
-            available = ', '.join(objects.REPORTERS)
+            available = ", ".join(objects.REPORTERS)
             parser.error(
                 f"no reporter matches {namespace.reporter!r} "
-                f"(available: {available})")
+                f"(available: {available})"
+            )
 
     if namespace.reporter is reporters.FormatReporter:
         if not namespace.format_str:
-            parser.error('missing or empty --format option required by FormatReporter')
+            parser.error("missing or empty --format option required by FormatReporter")
         namespace.reporter = partial(namespace.reporter, namespace.format_str)
     elif namespace.format_str is not None:
-        parser.error('--format option is only valid when using FormatReporter')
+        parser.error("--format option is only valid when using FormatReporter")
 
 
 repo_argparser = arghparse.ArgumentParser(suppress=True)
-repo_options = repo_argparser.add_argument_group('repo options')
+repo_options = repo_argparser.add_argument_group("repo options")
 repo_options.add_argument(
-    '-r', '--repo', metavar='REPO', dest='target_repo',
-    action=commandline.StoreRepoObject, repo_type='ebuild-raw', allow_external_repos=True,
-    help='target repo')
+    "-r",
+    "--repo",
+    metavar="REPO",
+    dest="target_repo",
+    action=commandline.StoreRepoObject,
+    repo_type="ebuild-raw",
+    allow_external_repos=True,
+    help="target repo",
+)
