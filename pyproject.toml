@@ -9,7 +9,7 @@ requires = [
 	"pathspec",
 	"tree-sitter>=0.19.0",
 	"snakeoil~=0.10.3",
-	"pkgcore~=0.12.17",
+	"pkgcore~=0.12.18",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -41,7 +41,7 @@ dependencies = [
 	"pathspec",
 	"tree-sitter>=0.19.0",
 	"snakeoil~=0.10.3",
-	"pkgcore~=0.12.17",
+	"pkgcore~=0.12.18",
 ]
 
 [project.optional-dependencies]
