@@ -430,7 +430,7 @@ class TestSourcingCheck(misc.ReportTestCase, misc.Tmpdir):
                 """))
             r = self.assertReport(check, self.repo)
             assert isinstance(r, metadata.InvalidEapi)
-            assert f"invalid EAPI: '{eapi}'" in str(r)
+            assert f"invalid EAPI '{eapi}'" in str(r)
 
     def test_sourcing_error(self):
         check = self.mk_check()
