@@ -23,8 +23,8 @@ class VulnerablePackage(results.VersionResult, results.Error):
     @property
     def desc(self):
         s = pluralism(self.arches)
-        arches = ', '.join(self.arches)
-        return f'vulnerable via {self.glsa}, keyword{s}: {arches}'
+        arches = ", ".join(self.arches)
+        return f"vulnerable via {self.glsa}, keyword{s}: {arches}"
 
 
 class GlsaCheck(GentooRepoCheck):
@@ -37,8 +37,7 @@ class GlsaCheck(GentooRepoCheck):
 
     @staticmethod
     def mangle_argparser(parser):
-        parser.plugin.add_argument(
-            "--glsa-dir", type=existent_dir, help="custom glsa directory")
+        parser.plugin.add_argument("--glsa-dir", type=existent_dir, help="custom glsa directory")
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -46,12 +45,12 @@ class GlsaCheck(GentooRepoCheck):
         if glsa_dir is None:
             # search for glsa dir in target repo and then any masters
             for repo in reversed(self.options.target_repo.trees):
-                path = pjoin(repo.location, 'metadata', 'glsa')
+                path = pjoin(repo.location, "metadata", "glsa")
                 if os.path.isdir(path):
                     glsa_dir = path
                     break
             else:
-                raise SkipCheck(self, 'no available glsa source')
+                raise SkipCheck(self, "no available glsa source")
 
         # this is a bit brittle
         self.vulns = defaultdict(list)
@@ -63,13 +62,14 @@ class GlsaCheck(GentooRepoCheck):
         for vuln in self.vulns.get(pkg.key, ()):
             if vuln.match(pkg):
                 arches = set()
-                for v in collect_package_restrictions(vuln, ['keywords']):
+                for v in collect_package_restrictions(vuln, ["keywords"]):
                     if isinstance(v.restriction, values.ContainmentMatch2):
-                        arches.update(x.lstrip('~') for x in v.restriction.vals)
+                        arches.update(x.lstrip("~") for x in v.restriction.vals)
                     else:
                         raise Exception(
-                            f'unexpected restriction sequence- {v.restriction} in {vuln}')
-                keys = {x.lstrip('~') for x in pkg.keywords if not x.startswith('-')}
+                            f"unexpected restriction sequence- {v.restriction} in {vuln}"
+                        )
+                keys = {x.lstrip("~") for x in pkg.keywords if not x.startswith("-")}
                 if arches:
                     arches = sorted(arches.intersection(keys))
                     assert arches

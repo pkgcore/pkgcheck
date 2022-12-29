@@ -26,18 +26,18 @@ class ArchesArgs(arghparse.CommaSeparatedNegations):
 
         if not enabled:
             # enable all non-prefix arches
-            enabled = set(arch for arch in all_arches if '-' not in arch)
+            enabled = set(arch for arch in all_arches if "-" not in arch)
 
         arches = set(enabled).difference(disabled)
         if all_arches and (unknown_arches := arches.difference(all_arches)):
-            es = pluralism(unknown_arches, plural='es')
-            unknown = ', '.join(unknown_arches)
-            valid = ', '.join(sorted(all_arches))
-            parser.error(f'unknown arch{es}: {unknown} (valid arches: {valid})')
+            es = pluralism(unknown_arches, plural="es")
+            unknown = ", ".join(unknown_arches)
+            valid = ", ".join(sorted(all_arches))
+            parser.error(f"unknown arch{es}: {unknown} (valid arches: {valid})")
 
         # check if any selected arch only has experimental profiles
         for arch in arches:
-            if all(p.status == 'exp' for p in namespace.target_repo.profiles if p.arch == arch):
+            if all(p.status == "exp" for p in namespace.target_repo.profiles if p.arch == arch):
                 namespace.exp_profiles_required = True
                 break
 
@@ -51,11 +51,17 @@ class ArchesAddon(base.Addon):
 
     @classmethod
     def mangle_argparser(cls, parser):
-        group = parser.add_argument_group('arches')
+        group = parser.add_argument_group("arches")
         group.add_argument(
-            '-a', '--arches', dest='selected_arches', metavar='ARCH', default=(),
-            action=arghparse.Delayed, target=ArchesArgs, priority=100,
-            help='comma separated list of arches to enable/disable',
+            "-a",
+            "--arches",
+            dest="selected_arches",
+            metavar="ARCH",
+            default=(),
+            action=arghparse.Delayed,
+            target=ArchesArgs,
+            priority=100,
+            help="comma separated list of arches to enable/disable",
             docs="""
                 Comma separated list of arches to enable and disable.
 
@@ -67,8 +73,9 @@ class ArchesAddon(base.Addon):
                 By default all repo defined arches are used; however,
                 stable-related checks (e.g. UnstableOnly) default to the set of
                 arches having stable profiles in the target repo.
-            """)
-        parser.bind_delayed_default(1000, 'arches')(cls._default_arches)
+            """,
+        )
+        parser.bind_delayed_default(1000, "arches")(cls._default_arches)
 
     @staticmethod
     def _default_arches(namespace, attr):
@@ -81,14 +88,14 @@ class KeywordsAddon(base.Addon):
 
     def __init__(self, *args):
         super().__init__(*args)
-        special = {'-*'}
+        special = {"-*"}
         self.arches = self.options.target_repo.known_arches
-        unstable = {'~' + x for x in self.arches}
-        disabled = {'-' + x for x in chain(self.arches, unstable)}
+        unstable = {"~" + x for x in self.arches}
+        disabled = {"-" + x for x in chain(self.arches, unstable)}
         self.valid = special | self.arches | unstable | disabled
         # Note: '*' and '~*' are portage-only, i.e. not in the spec, so they
         # don't belong in the main tree.
-        self.portage = {'*', '~*'}
+        self.portage = {"*", "~*"}
 
 
 class StableArchesAddon(base.Addon):
@@ -98,7 +105,7 @@ class StableArchesAddon(base.Addon):
 
     @classmethod
     def mangle_argparser(cls, parser):
-        parser.bind_delayed_default(1001, 'stable_arches')(cls._default_stable_arches)
+        parser.bind_delayed_default(1001, "stable_arches")(cls._default_stable_arches)
 
     @staticmethod
     def _default_stable_arches(namespace, attr):
@@ -106,11 +113,12 @@ class StableArchesAddon(base.Addon):
         target_repo = namespace.target_repo
         if not namespace.selected_arches:
             # use known stable arches (GLEP 72) if arches aren't specified
-            stable_arches = target_repo.config.arches_desc['stable']
+            stable_arches = target_repo.config.arches_desc["stable"]
             # fallback to determining stable arches from profiles.desc if arches.desc doesn't exist
             if not stable_arches:
-                stable_arches = set().union(*(
-                    repo.profiles.arches('stable') for repo in target_repo.trees))
+                stable_arches = set().union(
+                    *(repo.profiles.arches("stable") for repo in target_repo.trees)
+                )
         else:
             stable_arches = namespace.arches
 
@@ -129,17 +137,17 @@ class UnstatedIuse(results.VersionResult, results.Error):
 
     @property
     def desc(self):
-        msg = [f'attr({self.attr})']
+        msg = [f"attr({self.attr})"]
         if self.profile is not None:
             if self.num_profiles is not None:
-                num_profiles = f' ({self.num_profiles} total)'
+                num_profiles = f" ({self.num_profiles} total)"
             else:
-                num_profiles = ''
-            msg.append(f'profile {self.profile!r}{num_profiles}')
-        flags = ', '.join(self.flags)
+                num_profiles = ""
+            msg.append(f"profile {self.profile!r}{num_profiles}")
+        flags = ", ".join(self.flags)
         s = pluralism(self.flags)
-        msg.extend([f'unstated flag{s}', f'[ {flags} ]'])
-        return ': '.join(msg)
+        msg.extend([f"unstated flag{s}", f"[ {flags} ]"])
+        return ": ".join(msg)
 
 
 class UseAddon(base.Addon):
@@ -153,7 +161,8 @@ class UseAddon(base.Addon):
         for p in target_repo.profiles:
             try:
                 self.profiles.append(
-                    target_repo.profiles.create_profile(p, load_profile_base=False))
+                    target_repo.profiles.create_profile(p, load_profile_base=False)
+                )
             except profiles_mod.ProfileError:
                 continue
 
@@ -173,8 +182,8 @@ class UseAddon(base.Addon):
         for repo in target_repo.trees:
             known_iuse.update(flag for matcher, (flag, desc) in repo.config.use_desc)
             known_iuse_expand.update(
-                flag for flags in repo.config.use_expand_desc.values()
-                for flag, desc in flags)
+                flag for flags in repo.config.use_expand_desc.values() for flag, desc in flags
+            )
 
         self.collapsed_iuse = misc.non_incremental_collapsed_restrict_to_data(
             ((packages.AlwaysTrue, known_iuse),),
@@ -186,8 +195,9 @@ class UseAddon(base.Addon):
         self.ignore = not (c_implicit_iuse or known_iuse or known_iuse_expand)
         if self.ignore:
             logger.debug(
-                'disabling use/iuse validity checks since no usable '
-                'use.desc and use.local.desc were found')
+                "disabling use/iuse validity checks since no usable "
+                "use.desc and use.local.desc were found"
+            )
 
     def allowed_iuse(self, pkg):
         return self.collapsed_iuse.pull_data(pkg).union(pkg.local_use)
@@ -213,9 +223,14 @@ class UseAddon(base.Addon):
                 v.append(node.restriction)
                 yield from self._flatten_restricts(
                     iflatten_instance(node.payload, skip_filter),
-                    skip_filter, stated, unstated, attr, v)
+                    skip_filter,
+                    stated,
+                    unstated,
+                    attr,
+                    v,
+                )
                 continue
-            elif attr == 'required_use':
+            elif attr == "required_use":
                 unstated.update(filterfalse(stated.__contains__, node.vals))
             yield k, tuple(v)
 
@@ -248,8 +263,11 @@ class UseAddon(base.Addon):
         skip_filter = (packages.Conditional,) + klasses
         nodes = iflatten_instance(seq, skip_filter)
         unstated = set()
-        vals = dict(self._flatten_restricts(
-            nodes, skip_filter, stated=pkg.iuse_stripped, unstated=unstated, attr=attr))
+        vals = dict(
+            self._flatten_restricts(
+                nodes, skip_filter, stated=pkg.iuse_stripped, unstated=unstated, attr=attr
+            )
+        )
         return vals, self._unstated_iuse(pkg, attr, unstated)
 
 
@@ -258,24 +276,27 @@ class NetAddon(base.Addon):
 
     @classmethod
     def mangle_argparser(cls, parser):
-        group = parser.add_argument_group('network')
+        group = parser.add_argument_group("network")
         group.add_argument(
-            '--timeout', type=float, default='5',
-            help='timeout used for network checks')
+            "--timeout", type=float, default="5", help="timeout used for network checks"
+        )
         group.add_argument(
-            '--user-agent', default='Wget/1.20.3 (linux-gnu)',
-            help='custom user agent spoofing')
+            "--user-agent", default="Wget/1.20.3 (linux-gnu)", help="custom user agent spoofing"
+        )
 
     @property
     def session(self):
         try:
             from .net import Session
+
             return Session(
-                concurrent=self.options.tasks, timeout=self.options.timeout,
-                user_agent=self.options.user_agent)
+                concurrent=self.options.tasks,
+                timeout=self.options.timeout,
+                user_agent=self.options.user_agent,
+            )
         except ImportError as e:
-            if e.name == 'requests':
-                raise PkgcheckUserException('network checks require requests to be installed')
+            if e.name == "requests":
+                raise PkgcheckUserException("network checks require requests to be installed")
             raise
 
 
@@ -290,10 +311,14 @@ def init_addon(cls, options, addons_map=None, **kwargs):
         # initialize and inject all required addons for a given addon's inheritance
         # tree as kwargs
         required_addons = chain.from_iterable(
-            x.required_addons for x in cls.__mro__ if issubclass(x, base.Addon))
-        kwargs.update({
-            base.param_name(addon): init_addon(addon, options, addons_map)
-            for addon in required_addons})
+            x.required_addons for x in cls.__mro__ if issubclass(x, base.Addon)
+        )
+        kwargs.update(
+            {
+                base.param_name(addon): init_addon(addon, options, addons_map)
+                for addon in required_addons
+            }
+        )
 
         # verify the cache type is enabled
         if issubclass(cls, caches.CachedAddon) and not options.cache[cls.cache.type]:
@@ -302,7 +327,7 @@ def init_addon(cls, options, addons_map=None, **kwargs):
         addon = addons_map[cls] = cls(options, **kwargs)
 
         # force cache updates
-        force_cache = getattr(options, 'force_cache', False)
+        force_cache = getattr(options, "force_cache", False)
         if isinstance(addon, caches.CachedAddon):
             addon.update_cache(force=force_cache)
 

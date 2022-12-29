@@ -68,25 +68,48 @@ class BadWhitespaceCharacter(results.LineResult, results.Warning):
     @property
     def desc(self):
         return (
-            f'bad whitespace character {self.char} on line {self.lineno}'
-            f', char {self.position}: {self.line}'
+            f"bad whitespace character {self.char} on line {self.lineno}"
+            f", char {self.position}: {self.line}"
         )
 
 
 class WhitespaceData(NamedTuple):
     """Data format to register hardcoded list of bad whitespace characters."""
+
     unicode_version: str
     chars: tuple
 
 
 whitespace_data = WhitespaceData(
-    unicode_version='12.1.0',
+    unicode_version="12.1.0",
     chars=(
-        '\x0b', '\x0c', '\r', '\x1c', '\x1d', '\x1e', '\x1f', '\x85', '\xa0',
-        '\u1680', '\u2000', '\u2001', '\u2002', '\u2003', '\u2004', '\u2005',
-        '\u2006', '\u2007', '\u2008', '\u2009', '\u200a', '\u2028', '\u2029',
-        '\u202f', '\u205f', '\u3000',
-    )
+        "\x0b",
+        "\x0c",
+        "\r",
+        "\x1c",
+        "\x1d",
+        "\x1e",
+        "\x1f",
+        "\x85",
+        "\xa0",
+        "\u1680",
+        "\u2000",
+        "\u2001",
+        "\u2002",
+        "\u2003",
+        "\u2004",
+        "\u2005",
+        "\u2006",
+        "\u2007",
+        "\u2008",
+        "\u2009",
+        "\u200a",
+        "\u2028",
+        "\u2029",
+        "\u202f",
+        "\u205f",
+        "\u3000",
+    ),
 )
 
 
@@ -94,17 +117,23 @@ class WhitespaceCheck(Check):
     """Scan ebuild for useless whitespace."""
 
     _source = sources.EbuildFileRepoSource
-    known_results = frozenset([
-        WhitespaceFound, WrongIndentFound, DoubleEmptyLine,
-        TrailingEmptyLine, NoFinalNewline, BadWhitespaceCharacter
-    ])
+    known_results = frozenset(
+        [
+            WhitespaceFound,
+            WrongIndentFound,
+            DoubleEmptyLine,
+            TrailingEmptyLine,
+            NoFinalNewline,
+            BadWhitespaceCharacter,
+        ]
+    )
 
-    _indent_regex = re.compile('^\t* \t+')
+    _indent_regex = re.compile("^\t* \t+")
 
     def __init__(self, *args):
         super().__init__(*args)
-        bad_whitespace = ''.join(whitespace_data.chars)
-        self.bad_whitespace_regex = re.compile(rf'(?P<char>[{bad_whitespace}])')
+        bad_whitespace = "".join(whitespace_data.chars)
+        self.bad_whitespace_regex = re.compile(rf"(?P<char>[{bad_whitespace}])")
 
     def feed(self, pkg):
         lastlineempty = False
@@ -116,14 +145,18 @@ class WhitespaceCheck(Check):
         for lineno, line in enumerate(pkg.lines, 1):
             for match in self.bad_whitespace_regex.finditer(line):
                 yield BadWhitespaceCharacter(
-                    repr(match.group('char')), match.end('char'),
-                    line=repr(line), lineno=lineno, pkg=pkg)
+                    repr(match.group("char")),
+                    match.end("char"),
+                    line=repr(line),
+                    lineno=lineno,
+                    pkg=pkg,
+                )
 
-            if line != '\n':
+            if line != "\n":
                 lastlineempty = False
-                if line[-2:-1] == ' ' or line[-2:-1] == '\t':
+                if line[-2:-1] == " " or line[-2:-1] == "\t":
                     trailing.append(lineno)
-                elif line[0] == ' ':
+                elif line[0] == " ":
                     leading.append(lineno)
                 if self._indent_regex.match(line):
                     indent.append(lineno)
@@ -132,9 +165,9 @@ class WhitespaceCheck(Check):
             else:
                 lastlineempty = True
         if trailing:
-            yield WhitespaceFound('trailing', lines=trailing, pkg=pkg)
+            yield WhitespaceFound("trailing", lines=trailing, pkg=pkg)
         if leading:
-            yield WhitespaceFound('leading', lines=leading, pkg=pkg)
+            yield WhitespaceFound("leading", lines=leading, pkg=pkg)
         if indent:
             yield WrongIndentFound(indent, pkg=pkg)
         if double_empty:
@@ -143,5 +176,5 @@ class WhitespaceCheck(Check):
             yield TrailingEmptyLine(pkg=pkg)
 
         # Dealing with empty ebuilds is just paranoia
-        if pkg.lines and not pkg.lines[-1].endswith('\n'):
+        if pkg.lines and not pkg.lines[-1].endswith("\n"):
             yield NoFinalNewline(pkg=pkg)

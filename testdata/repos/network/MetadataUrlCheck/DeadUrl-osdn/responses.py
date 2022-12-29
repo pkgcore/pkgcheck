@@ -4,7 +4,7 @@ from requests.models import Response
 
 r = Response()
 r.status_code = 404
-r.reason = 'Not Found'
-r.url = 'https://osdn.net/projects/pkgcore/pkgcheck/'
+r.reason = "Not Found"
+r.url = "https://osdn.net/projects/pkgcore/pkgcheck/"
 r.raw = io.StringIO()
 responses = [r]

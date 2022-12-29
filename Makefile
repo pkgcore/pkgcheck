@@ -12,3 +12,7 @@ sdist wheel:
 .PHONY: clean
 clean:
 	$(RM) -r build doc/man/pkgcheck doc/generated dist
+
+.PHONY: format
+format:
+	$(PYTHON) -m black .

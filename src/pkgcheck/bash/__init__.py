@@ -11,10 +11,10 @@ from .. import const
 from ctypes.util import find_library
 
 # path to bash parsing library on the system (may be None)
-syslib = find_library('tree-sitter-bash')
+syslib = find_library("tree-sitter-bash")
 
 # path to bash parsing library (vendored)
-lib = pjoin(os.path.dirname(__file__), 'lang.so')
+lib = pjoin(os.path.dirname(__file__), "lang.so")
 
 # copied from tree-sitter with the following changes:
 # - prefer stdc++ over c++ when linking
@@ -50,9 +50,7 @@ def build_library(output_path, repo_paths):  # pragma: no cover
             source_paths.append(path.join(src_path, "scanner.cc"))
         elif path.exists(path.join(src_path, "scanner.c")):
             source_paths.append(path.join(src_path, "scanner.c"))
-    source_mtimes = [path.getmtime(__file__)] + [
-        path.getmtime(path_) for path_ in source_paths
-    ]
+    source_mtimes = [path.getmtime(__file__)] + [path.getmtime(path_) for path_ in source_paths]
 
     compiler = new_compiler()
     # force `c++` compiler so the appropriate standard library is used
@@ -91,21 +89,25 @@ try:
     from .. import _const
 except ImportError:  # pragma: no cover
     # build library when running from git repo or tarball
-    if syslib is None and not os.path.exists(lib) and 'tree-sitter-bash' in os.listdir(const.REPO_PATH):
-        bash_src = pjoin(const.REPO_PATH, 'tree-sitter-bash')
+    if (
+        syslib is None
+        and not os.path.exists(lib)
+        and "tree-sitter-bash" in os.listdir(const.REPO_PATH)
+    ):
+        bash_src = pjoin(const.REPO_PATH, "tree-sitter-bash")
         build_library(lib, [bash_src])
 
 if syslib is not None or os.path.exists(lib):
-    lang = Language(syslib or lib, 'bash')
+    lang = Language(syslib or lib, "bash")
     query = partial(lang.query)
     parser = Parser()
     parser.set_language(lang)
 
     # various parse tree queries
-    cmd_query = query('(command) @call')
-    func_query = query('(function_definition) @func')
-    var_assign_query = query('(variable_assignment) @assign')
-    var_query = query('(variable_name) @var')
+    cmd_query = query("(command) @call")
+    func_query = query("(function_definition) @func")
+    var_assign_query = query("(variable_assignment) @assign")
+    var_query = query("(variable_name) @var")
 
 
 class ParseTree:
@@ -118,13 +120,13 @@ class ParseTree:
 
     def node_str(self, node):
         """Return the ebuild string associated with a given parse tree node."""
-        return self.data[node.start_byte:node.end_byte].decode('utf8')
+        return self.data[node.start_byte : node.end_byte].decode("utf8")
 
     def global_query(self, query):
         """Run a given parse tree query returning only those nodes in global scope."""
         for x in self.tree.root_node.children:
             # skip nodes in function scope
-            if x.type != 'function_definition':
+            if x.type != "function_definition":
                 for node, _ in query.captures(x):
                     yield node
 
@@ -132,6 +134,6 @@ class ParseTree:
         """Run a given parse tree query returning only those nodes in function scope."""
         for x in self.tree.root_node.children:
             # only return nodes in function scope
-            if x.type == 'function_definition':
+            if x.type == "function_definition":
                 for node, _ in query.captures(x):
                     yield node

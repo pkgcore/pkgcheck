@@ -30,7 +30,7 @@ def main(f=sys.stdout, **kwargs):
 
     def _rst_header(char, text, newline=True, leading=False):
         if newline:
-            out('\n', end='')
+            out("\n", end="")
         if leading:
             out(char * len(text))
         out(text)
@@ -43,33 +43,38 @@ def main(f=sys.stdout, **kwargs):
     wrapper = TextWrapper(width=85)
 
     for scope in base.scopes.values():
-        _rst_header('-', scope.desc.capitalize() + ' scope', leading=True)
+        _rst_header("-", scope.desc.capitalize() + " scope", leading=True)
 
         checks = (x for x in objects.CHECKS.values() if x.scope == scope)
         for check in checks:
             if check.__doc__ is not None:
                 try:
-                    summary, explanation = check.__doc__.split('\n', 1)
+                    summary, explanation = check.__doc__.split("\n", 1)
                 except ValueError:
                     summary = check.__doc__
                     explanation = None
             else:
                 summary = None
 
-            _rst_header('-', check.__name__)
+            _rst_header("-", check.__name__)
             if summary:
-                out('\n' + dedent(summary).strip())
+                out("\n" + dedent(summary).strip())
                 if explanation:
-                    explanation = '\n'.join(dedent(explanation).strip().split('\n'))
-                    out('\n' + explanation)
+                    explanation = "\n".join(dedent(explanation).strip().split("\n"))
+                    out("\n" + explanation)
                 if issubclass(check, GentooRepoCheck):
-                    out('\n\n- Gentoo repo specific')
-                known_results = ', '.join(
-                    f'`{r.__name__}`_' for r in
-                    sorted(check.known_results, key=attrgetter('__name__')))
-                out('\n' + '\n'.join(wrapper.wrap(
-                    f"(known result{_pl(check.known_results)}: {known_results})")))
+                    out("\n\n- Gentoo repo specific")
+                known_results = ", ".join(
+                    f"`{r.__name__}`_"
+                    for r in sorted(check.known_results, key=attrgetter("__name__"))
+                )
+                out(
+                    "\n"
+                    + "\n".join(
+                        wrapper.wrap(f"(known result{_pl(check.known_results)}: {known_results})")
+                    )
+                )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

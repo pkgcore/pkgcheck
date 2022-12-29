@@ -29,7 +29,7 @@ class Pipeline:
         self.errors = []
 
         # pkgcheck currently requires the fork start method (#254)
-        self._mp_ctx = multiprocessing.get_context('fork')
+        self._mp_ctx = multiprocessing.get_context("fork")
         self._results_q = self._mp_ctx.SimpleQueue()
 
         # create checkrunners
@@ -44,19 +44,19 @@ class Pipeline:
         if self.options.pkg_scan:
             # package level scans sort all returned results
             self._ordered_results = {
-                scope: [] for scope in base.scopes.values()
-                if scope >= base.package_scope
+                scope: [] for scope in base.scopes.values() if scope >= base.package_scope
             }
         else:
             # scoped mapping for caching repo and location specific results
             self._ordered_results = {
-                scope: [] for scope in reversed(list(base.scopes.values()))
+                scope: []
+                for scope in reversed(list(base.scopes.values()))
                 if scope <= base.repo_scope
             }
 
     def _filter_checks(self, scope):
         """Verify check scope against given scope to determine activation."""
-        for check in sorted(self.options.enabled_checks, key=attrgetter('__name__')):
+        for check in sorted(self.options.enabled_checks, key=attrgetter("__name__")):
             if isinstance(check.scope, base.ConditionalScope):
                 # conditionally enabled check
                 yield check
@@ -77,7 +77,7 @@ class Pipeline:
 
     def _create_runners(self):
         """Initialize and categorize checkrunners for results pipeline."""
-        pipes = {'async': [], 'sync': [], 'sequential': []}
+        pipes = {"async": [], "sync": [], "sequential": []}
 
         # use addon/source caches to avoid re-initializing objects
         addons_map = {}
@@ -88,15 +88,20 @@ class Pipeline:
             addons = list(base.get_addons(self._filter_checks(scope)))
             if not addons:
                 raise base.PkgcheckUserException(
-                    f'no matching checks available for {scope.desc} scope')
+                    f"no matching checks available for {scope.desc} scope"
+                )
             checks = init_checks(
-                addons, self.options, self._results_q,
-                addons_map=addons_map, source_map=source_map)
+                addons, self.options, self._results_q, addons_map=addons_map, source_map=source_map
+            )
 
             # Initialize checkrunners per source type using separate runner for
             # async checks and categorize them for parallelization based on the
             # scan and source scope.
-            runners = {'async': defaultdict(list), 'sync': defaultdict(list), 'sequential': defaultdict(list)}
+            runners = {
+                "async": defaultdict(list),
+                "sync": defaultdict(list),
+                "sequential": defaultdict(list),
+            }
             for (source, runner_cls), check_objs in checks.items():
                 runner = runner_cls(self.options, source, check_objs)
                 if not self.options.pkg_scan and source.scope >= base.package_scope:
@@ -183,8 +188,9 @@ class Pipeline:
         """Consumer that runs scanning tasks, queuing results for output."""
         try:
             for scope, restrict, i, runners in iter(work_q.get, None):
-                if results := sorted(chain.from_iterable(
-                        pipes[i][-1][scope][j].run(restrict) for j in runners)):
+                if results := sorted(
+                    chain.from_iterable(pipes[i][-1][scope][j].run(restrict) for j in runners)
+                ):
                     self._results_q.put(results)
         except Exception:  # pragma: no cover
             # traceback can't be pickled so serialize it
@@ -213,21 +219,19 @@ class Pipeline:
 
             # schedule asynchronous checks in a separate process
             async_proc = None
-            if async_pipes := self._pipes['async']:
-                async_proc = self._mp_ctx.Process(
-                    target=self._schedule_async, args=(async_pipes,))
+            if async_pipes := self._pipes["async"]:
+                async_proc = self._mp_ctx.Process(target=self._schedule_async, args=(async_pipes,))
                 async_proc.start()
 
             # run synchronous checks using a process pool
-            if sync_pipes := self._pipes['sync']:
+            if sync_pipes := self._pipes["sync"]:
                 work_q = self._mp_ctx.SimpleQueue()
-                pool = self._mp_ctx.Pool(
-                    self.options.jobs, self._run_checks, (sync_pipes, work_q))
+                pool = self._mp_ctx.Pool(self.options.jobs, self._run_checks, (sync_pipes, work_q))
                 pool.close()
                 self._queue_work(sync_pipes, work_q)
                 pool.join()
 
-            if sequential_pipes := self._pipes['sequential']:
+            if sequential_pipes := self._pipes["sequential"]:
                 for _scope, restriction, pipes in sequential_pipes:
                     for runner in chain.from_iterable(pipes.values()):
                         if results := tuple(runner.run(restriction)):

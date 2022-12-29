@@ -30,8 +30,12 @@ class TestInsintoCheck(misc.ReportTestCase):
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
 
         bad = (
-            "/etc/env.d", "/etc/conf.d", "/etc/init.d", "/etc/pam.d",
-            "/usr/share/applications", "/usr/share/applications",
+            "/etc/env.d",
+            "/etc/conf.d",
+            "/etc/init.d",
+            "/etc/pam.d",
+            "/usr/share/applications",
+            "/usr/share/applications",
             "//usr/share//applications",
         )
         check = self.check_kls(None)
@@ -42,11 +46,12 @@ class TestInsintoCheck(misc.ReportTestCase):
 
     def test_docinto(self):
         check = self.check_kls(None)
-        for path in ('${PF}', '${P}', '${PF}/examples'):
+        for path in ("${PF}", "${P}", "${PF}/examples"):
             for eapi_str, eapi in EAPI.known_eapis.items():
-                fake_src = [f'\tinsinto /usr/share/doc/{path}\n']
+                fake_src = [f"\tinsinto /usr/share/doc/{path}\n"]
                 fake_pkg = misc.FakePkg(
-                    "dev-util/diff-0.5", data={'EAPI': eapi_str}, lines=fake_src)
+                    "dev-util/diff-0.5", data={"EAPI": eapi_str}, lines=fake_src
+                )
                 if eapi.options.dodoc_allow_recursive:
                     r = self.assertReport(check, fake_pkg)
                     assert path in str(r)
@@ -68,10 +73,10 @@ class TestAbsoluteSymlink(misc.ReportTestCase):
 
         absolute_prefixed = []
         for path_var in codingstyle.PATH_VARIABLES:
-            src, dest = ('/bin/blah', '/bin/bash')
+            src, dest = ("/bin/blah", "/bin/bash")
             absolute_prefixed.append((f'"${{{path_var}}}"{src}', dest))
             absolute_prefixed.append((f'"${{{path_var}%/}}"{src}', dest))
-            src, dest = ('/bin/blah baz', '/bin/blahbaz')
+            src, dest = ("/bin/blah baz", "/bin/blahbaz")
             absolute_prefixed.append((f'"${{{path_var}}}{src}"', dest))
             absolute_prefixed.append((f'"${{{path_var}%/}}{src}"', dest))
 
@@ -99,7 +104,7 @@ class TestAbsoluteSymlink(misc.ReportTestCase):
 
         assert len(reports) == len(absolute) + len(absolute_prefixed)
         for r, (src, dest) in zip(reports, absolute + absolute_prefixed):
-            assert f'dosym {src}' in str(r)
+            assert f"dosym {src}" in str(r)
 
 
 class TestPathVariablesCheck(misc.ReportTestCase):
@@ -107,7 +112,7 @@ class TestPathVariablesCheck(misc.ReportTestCase):
     check_kls = codingstyle.PathVariablesCheck
     check = check_kls(None)
 
-    def _found(self, cls, suffix=''):
+    def _found(self, cls, suffix=""):
         # check single and multiple matches across all specified variables
         for lines in (1, 2):
             for path_var in codingstyle.PATH_VARIABLES:
@@ -117,17 +122,18 @@ class TestPathVariablesCheck(misc.ReportTestCase):
                 fake_src.extend(["}\n", "\n"])
                 for eapi_str, eapi in EAPI.known_eapis.items():
                     fake_pkg = misc.FakePkg(
-                        "dev-util/diff-0.5", data={'EAPI': eapi_str}, lines=fake_src)
+                        "dev-util/diff-0.5", data={"EAPI": eapi_str}, lines=fake_src
+                    )
                     if eapi.options.trailing_slash:
                         self.assertNoReport(self.check, fake_pkg)
                     else:
                         r = self.assertReport(self.check, fake_pkg)
                         assert isinstance(r, cls)
-                        assert r.match == f'${{{path_var}{suffix}}}'
+                        assert r.match == f"${{{path_var}{suffix}}}"
                         assert r.lines == tuple(x + 2 for x in range(lines))
                         assert path_var in str(r)
 
-    def _unfound(self, cls, suffix=''):
+    def _unfound(self, cls, suffix=""):
         for path_var in codingstyle.PATH_VARIABLES:
             fake_src = [
                 "src_install() {\n",
@@ -138,7 +144,8 @@ class TestPathVariablesCheck(misc.ReportTestCase):
             ]
             for eapi_str, eapi in EAPI.known_eapis.items():
                 fake_pkg = misc.FakePkg(
-                    "dev-util/diffball-0.5", data={'EAPI': eapi_str}, lines=fake_src)
+                    "dev-util/diffball-0.5", data={"EAPI": eapi_str}, lines=fake_src
+                )
                 self.assertNoReport(self.check, fake_pkg)
 
     def test_missing_found(self):
@@ -148,14 +155,14 @@ class TestPathVariablesCheck(misc.ReportTestCase):
         self._unfound(codingstyle.MissingSlash)
 
     def test_unnecessary_found(self):
-        self._found(codingstyle.UnnecessarySlashStrip, suffix='%/')
+        self._found(codingstyle.UnnecessarySlashStrip, suffix="%/")
 
     def test_unnecessary_unfound(self):
-        self._unfound(codingstyle.UnnecessarySlashStrip, suffix='%/')
+        self._unfound(codingstyle.UnnecessarySlashStrip, suffix="%/")
 
     def test_double_prefix_found(self):
         fake_src = [
-            'src_install() {\n',
+            "src_install() {\n",
             '   cp foo.py "${ED}$(python_get_sitedir)"\n',
             # test non-match
             '   cp foo.py "${D%/}$(python_get_sitedir)"\n',
@@ -174,17 +181,17 @@ class TestPathVariablesCheck(misc.ReportTestCase):
             '   dodir /foo/bar "${EPREFIX}"/bar/baz\n',
             # commented lines aren't flagged for double prefix usage
             '#  exeinto "${EPREFIX}/foo/bar"\n',
-            '}\n'
+            "}\n",
         ]
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
         r = self.assertReports(self.check, fake_pkg)
         cls = codingstyle.DoublePrefixInPath
         expected_results = (
-            ('${ED}$(python_get_sitedir)', 2),
-            ('${ED%/}$(python_get_sitedir)', 4),
-            ('${ED}/$(python_get_sitedir)', 5),
-            ('${ED}${PYTHON_SITEDIR}', 6),
-            ('${ED}${EPREFIX}', 7),
+            ("${ED}$(python_get_sitedir)", 2),
+            ("${ED%/}$(python_get_sitedir)", 4),
+            ("${ED}/$(python_get_sitedir)", 5),
+            ("${ED}${PYTHON_SITEDIR}", 6),
+            ("${ED}${EPREFIX}", 7),
             ('insinto "$(python_get_sitedir)', 8),
             ('exeinto "${EPREFIX}', 9),
             ('fowners foo:bar "$(python_get_sitedir)', 10),
@@ -199,16 +206,16 @@ class TestPathVariablesCheck(misc.ReportTestCase):
 
     def test_double_prefix_unfound(self):
         fake_src = [
-            'src_install() {\n',
+            "src_install() {\n",
             '    cp foo.py "${D}$(python_get_sitedir)"\n',
             '    cp foo "${D}${EPREFIX}/foo/bar"\n',
-            '    insinto /foo/bar\n',
+            "    insinto /foo/bar\n",
             # potential false positives: stripping prefix
             '    insinto "${MYVAR#${EPREFIX}}"\n',
             '    insinto "${MYVAR#"${EPREFIX}"}"\n',
             # combined commands
             '    dodir /etc/env.d && echo "FOO=${EPREFIX}"\n',
-            '}\n'
+            "}\n",
         ]
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
         self.assertNoReport(self.check, fake_pkg)
@@ -219,99 +226,76 @@ class TestObsoleteUri(misc.ReportTestCase):
     check_kls = codingstyle.ObsoleteUriCheck
 
     def test_github_archive_uri(self):
-        uri = 'https://github.com/foo/bar/archive/${PV}.tar.gz'
-        fake_src = [
-            f'SRC_URI="{uri} -> ${{P}}.tar.gz"\n'
-        ]
+        uri = "https://github.com/foo/bar/archive/${PV}.tar.gz"
+        fake_src = [f'SRC_URI="{uri} -> ${{P}}.tar.gz"\n']
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
         self.assertNoReport(self.check_kls(None), fake_pkg)
 
     def test_commented_github_tarball_uri(self):
-        uri = 'https://github.com/foo/bar/tarball/${PV}'
-        fake_src = [
-            '# github tarball\n',
-            '\n',
-            f'# {uri}\n'
-        ]
+        uri = "https://github.com/foo/bar/tarball/${PV}"
+        fake_src = ["# github tarball\n", "\n", f"# {uri}\n"]
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
         self.assertNoReport(self.check_kls(None), fake_pkg)
 
     def test_github_tarball_uri(self):
-        uri = 'https://github.com/foo/bar/tarball/${PV}'
-        fake_src = [
-            f'SRC_URI="{uri} -> ${{P}}.tar.gz"\n'
-        ]
+        uri = "https://github.com/foo/bar/tarball/${PV}"
+        fake_src = [f'SRC_URI="{uri} -> ${{P}}.tar.gz"\n']
 
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
         r = self.assertReport(self.check_kls(None), fake_pkg)
         assert r.line == 1
         assert r.uri == uri
-        assert (r.replacement ==
-                'https://github.com/foo/bar/archive/${PV}.tar.gz')
+        assert r.replacement == "https://github.com/foo/bar/archive/${PV}.tar.gz"
         assert uri in str(r)
 
     def test_github_zipball_uri(self):
-        uri = 'https://github.com/foo/bar/zipball/${PV}'
-        fake_src = [
-            f'SRC_URI="{uri} -> ${{P}}.zip"\n'
-        ]
+        uri = "https://github.com/foo/bar/zipball/${PV}"
+        fake_src = [f'SRC_URI="{uri} -> ${{P}}.zip"\n']
 
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
         r = self.assertReport(self.check_kls(None), fake_pkg)
         assert r.line == 1
         assert r.uri == uri
-        assert (r.replacement ==
-                'https://github.com/foo/bar/archive/${PV}.tar.gz')
+        assert r.replacement == "https://github.com/foo/bar/archive/${PV}.tar.gz"
         assert uri in str(r)
 
     def test_gitlab_archive_uri(self):
-        uri = 'https://gitlab.com/foo/bar/-/archive/${PV}/${P}.tar.gz'
-        fake_src = [
-            f'SRC_URI="{uri}"\n'
-        ]
+        uri = "https://gitlab.com/foo/bar/-/archive/${PV}/${P}.tar.gz"
+        fake_src = [f'SRC_URI="{uri}"\n']
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
         self.assertNoReport(self.check_kls(None), fake_pkg)
 
     def test_gitlab_tar_gz_uri(self):
-        uri = 'https://gitlab.com/foo/bar/repository/archive.tar.gz?ref=${PV}'
-        fake_src = [
-            f'SRC_URI="{uri} -> ${{P}}.tar.gz"\n'
-        ]
+        uri = "https://gitlab.com/foo/bar/repository/archive.tar.gz?ref=${PV}"
+        fake_src = [f'SRC_URI="{uri} -> ${{P}}.tar.gz"\n']
 
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
         r = self.assertReport(self.check_kls(None), fake_pkg)
         assert r.line == 1
         assert r.uri == uri
-        assert (r.replacement ==
-                'https://gitlab.com/foo/bar/-/archive/${PV}/bar-${PV}.tar.gz')
+        assert r.replacement == "https://gitlab.com/foo/bar/-/archive/${PV}/bar-${PV}.tar.gz"
         assert uri in str(r)
 
     def test_gitlab_tar_bz2_uri(self):
-        uri = 'https://gitlab.com/foo/bar/repository/archive.tar.bz2?ref=${PV}'
-        fake_src = [
-            f'SRC_URI="{uri} -> ${{P}}.tar.bz2"\n'
-        ]
+        uri = "https://gitlab.com/foo/bar/repository/archive.tar.bz2?ref=${PV}"
+        fake_src = [f'SRC_URI="{uri} -> ${{P}}.tar.bz2"\n']
 
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
         r = self.assertReport(self.check_kls(None), fake_pkg)
         assert r.line == 1
         assert r.uri == uri
-        assert (r.replacement ==
-                'https://gitlab.com/foo/bar/-/archive/${PV}/bar-${PV}.tar.bz2')
+        assert r.replacement == "https://gitlab.com/foo/bar/-/archive/${PV}/bar-${PV}.tar.bz2"
         assert uri in str(r)
 
     def test_gitlab_zip_uri(self):
-        uri = 'https://gitlab.com/foo/bar/repository/archive.zip?ref=${PV}'
-        fake_src = [
-            f'SRC_URI="{uri} -> ${{P}}.zip"\n'
-        ]
+        uri = "https://gitlab.com/foo/bar/repository/archive.zip?ref=${PV}"
+        fake_src = [f'SRC_URI="{uri} -> ${{P}}.zip"\n']
 
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
         r = self.assertReport(self.check_kls(None), fake_pkg)
         assert r.line == 1
         assert r.uri == uri
-        assert (r.replacement ==
-                'https://gitlab.com/foo/bar/-/archive/${PV}/bar-${PV}.zip')
+        assert r.replacement == "https://gitlab.com/foo/bar/-/archive/${PV}/bar-${PV}.zip"
         assert uri in str(r)
 
 
@@ -320,15 +304,13 @@ class TestBetterCompression(misc.ReportTestCase):
     check_kls = codingstyle.BetterCompressionCheck
 
     def test_github_archive_uri(self):
-        uri = 'https://github.com/foo/bar/archive/${PV}.tar.gz'
-        fake_src = [
-            f'SRC_URI="{uri} -> ${{P}}.tar.gz"\n'
-        ]
+        uri = "https://github.com/foo/bar/archive/${PV}.tar.gz"
+        fake_src = [f'SRC_URI="{uri} -> ${{P}}.tar.gz"\n']
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
         self.assertNoReport(self.check_kls(None), fake_pkg)
 
     def test_comment_uri(self):
-        uri = 'https://gitlab.com/GNOME/${PN}/-/archive/${PV}/${P}.tar'
+        uri = "https://gitlab.com/GNOME/${PN}/-/archive/${PV}/${P}.tar"
         fake_src = [
             f'#SRC_URI="{uri} -> ${{P}}.tar.gz"\n',
             " ",
@@ -339,21 +321,22 @@ class TestBetterCompression(misc.ReportTestCase):
         r = self.assertReport(self.check_kls(None), fake_pkg)
         assert r.lineno == 4
 
-    @pytest.mark.parametrize('uri', (
-        'https://gitlab.com/GNOME/${PN}/-/archive/${PV}/${P}.tar',
-        'https://gitlab.gnome.org/GNOME/${PN}/-/archive/${PV}/${P}.tar.gz',
-        'https://gitlab.gnome.org/GNOME/${PN}/-/archive/${PV}/${P}.zip',
-        'https://gitlab.freedesktop.org/glvnd/${PN}/-/archive/v${PV}/${PN}-v${PV}.tar.gz',
-    ))
+    @pytest.mark.parametrize(
+        "uri",
+        (
+            "https://gitlab.com/GNOME/${PN}/-/archive/${PV}/${P}.tar",
+            "https://gitlab.gnome.org/GNOME/${PN}/-/archive/${PV}/${P}.tar.gz",
+            "https://gitlab.gnome.org/GNOME/${PN}/-/archive/${PV}/${P}.zip",
+            "https://gitlab.freedesktop.org/glvnd/${PN}/-/archive/v${PV}/${PN}-v${PV}.tar.gz",
+        ),
+    )
     def test_gitlab_archive_uri(self, uri):
-        fake_src = [
-            f'SRC_URI="{uri} -> ${{P}}.tar.gz"\n'
-        ]
+        fake_src = [f'SRC_URI="{uri} -> ${{P}}.tar.gz"\n']
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
         r = self.assertReport(self.check_kls(None), fake_pkg)
         assert r.lineno == 1
         assert r.line == uri
-        assert r.replacement == '.tar.bz2'
+        assert r.replacement == ".tar.bz2"
         assert uri in str(r)
 
 
@@ -363,76 +346,85 @@ class TestStaticSrcUri(misc.ReportTestCase):
     check = check_kls(None)
 
     @staticmethod
-    def _prepare_pkg(uri_value: str, rename: str = '', pkgver: str = 'diffball-0.1.2.3'):
+    def _prepare_pkg(uri_value: str, rename: str = "", pkgver: str = "diffball-0.1.2.3"):
         if rename:
-            rename = f' -> {rename}'
-        uri = f'https://github.com/pkgcore/pkgcheck/archive/{uri_value}.tar.gz'
-        fake_src = [
-            f'SRC_URI="{uri}{rename}"\n'
-        ]
+            rename = f" -> {rename}"
+        uri = f"https://github.com/pkgcore/pkgcheck/archive/{uri_value}.tar.gz"
+        fake_src = [f'SRC_URI="{uri}{rename}"\n']
 
-        fake_pkg = misc.FakePkg(f"dev-util/{pkgver}", ebuild=''.join(fake_src), lines=fake_src)
-        data = ''.join(fake_src).encode()
+        fake_pkg = misc.FakePkg(f"dev-util/{pkgver}", ebuild="".join(fake_src), lines=fake_src)
+        data = "".join(fake_src).encode()
         return _ParsedPkg(data, pkg=fake_pkg)
 
-
-    @pytest.mark.parametrize('value', (
-        '${P}',
-        '${PV}',
-        'v${PV}',
-        'random-0.1.2.3', # not a valid prefix
-        '1.2.3', # currently we support only ver_cut with start=1
-        '0', # for ver_cut only if more then 1 part
-    ))
+    @pytest.mark.parametrize(
+        "value",
+        (
+            "${P}",
+            "${PV}",
+            "v${PV}",
+            "random-0.1.2.3",  # not a valid prefix
+            "1.2.3",  # currently we support only ver_cut with start=1
+            "0",  # for ver_cut only if more then 1 part
+        ),
+    )
     def test_no_report(self, value):
         self.assertNoReport(self.check, self._prepare_pkg(value))
 
-    @pytest.mark.parametrize(('value', 'static_str', 'replacement'), (
-        ('diffball-0.1.2.3', 'diffball-0.1.2.3', '${P}'),
-        ('Diffball-0.1.2.3', 'Diffball-0.1.2.3', '${P^}'),
-        ('DIFFBALL-0.1.2.3', 'DIFFBALL-0.1.2.3', '${P^^}'),
-        ('diffball-0123', 'diffball-0123', '${P//.}'),
-        ('Diffball-0123', 'Diffball-0123', '${P^//.}'),
-        ('0.1.2.3', '0.1.2.3', '${PV}'),
-        ('v0.1.2.3', '0.1.2.3', '${PV}'),
-        ('0.1.2', '0.1.2', '$(ver_cut 1-3)'),
-        ('0.1', '0.1', '$(ver_cut 1-2)'),
-        ('diffball-0.1.2', '0.1.2', '$(ver_cut 1-3)'),
-        ('v0123', '0123', "${PV//.}"),
-        ('012.3', '012.3', "$(ver_rs 1-2 '')"),
-        ('012.3', '012.3', "$(ver_rs 1-2 '')"),
-        ('0_1_2_3', '0_1_2_3', "${PV//./_}"),
-        ('0_1_2.3', '0_1_2.3', "$(ver_rs 1-2 '_')"),
-        ('0-1.2.3', '0-1.2.3', "$(ver_rs 1 '-')"),
-    ))
+    @pytest.mark.parametrize(
+        ("value", "static_str", "replacement"),
+        (
+            ("diffball-0.1.2.3", "diffball-0.1.2.3", "${P}"),
+            ("Diffball-0.1.2.3", "Diffball-0.1.2.3", "${P^}"),
+            ("DIFFBALL-0.1.2.3", "DIFFBALL-0.1.2.3", "${P^^}"),
+            ("diffball-0123", "diffball-0123", "${P//.}"),
+            ("Diffball-0123", "Diffball-0123", "${P^//.}"),
+            ("0.1.2.3", "0.1.2.3", "${PV}"),
+            ("v0.1.2.3", "0.1.2.3", "${PV}"),
+            ("0.1.2", "0.1.2", "$(ver_cut 1-3)"),
+            ("0.1", "0.1", "$(ver_cut 1-2)"),
+            ("diffball-0.1.2", "0.1.2", "$(ver_cut 1-3)"),
+            ("v0123", "0123", "${PV//.}"),
+            ("012.3", "012.3", "$(ver_rs 1-2 '')"),
+            ("012.3", "012.3", "$(ver_rs 1-2 '')"),
+            ("0_1_2_3", "0_1_2_3", "${PV//./_}"),
+            ("0_1_2.3", "0_1_2.3", "$(ver_rs 1-2 '_')"),
+            ("0-1.2.3", "0-1.2.3", "$(ver_rs 1 '-')"),
+        ),
+    )
     def test_with_report(self, value, static_str, replacement):
         r = self.assertReport(self.check, self._prepare_pkg(value))
         assert r.static_str == static_str
         assert r.replacement == replacement
 
     def test_rename(self):
-        self.assertNoReport(self.check, self._prepare_pkg('${P}', '${P}.tar.gz'))
+        self.assertNoReport(self.check, self._prepare_pkg("${P}", "${P}.tar.gz"))
 
-        r = self.assertReport(self.check, self._prepare_pkg('${P}', 'diffball-0.1.2.3.tar.gz'))
-        assert r.static_str == 'diffball-0.1.2.3'
-        assert r.replacement == '${P}'
+        r = self.assertReport(self.check, self._prepare_pkg("${P}", "diffball-0.1.2.3.tar.gz"))
+        assert r.static_str == "diffball-0.1.2.3"
+        assert r.replacement == "${P}"
 
-        r = self.assertReport(self.check, self._prepare_pkg('0.1.2.3', '${P}.tar.gz'))
-        assert r.static_str == '0.1.2.3'
-        assert r.replacement == '${PV}'
+        r = self.assertReport(self.check, self._prepare_pkg("0.1.2.3", "${P}.tar.gz"))
+        assert r.static_str == "0.1.2.3"
+        assert r.replacement == "${PV}"
 
-        r = self.assertReport(self.check, self._prepare_pkg('diffball-0.1.2.3', 'diffball-0.1.2.3.tar.gz'))
-        assert r.static_str == 'diffball-0.1.2.3'
-        assert r.replacement == '${P}'
+        r = self.assertReport(
+            self.check, self._prepare_pkg("diffball-0.1.2.3", "diffball-0.1.2.3.tar.gz")
+        )
+        assert r.static_str == "diffball-0.1.2.3"
+        assert r.replacement == "${P}"
 
     def test_capitalize(self):
-        r = self.assertReport(self.check, self._prepare_pkg('DIFFBALL-0.1.2.3', pkgver='DIFFBALL-0.1.2.3'))
-        assert r.static_str == 'DIFFBALL-0.1.2.3'
-        assert r.replacement == '${P}'
+        r = self.assertReport(
+            self.check, self._prepare_pkg("DIFFBALL-0.1.2.3", pkgver="DIFFBALL-0.1.2.3")
+        )
+        assert r.static_str == "DIFFBALL-0.1.2.3"
+        assert r.replacement == "${P}"
 
-        r = self.assertReport(self.check, self._prepare_pkg('Diffball-0.1.2.3', pkgver='Diffball-0.1.2.3'))
-        assert r.static_str == 'Diffball-0.1.2.3'
-        assert r.replacement == '${P}'
+        r = self.assertReport(
+            self.check, self._prepare_pkg("Diffball-0.1.2.3", pkgver="Diffball-0.1.2.3")
+        )
+        assert r.static_str == "Diffball-0.1.2.3"
+        assert r.replacement == "${P}"
 
 
 class TestExcessiveLineLength(misc.ReportTestCase):
@@ -441,54 +433,68 @@ class TestExcessiveLineLength(misc.ReportTestCase):
     check = check_kls(None)
     word_length = codingstyle.ExcessiveLineLength.word_length
 
-
     @staticmethod
     def _prepare_pkg(*lines: str):
-        fake_pkg = misc.FakePkg("dev-util/diffball-0", ebuild=''.join(lines), lines=lines)
-        data = ''.join(lines).encode()
+        fake_pkg = misc.FakePkg("dev-util/diffball-0", ebuild="".join(lines), lines=lines)
+        data = "".join(lines).encode()
         return _ParsedPkg(data, pkg=fake_pkg)
 
     def test_normal_length(self):
         self.assertNoReport(self.check, self._prepare_pkg('echo "short line"'))
 
     def test_long_line(self):
-        r = self.assertReport(self.check, self._prepare_pkg(f'echo {"a " * codingstyle.ExcessiveLineLength.line_length}'))
-        assert r.lines == (1, )
+        r = self.assertReport(
+            self.check,
+            self._prepare_pkg(f'echo {"a " * codingstyle.ExcessiveLineLength.line_length}'),
+        )
+        assert r.lines == (1,)
 
     def test_multiple_lines(self):
-        r = self.assertReport(self.check, self._prepare_pkg(
-            f'echo {"a " * codingstyle.ExcessiveLineLength.line_length}',
-            'echo "short line"',
-            f'echo {"Hello " * codingstyle.ExcessiveLineLength.line_length}',
-        ))
+        r = self.assertReport(
+            self.check,
+            self._prepare_pkg(
+                f'echo {"a " * codingstyle.ExcessiveLineLength.line_length}',
+                'echo "short line"',
+                f'echo {"Hello " * codingstyle.ExcessiveLineLength.line_length}',
+            ),
+        )
         assert r.lines == (1, 3)
 
-    @pytest.mark.parametrize('variable', ('DESCRIPTION', 'KEYWORDS', 'IUSE'))
+    @pytest.mark.parametrize("variable", ("DESCRIPTION", "KEYWORDS", "IUSE"))
     def test_special_variables(self, variable):
-        self.assertNoReport(self.check, self._prepare_pkg(
-            f'{variable}="{"a " * codingstyle.ExcessiveLineLength.line_length}"',
-            f'    {variable}="{"a " * codingstyle.ExcessiveLineLength.line_length}"',
-            f'\t\t{variable}="{"a " * codingstyle.ExcessiveLineLength.line_length}"',
-        ))
+        self.assertNoReport(
+            self.check,
+            self._prepare_pkg(
+                f'{variable}="{"a " * codingstyle.ExcessiveLineLength.line_length}"',
+                f'    {variable}="{"a " * codingstyle.ExcessiveLineLength.line_length}"',
+                f'\t\t{variable}="{"a " * codingstyle.ExcessiveLineLength.line_length}"',
+            ),
+        )
 
     def test_long_words(self):
-        long_word = 'a' * self.word_length + 'b'
-        medium_word = 'a' * (self.word_length // 2)
-        r = self.assertReport(self.check, self._prepare_pkg(
-            f'echo {"a" * codingstyle.ExcessiveLineLength.line_length}',
-            f'echo {medium_word} {long_word}',
-            f'echo {medium_word} {long_word[:-5]}',
-        ))
-        assert r.lines == (3, )
+        long_word = "a" * self.word_length + "b"
+        medium_word = "a" * (self.word_length // 2)
+        r = self.assertReport(
+            self.check,
+            self._prepare_pkg(
+                f'echo {"a" * codingstyle.ExcessiveLineLength.line_length}',
+                f"echo {medium_word} {long_word}",
+                f"echo {medium_word} {long_word[:-5]}",
+            ),
+        )
+        assert r.lines == (3,)
 
     def test_long_quotes(self):
         # The exception is for any quoted string with length >= word_length.
         # Each quoted string is computed by itself.
-        long_word = 'a ' * (self.word_length // 2) + 'b' # long quoted string, skipped
-        medium_word = 'a ' * (self.word_length // 4) # not long enough string, not skipped
-        r = self.assertReport(self.check, self._prepare_pkg(
-            f'echo "{"a" * codingstyle.ExcessiveLineLength.line_length}"',
-            f'echo "{medium_word}" "{long_word}"',
-            'echo' + f' "{medium_word}"' * 3,
-        ))
-        assert r.lines == (3, )
+        long_word = "a " * (self.word_length // 2) + "b"  # long quoted string, skipped
+        medium_word = "a " * (self.word_length // 4)  # not long enough string, not skipped
+        r = self.assertReport(
+            self.check,
+            self._prepare_pkg(
+                f'echo "{"a" * codingstyle.ExcessiveLineLength.line_length}"',
+                f'echo "{medium_word}" "{long_word}"',
+                "echo" + f' "{medium_word}"' * 3,
+            ),
+        )
+        assert r.lines == (3,)

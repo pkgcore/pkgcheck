@@ -25,7 +25,7 @@ def main(f=sys.stdout, **kwargs):
 
     def _rst_header(char, text, newline=True, leading=False):
         if newline:
-            out('\n', end='')
+            out("\n", end="")
         if leading:
             out(char * len(text))
         out(text)
@@ -41,32 +41,31 @@ def main(f=sys.stdout, **kwargs):
             related_checks[keyword].add(check)
 
     for scope in base.scopes.values():
-        _rst_header('-', scope.desc.capitalize() + ' scope', leading=True)
+        _rst_header("-", scope.desc.capitalize() + " scope", leading=True)
 
         keywords = (x for x in objects.KEYWORDS.values() if x.scope == scope)
         for keyword in keywords:
             if keyword.__doc__ is not None:
                 try:
-                    summary, explanation = keyword.__doc__.split('\n', 1)
+                    summary, explanation = keyword.__doc__.split("\n", 1)
                 except ValueError:
                     summary = keyword.__doc__
                     explanation = None
             else:
                 summary = None
 
-            _rst_header('-', keyword.__name__)
+            _rst_header("-", keyword.__name__)
             if summary:
-                out('\n' + dedent(summary).strip())
+                out("\n" + dedent(summary).strip())
                 if explanation:
-                    explanation = '\n'.join(dedent(explanation).strip().split('\n'))
-                    out('\n' + explanation)
+                    explanation = "\n".join(dedent(explanation).strip().split("\n"))
+                    out("\n" + explanation)
                 if all(issubclass(x, GentooRepoCheck) for x in related_checks[keyword]):
-                    out(f'\n- Gentoo repo specific')
-                out('\n' + f'- level: {keyword.level}')
-                checks = ', '.join(sorted(
-                    f'`{c.__name__}`_' for c in related_checks[keyword]))
-                out(f'- related check{_pl(related_checks[keyword])}: {checks}')
+                    out("\n- Gentoo repo specific")
+                out("\n" + f"- level: {keyword.level}")
+                checks = ", ".join(sorted(f"`{c.__name__}`_" for c in related_checks[keyword]))
+                out(f"- related check{_pl(related_checks[keyword])}: {checks}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -73,6 +73,9 @@ zip-safe = false
 [tool.setuptools.dynamic]
 version = {attr = "pkgcheck.__version__"}
 
+[tool.black]
+line-length = 100
+
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "-vv -ra -l"

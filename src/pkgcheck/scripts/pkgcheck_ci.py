@@ -21,10 +21,10 @@ class ArgumentParser(arghparse.ArgumentParser):
         return namespace, []
 
 
-ci = ArgumentParser(prog='pkgcheck ci', description='scan repo for CI')
+ci = ArgumentParser(prog="pkgcheck ci", description="scan repo for CI")
 ci.add_argument(
-    '--failures', type=argparse.FileType('w'),
-    help='file path for storing failure results')
+    "--failures", type=argparse.FileType("w"), help="file path for storing failure results"
+)
 
 
 @ci.bind_main_func

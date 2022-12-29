@@ -1,3 +1,3 @@
 from requests.exceptions import ConnectionError
 
-responses = [ConnectionError('connection failed')]
+responses = [ConnectionError("connection failed")]

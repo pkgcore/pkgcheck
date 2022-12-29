@@ -20,7 +20,7 @@ class StableRequest(results.VersionResult, results.Info):
     @property
     def desc(self):
         s = pluralism(self.keywords)
-        keywords = ', '.join(self.keywords)
+        keywords = ", ".join(self.keywords)
         return (
             f"slot({self.slot}) no change in {self.age} days "
             f"for unstable keyword{s}: [ {keywords} ]"
@@ -37,19 +37,25 @@ class StableRequestCheck(GentooRepoCheck):
     Note that packages with no stable keywords won't trigger this at all.
     Instead they'll be caught by the UnstableOnly check.
     """
-    _source = (sources.PackageRepoSource, (), (('source', sources.UnmaskedRepoSource),))
+
+    _source = (sources.PackageRepoSource, (), (("source", sources.UnmaskedRepoSource),))
     required_addons = (addons.git.GitAddon,)
     known_results = frozenset([StableRequest])
 
     @staticmethod
     def mangle_argparser(parser):
         parser.plugin.add_argument(
-            '--stabletime', metavar='DAYS', dest='stable_time', default=30,
-            type=arghparse.positive_int, help='set number of days before stabilisation',
+            "--stabletime",
+            metavar="DAYS",
+            dest="stable_time",
+            default=30,
+            type=arghparse.positive_int,
+            help="set number of days before stabilisation",
             docs="""
                 An integer number of days before a package version is flagged by
                 StableRequestCheck. Defaults to 30 days.
-            """)
+            """,
+        )
 
     def __init__(self, *args, git_addon):
         super().__init__(*args)
@@ -64,7 +70,7 @@ class StableRequestCheck(GentooRepoCheck):
             pkg_slotted[pkg.slot].append(pkg)
             pkg_keywords.update(pkg.keywords)
 
-        if stable_pkg_keywords := {x for x in pkg_keywords if x[0] not in {'-', '~'}}:
+        if stable_pkg_keywords := {x for x in pkg_keywords if x[0] not in {"-", "~"}}:
             for slot, pkgs in sorted(pkg_slotted.items()):
                 slot_keywords = set().union(*(pkg.keywords for pkg in pkgs))
                 stable_slot_keywords = slot_keywords.intersection(stable_pkg_keywords)
@@ -82,11 +88,11 @@ class StableRequestCheck(GentooRepoCheck):
                     added = datetime.fromtimestamp(match.time)
                     days_old = (self.today - added).days
                     if days_old >= self.options.stable_time:
-                        pkg_stable_keywords = {x.lstrip('~') for x in pkg.keywords}
+                        pkg_stable_keywords = {x.lstrip("~") for x in pkg.keywords}
                         if stable_slot_keywords:
                             keywords = stable_slot_keywords.intersection(pkg_stable_keywords)
                         else:
                             keywords = stable_pkg_keywords.intersection(pkg_stable_keywords)
-                        keywords = sorted('~' + x for x in keywords)
+                        keywords = sorted("~" + x for x in keywords)
                         yield StableRequest(slot, keywords, days_old, pkg=pkg)
                         break

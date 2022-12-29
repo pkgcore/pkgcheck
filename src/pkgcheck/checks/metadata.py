@@ -37,32 +37,32 @@ class _LicenseResult(results.VersionResult):
     @property
     def desc(self):
         s = pluralism(self.licenses)
-        licenses = ', '.join(self.licenses)
-        return f'{self.license_type} license{s}: {licenses}'
+        licenses = ", ".join(self.licenses)
+        return f"{self.license_type} license{s}: {licenses}"
 
 
 class UnknownLicense(_LicenseResult, results.Error):
     """License usage with no matching license file."""
 
-    license_type = 'unknown'
+    license_type = "unknown"
 
 
 class DeprecatedLicense(_LicenseResult, results.Warning):
     """Deprecated license usage."""
 
-    license_type = 'deprecated'
+    license_type = "deprecated"
 
 
 class MissingLicense(results.VersionResult, results.Error):
     """Package has no LICENSE defined."""
 
-    desc = 'no license defined'
+    desc = "no license defined"
 
 
 class InvalidLicense(results.MetadataError, results.VersionResult):
     """Package's LICENSE is invalid."""
 
-    attr = 'license'
+    attr = "license"
 
 
 class MissingLicenseRestricts(results.VersionResult, results.Warning):
@@ -76,10 +76,9 @@ class MissingLicenseRestricts(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        restrictions = ' '.join(self.restrictions)
+        restrictions = " ".join(self.restrictions)
         return (
-            f'{self.license_group} license {self.license!r} '
-            f'requires RESTRICT="{restrictions}"'
+            f"{self.license_group} license {self.license!r} " f'requires RESTRICT="{restrictions}"'
         )
 
 
@@ -94,23 +93,30 @@ class UnnecessaryLicense(results.VersionResult, results.Warning):
 class LicenseCheck(Check):
     """LICENSE validity checks."""
 
-    known_results = frozenset([
-        InvalidLicense, MissingLicense, UnknownLicense, DeprecatedLicense,
-        UnnecessaryLicense, UnstatedIuse, MissingLicenseRestricts,
-    ])
+    known_results = frozenset(
+        [
+            InvalidLicense,
+            MissingLicense,
+            UnknownLicense,
+            DeprecatedLicense,
+            UnnecessaryLicense,
+            UnstatedIuse,
+            MissingLicenseRestricts,
+        ]
+    )
 
     # categories for ebuilds that can lack LICENSE settings
-    unlicensed_categories = frozenset(['virtual', 'acct-group', 'acct-user'])
+    unlicensed_categories = frozenset(["virtual", "acct-group", "acct-user"])
 
     required_addons = (addons.UseAddon,)
 
     def __init__(self, *args, use_addon):
         super().__init__(*args)
         repo = self.options.target_repo
-        self.iuse_filter = use_addon.get_filter('license')
-        self.deprecated = repo.licenses.groups.get('DEPRECATED', frozenset())
-        self.eula = repo.licenses.groups.get('EULA', frozenset())
-        self.mirror_restricts = frozenset(['fetch', 'mirror'])
+        self.iuse_filter = use_addon.get_filter("license")
+        self.deprecated = repo.licenses.groups.get("DEPRECATED", frozenset())
+        self.eula = repo.licenses.groups.get("EULA", frozenset())
+        self.mirror_restricts = frozenset(["fetch", "mirror"])
 
     def _required_licenses(self, license_group, nodes, restricts=None):
         """Determine required licenses from a given license group."""
@@ -140,14 +146,13 @@ class LicenseCheck(Check):
                 restricts = set().union(*(x.vals for x in restrictions if not x.negate))
                 license_restrictions = pkg.restrict.evaluate_depset(restricts)
                 missing_restricts = []
-                if 'bindist' not in license_restrictions:
-                    missing_restricts.append('bindist')
+                if "bindist" not in license_restrictions:
+                    missing_restricts.append("bindist")
                 if not self.mirror_restricts.intersection(license_restrictions):
                     if pkg.fetchables:
-                        missing_restricts.append('mirror')
+                        missing_restricts.append("mirror")
                 if missing_restricts:
-                    yield MissingLicenseRestricts(
-                        'EULA', license, missing_restricts, pkg=pkg)
+                    yield MissingLicenseRestricts("EULA", license, missing_restricts, pkg=pkg)
 
         # flatten license depset
         licenses, unstated = self.iuse_filter((str,), pkg, pkg.license)
@@ -178,26 +183,26 @@ class _UseFlagsResult(results.VersionResult):
     @property
     def desc(self):
         s = pluralism(self.flags)
-        flags = ', '.join(map(repr, sorted(self.flags)))
-        return f'{self.flag_type} USE flag{s}: {flags}'
+        flags = ", ".join(map(repr, sorted(self.flags)))
+        return f"{self.flag_type} USE flag{s}: {flags}"
 
 
 class InvalidUseFlags(_UseFlagsResult, results.Error):
     """Package IUSE contains invalid USE flags."""
 
-    flag_type = 'invalid'
+    flag_type = "invalid"
 
 
 class UnknownUseFlags(_UseFlagsResult, results.Error):
     """Package IUSE contains unknown USE flags."""
 
-    flag_type = 'unknown'
+    flag_type = "unknown"
 
 
 class BadDefaultUseFlags(_UseFlagsResult, results.Error):
     """Package IUSE contains bad default USE flags."""
 
-    flag_type = 'bad default'
+    flag_type = "bad default"
 
 
 class IuseCheck(Check):
@@ -205,19 +210,22 @@ class IuseCheck(Check):
 
     required_addons = (addons.UseAddon,)
     known_results = frozenset([InvalidUseFlags, UnknownUseFlags, BadDefaultUseFlags])
-    use_expand_groups = ('cpu_flags',)
+    use_expand_groups = ("cpu_flags",)
 
     def __init__(self, *args, use_addon):
         super().__init__(*args)
         self.iuse_handler = use_addon
-        self.bad_defaults = tuple(['-'] + [f'+{x}_' for x in self.use_expand_groups])
+        self.bad_defaults = tuple(["-"] + [f"+{x}_" for x in self.use_expand_groups])
 
     def feed(self, pkg):
         if invalid := sorted(x for x in pkg.iuse_stripped if not pkg.eapi.is_valid_use_flag(x)):
             yield InvalidUseFlags(invalid, pkg=pkg)
 
-        if pkg.eapi.options.iuse_defaults and (bad_defaults := sorted(
-                x for x in pkg.iuse if x.startswith(self.bad_defaults) and len(x) > 1)):
+        if pkg.eapi.options.iuse_defaults and (
+            bad_defaults := sorted(
+                x for x in pkg.iuse if x.startswith(self.bad_defaults) and len(x) > 1
+            )
+        ):
             yield BadDefaultUseFlags(bad_defaults, pkg=pkg)
 
         if not self.iuse_handler.ignore:
@@ -243,13 +251,13 @@ class _EapiResult(results.VersionResult):
 class DeprecatedEapi(_EapiResult, results.Warning):
     """Package's EAPI is deprecated according to repo metadata."""
 
-    _type = 'deprecated'
+    _type = "deprecated"
 
 
 class BannedEapi(_EapiResult, results.Error):
     """Package's EAPI is banned according to repo metadata."""
 
-    _type = 'banned'
+    _type = "banned"
 
 
 class StableKeywordsOnTestingEapi(results.VersionResult, results.Error):
@@ -281,8 +289,9 @@ class UnsupportedEclassEapi(results.VersionResult, results.Warning):
 class EapiCheck(Check):
     """Scan for packages with banned or deprecated EAPIs."""
 
-    known_results = frozenset([DeprecatedEapi, BannedEapi, UnsupportedEclassEapi,
-                               StableKeywordsOnTestingEapi])
+    known_results = frozenset(
+        [DeprecatedEapi, BannedEapi, UnsupportedEclassEapi, StableKeywordsOnTestingEapi]
+    )
     required_addons = (addons.eclass.EclassAddon,)
 
     def __init__(self, *args, eclass_addon):
@@ -297,7 +306,7 @@ class EapiCheck(Check):
             yield DeprecatedEapi(pkg.eapi, pkg=pkg)
 
         if eapi_str in self.options.target_repo.config.eapis_testing:
-            stable_keywords_gen = (k for k in pkg.keywords if not k.startswith(('~', '-')))
+            stable_keywords_gen = (k for k in pkg.keywords if not k.startswith(("~", "-")))
             if stable_keywords := sorted(stable_keywords_gen):
                 yield StableKeywordsOnTestingEapi(pkg.eapi, stable_keywords, pkg=pkg)
 
@@ -310,19 +319,19 @@ class EapiCheck(Check):
 class InvalidEapi(results.MetadataError, results.VersionResult):
     """Package's EAPI is invalid."""
 
-    attr = 'eapi'
+    attr = "eapi"
 
 
 class InvalidSlot(results.MetadataError, results.VersionResult):
     """Package's SLOT is invalid."""
 
-    attr = 'slot'
+    attr = "slot"
 
 
 class SourcingError(results.MetadataError, results.VersionResult):
     """Failed sourcing ebuild."""
 
-    attr = 'data'
+    attr = "data"
 
 
 class SourcingCheck(Check):
@@ -346,8 +355,9 @@ class RequiredUseDefaults(results.VersionResult, results.Warning):
     or modifying REQUIRED_USE.
     """
 
-    def __init__(self, required_use, use=(), keyword=None,
-                 profile=None, num_profiles=None, **kwargs):
+    def __init__(
+        self, required_use, use=(), keyword=None, profile=None, num_profiles=None, **kwargs
+    ):
         super().__init__(**kwargs)
         self.required_use = required_use
         self.use = tuple(use)
@@ -359,40 +369,48 @@ class RequiredUseDefaults(results.VersionResult, results.Warning):
     def desc(self):
         if not self.use:
             if self.num_profiles is not None and self.num_profiles > 1:
-                num_profiles = f' ({self.num_profiles} total)'
+                num_profiles = f" ({self.num_profiles} total)"
             else:
-                num_profiles = ''
+                num_profiles = ""
             # collapsed version
             return (
-                f'profile: {self.profile!r}{num_profiles} '
-                f'failed REQUIRED_USE: {self.required_use}'
+                f"profile: {self.profile!r}{num_profiles} "
+                f"failed REQUIRED_USE: {self.required_use}"
             )
         return (
-            f'keyword: {self.keyword}, profile: {self.profile!r}, '
+            f"keyword: {self.keyword}, profile: {self.profile!r}, "
             f"default USE: [{', '.join(self.use)}] "
-            f'-- failed REQUIRED_USE: {self.required_use}'
+            f"-- failed REQUIRED_USE: {self.required_use}"
         )
 
 
 class InvalidRequiredUse(results.MetadataError, results.VersionResult):
     """Package's REQUIRED_USE is invalid."""
 
-    attr = 'required_use'
+    attr = "required_use"
 
 
 class RequiredUseCheck(Check):
     """REQUIRED_USE validity checks."""
 
     # only run the check for EAPI 4 and above
-    _source = (sources.RestrictionRepoSource, (
-        packages.PackageRestriction('eapi', values.GetAttrRestriction(
-            'options.has_required_use', values.FunctionRestriction(bool))),))
+    _source = (
+        sources.RestrictionRepoSource,
+        (
+            packages.PackageRestriction(
+                "eapi",
+                values.GetAttrRestriction(
+                    "options.has_required_use", values.FunctionRestriction(bool)
+                ),
+            ),
+        ),
+    )
     required_addons = (addons.UseAddon, addons.profiles.ProfileAddon)
     known_results = frozenset([InvalidRequiredUse, RequiredUseDefaults, UnstatedIuse])
 
     def __init__(self, *args, use_addon, profile_addon):
         super().__init__(*args)
-        self.iuse_filter = use_addon.get_filter('required_use')
+        self.iuse_filter = use_addon.get_filter("required_use")
         self.profiles = profile_addon
 
     def feed(self, pkg):
@@ -404,15 +422,15 @@ class RequiredUseCheck(Check):
         # unstable profiles for unstable KEYWORDS
         keywords = []
         for keyword in pkg.sorted_keywords:
-            if keyword[0] != '~':
+            if keyword[0] != "~":
                 keywords.append(keyword)
-            keywords.append('~' + keyword.lstrip('~'))
+            keywords.append("~" + keyword.lstrip("~"))
 
         # check USE defaults (pkg IUSE defaults + profile USE) against
         # REQUIRED_USE for all profiles matching a pkg's KEYWORDS
         failures = defaultdict(list)
         for keyword in keywords:
-            for profile in sorted(self.profiles.get(keyword, ()), key=attrgetter('name')):
+            for profile in sorted(self.profiles.get(keyword, ()), key=attrgetter("name")):
                 # skip packages masked by the profile
                 if profile.visible(pkg):
                     src = FakeConfigurable(pkg, profile)
@@ -424,15 +442,15 @@ class RequiredUseCheck(Check):
             # report all failures with profile info in verbose mode
             for node, profile_info in failures.items():
                 for use, keyword, profile in profile_info:
-                    yield RequiredUseDefaults(
-                        str(node), sorted(use), keyword, profile, pkg=pkg)
+                    yield RequiredUseDefaults(str(node), sorted(use), keyword, profile, pkg=pkg)
         else:
             # only report one failure per REQUIRED_USE node in regular mode
             for node, profile_info in failures.items():
                 num_profiles = len(profile_info)
                 _use, _keyword, profile = profile_info[0]
                 yield RequiredUseDefaults(
-                    str(node), profile=profile, num_profiles=num_profiles, pkg=pkg)
+                    str(node), profile=profile, num_profiles=num_profiles, pkg=pkg
+                )
 
 
 class UnusedLocalUse(results.PackageResult, results.Warning):
@@ -445,8 +463,8 @@ class UnusedLocalUse(results.PackageResult, results.Warning):
     @property
     def desc(self):
         s = pluralism(self.flags)
-        flags = ', '.join(self.flags)
-        return f'unused local USE flag{s}: [ {flags} ]'
+        flags = ", ".join(self.flags)
+        return f"unused local USE flag{s}: [ {flags} ]"
 
 
 class MatchingGlobalUse(results.PackageResult, results.Warning):
@@ -526,8 +544,8 @@ class MissingLocalUseDesc(results.PackageResult, results.Warning):
     @property
     def desc(self):
         s = pluralism(self.flags)
-        flags = ', '.join(self.flags)
-        return f'local USE flag{s} missing description{s}: [ {flags} ]'
+        flags = ", ".join(self.flags)
+        return f"local USE flag{s} missing description{s}: [ {flags} ]"
 
 
 class LocalUseCheck(Check):
@@ -535,23 +553,27 @@ class LocalUseCheck(Check):
 
     _source = sources.PackageRepoSource
     required_addons = (addons.UseAddon,)
-    known_results = frozenset([
-        UnusedLocalUse, MatchingGlobalUse, ProbableGlobalUse,
-        ProbableUseExpand, UnderscoreInUseFlag, UnstatedIuse,
-        MissingLocalUseDesc,
-    ])
+    known_results = frozenset(
+        [
+            UnusedLocalUse,
+            MatchingGlobalUse,
+            ProbableGlobalUse,
+            ProbableUseExpand,
+            UnderscoreInUseFlag,
+            UnstatedIuse,
+            MissingLocalUseDesc,
+        ]
+    )
 
     def __init__(self, *args, use_addon):
         super().__init__(*args)
         repo_config = self.options.target_repo.config
         self.iuse_handler = use_addon
-        self.global_use = {
-            flag: desc for matcher, (flag, desc) in repo_config.use_desc}
+        self.global_use = {flag: desc for matcher, (flag, desc) in repo_config.use_desc}
 
         self.use_expand = dict()
         for group in repo_config.use_expand_desc.keys():
-            self.use_expand[group] = {
-                flag for flag, desc in repo_config.use_expand_desc[group]}
+            self.use_expand[group] = {flag for flag, desc in repo_config.use_expand_desc[group]}
 
     def feed(self, pkgs):
         pkg = pkgs[0]
@@ -568,9 +590,9 @@ class LocalUseCheck(Check):
                     yield MatchingGlobalUse(flag, pkg=pkg)
                 elif ratio >= 0.75:
                     yield ProbableGlobalUse(flag, pkg=pkg)
-            elif '_' in flag:
+            elif "_" in flag:
                 for group, flags in self.use_expand.items():
-                    if flag.startswith(f'{group}_'):
+                    if flag.startswith(f"{group}_"):
                         if flag not in flags:
                             yield ProbableUseExpand(flag, group.upper(), pkg=pkg)
                         break
@@ -608,23 +630,32 @@ class UseFlagWithoutDeps(results.VersionResult, results.Warning):
     @property
     def desc(self):
         s = pluralism(self.flags)
-        flags = ', '.join(self.flags)
-        return f'special small-files USE flag{s} without effect on dependencies: [ {flags} ]'
+        flags = ", ".join(self.flags)
+        return f"special small-files USE flag{s} without effect on dependencies: [ {flags} ]"
 
 
 class UseFlagsWithoutEffectsCheck(GentooRepoCheck):
     """Check for USE flags without effects."""
 
-    known_results = frozenset({
-        UseFlagWithoutDeps,
-    })
+    known_results = frozenset(
+        {
+            UseFlagWithoutDeps,
+        }
+    )
 
-    warn_use_small_files = frozenset({
-        'ipv6', 'logrotate', 'unicode',
-        'bash-completion', 'fish-completion', 'zsh-completion', 'vim-syntax',
-        # TODO: enable those one day
-        # 'systemd',
-    })
+    warn_use_small_files = frozenset(
+        {
+            "ipv6",
+            "logrotate",
+            "unicode",
+            "bash-completion",
+            "fish-completion",
+            "zsh-completion",
+            "vim-syntax",
+            # TODO: enable those one day
+            # 'systemd',
+        }
+    )
 
     def feed(self, pkg):
         used_flags = set(pkg.local_use)
@@ -632,15 +663,18 @@ class UseFlagsWithoutEffectsCheck(GentooRepoCheck):
             deps = getattr(pkg, attr.lower())
 
             use_values = set()
-            use_values.update(itertools.chain.from_iterable(
-                atom.use or ()
-                for atom in iflatten_instance(deps, atom_cls)
-            ))
-            use_values.update(itertools.chain.from_iterable(
-                atom.restriction.vals
-                for atom in iflatten_instance(deps, packages.Conditional)
-                if isinstance(atom, packages.Conditional) and atom.attr == 'use'
-            ))
+            use_values.update(
+                itertools.chain.from_iterable(
+                    atom.use or () for atom in iflatten_instance(deps, atom_cls)
+                )
+            )
+            use_values.update(
+                itertools.chain.from_iterable(
+                    atom.restriction.vals
+                    for atom in iflatten_instance(deps, packages.Conditional)
+                    if isinstance(atom, packages.Conditional) and atom.attr == "use"
+                )
+            )
             for check_use in self.warn_use_small_files:
                 if any(check_use in use for use in use_values):
                     used_flags.add(check_use)
@@ -648,6 +682,7 @@ class UseFlagsWithoutEffectsCheck(GentooRepoCheck):
         flags = self.warn_use_small_files.intersection(pkg.iuse_stripped).difference(used_flags)
         if flags:
             yield UseFlagWithoutDeps(flags, pkg=pkg)
+
 
 class MissingSlotDep(results.VersionResult, results.Warning):
     """Missing slot value in dependencies.
@@ -672,18 +707,22 @@ class MissingSlotDep(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        return (
-            f"{self.dep!r} matches more than one slot: "
-            f"[ {', '.join(self.dep_slots)} ]")
+        return f"{self.dep!r} matches more than one slot: " f"[ {', '.join(self.dep_slots)} ]"
 
 
 class MissingSlotDepCheck(Check):
     """Check for missing slot dependencies."""
 
     # only run the check for EAPI 5 and above
-    _source = (sources.RestrictionRepoSource, (
-        packages.PackageRestriction('eapi', values.GetAttrRestriction(
-            'options.sub_slotting', values.FunctionRestriction(bool))),))
+    _source = (
+        sources.RestrictionRepoSource,
+        (
+            packages.PackageRestriction(
+                "eapi",
+                values.GetAttrRestriction("options.sub_slotting", values.FunctionRestriction(bool)),
+            ),
+        ),
+    )
     required_addons = (addons.UseAddon,)
     known_results = frozenset([MissingSlotDep])
 
@@ -696,8 +735,11 @@ class MissingSlotDepCheck(Check):
         depend, _ = self.iuse_filter((atom_cls,), pkg, pkg.depend)
 
         # skip deps that are blockers or have explicit slots/slot operators
-        for dep in (x for x in set(rdepend).intersection(depend) if not
-                    (x.blocks or x.slot is not None or x.slot_operator is not None)):
+        for dep in (
+            x
+            for x in set(rdepend).intersection(depend)
+            if not (x.blocks or x.slot is not None or x.slot_operator is not None)
+        ):
             dep_slots = {x.slot for x in pkg.repo.itermatch(dep.no_usedeps)}
             if len(dep_slots) > 1:
                 yield MissingSlotDep(str(dep), sorted(dep_slots), pkg=pkg)
@@ -738,10 +780,10 @@ class MissingUseDepDefault(results.VersionResult, results.Warning):
     @property
     def desc(self):
         s = pluralism(self.pkgs)
-        pkgs = ', '.join(self.pkgs)
+        pkgs = ", ".join(self.pkgs)
         return (
             f'{self.attr}="{self.atom}": USE flag {self.flag!r} missing from '
-            f'package{s}: [ {pkgs} ]'
+            f"package{s}: [ {pkgs} ]"
         )
 
 
@@ -755,7 +797,7 @@ class DeprecatedDep(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        ies = pluralism(self.atoms, singular='y', plural='ies')
+        ies = pluralism(self.atoms, singular="y", plural="ies")
         return f"{self.attr}: deprecated dependenc{ies}: {' '.join(self.atoms)}"
 
 
@@ -776,31 +818,31 @@ class BadDependency(results.VersionResult, results.Error):
 class InvalidDepend(results.MetadataError, results.VersionResult):
     """Package has invalid DEPEND."""
 
-    attr = 'depend'
+    attr = "depend"
 
 
 class InvalidRdepend(results.MetadataError, results.VersionResult):
     """Package has invalid RDEPEND."""
 
-    attr = 'rdepend'
+    attr = "rdepend"
 
 
 class InvalidPdepend(results.MetadataError, results.VersionResult):
     """Package has invalid PDEPEND."""
 
-    attr = 'pdepend'
+    attr = "pdepend"
 
 
 class InvalidBdepend(results.MetadataError, results.VersionResult):
     """Package has invalid BDEPEND."""
 
-    attr = 'bdepend'
+    attr = "bdepend"
 
 
 class InvalidIdepend(results.MetadataError, results.VersionResult):
     """Package has invalid IDEPEND."""
 
-    attr = 'idepend'
+    attr = "idepend"
 
 
 class MisplacedWeakBlocker(results.Warning, results.VersionResult):
@@ -821,25 +863,35 @@ class MisplacedWeakBlocker(results.Warning, results.VersionResult):
 
     @property
     def desc(self):
-        return f'{self.attr}: misplaced weak blocker: {self.atom}'
+        return f"{self.attr}: misplaced weak blocker: {self.atom}"
 
 
 class DependencyCheck(Check):
     """Verify dependency attributes (e.g. RDEPEND)."""
 
     required_addons = (addons.UseAddon,)
-    known_results = frozenset([
-        BadDependency, MissingPackageRevision, MissingUseDepDefault,
-        UnstatedIuse, DeprecatedDep, InvalidDepend, InvalidRdepend,
-        InvalidPdepend, InvalidBdepend, InvalidIdepend, MisplacedWeakBlocker,
-    ])
+    known_results = frozenset(
+        [
+            BadDependency,
+            MissingPackageRevision,
+            MissingUseDepDefault,
+            UnstatedIuse,
+            DeprecatedDep,
+            InvalidDepend,
+            InvalidRdepend,
+            InvalidPdepend,
+            InvalidBdepend,
+            InvalidIdepend,
+            MisplacedWeakBlocker,
+        ]
+    )
 
     def __init__(self, *args, use_addon):
         super().__init__(*args)
         self.deprecated = self.options.target_repo.deprecated.match
         self.iuse_filter = use_addon.get_filter()
-        self.conditional_ops = {'?', '='}
-        self.use_defaults = {'(+)', '(-)'}
+        self.conditional_ops = {"?", "="}
+        self.use_defaults = {"(+)", "(-)"}
 
     def _check_use_deps(self, attr, atom):
         """Check dependencies for missing USE dep defaults."""
@@ -849,7 +901,7 @@ class DependencyCheck(Check):
                 x = x[:-1]
             if x[-3:] in self.use_defaults:
                 continue
-            stripped_use.append(x.lstrip('!-'))
+            stripped_use.append(x.lstrip("!-"))
         if stripped_use:
             missing_use_deps = defaultdict(set)
             for pkg in self.options.search_repo.match(atom.no_usedeps):
@@ -868,12 +920,13 @@ class DependencyCheck(Check):
             try:
                 deps = getattr(pkg, attr)
             except MetadataException as e:
-                cls = globals()[f'Invalid{attr.capitalize()}']
+                cls = globals()[f"Invalid{attr.capitalize()}"]
                 yield cls(attr, e.msg(), pkg=pkg)
                 continue
 
             nodes, unstated = self.iuse_filter(
-                (atom_cls, boolean.OrRestriction), pkg, deps, attr=attr)
+                (atom_cls, boolean.OrRestriction), pkg, deps, attr=attr
+            )
             yield from unstated
 
             for node in nodes:
@@ -892,9 +945,10 @@ class DependencyCheck(Check):
                         if all(self.deprecated(x.versioned_atom) for x in pkgs):
                             deprecated[attr].add(atom)
 
-                    if in_or_restriction and atom.slot_operator == '=':
+                    if in_or_restriction and atom.slot_operator == "=":
                         yield BadDependency(
-                            attr, atom, '= slot operator used inside || block', pkg=pkg)
+                            attr, atom, "= slot operator used inside || block", pkg=pkg
+                        )
 
                     if pkg.eapi.options.has_use_dep_defaults and atom.use is not None:
                         missing_use_deps = self._check_use_deps(attr, atom)
@@ -902,22 +956,23 @@ class DependencyCheck(Check):
                             pkgs = (x.cpvstr for x in sorted(atoms))
                             yield MissingUseDepDefault(attr, str(atom), use, pkgs, pkg=pkg)
 
-                    if atom.op == '=' and not atom.revision:
+                    if atom.op == "=" and not atom.revision:
                         yield MissingPackageRevision(attr, str(atom), pkg=pkg)
 
                     if atom.blocks:
                         if atom.match(pkg):
                             yield BadDependency(attr, atom, "package blocks itself", pkg=pkg)
-                        elif atom.slot_operator == '=':
+                        elif atom.slot_operator == "=":
                             yield BadDependency(
-                                attr, atom, '= slot operator used in blocker', pkg=pkg)
+                                attr, atom, "= slot operator used in blocker", pkg=pkg
+                            )
                         elif not atom.blocks_strongly:
                             weak_blocks[attr].add(atom)
 
-        for attr in ('depend', 'bdepend'):
-            weak_blocks[attr].difference_update(weak_blocks['rdepend'])
-        weak_blocks['idepend'].difference_update(weak_blocks['rdepend'], weak_blocks['depend'])
-        for attr in ('depend', 'bdepend', 'idepend', 'pdepend'):
+        for attr in ("depend", "bdepend"):
+            weak_blocks[attr].difference_update(weak_blocks["rdepend"])
+        weak_blocks["idepend"].difference_update(weak_blocks["rdepend"], weak_blocks["depend"])
+        for attr in ("depend", "bdepend", "idepend", "pdepend"):
             for atom in weak_blocks[attr]:
                 yield MisplacedWeakBlocker(attr, atom, pkg=pkg)
 
@@ -941,7 +996,7 @@ class OutdatedBlocker(results.VersionResult, results.Info):
     def desc(self):
         return (
             f'outdated blocker {self.attr}="{self.atom}": '
-            f'last match removed {self.age} years ago'
+            f"last match removed {self.age} years ago"
         )
 
 
@@ -961,10 +1016,7 @@ class NonexistentBlocker(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        return (
-            f'nonexistent blocker {self.attr}="{self.atom}": '
-            'no matches in repo history'
-        )
+        return f'nonexistent blocker {self.attr}="{self.atom}": ' "no matches in repo history"
 
 
 class OutdatedBlockersCheck(Check):
@@ -985,7 +1037,7 @@ class OutdatedBlockersCheck(Check):
         for attr in sorted(x.lower() for x in pkg.eapi.dep_keys):
             blockers = (x for x in iflatten_instance(getattr(pkg, attr), atom_cls) if x.blocks)
             for atom in blockers:
-                if atom.op == '=*':
+                if atom.op == "=*":
                     atom_str = f"={atom.cpvstr}*"
                 else:
                     atom_str = atom.op + atom.cpvstr
@@ -1084,7 +1136,7 @@ class VirtualKeywordsUpdate(results.VersionResult, results.Info):
     @property
     def desc(self):
         s = pluralism(self.keywords)
-        keywords = ', '.join(self.keywords)
+        keywords = ", ".join(self.keywords)
         return f"KEYWORDS update{s} available: {keywords}"
 
 
@@ -1092,10 +1144,16 @@ class KeywordsCheck(Check):
     """Check package keywords for sanity; empty keywords, and -* are flagged."""
 
     required_addons = (addons.UseAddon, addons.KeywordsAddon)
-    known_results = frozenset([
-        BadKeywords, UnknownKeywords, OverlappingKeywords, DuplicateKeywords,
-        UnsortedKeywords, VirtualKeywordsUpdate,
-    ])
+    known_results = frozenset(
+        [
+            BadKeywords,
+            UnknownKeywords,
+            OverlappingKeywords,
+            DuplicateKeywords,
+            UnsortedKeywords,
+            VirtualKeywordsUpdate,
+        ]
+    )
 
     def __init__(self, *args, use_addon, keywords_addon):
         super().__init__(*args)
@@ -1103,7 +1161,7 @@ class KeywordsCheck(Check):
         self.keywords = keywords_addon
 
     def feed(self, pkg):
-        if pkg.keywords == ('-*',):
+        if pkg.keywords == ("-*",):
             yield BadKeywords(pkg)
         else:
             # check for unknown keywords
@@ -1115,11 +1173,12 @@ class KeywordsCheck(Check):
                 yield UnknownKeywords(sorted(unknown), pkg=pkg)
 
             # check for overlapping keywords
-            unstable = {x[1:] for x in pkg.keywords if x[0] == '~'}
-            stable = {x for x in pkg.keywords if x[0] != '~'}
+            unstable = {x[1:] for x in pkg.keywords if x[0] == "~"}
+            stable = {x for x in pkg.keywords if x[0] != "~"}
             if overlapping := unstable & stable:
-                keywords = ', '.join(map(
-                    str, sorted(zip(overlapping, ('~' + x for x in overlapping)))))
+                keywords = ", ".join(
+                    map(str, sorted(zip(overlapping, ("~" + x for x in overlapping))))
+                )
                 yield OverlappingKeywords(keywords, pkg=pkg)
 
             # check for duplicate keywords
@@ -1139,19 +1198,21 @@ class KeywordsCheck(Check):
                     yield UnsortedKeywords(pkg.keywords, pkg=pkg)
                 else:
                     yield UnsortedKeywords(
-                        pkg.keywords, sorted_keywords=pkg.sorted_keywords, pkg=pkg)
+                        pkg.keywords, sorted_keywords=pkg.sorted_keywords, pkg=pkg
+                    )
 
-            if pkg.category == 'virtual':
+            if pkg.category == "virtual":
                 dep_keywords = defaultdict(set)
                 rdepend, _ = self.iuse_filter((atom_cls,), pkg, pkg.rdepend)
                 for dep in set(rdepend):
                     for p in self.options.search_repo.match(dep.no_usedeps):
                         dep_keywords[dep].update(
-                            x for x in p.keywords if x.lstrip('~') in self.keywords.arches)
+                            x for x in p.keywords if x.lstrip("~") in self.keywords.arches
+                        )
                 if dep_keywords:
                     dep_keywords = set.intersection(*dep_keywords.values())
                     pkg_keywords = set(pkg.keywords)
-                    pkg_keywords.update(f'~{x}' for x in pkg.keywords if x[0] != '~')
+                    pkg_keywords.update(f"~{x}" for x in pkg.keywords if x[0] != "~")
                     if keywords := dep_keywords - pkg_keywords:
                         yield VirtualKeywordsUpdate(sort_keywords(keywords), pkg=pkg)
 
@@ -1166,8 +1227,8 @@ class MissingUri(results.VersionResult, results.Warning):
     @property
     def desc(self):
         s = pluralism(self.filenames)
-        filenames = ', '.join(map(repr, self.filenames))
-        return f'unfetchable file{s}: {filenames}'
+        filenames = ", ".join(map(repr, self.filenames))
+        return f"unfetchable file{s}: {filenames}"
 
 
 class UnknownMirror(results.VersionResult, results.Error):
@@ -1180,7 +1241,7 @@ class UnknownMirror(results.VersionResult, results.Error):
 
     @property
     def desc(self):
-        return f'unknown mirror {self.mirror!r} from URI {self.uri!r}'
+        return f"unknown mirror {self.mirror!r} from URI {self.uri!r}"
 
 
 class BadProtocol(results.VersionResult, results.Error):
@@ -1197,8 +1258,8 @@ class BadProtocol(results.VersionResult, results.Error):
     @property
     def desc(self):
         s = pluralism(self.uris)
-        uris = ', '.join(map(repr, self.uris))
-        return f'bad protocol {self.protocol!r} in URI{s}: {uris}'
+        uris = ", ".join(map(repr, self.uris))
+        return f"bad protocol {self.protocol!r} in URI{s}: {uris}"
 
 
 class RedundantUriRename(results.VersionResult, results.Style):
@@ -1226,8 +1287,8 @@ class BadFilename(results.VersionResult, results.Warning):
     @property
     def desc(self):
         s = pluralism(self.filenames)
-        filenames = ', '.join(self.filenames)
-        return f'bad filename{s}: [ {filenames} ]'
+        filenames = ", ".join(self.filenames)
+        return f"bad filename{s}: [ {filenames} ]"
 
 
 class TarballAvailable(results.VersionResult, results.Style):
@@ -1244,14 +1305,14 @@ class TarballAvailable(results.VersionResult, results.Style):
     @property
     def desc(self):
         s = pluralism(self.uris)
-        uris = ' '.join(self.uris)
-        return f'zip archive{s} used when tarball available: [ {uris} ]'
+        uris = " ".join(self.uris)
+        return f"zip archive{s} used when tarball available: [ {uris} ]"
 
 
 class InvalidSrcUri(results.MetadataError, results.VersionResult):
     """Package's SRC_URI is invalid."""
 
-    attr = 'fetchables'
+    attr = "fetchables"
 
 
 class SrcUriCheck(Check):
@@ -1262,19 +1323,28 @@ class SrcUriCheck(Check):
     """
 
     required_addons = (addons.UseAddon,)
-    known_results = frozenset([
-        BadFilename, BadProtocol, MissingUri, InvalidSrcUri,
-        RedundantUriRename, TarballAvailable, UnknownMirror, UnstatedIuse,
-    ])
+    known_results = frozenset(
+        [
+            BadFilename,
+            BadProtocol,
+            MissingUri,
+            InvalidSrcUri,
+            RedundantUriRename,
+            TarballAvailable,
+            UnknownMirror,
+            UnstatedIuse,
+        ]
+    )
 
     valid_protos = frozenset(["http", "https", "ftp"])
 
     def __init__(self, *args, use_addon):
         super().__init__(*args)
-        self.iuse_filter = use_addon.get_filter('fetchables')
+        self.iuse_filter = use_addon.get_filter("fetchables")
         self.zip_to_tar_re = re.compile(
-            r'https?://(github\.com/.*?/.*?/archive/.+\.zip|'
-            r'gitlab\.com/.*?/.*?/-/archive/.+\.zip)')
+            r"https?://(github\.com/.*?/.*?/archive/.+\.zip|"
+            r"gitlab\.com/.*?/.*?/-/archive/.+\.zip)"
+        )
 
     def feed(self, pkg):
         lacks_uri = set()
@@ -1283,13 +1353,17 @@ class SrcUriCheck(Check):
         bad_filenames = set()
         tarball_available = set()
 
-        report_uris = LogMap('pkgcore.log.logger.info', partial(RedundantUriRename, pkg))
+        report_uris = LogMap("pkgcore.log.logger.info", partial(RedundantUriRename, pkg))
         with LogReports(report_uris) as log_reports:
             fetchables, unstated = self.iuse_filter(
-                (fetchable,), pkg,
+                (fetchable,),
+                pkg,
                 pkg.generate_fetchables(
-                    allow_missing_checksums=True, ignore_unknown_mirrors=True,
-                    skip_default_mirrors=True))
+                    allow_missing_checksums=True,
+                    ignore_unknown_mirrors=True,
+                    skip_default_mirrors=True,
+                ),
+            )
         yield from log_reports
 
         yield from unstated
@@ -1300,7 +1374,8 @@ class SrcUriCheck(Check):
 
             mirrors = f_inst.uri.visit_mirrors(treat_default_as_mirror=False)
             unknown_mirrors = [
-                (m, sub_uri) for m, sub_uri in mirrors if isinstance(m, unknown_mirror)]
+                (m, sub_uri) for m, sub_uri in mirrors if isinstance(m, unknown_mirror)
+            ]
             for mirror, sub_uri in unknown_mirrors:
                 uri = f"{mirror}/{sub_uri}"
                 yield UnknownMirror(mirror.mirror_name, uri, pkg=pkg)
@@ -1311,12 +1386,12 @@ class SrcUriCheck(Check):
             PN = re.escape(pkg.PN)
             PV = re.escape(pkg.PV)
             exts = pkg.eapi.archive_exts_regex_pattern
-            bad_filenames_re = rf'^({PN}|v?{PV}|[0-9a-f]{{40}}){exts}$'
+            bad_filenames_re = rf"^({PN}|v?{PV}|[0-9a-f]{{40}}){exts}$"
             if re.match(bad_filenames_re, f_inst.filename):
                 bad_filenames.add(f_inst.filename)
 
             restricts = set().union(*(x.vals for x in restrictions if not x.negate))
-            if not f_inst.uri and 'fetch' not in pkg.restrict.evaluate_depset(restricts):
+            if not f_inst.uri and "fetch" not in pkg.restrict.evaluate_depset(restricts):
                 lacks_uri.add(f_inst.filename)
             else:
                 bad_protocols = defaultdict(set)
@@ -1349,8 +1424,8 @@ class BadDescription(results.VersionResult, results.Style):
 
     @property
     def desc(self):
-        pkg_desc = f'DESCRIPTION="{self.pkg_desc}" ' if self.pkg_desc else ''
-        return f'{pkg_desc}{self.msg}'
+        pkg_desc = f'DESCRIPTION="{self.pkg_desc}" ' if self.pkg_desc else ""
+        return f"{pkg_desc}{self.msg}"
 
 
 class DescriptionCheck(Check):
@@ -1403,31 +1478,33 @@ class HomepageCheck(Check):
     known_results = frozenset([BadHomepage])
 
     # categories for ebuilds that should lack HOMEPAGE
-    missing_categories = frozenset(['virtual', 'acct-group', 'acct-user'])
+    missing_categories = frozenset(["virtual", "acct-group", "acct-user"])
     # generic sites that shouldn't be used for HOMEPAGE
-    generic_sites = frozenset(['https://www.gentoo.org', 'https://gentoo.org'])
+    generic_sites = frozenset(["https://www.gentoo.org", "https://gentoo.org"])
 
     def feed(self, pkg):
         if not pkg.homepage:
             if pkg.category not in self.missing_categories:
-                yield BadHomepage('HOMEPAGE empty/unset', pkg=pkg)
+                yield BadHomepage("HOMEPAGE empty/unset", pkg=pkg)
         else:
             if pkg.category in self.missing_categories:
                 yield BadHomepage(
-                    f'HOMEPAGE should be undefined for {pkg.category!r} packages', pkg=pkg)
+                    f"HOMEPAGE should be undefined for {pkg.category!r} packages", pkg=pkg
+                )
             else:
                 for homepage in pkg.homepage:
-                    if homepage.rstrip('/') in self.generic_sites:
-                        yield BadHomepage(f'unspecific HOMEPAGE: {homepage}', pkg=pkg)
+                    if homepage.rstrip("/") in self.generic_sites:
+                        yield BadHomepage(f"unspecific HOMEPAGE: {homepage}", pkg=pkg)
                     else:
-                        i = homepage.find('://')
+                        i = homepage.find("://")
                         if i == -1:
-                            yield BadHomepage(f'HOMEPAGE={homepage!r} lacks protocol', pkg=pkg)
+                            yield BadHomepage(f"HOMEPAGE={homepage!r} lacks protocol", pkg=pkg)
                         elif homepage[:i] not in SrcUriCheck.valid_protos:
                             yield BadHomepage(
-                                f'HOMEPAGE={homepage!r} uses unsupported '
-                                f'protocol {homepage[:i]!r}',
-                                pkg=pkg)
+                                f"HOMEPAGE={homepage!r} uses unsupported "
+                                f"protocol {homepage[:i]!r}",
+                                pkg=pkg,
+                            )
 
 
 class UnknownRestrict(results.VersionResult, results.Warning):
@@ -1439,7 +1516,7 @@ class UnknownRestrict(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        restricts = ' '.join(self.restricts)
+        restricts = " ".join(self.restricts)
         return f'unknown RESTRICT="{restricts}"'
 
 
@@ -1452,20 +1529,20 @@ class UnknownProperties(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        properties = ' '.join(self.properties)
+        properties = " ".join(self.properties)
         return f'unknown PROPERTIES="{properties}"'
 
 
 class InvalidRestrict(results.MetadataError, results.VersionResult):
     """Package's RESTRICT is invalid."""
 
-    attr = 'restrict'
+    attr = "restrict"
 
 
 class InvalidProperties(results.MetadataError, results.VersionResult):
     """Package's PROPERTIES is invalid."""
 
-    attr = 'properties'
+    attr = "properties"
 
 
 class _RestrictPropertiesCheck(Check):
@@ -1482,7 +1559,7 @@ class _RestrictPropertiesCheck(Check):
         # pull allowed values from a repo and its masters
         allowed = []
         for repo in self.options.target_repo.trees:
-            allowed.extend(getattr(repo.config, f'{self._attr}_allowed'))
+            allowed.extend(getattr(repo.config, f"{self._attr}_allowed"))
         self.allowed = frozenset(allowed)
 
     def feed(self, pkg):
@@ -1499,7 +1576,7 @@ class RestrictCheck(_RestrictPropertiesCheck):
     """RESTRICT related checks."""
 
     known_results = frozenset([UnknownRestrict, UnstatedIuse, InvalidRestrict])
-    _attr = 'restrict'
+    _attr = "restrict"
     _unknown_result_cls = UnknownRestrict
 
 
@@ -1507,7 +1584,7 @@ class PropertiesCheck(_RestrictPropertiesCheck):
     """PROPERTIES related checks."""
 
     known_results = frozenset([UnknownProperties, UnstatedIuse, InvalidProperties])
-    _attr = 'properties'
+    _attr = "properties"
     _unknown_result_cls = UnknownProperties
 
 
@@ -1536,15 +1613,16 @@ class RestrictTestCheck(Check):
         super().__init__(*args)
         # create "!test? ( test )" conditional to match restrictions against
         self.test_restrict = packages.Conditional(
-            'use', values.ContainmentMatch2('test', negate=True), ['test'])
+            "use", values.ContainmentMatch2("test", negate=True), ["test"]
+        )
 
     def feed(self, pkg):
-        if 'test' not in pkg.iuse:
+        if "test" not in pkg.iuse:
             return
 
         # conditional is unnecessary if it already exists or is in unconditional form
         for r in pkg.restrict:
-            if r in ('test', self.test_restrict):
+            if r in ("test", self.test_restrict):
                 return
 
         yield MissingTestRestrict(pkg=pkg)
@@ -1567,7 +1645,7 @@ class MissingUnpackerDep(results.VersionResult, results.Warning):
     def desc(self):
         # determine proper dep type from pkg EAPI
         eapi_obj = get_eapi(self.eapi)
-        dep_type = 'BDEPEND' if 'BDEPEND' in eapi_obj.metadata_keys else 'DEPEND'
+        dep_type = "BDEPEND" if "BDEPEND" in eapi_obj.metadata_keys else "DEPEND"
 
         if len(self.unpackers) == 1:
             dep = self.unpackers[0]
@@ -1575,7 +1653,7 @@ class MissingUnpackerDep(results.VersionResult, results.Warning):
             dep = f"|| ( {' '.join(self.unpackers)} )"
 
         s = pluralism(self.filenames)
-        filenames = ', '.join(self.filenames)
+        filenames = ", ".join(self.filenames)
         return f'missing {dep_type}="{dep}" for SRC_URI archive{s}: [ {filenames} ]'
 
 
@@ -1585,26 +1663,30 @@ class MissingUnpackerDepCheck(Check):
     known_results = frozenset([MissingUnpackerDep])
     required_addons = (addons.UseAddon,)
 
-    non_system_unpackers = ImmutableDict({
-        '.zip': frozenset(['app-arch/unzip']),
-        '.7z': frozenset(['app-arch/p7zip']),
-        '.rar': frozenset(['app-arch/rar', 'app-arch/unrar']),
-        '.lha': frozenset(['app-arch/lha']),
-        '.lzh': frozenset(['app-arch/lha']),
-    })
+    non_system_unpackers = ImmutableDict(
+        {
+            ".zip": frozenset(["app-arch/unzip"]),
+            ".7z": frozenset(["app-arch/p7zip"]),
+            ".rar": frozenset(["app-arch/rar", "app-arch/unrar"]),
+            ".lha": frozenset(["app-arch/lha"]),
+            ".lzh": frozenset(["app-arch/lha"]),
+        }
+    )
 
     def __init__(self, *args, use_addon):
         super().__init__(*args)
         self.dep_filter = use_addon.get_filter()
-        self.fetch_filter = use_addon.get_filter('fetchables')
+        self.fetch_filter = use_addon.get_filter("fetchables")
 
     def feed(self, pkg):
         # ignore conditionals
         fetchables, _ = self.fetch_filter(
-            (fetchable,), pkg,
+            (fetchable,),
+            pkg,
             pkg.generate_fetchables(
-                allow_missing_checksums=True, ignore_unknown_mirrors=True,
-                skip_default_mirrors=True))
+                allow_missing_checksums=True, ignore_unknown_mirrors=True, skip_default_mirrors=True
+            ),
+        )
 
         missing_unpackers = defaultdict(set)
 
@@ -1616,7 +1698,7 @@ class MissingUnpackerDepCheck(Check):
 
         # toss all the potentially missing unpackers that properly include deps
         if missing_unpackers:
-            for dep_type in ('bdepend', 'depend'):
+            for dep_type in ("bdepend", "depend"):
                 deps, _ = self.dep_filter((atom_cls,), pkg, getattr(pkg, dep_type))
                 deps = {x.key for x in deps}
                 for unpackers in list(missing_unpackers.keys()):
@@ -1624,8 +1706,7 @@ class MissingUnpackerDepCheck(Check):
                         missing_unpackers.pop(unpackers, None)
 
         for unpackers, filenames in missing_unpackers.items():
-            yield MissingUnpackerDep(
-                str(pkg.eapi), sorted(filenames), sorted(unpackers), pkg=pkg)
+            yield MissingUnpackerDep(str(pkg.eapi), sorted(filenames), sorted(unpackers), pkg=pkg)
 
 
 class VirtualWithSingleProvider(results.PackageResult, results.Warning):
@@ -1644,32 +1725,31 @@ class VirtualWithSingleProvider(results.PackageResult, results.Warning):
 
     @property
     def desc(self):
-        return f'virtual package with a single provider: {self.provider}'
+        return f"virtual package with a single provider: {self.provider}"
 
 
 class VirtualWithBdepend(results.VersionResult, results.Warning):
     """Virtual package with a BDEPEND defined."""
 
-    desc = 'virtual package with a BDEPEND defined'
+    desc = "virtual package with a BDEPEND defined"
 
 
 class VirtualWithDepend(results.VersionResult, results.Warning):
     """Virtual package with a BDEPEND defined."""
 
-    desc = 'virtual package with a DEPEND defined'
+    desc = "virtual package with a DEPEND defined"
 
 
 class VirtualProvidersCheck(Check):
     """Check providers of virtual packages."""
 
-    _restricted_source = (sources.RestrictionRepoSource, (restricts.CategoryDep('virtual'), ))
-    _source = (sources.PackageRepoSource, (), (('source', _restricted_source),))
-    known_results = frozenset([VirtualWithSingleProvider,
-        VirtualWithBdepend, VirtualWithDepend])
+    _restricted_source = (sources.RestrictionRepoSource, (restricts.CategoryDep("virtual"),))
+    _source = (sources.PackageRepoSource, (), (("source", _restricted_source),))
+    known_results = frozenset([VirtualWithSingleProvider, VirtualWithBdepend, VirtualWithDepend])
 
     useless_depends = (
-        ('depend', VirtualWithDepend),
-        ('bdepend', VirtualWithBdepend),
+        ("depend", VirtualWithDepend),
+        ("bdepend", VirtualWithBdepend),
     )
 
     def __init__(self, options, **kwargs):
@@ -1678,10 +1758,13 @@ class VirtualProvidersCheck(Check):
         self.deprecated = self.options.target_repo.deprecated
 
     def pkg_has_conditional_exception(self, pkgs):
-        return any(use.startswith(('elibc', 'kernel'))
+        return any(
+            use.startswith(("elibc", "kernel"))
             for pkg in pkgs
             for dep in iflatten_instance(pkg.rdepend, (atom_cls, packages.Conditional))
-            if isinstance(dep, packages.Conditional) and dep.attr == 'use' and isinstance(dep.restriction, values.ContainmentMatch)
+            if isinstance(dep, packages.Conditional)
+            and dep.attr == "use"
+            and isinstance(dep.restriction, values.ContainmentMatch)
             for use in dep.restriction.vals
         )
 
@@ -1692,15 +1775,10 @@ class VirtualProvidersCheck(Check):
                     yield cls(pkg=pkg)
 
         if not any(self.deprecated.match(pkg) for pkg in pkgs):
-            pkgs_rdepends = tuple(
-                tuple(iflatten_instance(pkg.rdepend, atom_cls))
-                for pkg in pkgs
-            )
+            pkgs_rdepends = tuple(tuple(iflatten_instance(pkg.rdepend, atom_cls)) for pkg in pkgs)
             if max(map(len, pkgs_rdepends)) == 1:
                 unversioned_rdepends = {
-                    deps[0].unversioned_atom
-                    for deps in pkgs_rdepends
-                    if len(deps) == 1
+                    deps[0].unversioned_atom for deps in pkgs_rdepends if len(deps) == 1
                 }
                 if len(unversioned_rdepends) == 1 and not self.pkg_has_conditional_exception(pkgs):
                     yield VirtualWithSingleProvider(unversioned_rdepends.pop(), pkg=pkgs[0])

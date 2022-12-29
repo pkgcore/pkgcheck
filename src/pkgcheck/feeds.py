@@ -38,15 +38,16 @@ class Feed(base.Addon):
 
 
 class QueryCache(Feed):
-
     @staticmethod
     def mangle_argparser(parser):
-        group = parser.add_argument_group('query caching')
+        group = parser.add_argument_group("query caching")
         group.add_argument(
-            '--reset-caching-per', dest='query_caching_freq',
-            choices=('version', 'package', 'category'), default='package',
-            help='control how often the cache is cleared '
-                 '(version, package or category)')
+            "--reset-caching-per",
+            dest="query_caching_freq",
+            choices=("version", "package", "category"),
+            default="package",
+            help="control how often the cache is cleared " "(version, package or category)",
+        )
 
     @staticmethod
     def _version(item):
@@ -63,7 +64,7 @@ class QueryCache(Feed):
     def __init__(self, options):
         super().__init__(options)
         self.query_cache = {}
-        self._keyfunc = getattr(self, f'_{options.query_caching_freq}')
+        self._keyfunc = getattr(self, f"_{options.query_caching_freq}")
         self._key = None
 
     def feed(self, item):
@@ -76,7 +77,6 @@ class QueryCache(Feed):
 
 
 class EvaluateDepSet(Feed):
-
     def __init__(self, *args, profile_addon):
         super().__init__(*args)
         self.pkg_evaluate_depsets_cache = {}
@@ -95,15 +95,15 @@ class EvaluateDepSet(Feed):
             self.pkg_profiles_cache[pkg] = profile_grps
 
         # strip use dep defaults so known flags get identified correctly
-        diuse = frozenset(
-            x[:-3] if x[-1] == ')' else x for x in depset.known_conditionals)
+        diuse = frozenset(x[:-3] if x[-1] == ")" else x for x in depset.known_conditionals)
         collapsed = {}
         for profiles in profile_grps:
             immutable, enabled = profiles[0].identify_use(pkg, diuse)
             collapsed.setdefault((immutable, enabled), []).extend(profiles)
 
-        return [(depset.evaluate_depset(k[1], tristate_filter=k[0]), v)
-                for k, v in collapsed.items()]
+        return [
+            (depset.evaluate_depset(k[1], tristate_filter=k[0]), v) for k, v in collapsed.items()
+        ]
 
     def collapse_evaluate_depset(self, pkg, attr, depset):
         depset_profiles = self.pkg_evaluate_depsets_cache.get((pkg, attr))

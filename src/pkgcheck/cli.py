@@ -14,10 +14,9 @@ from . import const
 
 
 class Tool(commandline.Tool):
-
     def main(self):
         # suppress all pkgcore log messages
-        logging.getLogger('pkgcore').setLevel(100)
+        logging.getLogger("pkgcore").setLevel(100)
         return super().main()
 
 
@@ -50,14 +49,16 @@ class ConfigFileParser:
             for f in configs:
                 config.read(f)
         except configparser.ParsingError as e:
-            self.parser.error(f'parsing config file failed: {e}')
+            self.parser.error(f"parsing config file failed: {e}")
         return config
 
     def parse_config_sections(self, namespace, sections):
         """Parse options from a given iterable of config section names."""
-        with patch('snakeoil.cli.arghparse.ArgumentParser.error', self._config_error):
+        with patch("snakeoil.cli.arghparse.ArgumentParser.error", self._config_error):
             for section in (x for x in sections if x in self.config):
-                config_args = [f'--{k}={v}' if v else f'--{k}' for k, v in self.config.items(section)]
+                config_args = [
+                    f"--{k}={v}" if v else f"--{k}" for k, v in self.config.items(section)
+                ]
                 namespace, args = self.parser.parse_known_optionals(config_args, namespace)
                 if args:
                     self.parser.error(f"unknown arguments: {'  '.join(args)}")
@@ -74,16 +75,16 @@ class ConfigFileParser:
         self._config = None
 
         # load default options
-        namespace = self.parse_config_sections(namespace, ['DEFAULT'])
+        namespace = self.parse_config_sections(namespace, ["DEFAULT"])
 
         # load any defined checksets -- empty checksets are ignored
-        if 'CHECKSETS' in self.config:
-            for k, v in self.config.items('CHECKSETS'):
+        if "CHECKSETS" in self.config:
+            for k, v in self.config.items("CHECKSETS"):
                 if v:
-                    namespace.config_checksets[k] = re.split('[,\n]', v.strip())
+                    namespace.config_checksets[k] = re.split("[,\n]", v.strip())
 
         return namespace
 
     def _config_error(self, message, status=2):
         """Stub to replace error method that notes config failure."""
-        self.parser.exit(status, f'{self.parser.prog}: failed loading config: {message}\n')
+        self.parser.exit(status, f"{self.parser.prog}: failed loading config: {message}\n")

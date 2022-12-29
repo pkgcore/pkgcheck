@@ -18,8 +18,8 @@ class RedundantVersion(results.VersionResult, results.Info):
     @property
     def desc(self):
         s = pluralism(self.later_versions)
-        versions = ', '.join(self.later_versions)
-        return f'slot({self.slot}) keywords are overshadowed by version{s}: {versions}'
+        versions = ", ".join(self.later_versions)
+        return f"slot({self.slot}) keywords are overshadowed by version{s}: {versions}"
 
 
 class RedundantVersionCheck(Check):
@@ -40,38 +40,45 @@ class RedundantVersionCheck(Check):
     @staticmethod
     def mangle_argparser(parser):
         parser.plugin.add_argument(
-            '--stable-only', action='store_true',
-            help='consider redundant versions only within stable',
+            "--stable-only",
+            action="store_true",
+            help="consider redundant versions only within stable",
             docs="""
                 If enabled, for each slot, only consider redundant versions
                 with stable keywords. This is useful for cases of cleanup after
                 successful stabilization.
-            """)
+            """,
+        )
 
     def __init__(self, *args, profile_addon):
         super().__init__(*args)
         self.keywords_profiles = {
-            keyword: sorted(profiles, key=attrgetter('name'))
-            for keyword, profiles in profile_addon.items()}
+            keyword: sorted(profiles, key=attrgetter("name"))
+            for keyword, profiles in profile_addon.items()
+        }
 
     def filter_later_profiles_masks(self, visible_cache, pkg, later_versions):
         # check both stable/unstable profiles for stable KEYWORDS and only
         # unstable profiles for unstable KEYWORDS
         keywords = []
         for keyword in pkg.sorted_keywords:
-            if keyword[0] != '~':
-                keywords.append('~' + keyword)
+            if keyword[0] != "~":
+                keywords.append("~" + keyword)
             keywords.append(keyword)
 
         # if a profile exists, where the package is visible, but the later aren't
         # then it isn't redundant
-        visible_profiles = tuple(profile
+        visible_profiles = tuple(
+            profile
             for keyword in keywords
             for profile in self.keywords_profiles.get(keyword, ())
-            if visible_cache[(profile, pkg)])
+            if visible_cache[(profile, pkg)]
+        )
         return tuple(
-            later for later in later_versions
-            if all(visible_cache[(profile, later)] for profile in visible_profiles))
+            later
+            for later in later_versions
+            if all(visible_cache[(profile, later)] for profile in visible_profiles)
+        )
 
     def feed(self, pkgset):
         if len(pkgset) == 1:
@@ -91,8 +98,9 @@ class RedundantVersionCheck(Check):
             if not curr_set:
                 continue
 
-            matches = [ver for ver, keys in stack if ver.slot == pkg.slot and
-                       not curr_set.difference(keys)]
+            matches = [
+                ver for ver, keys in stack if ver.slot == pkg.slot and not curr_set.difference(keys)
+            ]
 
             # we've done our checks; now we inject unstable for any stable
             # via this, earlier versions that are unstable only get flagged
@@ -100,7 +108,7 @@ class RedundantVersionCheck(Check):
             # stable.
 
             # also, yes, have to use list comp here- we're adding as we go
-            curr_set.update([f'~{x}' for x in curr_set if not x.startswith('~')])
+            curr_set.update([f"~{x}" for x in curr_set if not x.startswith("~")])
 
             stack.append((pkg, curr_set))
             if matches:
@@ -108,7 +116,9 @@ class RedundantVersionCheck(Check):
 
         visible_cache = defaultdictkey(lambda profile_pkg: profile_pkg[0].visible(profile_pkg[1]))
         for pkg, matches in reversed(bad):
-            if self.options.stable_only and all(key.startswith('~') for x in matches for key in x.keywords):
+            if self.options.stable_only and all(
+                key.startswith("~") for x in matches for key in x.keywords
+            ):
                 continue
             if matches := self.filter_later_profiles_masks(visible_cache, pkg, matches):
                 later_versions = (x.fullver for x in sorted(matches))

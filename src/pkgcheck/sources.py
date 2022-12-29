@@ -64,8 +64,9 @@ class LatestVersionRepoSource(RepoSource):
     """Repo source that returns only the latest non-VCS and VCS slots"""
 
     def itermatch(self, *args, **kwargs):
-        for _, pkgs in groupby(super().itermatch(*args, **kwargs),
-                               key=lambda pkg: pkg.slotted_atom):
+        for _, pkgs in groupby(
+            super().itermatch(*args, **kwargs), key=lambda pkg: pkg.slotted_atom
+        ):
             best_by_live = {pkg.live: pkg for pkg in pkgs}
             yield from sorted(best_by_live.values())
 
@@ -94,7 +95,7 @@ class LatestVersionsFilter:
             # determine the latest non-VCS and VCS pkgs for each slot
             while key == pkg.key:
                 if pkg.live:
-                    selected_pkgs[f'vcs-{pkg.slot}'] = pkg
+                    selected_pkgs[f"vcs-{pkg.slot}"] = pkg
                 else:
                     selected_pkgs[pkg.slot] = pkg
 
@@ -111,7 +112,8 @@ class LatestVersionsFilter:
 
             selected_pkgs = set(selected_pkgs.values())
             self._pkg_cache.extend(
-                FilteredPkg(pkg=pkg) if pkg not in selected_pkgs else pkg for pkg in pkgs)
+                FilteredPkg(pkg=pkg) if pkg not in selected_pkgs else pkg for pkg in pkgs
+            )
 
         return self._pkg_cache.popleft()
 
@@ -132,7 +134,7 @@ class LatestPkgsFilter:
         # determine the latest non-VCS and VCS pkgs for each slot
         for pkg in pkgs:
             if pkg.live:
-                selected_pkgs[f'vcs-{pkg.slot}'] = pkg
+                selected_pkgs[f"vcs-{pkg.slot}"] = pkg
             else:
                 selected_pkgs[pkg.slot] = pkg
 
@@ -166,7 +168,7 @@ class EclassRepoSource(RepoSource):
     def __init__(self, *args, eclass_addon, **kwargs):
         super().__init__(*args, **kwargs)
         self.eclasses = eclass_addon._eclass_repos[self.repo.location]
-        self.eclass_dir = pjoin(self.repo.location, 'eclass')
+        self.eclass_dir = pjoin(self.repo.location, "eclass")
 
     def itermatch(self, restrict, **kwargs):
         if isinstance(restrict, str):
@@ -178,12 +180,13 @@ class EclassRepoSource(RepoSource):
             eclasses = self.eclasses
 
         for name in eclasses:
-            yield Eclass(name, pjoin(self.eclass_dir, f'{name}.eclass'))
+            yield Eclass(name, pjoin(self.eclass_dir, f"{name}.eclass"))
 
 
 @dataclass
 class Profile:
     """Generic profile object."""
+
     node: ProfileNode
     files: set
 
@@ -196,8 +199,7 @@ class ProfilesRepoSource(RepoSource):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.profiles_dir = self.repo.config.profiles_base
-        self.non_profile_dirs = {
-            f'profiles/{x}' for x in ProfileAddon.non_profile_dirs}
+        self.non_profile_dirs = {f"profiles/{x}" for x in ProfileAddon.non_profile_dirs}
         self._prefix_len = len(self.repo.location.rstrip(os.sep)) + 1
 
     def itermatch(self, restrict, **kwargs):
@@ -221,7 +223,7 @@ class ProfilesRepoSource(RepoSource):
         else:
             # matching all profiles
             for root, _dirs, files in os.walk(self.profiles_dir):
-                if root[self._prefix_len:] not in self.non_profile_dirs:
+                if root[self._prefix_len :] not in self.non_profile_dirs:
                     yield Profile(ProfileNode(root), set(files))
 
 
@@ -234,17 +236,15 @@ class _RawRepo(UnconfiguredTree):
         Deviates from parent in that no package name check is done.
         """
         cppath = pjoin(self.base, catpkg[0], catpkg[1])
-        pkg = f'{catpkg[-1]}-'
+        pkg = f"{catpkg[-1]}-"
         lp = len(pkg)
         extension = self.extension
         ext_len = -len(extension)
         try:
-            return tuple(
-                x[lp:ext_len] for x in listdir_files(cppath)
-                if x[ext_len:] == extension)
+            return tuple(x[lp:ext_len] for x in listdir_files(cppath) if x[ext_len:] == extension)
         except EnvironmentError as e:
             path = pjoin(self.base, os.sep.join(catpkg))
-            raise KeyError(f'failed fetching versions for package {path}: {e}') from e
+            raise KeyError(f"failed fetching versions for package {path}: {e}") from e
 
 
 class RawRepoSource(RepoSource):
@@ -276,8 +276,14 @@ class UnmaskedRepoSource(RepoSource):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._filtered_repo = self.options.domain.filter_repo(
-            self.repo, pkg_masks=(), pkg_unmasks=(), pkg_filters=(),
-            pkg_accept_keywords=(), pkg_keywords=(), profile=False)
+            self.repo,
+            pkg_masks=(),
+            pkg_unmasks=(),
+            pkg_filters=(),
+            pkg_accept_keywords=(),
+            pkg_keywords=(),
+            profile=False,
+        )
 
     def itermatch(self, restrict, **kwargs):
         yield from self._filtered_repo.itermatch(restrict, **kwargs)
@@ -286,7 +292,7 @@ class UnmaskedRepoSource(RepoSource):
 class _SourcePkg(WrappedPkg):
     """Package object with file contents injected as an attribute."""
 
-    __slots__ = ('lines',)
+    __slots__ = ("lines",)
 
     def __init__(self, pkg):
         super().__init__(pkg)
@@ -323,8 +329,8 @@ class _ParsedEclass(ParseTree):
         super().__init__(data)
         self.eclass = eclass
 
-    __getattr__ = klass.GetAttrProxy('eclass')
-    __dir__ = klass.DirProxy('eclass')
+    __getattr__ = klass.GetAttrProxy("eclass")
+    __dir__ = klass.DirProxy("eclass")
 
 
 class EclassParseRepoSource(EclassRepoSource):
@@ -332,7 +338,7 @@ class EclassParseRepoSource(EclassRepoSource):
 
     def itermatch(self, restrict, **kwargs):
         for eclass in super().itermatch(restrict, **kwargs):
-            with open(eclass.path, 'rb') as f:
+            with open(eclass.path, "rb") as f:
                 data = f.read()
             yield _ParsedEclass(data, eclass=eclass)
 
@@ -364,14 +370,14 @@ class PackageRepoSource(_CombinedSource):
     """Ebuild repository source yielding lists of versioned packages per package."""
 
     scope = base.package_scope
-    keyfunc = attrgetter('key')
+    keyfunc = attrgetter("key")
 
 
 class CategoryRepoSource(_CombinedSource):
     """Ebuild repository source yielding lists of versioned packages per category."""
 
     scope = base.category_scope
-    keyfunc = attrgetter('category')
+    keyfunc = attrgetter("category")
 
 
 class RepositoryRepoSource(RepoSource):
@@ -401,13 +407,13 @@ class _FilteredSource(RawRepoSource):
 class UnversionedSource(_FilteredSource):
     """Source yielding unversioned atoms from matching packages."""
 
-    keyfunc = attrgetter('unversioned_atom')
+    keyfunc = attrgetter("unversioned_atom")
 
 
 class VersionedSource(_FilteredSource):
     """Source yielding versioned atoms from matching packages."""
 
-    keyfunc = attrgetter('versioned_atom')
+    keyfunc = attrgetter("versioned_atom")
 
 
 def init_source(source, options, addons_map=None):
@@ -417,8 +423,8 @@ def init_source(source, options, addons_map=None):
             cls, args, kwargs = source
             kwargs = dict(kwargs)
             # initialize wrapped source
-            if 'source' in kwargs:
-                kwargs['source'] = init_source(kwargs['source'], options, addons_map)
+            if "source" in kwargs:
+                kwargs["source"] = init_source(kwargs["source"], options, addons_map)
         else:
             cls, args = source
             kwargs = {}

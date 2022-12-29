@@ -8,7 +8,7 @@ import requests
 from ..checks.network import RequestError, SSLError
 
 # suppress all urllib3 log messages
-logging.getLogger('urllib3').propagate = False
+logging.getLogger("urllib3").propagate = False
 
 
 class Session(requests.Session):
@@ -26,15 +26,15 @@ class Session(requests.Session):
         # block when urllib3 connection pool is full
         concurrent = concurrent if concurrent is not None else os.cpu_count() * 5
         a = requests.adapters.HTTPAdapter(pool_maxsize=concurrent, pool_block=True)
-        self.mount('https://', a)
-        self.mount('http://', a)
+        self.mount("https://", a)
+        self.mount("http://", a)
 
         # spoof user agent
-        self.headers['User-Agent'] = user_agent
+        self.headers["User-Agent"] = user_agent
 
     def send(self, req, **kwargs):
         # forcibly use the session timeout
-        kwargs['timeout'] = self.timeout
+        kwargs["timeout"] = self.timeout
         try:
             with super().send(req, **kwargs) as r:
                 r.raise_for_status()
@@ -42,6 +42,6 @@ class Session(requests.Session):
         except requests.exceptions.SSLError as e:
             raise SSLError(e)
         except requests.exceptions.ConnectionError as e:
-            raise RequestError(e, 'connection failed')
+            raise RequestError(e, "connection failed")
         except requests.exceptions.RequestException as e:
             raise RequestError(e)

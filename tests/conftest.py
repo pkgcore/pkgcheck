@@ -17,7 +17,7 @@ from snakeoil.contexts import os_environ
 from snakeoil.formatters import PlainTextFormatter
 from snakeoil.osutils import pjoin
 
-pytest_plugins = ['pkgcore']
+pytest_plugins = ["pkgcore"]
 REPO_ROOT = Path(__file__).parent.parent
 
 
@@ -43,7 +43,7 @@ def default_session_fixture(request):
     """Fixture run globally for the entire test session."""
     stack = ExitStack()
     # don't load the default system or user config files
-    stack.enter_context(patch('pkgcheck.cli.ConfigFileParser.default_configs', ()))
+    stack.enter_context(patch("pkgcheck.cli.ConfigFileParser.default_configs", ()))
     stack.enter_context(os_environ(**(git_config := GitConfig()).config_env))
 
     def unpatch():
@@ -59,40 +59,44 @@ def testconfig(tmp_path_factory):
 
     Also, repo entries for all the bundled test repos.
     """
-    config = tmp_path_factory.mktemp('testconfig')
-    repos_conf = config / 'repos.conf'
-    stubrepo = pjoin(pkgcore_const.DATA_PATH, 'stubrepo')
-    testdir = REPO_ROOT / 'testdata/repos'
-    with open(repos_conf, 'w') as f:
-        f.write(textwrap.dedent(f"""\
-            [DEFAULT]
-            main-repo = standalone
-            [stubrepo]
-            location = {stubrepo}
-        """))
+    config = tmp_path_factory.mktemp("testconfig")
+    repos_conf = config / "repos.conf"
+    stubrepo = pjoin(pkgcore_const.DATA_PATH, "stubrepo")
+    testdir = REPO_ROOT / "testdata/repos"
+    with open(repos_conf, "w") as f:
+        f.write(
+            textwrap.dedent(
+                f"""\
+                    [DEFAULT]
+                    main-repo = standalone
+                    [stubrepo]
+                    location = {stubrepo}
+                """
+            )
+        )
         for repo in testdir.iterdir():
-            f.write(f'[{repo.name}]\n')
-            f.write(f'location = {repo}\n')
-    profile_path = pjoin(stubrepo, 'profiles', 'default')
-    os.symlink(profile_path, str(config / 'make.profile'))
+            f.write(f"[{repo.name}]\n")
+            f.write(f"location = {repo}\n")
+    profile_path = pjoin(stubrepo, "profiles", "default")
+    os.symlink(profile_path, str(config / "make.profile"))
     return str(config)
 
 
 @pytest.fixture(scope="session")
 def cache_dir(tmp_path_factory):
     """Generate a cache directory for pkgcheck."""
-    cache_dir = tmp_path_factory.mktemp('cache')
+    cache_dir = tmp_path_factory.mktemp("cache")
     return str(cache_dir)
 
 
 @pytest.fixture
 def fakerepo(tmp_path_factory):
     """Generate a stub repo."""
-    fakerepo = tmp_path_factory.mktemp('fakerepo')
-    (profiles := fakerepo / 'profiles').mkdir(parents=True)
-    (profiles / 'repo_name').write_text('fakerepo\n')
-    (metadata := fakerepo / 'metadata').mkdir(parents=True)
-    (metadata / 'layout.conf').write_text('masters =\n')
+    fakerepo = tmp_path_factory.mktemp("fakerepo")
+    (profiles := fakerepo / "profiles").mkdir(parents=True)
+    (profiles / "repo_name").write_text("fakerepo\n")
+    (metadata := fakerepo / "metadata").mkdir(parents=True)
+    (metadata / "layout.conf").write_text("masters =\n")
     return fakerepo
 
 

@@ -37,7 +37,7 @@ class ConflictingAccountIdentifiers(results.Error):
 
     @property
     def desc(self):
-        pkgs = ', '.join(self.pkgs)
+        pkgs = ", ".join(self.pkgs)
         return f"conflicting {self.kind} id {self.identifier} usage: [ {pkgs} ]"
 
 
@@ -55,8 +55,7 @@ class OutsideRangeAccountIdentifier(results.VersionResult, results.Error):
 
     @property
     def desc(self):
-        return (f"{self.kind} id {self.identifier} outside permitted "
-            f"static allocation range")
+        return f"{self.kind} id {self.identifier} outside permitted " f"static allocation range"
 
 
 class AcctCheck(GentooRepoCheck, RepoCheck):
@@ -71,33 +70,43 @@ class AcctCheck(GentooRepoCheck, RepoCheck):
     exist or is wrongly defined, this check is skipped.
     """
 
-    _restricted_source = (sources.RestrictionRepoSource, (packages.OrRestriction(*(
-        restricts.CategoryDep('acct-user'), restricts.CategoryDep('acct-group'))),))
-    _source = (sources.RepositoryRepoSource, (), (('source', _restricted_source),))
-    known_results = frozenset([
-        MissingAccountIdentifier, ConflictingAccountIdentifiers,
-        OutsideRangeAccountIdentifier,
-    ])
+    _restricted_source = (
+        sources.RestrictionRepoSource,
+        (
+            packages.OrRestriction(
+                *(restricts.CategoryDep("acct-user"), restricts.CategoryDep("acct-group"))
+            ),
+        ),
+    )
+    _source = (sources.RepositoryRepoSource, (), (("source", _restricted_source),))
+    known_results = frozenset(
+        [
+            MissingAccountIdentifier,
+            ConflictingAccountIdentifiers,
+            OutsideRangeAccountIdentifier,
+        ]
+    )
 
     def __init__(self, *args):
         super().__init__(*args)
         self.id_re = re.compile(
-            r'ACCT_(?P<var>USER|GROUP)_ID=(?P<quot>[\'"]?)(?P<id>[0-9]+)(?P=quot)')
+            r'ACCT_(?P<var>USER|GROUP)_ID=(?P<quot>[\'"]?)(?P<id>[0-9]+)(?P=quot)'
+        )
         self.seen_uids = defaultdict(partial(defaultdict, list))
         self.seen_gids = defaultdict(partial(defaultdict, list))
         uid_range, gid_range = self.load_ids_from_configuration(self.options.target_repo)
         self.category_map = {
-            'acct-user': (self.seen_uids, 'USER', tuple(uid_range)),
-            'acct-group': (self.seen_gids, 'GROUP', tuple(gid_range)),
+            "acct-user": (self.seen_uids, "USER", tuple(uid_range)),
+            "acct-group": (self.seen_gids, "GROUP", tuple(gid_range)),
         }
 
     def parse_config_id_range(self, config: ConfigParser, config_key: str):
-        id_ranges = config['user-group-ids'].get(config_key, None)
+        id_ranges = config["user-group-ids"].get(config_key, None)
         if not id_ranges:
             raise SkipCheck(self, f"metadata/qa-policy.conf: missing value for {config_key}")
         try:
-            for id_range in map(str.strip, id_ranges.split(',')):
-                start, *end = map(int, id_range.split('-', maxsplit=1))
+            for id_range in map(str.strip, id_ranges.split(",")):
+                start, *end = map(int, id_range.split("-", maxsplit=1))
                 if len(end) == 0:
                     yield range(start, start + 1)
                 else:
@@ -107,11 +116,13 @@ class AcctCheck(GentooRepoCheck, RepoCheck):
 
     def load_ids_from_configuration(self, repo):
         config = ConfigParser()
-        if not config.read(pjoin(repo.location, 'metadata', 'qa-policy.conf')):
+        if not config.read(pjoin(repo.location, "metadata", "qa-policy.conf")):
             raise SkipCheck(self, "failed loading 'metadata/qa-policy.conf'")
-        if 'user-group-ids' not in config:
+        if "user-group-ids" not in config:
             raise SkipCheck(self, "metadata/qa-policy.conf: missing section user-group-ids")
-        return self.parse_config_id_range(config, 'uid-range'), self.parse_config_id_range(config, 'gid-range')
+        return self.parse_config_id_range(config, "uid-range"), self.parse_config_id_range(
+            config, "gid-range"
+        )
 
     def feed(self, pkg):
         try:
@@ -121,8 +132,8 @@ class AcctCheck(GentooRepoCheck, RepoCheck):
 
         for line in pkg.ebuild.text_fileobj():
             m = self.id_re.match(line)
-            if m is not None and m.group('var') == expected_var:
-                found_id = int(m.group('id'))
+            if m is not None and m.group("var") == expected_var:
+                found_id = int(m.group("id"))
                 break
         else:
             yield MissingAccountIdentifier(f"ACCT_{expected_var}_ID", pkg=pkg)

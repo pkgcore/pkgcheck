@@ -15,14 +15,14 @@ from .. import addons, bash, results, sources
 from . import Check
 
 # NB: distutils-r1 inherits one of the first two
-ECLASSES = frozenset(['python-r1', 'python-single-r1', 'python-any-r1'])
+ECLASSES = frozenset(["python-r1", "python-single-r1", "python-any-r1"])
 
-IUSE_PREFIX = 'python_targets_'
-IUSE_PREFIX_S = 'python_single_target_'
+IUSE_PREFIX = "python_targets_"
+IUSE_PREFIX_S = "python_single_target_"
 
-GITHUB_ARCHIVE_RE = re.compile(r'^https://github\.com/[^/]+/[^/]+/archive/')
-SNAPSHOT_RE = re.compile(r'[a-fA-F0-9]{40}\.tar\.gz$')
-USE_FLAGS_PYTHON_USEDEP = re.compile(r'\[(.+,)?\$\{PYTHON_USEDEP\}(,.+)?\]$')
+GITHUB_ARCHIVE_RE = re.compile(r"^https://github\.com/[^/]+/[^/]+/archive/")
+SNAPSHOT_RE = re.compile(r"[a-fA-F0-9]{40}\.tar\.gz$")
+USE_FLAGS_PYTHON_USEDEP = re.compile(r"\[(.+,)?\$\{PYTHON_USEDEP\}(,.+)?\]$")
 
 
 def get_python_eclass(pkg):
@@ -30,8 +30,7 @@ def get_python_eclass(pkg):
     # All three eclasses block one another, but check and throw an error
     # just in case it isn't caught when sourcing the ebuild.
     if len(eclasses) > 1:
-        raise ValueError(
-            f"python eclasses are mutually exclusive: [ {', '.join(eclasses)} ]")
+        raise ValueError(f"python eclasses are mutually exclusive: [ {', '.join(eclasses)} ]")
     return next(iter(eclasses)) if eclasses else None
 
 
@@ -139,10 +138,7 @@ class DistutilsNonPEP517Build(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        return (
-            "uses deprecated non-PEP517 build mode, please switch to "
-            "DISTUTILS_USE_PEP517=..."
-        )
+        return "uses deprecated non-PEP517 build mode, please switch to " "DISTUTILS_USE_PEP517=..."
 
 
 class PythonHasVersionUsage(results.LinesResult, results.Style):
@@ -158,7 +154,7 @@ class PythonHasVersionUsage(results.LinesResult, results.Style):
 
     @property
     def desc(self):
-        return f'usage of has_version {self.lines_str}, replace with python_has_version'
+        return f"usage of has_version {self.lines_str}, replace with python_has_version"
 
 
 class PythonHasVersionMissingPythonUseDep(results.LineResult, results.Error):
@@ -174,7 +170,9 @@ class PythonHasVersionMissingPythonUseDep(results.LineResult, results.Error):
 
     @property
     def desc(self):
-        return f'line: {self.lineno}: missing [${{PYTHON_USEDEP}}] suffix for argument "{self.line}"'
+        return (
+            f'line: {self.lineno}: missing [${{PYTHON_USEDEP}}] suffix for argument "{self.line}"'
+        )
 
 
 class PythonAnyMismatchedUseHasVersionCheck(results.VersionResult, results.Warning):
@@ -198,8 +196,8 @@ class PythonAnyMismatchedUseHasVersionCheck(results.VersionResult, results.Warni
     @property
     def desc(self):
         s = pluralism(self.use_flags)
-        use_flags = ', '.join(map(str, self.use_flags))
-        return f'{self.dep_category}: mismatch for {self.dep_atom} check use flag{s} [{use_flags}] in {self.location}'
+        use_flags = ", ".join(map(str, self.use_flags))
+        return f"{self.dep_category}: mismatch for {self.dep_atom} check use flag{s} [{use_flags}] in {self.location}"
 
 
 class PythonAnyMismatchedDepHasVersionCheck(results.VersionResult, results.Warning):
@@ -222,8 +220,9 @@ class PythonAnyMismatchedDepHasVersionCheck(results.VersionResult, results.Warni
 
     @property
     def desc(self):
-        use_flags = ', '.join(map(str, self.use_flags))
-        return f'{self.dep_category}: missing check for {self.dep_atom}[{use_flags}] in {self.location!r}'
+        use_flags = ", ".join(map(str, self.use_flags))
+        return f"{self.dep_category}: missing check for {self.dep_atom}[{use_flags}] in {self.location!r}"
+
 
 class PythonCheck(Check):
     """Python eclass checks.
@@ -233,32 +232,37 @@ class PythonCheck(Check):
     """
 
     _source = sources.EbuildParseRepoSource
-    known_results = frozenset([
-        MissingPythonEclass, PythonMissingRequiredUse,
-        PythonMissingDeps, PythonRuntimeDepInAnyR1, PythonEclassError,
-        DistutilsNonPEP517Build,
-        PythonHasVersionUsage,
-        PythonHasVersionMissingPythonUseDep,
-        PythonAnyMismatchedUseHasVersionCheck,
-        PythonAnyMismatchedDepHasVersionCheck,
-    ])
+    known_results = frozenset(
+        [
+            MissingPythonEclass,
+            PythonMissingRequiredUse,
+            PythonMissingDeps,
+            PythonRuntimeDepInAnyR1,
+            PythonEclassError,
+            DistutilsNonPEP517Build,
+            PythonHasVersionUsage,
+            PythonHasVersionMissingPythonUseDep,
+            PythonAnyMismatchedUseHasVersionCheck,
+            PythonAnyMismatchedDepHasVersionCheck,
+        ]
+    )
 
     has_version_known_flags = {
-        '-b': 'BDEPEND',
-        '-r': 'RDEPEND',
-        '-d': 'DEPEND',
-        '--host-root': 'BDEPEND',
+        "-b": "BDEPEND",
+        "-r": "RDEPEND",
+        "-d": "DEPEND",
+        "--host-root": "BDEPEND",
     }
 
     has_version_default = {
-        'has_version': 'DEPEND',
-        'python_has_version': 'BDEPEND',
+        "has_version": "DEPEND",
+        "python_has_version": "BDEPEND",
     }
 
     eclass_any_dep_func = {
-        'python-single-r1': 'python_gen_cond_dep',
-        'python-any-r1': 'python_gen_any_dep',
-        'python-r1': 'python_gen_any_dep',
+        "python-single-r1": "python_gen_cond_dep",
+        "python-any-r1": "python_gen_any_dep",
+        "python-r1": "python_gen_any_dep",
     }
 
     def scan_tree_recursively(self, deptree, expected_cls):
@@ -269,8 +273,7 @@ class PythonCheck(Check):
         yield deptree
 
     def check_required_use(self, requse, flags, prefix, container_cls):
-        for token in self.scan_tree_recursively(requse,
-                                                values.ContainmentMatch2):
+        for token in self.scan_tree_recursively(requse, values.ContainmentMatch2):
             # pkgcore collapses single flag in ||/^^, so expect top-level flags
             # when len(flags) == 1
             if len(flags) > 1 and not isinstance(token, container_cls):
@@ -281,7 +284,7 @@ class PythonCheck(Check):
                     continue
                 name = next(iter(x.vals))
                 if name.startswith(prefix):
-                    matched.add(name[len(prefix):])
+                    matched.add(name[len(prefix) :])
                 elif isinstance(token, container_cls):
                     # skip the ||/^^ if it contains at least one foreign flag
                     break
@@ -304,7 +307,7 @@ class PythonCheck(Check):
                     continue
                 if not any(is_python_interpreter(y) for y in x if isinstance(y, atom)):
                     continue
-                matched.add(flag[len(prefix):])
+                matched.add(flag[len(prefix) :])
             if matched == flags:
                 return True
         return False
@@ -322,7 +325,7 @@ class PythonCheck(Check):
         pep517_value = None
 
         for var_node, _ in bash.var_assign_query.captures(pkg.tree.root_node):
-            var_name = pkg.node_str(var_node.child_by_field_name('name'))
+            var_name = pkg.node_str(var_node.child_by_field_name("name"))
 
             if var_name == "DISTUTILS_OPTIONAL":
                 has_distutils_optional = True
@@ -334,7 +337,6 @@ class PythonCheck(Check):
                 # there's nothing for us to do anyway.
                 has_distutils_deps = True
 
-
         if pep517_value is None:
             yield DistutilsNonPEP517Build(pkg=pkg)
         elif has_distutils_optional and not has_distutils_deps and pep517_value != "no":
@@ -344,11 +346,14 @@ class PythonCheck(Check):
             if "dev-python/gpep517" not in iflatten_instance(pkg.bdepend, atom):
                 yield PythonMissingDeps("BDEPEND", pkg=pkg, dep_value="DISTUTILS_DEPS")
 
-
     @staticmethod
     def _prepare_deps(deps: str):
         try:
-            deps_str = deps.strip('\"\'').replace('\\$', '$').replace('${PYTHON_USEDEP}', 'pkgcheck_python_usedep')
+            deps_str = (
+                deps.strip("\"'")
+                .replace("\\$", "$")
+                .replace("${PYTHON_USEDEP}", "pkgcheck_python_usedep")
+            )
             return iflatten_instance(DepSet.parse(deps_str, atom), atom)
         except DepsetParseError:
             # if we are unable to parse that dep's string, skip it
@@ -357,18 +362,20 @@ class PythonCheck(Check):
     def build_python_gen_any_dep_calls(self, pkg, any_dep_func):
         check_deps = defaultdict(set)
         for var_node in pkg.global_query(bash.var_assign_query):
-            name = pkg.node_str(var_node.child_by_field_name('name'))
-            if name in {'DEPEND', 'BDEPEND'}:
+            name = pkg.node_str(var_node.child_by_field_name("name"))
+            if name in {"DEPEND", "BDEPEND"}:
                 for call_node, _ in bash.cmd_query.captures(var_node):
-                    call_name = pkg.node_str(call_node.child_by_field_name('name'))
+                    call_name = pkg.node_str(call_node.child_by_field_name("name"))
                     if call_name == any_dep_func and len(call_node.children) > 1:
-                        check_deps[name].update(self._prepare_deps(
-                            pkg.node_str(call_node.children[1])))
+                        check_deps[name].update(
+                            self._prepare_deps(pkg.node_str(call_node.children[1]))
+                        )
         return {dep: frozenset(atoms) for dep, atoms in check_deps.items()}
 
-    def report_mismatch_check_deps(self, pkg, python_check_deps, has_version_checked_deps, any_dep_func):
-        for dep_type in frozenset(python_check_deps.keys()).union(
-                has_version_checked_deps.keys()):
+    def report_mismatch_check_deps(
+        self, pkg, python_check_deps, has_version_checked_deps, any_dep_func
+    ):
+        for dep_type in frozenset(python_check_deps.keys()).union(has_version_checked_deps.keys()):
             extra = has_version_checked_deps[dep_type] - python_check_deps.get(dep_type, set())
             missing = python_check_deps.get(dep_type, set()) - has_version_checked_deps[dep_type]
             for diff, other, location in (
@@ -380,28 +387,35 @@ class PythonCheck(Check):
                     for other_dep in other:
                         if dep_atom == str(other_dep.versioned_atom):
                             if diff_flags := set(other_dep.use) - set(dep.use):
-                                yield PythonAnyMismatchedUseHasVersionCheck(pkg=pkg,
-                                    dep_category=dep_type, dep_atom=dep_atom,
-                                    use_flags=diff_flags, location=location)
+                                yield PythonAnyMismatchedUseHasVersionCheck(
+                                    pkg=pkg,
+                                    dep_category=dep_type,
+                                    dep_atom=dep_atom,
+                                    use_flags=diff_flags,
+                                    location=location,
+                                )
                             break
                     else:
-                        use_flags = {'${PYTHON_USEDEP}'} | set(dep.use) \
-                           - {'pkgcheck_python_usedep'}
-                        yield PythonAnyMismatchedDepHasVersionCheck(pkg=pkg,
-                            dep_category=dep_type, dep_atom=dep_atom,
-                            use_flags=use_flags, location=location)
+                        use_flags = {"${PYTHON_USEDEP}"} | set(dep.use) - {"pkgcheck_python_usedep"}
+                        yield PythonAnyMismatchedDepHasVersionCheck(
+                            pkg=pkg,
+                            dep_category=dep_type,
+                            dep_atom=dep_atom,
+                            use_flags=use_flags,
+                            location=location,
+                        )
 
     @staticmethod
     def _prepare_dep_type(pkg, dep_type: str) -> str:
-        if dep_type == 'BDEPEND' not in pkg.eapi.dep_keys:
-            return 'DEPEND'
+        if dep_type == "BDEPEND" not in pkg.eapi.dep_keys:
+            return "DEPEND"
         return dep_type
 
     def check_python_check_deps(self, pkg, func_node, python_check_deps, any_dep_func):
         has_version_checked_deps = defaultdict(set)
         has_version_lines = set()
         for node, _ in bash.cmd_query.captures(func_node):
-            call_name = pkg.node_str(node.child_by_field_name('name'))
+            call_name = pkg.node_str(node.child_by_field_name("name"))
             if call_name == "has_version":
                 lineno, _ = node.start_point
                 has_version_lines.add(lineno + 1)
@@ -412,19 +426,21 @@ class PythonCheck(Check):
                     if new_dep_mode := self.has_version_known_flags.get(arg_name, None):
                         dep_mode = self._prepare_dep_type(pkg, new_dep_mode)
                     else:
-                        arg_name = arg_name.strip('\"\'')
+                        arg_name = arg_name.strip("\"'")
                         if not USE_FLAGS_PYTHON_USEDEP.search(arg_name):
                             lineno, _ = arg.start_point
                             yield PythonHasVersionMissingPythonUseDep(
-                                lineno=lineno+1, line=arg_name, pkg=pkg)
+                                lineno=lineno + 1, line=arg_name, pkg=pkg
+                            )
                         else:
-                            has_version_checked_deps[dep_mode].update(
-                                self._prepare_deps(arg_name))
+                            has_version_checked_deps[dep_mode].update(self._prepare_deps(arg_name))
 
         if has_version_lines:
             yield PythonHasVersionUsage(lines=sorted(has_version_lines), pkg=pkg)
 
-        yield from self.report_mismatch_check_deps(pkg, python_check_deps, has_version_checked_deps, any_dep_func)
+        yield from self.report_mismatch_check_deps(
+            pkg, python_check_deps, has_version_checked_deps, any_dep_func
+        )
 
     def feed(self, pkg):
         try:
@@ -450,21 +466,21 @@ class PythonCheck(Check):
                 else:
                     recommendation = "python-any-r1"
                 yield MissingPythonEclass(recommendation, attr.upper(), str(p), pkg=pkg)
-        elif eclass in ('python-r1', 'python-single-r1'):
+        elif eclass in ("python-r1", "python-single-r1"):
             # grab Python implementations from IUSE
-            iuse = {x.lstrip('+-') for x in pkg.iuse}
+            iuse = {x.lstrip("+-") for x in pkg.iuse}
 
-            if eclass == 'python-r1':
-                flags = {x[len(IUSE_PREFIX):] for x in iuse if x.startswith(IUSE_PREFIX)}
+            if eclass == "python-r1":
+                flags = {x[len(IUSE_PREFIX) :] for x in iuse if x.startswith(IUSE_PREFIX)}
                 req_use_args = (flags, IUSE_PREFIX, OrRestriction)
             else:
-                flags = {x[len(IUSE_PREFIX_S):] for x in iuse if x.startswith(IUSE_PREFIX_S)}
+                flags = {x[len(IUSE_PREFIX_S) :] for x in iuse if x.startswith(IUSE_PREFIX_S)}
                 req_use_args = (flags, IUSE_PREFIX_S, JustOneRestriction)
 
             if not self.check_required_use(pkg.required_use, *req_use_args):
                 yield PythonMissingRequiredUse(pkg=pkg)
             if not self.check_depend(pkg.rdepend, *(req_use_args[:2])):
-                yield PythonMissingDeps('RDEPEND', pkg=pkg)
+                yield PythonMissingDeps("RDEPEND", pkg=pkg)
         else:  # python-any-r1
             for attr in ("rdepend", "pdepend"):
                 for p in iflatten_instance(getattr(pkg, attr), atom):
@@ -476,10 +492,12 @@ class PythonCheck(Check):
                 for attr in ("depend", "bdepend")
                 for p in iflatten_instance(getattr(pkg, attr), atom)
             ):
-                yield PythonMissingDeps('DEPEND', pkg=pkg)
+                yield PythonMissingDeps("DEPEND", pkg=pkg)
 
         # We're not interested in testing fake objects from TestPythonCheck
-        if eclass is None or not isinstance(pkg, sources._ParsedPkg) or not hasattr(pkg, 'tree'): # pragma: no cover
+        if (
+            eclass is None or not isinstance(pkg, sources._ParsedPkg) or not hasattr(pkg, "tree")
+        ):  # pragma: no cover
             return
 
         if "distutils-r1" in pkg.inherited:
@@ -488,9 +506,11 @@ class PythonCheck(Check):
         any_dep_func = self.eclass_any_dep_func[eclass]
         python_check_deps = self.build_python_gen_any_dep_calls(pkg, any_dep_func)
         for func_node, _ in bash.func_query.captures(pkg.tree.root_node):
-            func_name = pkg.node_str(func_node.child_by_field_name('name'))
+            func_name = pkg.node_str(func_node.child_by_field_name("name"))
             if func_name == "python_check_deps":
-                yield from self.check_python_check_deps(pkg, func_node, python_check_deps, any_dep_func)
+                yield from self.check_python_check_deps(
+                    pkg, func_node, python_check_deps, any_dep_func
+                )
 
 
 class PythonCompatUpdate(results.VersionResult, results.Info):
@@ -503,8 +523,8 @@ class PythonCompatUpdate(results.VersionResult, results.Info):
     @property
     def desc(self):
         s = pluralism(self.updates)
-        updates = ', '.join(self.updates)
-        return f'PYTHON_COMPAT update{s} available: {updates}'
+        updates = ", ".join(self.updates)
+        return f"PYTHON_COMPAT update{s} available: {updates}"
 
 
 class PythonCompatCheck(Check):
@@ -520,32 +540,32 @@ class PythonCompatCheck(Check):
         super().__init__(*args)
         repo = self.options.target_repo
         # sorter for python targets leveraging USE_EXPAND flag ordering from repo
-        self.sorter = repo.use_expand_sorter('python_targets')
+        self.sorter = repo.use_expand_sorter("python_targets")
 
         # determine available PYTHON_TARGET use flags
         targets = []
         for target, _desc in repo.use_expand_desc.get(IUSE_PREFIX[:-1], ()):
-            if target[len(IUSE_PREFIX):].startswith('python'):
-                targets.append(target[len(IUSE_PREFIX):])
+            if target[len(IUSE_PREFIX) :].startswith("python"):
+                targets.append(target[len(IUSE_PREFIX) :])
         multi_targets = tuple(sorted(targets, key=self.sorter))
 
         # determine available PYTHON_SINGLE_TARGET use flags
         targets = []
         for target, _desc in repo.use_expand_desc.get(IUSE_PREFIX_S[:-1], ()):
-            if target[len(IUSE_PREFIX_S):].startswith('python'):
-                targets.append(target[len(IUSE_PREFIX_S):])
+            if target[len(IUSE_PREFIX_S) :].startswith("python"):
+                targets.append(target[len(IUSE_PREFIX_S) :])
         single_targets = tuple(sorted(targets, key=self.sorter))
 
         self.params = {
-            'python-r1': (multi_targets, IUSE_PREFIX, None),
-            'python-single-r1': (single_targets, (IUSE_PREFIX, IUSE_PREFIX_S), None),
-            'python-any-r1': (multi_targets, (IUSE_PREFIX, IUSE_PREFIX_S), ('depend', 'bdepend')),
+            "python-r1": (multi_targets, IUSE_PREFIX, None),
+            "python-single-r1": (single_targets, (IUSE_PREFIX, IUSE_PREFIX_S), None),
+            "python-any-r1": (multi_targets, (IUSE_PREFIX, IUSE_PREFIX_S), ("depend", "bdepend")),
         }
 
     def python_deps(self, deps, prefix):
         for dep in (x for x in deps if x.use):
             for x in dep.use:
-                if x.startswith(('-', '!')):
+                if x.startswith(("-", "!")):
                     continue
                 if x.startswith(prefix):
                     yield dep.no_usedeps
@@ -573,19 +593,25 @@ class PythonCompatCheck(Check):
         try:
             # determine the latest supported python version
             latest_target = sorted(
-                (f"python{x.slot.replace('.', '_')}" for x in deps
-                if x.key == 'dev-lang/python' and x.slot is not None), key=self.sorter)[-1]
+                (
+                    f"python{x.slot.replace('.', '_')}"
+                    for x in deps
+                    if x.key == "dev-lang/python" and x.slot is not None
+                ),
+                key=self.sorter,
+            )[-1]
         except IndexError:
             # should be flagged by PythonMissingDeps
             return
 
         # ignore pkgs that probably aren't py3 compatible
-        if latest_target == 'python2_7':
+        if latest_target == "python2_7":
             return
 
         # determine python impls to target
-        targets = set(itertools.takewhile(
-            lambda x: x != latest_target, reversed(available_targets)))
+        targets = set(
+            itertools.takewhile(lambda x: x != latest_target, reversed(available_targets))
+        )
 
         if targets:
             try:
@@ -595,7 +621,9 @@ class PythonCompatCheck(Check):
                     latest = sorted(self.options.search_repo.match(dep))[-1]
                     targets.intersection_update(
                         f"python{x.rsplit('python', 1)[-1]}"
-                        for x in latest.iuse_stripped if x.startswith(prefix))
+                        for x in latest.iuse_stripped
+                        if x.startswith(prefix)
+                    )
                     if not targets:
                         return
             except IndexError:
@@ -624,20 +652,20 @@ class PythonGHDistfileSuffix(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        return (f"GitHub archive {self.filename!r} ({self.uri!r}) is not "
-                "using '.gh.tar.gz' suffix")
+        return (
+            f"GitHub archive {self.filename!r} ({self.uri!r}) is not " "using '.gh.tar.gz' suffix"
+        )
 
 
 class PythonGHDistfileSuffixCheck(Check):
-    """Check ebuilds with PyPI remotes for missing ".gh.tar.gz" suffixes.
-    """
+    """Check ebuilds with PyPI remotes for missing ".gh.tar.gz" suffixes."""
 
     required_addons = (addons.UseAddon,)
     known_results = frozenset([PythonGHDistfileSuffix])
 
     def __init__(self, *args, use_addon):
         super().__init__(*args)
-        self.iuse_filter = use_addon.get_filter('fetchables')
+        self.iuse_filter = use_addon.get_filter("fetchables")
 
     def feed(self, pkg):
         # consider only packages with pypi remote-id
@@ -646,10 +674,12 @@ class PythonGHDistfileSuffixCheck(Check):
 
         # look for GitHub archives
         fetchables, _ = self.iuse_filter(
-            (fetch.fetchable,), pkg,
-            pkg.generate_fetchables(allow_missing_checksums=True,
-                                    ignore_unknown_mirrors=True,
-                                    skip_default_mirrors=True))
+            (fetch.fetchable,),
+            pkg,
+            pkg.generate_fetchables(
+                allow_missing_checksums=True, ignore_unknown_mirrors=True, skip_default_mirrors=True
+            ),
+        )
         for f in fetchables:
             # skip files that have the correct suffix already
             if f.filename.endswith(".gh.tar.gz"):

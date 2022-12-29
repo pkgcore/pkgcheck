@@ -42,13 +42,13 @@ class Check(feeds.Feed):
                 return (
                     sources.FilteredRepoSource,
                     (sources.LatestVersionsFilter,),
-                    (('source', self._source),)
+                    (("source", self._source),),
                 )
             elif max(x.scope for x in self.known_results) >= base.version_scope:
                 return (
                     sources.FilteredPackageRepoSource,
                     (sources.LatestPkgsFilter,),
-                    (('source', self._source),)
+                    (("source", self._source),),
                 )
         return self._source
 
@@ -79,9 +79,9 @@ class GentooRepoCheck(Check):
         if not self.options.gentoo_repo:
             check = self.__class__.__name__
             if check in self.options.selected_checks:
-                self.options.override_skip['gentoo'].append(check)
+                self.options.override_skip["gentoo"].append(check)
             else:
-                raise SkipCheck(self, 'not running against gentoo repo')
+                raise SkipCheck(self, "not running against gentoo repo")
 
 
 class OverlayRepoCheck(Check):
@@ -90,7 +90,7 @@ class OverlayRepoCheck(Check):
     def __init__(self, *args):
         super().__init__(*args)
         if not self.options.target_repo.masters:
-            raise SkipCheck(self, 'not running against overlay')
+            raise SkipCheck(self, "not running against overlay")
 
 
 class OptionalCheck(Check):
@@ -105,7 +105,7 @@ class GitCommitsCheck(OptionalCheck):
     def __init__(self, *args):
         super().__init__(*args)
         if not self.options.commits:
-            raise SkipCheck(self, 'not scanning against git commits')
+            raise SkipCheck(self, "not scanning against git commits")
 
 
 class AsyncCheck(Check):
@@ -126,7 +126,7 @@ class NetworkCheck(AsyncCheck, OptionalCheck):
     def __init__(self, *args, net_addon, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.options.net:
-            raise SkipCheck(self, 'network checks not enabled')
+            raise SkipCheck(self, "network checks not enabled")
         self.timeout = self.options.timeout
         self.session = net_addon.session
 
@@ -138,13 +138,15 @@ class MirrorsCheck(Check):
 
     def __init__(self, *args, use_addon):
         super().__init__(*args)
-        self.iuse_filter = use_addon.get_filter('fetchables')
+        self.iuse_filter = use_addon.get_filter("fetchables")
 
     def get_mirrors(self, pkg):
         mirrors = []
         fetchables, _ = self.iuse_filter(
-            (fetch.fetchable,), pkg,
-            pkg.generate_fetchables(allow_missing_checksums=True, ignore_unknown_mirrors=True))
+            (fetch.fetchable,),
+            pkg,
+            pkg.generate_fetchables(allow_missing_checksums=True, ignore_unknown_mirrors=True),
+        )
         for f in fetchables:
             for m in f.uri.visit_mirrors(treat_default_as_mirror=False):
                 mirrors.append(m[0].mirror_name)
@@ -164,7 +166,7 @@ class SkipCheck(base.PkgcheckUserException):
         else:
             # assume the check param is a raw class object
             check_name = check.__name__
-        super().__init__(f'{check_name}: {msg}')
+        super().__init__(f"{check_name}: {msg}")
 
 
 def init_checks(enabled_addons, options, results_q, *, addons_map=None, source_map=None):
@@ -205,7 +207,7 @@ def init_checks(enabled_addons, options, results_q, *, addons_map=None, source_m
     # report which check skips were overridden
     for skip_type, checks in sorted(options.override_skip.items()):
         s = pluralism(checks)
-        checks_str = ', '.join(sorted(checks))
+        checks_str = ", ".join(sorted(checks))
         logger.warning(f"running {skip_type} specific check{s}: {checks_str}")
 
     return enabled

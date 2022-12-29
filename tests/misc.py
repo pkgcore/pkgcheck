@@ -26,18 +26,18 @@ from snakeoil.sequences import split_negations
 @dataclass
 class Profile:
     """Profile record used to create profiles in a repository."""
+
     path: str
     arch: str
-    status: str = 'stable'
+    status: str = "stable"
     deprecated: bool = False
     defaults: List[str] = None
-    eapi: str = '5'
+    eapi: str = "5"
 
 
 # TODO: merge this with the pkgcore-provided equivalent
 class FakePkg(package):
-
-    def __init__(self, cpvstr, data=None, parent=None, ebuild='', **kwargs):
+    def __init__(self, cpvstr, data=None, parent=None, ebuild="", **kwargs):
         if data is None:
             data = {}
 
@@ -46,7 +46,7 @@ class FakePkg(package):
 
         cpv = VersionedCPV(cpvstr)
         # TODO: make pkgcore generate empty shared pkg data when None is passed
-        mxml = repo_objs.LocalMetadataXml('')
+        mxml = repo_objs.LocalMetadataXml("")
         shared = repo_objs.SharedPkgData(metadata_xml=mxml, manifest=None)
         super().__init__(shared, parent, cpv.category, cpv.package, cpv.fullver)
         object.__setattr__(self, "data", data)
@@ -58,7 +58,7 @@ class FakePkg(package):
 
     @property
     def eapi(self):
-        return get_eapi(self.data.get('EAPI', '0'))
+        return get_eapi(self.data.get("EAPI", "0"))
 
     @property
     def ebuild(self):
@@ -88,8 +88,11 @@ class FakeFilesDirPkg(package):
         cpv = VersionedCPV(cpvstr)
         super().__init__(shared, factory(repo), cpv.category, cpv.package, cpv.fullver)
         object.__setattr__(self, "data", data)
-        object.__setattr__(self, "path", pjoin(
-            repo.location, cpv.category, cpv.package, f'{cpv.package}-{cpv.fullver}.ebuild'))
+        object.__setattr__(
+            self,
+            "path",
+            pjoin(repo.location, cpv.category, cpv.package, f"{cpv.package}-{cpv.fullver}.ebuild"),
+        )
 
 
 class ReportTestCase:
@@ -133,7 +136,7 @@ class ReportTestCase:
 
     def assertReport(self, check, data):
         results = self.assertReports(check, data)
-        results_str = '\n'.join(map(str, results))
+        results_str = "\n".join(map(str, results))
         assert len(results) == 1, f"expected one report, got {len(results)}:\n{results_str}"
         self._assertReportSanity(*results)
         result = results[0]
@@ -141,40 +144,51 @@ class ReportTestCase:
 
 
 class FakeProfile:
-
-    def __init__(self, masked_use={}, stable_masked_use={}, forced_use={},
-                 stable_forced_use={}, pkg_use={}, provides={}, iuse_effective=[],
-                 use=[], masks=[], unmasks=[], arch='x86', name='none'):
+    def __init__(
+        self,
+        masked_use={},
+        stable_masked_use={},
+        forced_use={},
+        stable_forced_use={},
+        pkg_use={},
+        provides={},
+        iuse_effective=[],
+        use=[],
+        masks=[],
+        unmasks=[],
+        arch="x86",
+        name="none",
+    ):
         self.provides_repo = SimpleTree(provides)
 
         self.masked_use = ChunkedDataDict()
         self.masked_use.update_from_stream(
-            chunked_data(atom(k), *split_negations(v))
-            for k, v in masked_use.items())
+            chunked_data(atom(k), *split_negations(v)) for k, v in masked_use.items()
+        )
         self.masked_use.freeze()
 
         self.stable_masked_use = ChunkedDataDict()
         self.stable_masked_use.update_from_stream(
-            chunked_data(atom(k), *split_negations(v))
-            for k, v in stable_masked_use.items())
+            chunked_data(atom(k), *split_negations(v)) for k, v in stable_masked_use.items()
+        )
         self.stable_masked_use.freeze()
 
         self.forced_use = ChunkedDataDict()
         self.forced_use.update_from_stream(
-            chunked_data(atom(k), *split_negations(v))
-            for k, v in forced_use.items())
+            chunked_data(atom(k), *split_negations(v)) for k, v in forced_use.items()
+        )
         self.forced_use.freeze()
 
         self.stable_forced_use = ChunkedDataDict()
         self.stable_forced_use.update_from_stream(
-            chunked_data(atom(k), *split_negations(v))
-            for k, v in stable_forced_use.items())
+            chunked_data(atom(k), *split_negations(v)) for k, v in stable_forced_use.items()
+        )
         self.stable_forced_use.freeze()
 
         self.pkg_use = ChunkedDataDict()
         self.pkg_use.update_from_stream(
-            chunked_data(atom(k), *split_negations(v))
-            for k, v in pkg_use.items())
+            chunked_data(atom(k), *split_negations(v)) for k, v in pkg_use.items()
+        )
         self.pkg_use.freeze()
 
         self.masks = tuple(map(atom, masks))
@@ -199,7 +213,7 @@ class Tmpdir:
 
 def random_str(length=10):
     """Generate a random string of ASCII characters of a given length."""
-    return ''.join(random.choice(string.ascii_letters) for _ in range(length))
+    return "".join(random.choice(string.ascii_letters) for _ in range(length))
 
 
 # TODO: combine this with pkgcheck.checks.init_checks()
@@ -224,6 +238,5 @@ def init_check(check_cls, options):
     except CacheDisabled as e:
         raise SkipCheck(cls, e)
 
-    required_addons = {
-        base.param_name(x): addons_map[x] for x in addon.required_addons}
+    required_addons = {base.param_name(x): addons_map[x] for x in addon.required_addons}
     return addon, required_addons, source

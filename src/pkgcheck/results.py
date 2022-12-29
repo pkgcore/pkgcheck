@@ -34,7 +34,7 @@ class Result:
         cls.name = cls._name if cls._name is not None else cls.__name__
 
     def __str__(self):
-        return f'{self.name}: {self.desc}'
+        return f"{self.name}: {self.desc}"
 
     @property
     def desc(self):
@@ -43,24 +43,24 @@ class Result:
     @property
     def _attrs(self):
         """Return all public result attributes."""
-        return {k: v for k, v in self.__dict__.items() if not k.startswith('_')}
+        return {k: v for k, v in self.__dict__.items() if not k.startswith("_")}
 
     @classmethod
     def _create(cls, **kwargs):
         """Create a new result object from a given attributes dict."""
         if issubclass(cls, CategoryResult):
-            category = kwargs.pop('category', None)
-            package = kwargs.pop('package', None)
-            version = kwargs.pop('version', None)
-            if 'pkg' not in kwargs:
+            category = kwargs.pop("category", None)
+            package = kwargs.pop("package", None)
+            version = kwargs.pop("version", None)
+            if "pkg" not in kwargs:
                 # recreate pkg param from related, separated attributes
                 if category is None:
-                    raise InvalidResult('missing category')
+                    raise InvalidResult("missing category")
                 if issubclass(cls, PackageResult) and package is None:
-                    raise InvalidResult('missing package')
+                    raise InvalidResult("missing package")
                 if issubclass(cls, VersionResult) and version is None:
-                    raise InvalidResult('missing version')
-                kwargs['pkg'] = RawCPV(category, package, version)
+                    raise InvalidResult("missing version")
+                kwargs["pkg"] = RawCPV(category, package, version)
         return cls(**kwargs)
 
     def __eq__(self, other):
@@ -91,36 +91,36 @@ class BaseLinesResult:
     @property
     def lines_str(self):
         s = pluralism(self.lines)
-        lines = ', '.join(map(str, self.lines))
-        return f'on line{s}: {lines}'
+        lines = ", ".join(map(str, self.lines))
+        return f"on line{s}: {lines}"
 
 
 class Error(Result):
     """Result with an error priority level."""
 
-    level = 'error'
-    color = 'red'
+    level = "error"
+    color = "red"
 
 
 class Warning(Result):
     """Result with a warning priority level."""
 
-    level = 'warning'
-    color = 'yellow'
+    level = "warning"
+    color = "yellow"
 
 
 class Style(Result):
     """Result with a coding style priority level."""
 
-    level = 'style'
-    color = 'cyan'
+    level = "style"
+    color = "cyan"
 
 
 class Info(Result):
     """Result with an info priority level."""
 
-    level = 'info'
-    color = 'green'
+    level = "info"
+    color = "green"
 
 
 class CommitResult(Result):
@@ -131,7 +131,7 @@ class CommitResult(Result):
     def __init__(self, commit, **kwargs):
         super().__init__(**kwargs)
         self.commit = str(commit)
-        self._attr = 'commit'
+        self._attr = "commit"
 
     def __lt__(self, other):
         try:
@@ -159,7 +159,7 @@ class EclassResult(Result):
     def __init__(self, eclass, **kwargs):
         super().__init__(**kwargs)
         self.eclass = str(eclass)
-        self._attr = 'eclass'
+        self._attr = "eclass"
 
     def __lt__(self, other):
         try:
@@ -182,7 +182,7 @@ class CategoryResult(Result):
     def __init__(self, pkg, **kwargs):
         super().__init__(**kwargs)
         self.category = pkg.category
-        self._attr = 'category'
+        self._attr = "category"
 
     def __lt__(self, other):
         try:
@@ -201,7 +201,7 @@ class PackageResult(CategoryResult):
     def __init__(self, pkg, **kwargs):
         super().__init__(pkg, **kwargs)
         self.package = pkg.package
-        self._attr = 'package'
+        self._attr = "package"
 
     def __lt__(self, other):
         try:
@@ -223,11 +223,11 @@ class VersionResult(PackageResult):
             pkg = pkg._pkg
         super().__init__(pkg, **kwargs)
         self.version = pkg.fullver
-        self._attr = 'version'
+        self._attr = "version"
 
     @klass.jit_attr
     def ver_rev(self):
-        version, _, revision = self.version.partition('-r')
+        version, _, revision = self.version.partition("-r")
         revision = cpv.Revision(revision)
         return version, revision
 
@@ -307,10 +307,9 @@ class MetadataError(Error):
         if cls.attr is not None:
             setting = cls.results.setdefault(cls.attr, cls)
             if setting != cls:
-                raise ValueError(
-                    f'metadata attribute {cls.attr!r} already registered: {setting!r}')
+                raise ValueError(f"metadata attribute {cls.attr!r} already registered: {setting!r}")
         else:
-            raise ValueError(f'class missing metadata attributes: {cls!r}')
+            raise ValueError(f"class missing metadata attributes: {cls!r}")
 
     def __init__(self, attr, msg, **kwargs):
         super().__init__(**kwargs)

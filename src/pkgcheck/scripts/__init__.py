@@ -19,19 +19,21 @@ def run(script_name):
 
     try:
         from pkgcheck.cli import Tool
-        script_module = '.'.join(
-            os.path.realpath(__file__).split(os.path.sep)[-3:-1] +
-            [script_name.replace('-', '_')])
+
+        script_module = ".".join(
+            os.path.realpath(__file__).split(os.path.sep)[-3:-1] + [script_name.replace("-", "_")]
+        )
         script = import_module(script_module)
     except ImportError as e:
-        python_version = '.'.join(map(str, sys.version_info[:3]))
-        sys.stderr.write(f'Failed importing: {e}!\n')
+        python_version = ".".join(map(str, sys.version_info[:3]))
+        sys.stderr.write(f"Failed importing: {e}!\n")
         sys.stderr.write(
-            'Verify that pkgcheck and its deps are properly installed '
-            f'and/or PYTHONPATH is set correctly for python {python_version}.\n')
-        if '--debug' in sys.argv[1:]:
+            "Verify that pkgcheck and its deps are properly installed "
+            f"and/or PYTHONPATH is set correctly for python {python_version}.\n"
+        )
+        if "--debug" in sys.argv[1:]:
             raise
-        sys.stderr.write('Add --debug to the commandline for a traceback.\n')
+        sys.stderr.write("Add --debug to the commandline for a traceback.\n")
         sys.exit(1)
 
     tool = Tool(script.argparser)
@@ -46,5 +48,5 @@ def main():
     run(os.path.basename(sys.argv[0]))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
