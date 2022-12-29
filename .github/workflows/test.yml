@@ -138,3 +138,10 @@ jobs:
     - name: Run linting tools
       run: |
         pylint --exit-zero src/pkgcheck
+
+  format:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    - uses: psf/black@stable
