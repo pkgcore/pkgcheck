@@ -3,6 +3,14 @@ Release Notes
 =============
 
 ----------------------------
+pkgcheck 0.10.20 (2022-12-29)
+----------------------------
+
+- MissingRemoteIdCheck: give ready ``<remote-id/>`` sample (Michał Górny, #500)
+
+- Format code with ``black`` (Arthur Zamarin)
+
+----------------------------
 pkgcheck 0.10.19 (2022-11-26)
 ----------------------------
 
