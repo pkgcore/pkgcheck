@@ -98,18 +98,36 @@ class MisplacedEclassVar(results.LineResult, results.Error):
         return f"invalid pre-inherit placement, line {self.lineno}: {self.line!r}"
 
 
+class ProvidedEclassInherit(results.LineResult, results.Style):
+    """Ebuild inherits an eclass which is already provided by another eclass.
+
+    When inheriting an eclass which declares ``@PROVIDES``, those referenced
+    eclasses are guaranteed to be provided by the eclass. Therefore, inheriting
+    them in ebuilds is redundant and should be removed.
+    """
+
+    def __init__(self, provider, **kwargs):
+        super().__init__(**kwargs)
+        self.provider = provider
+
+    @property
+    def desc(self):
+        return f"line {self.lineno}: redundant eclass inherit {self.line!r}, provided by {self.provider!r}"
+
+
 class EclassUsageCheck(Check):
     """Scan packages for various eclass-related issues."""
 
     _source = sources.EbuildParseRepoSource
     known_results = frozenset(
-        [
+        {
             DeprecatedEclass,
             DeprecatedEclassVariable,
             DeprecatedEclassFunction,
             DuplicateEclassInherit,
             MisplacedEclassVar,
-        ]
+            ProvidedEclassInherit,
+        }
     )
     required_addons = (addons.eclass.EclassAddon,)
 
@@ -118,15 +136,16 @@ class EclassUsageCheck(Check):
         self.deprecated_eclasses = eclass_addon.deprecated
         self.eclass_cache = eclass_addon.eclasses
 
-    def check_pre_inherits(self, pkg, inherits):
+    def check_pre_inherits(self, pkg, inherits: list[tuple[list[str], int]]):
         """Check for invalid @PRE_INHERIT variable placement."""
-        pre_inherits = {}
         # determine if any inherited eclasses have @PRE_INHERIT variables
-        for eclasses, lineno in inherits:
-            for eclass in eclasses:
-                for var in self.eclass_cache[eclass].variables:
-                    if var.pre_inherit:
-                        pre_inherits[var.name] = lineno
+        pre_inherits = {
+            var.name: lineno
+            for eclasses, lineno in inherits
+            for eclass in eclasses
+            for var in self.eclass_cache[eclass].variables
+            if var.pre_inherit
+        }
 
         # scan for any misplaced @PRE_INHERIT variables
         if pre_inherits:
@@ -137,22 +156,23 @@ class EclassUsageCheck(Check):
                     line = pkg.node_str(node)
                     yield MisplacedEclassVar(var_name, line=line, lineno=lineno + 1, pkg=pkg)
 
-    def check_deprecated_variables(self, pkg, inherits):
-        """Check for usage of @DEPRECATED variables or functions."""
-        deprecated = {}
+    def check_deprecated_variables(self, pkg, inherits: list[tuple[list[str], int]]):
+        """Check for usage of @DEPRECATED variables."""
         # determine if any inherited eclasses have @DEPRECATED variables
-        for eclasses, _ in inherits:
-            for eclass in eclasses:
-                for var in self.eclass_cache[eclass].variables:
-                    if var.deprecated:
-                        deprecated[var.name] = var.deprecated
+        deprecated = {
+            var.name: var.deprecated
+            for eclasses, _ in inherits
+            for eclass in eclasses
+            for var in self.eclass_cache[eclass].variables
+            if var.deprecated
+        }
 
         # scan for usage of @DEPRECATED variables
         if deprecated:
             for node, _ in bash.var_query.captures(pkg.tree.root_node):
                 var_name = pkg.node_str(node)
-                lineno, _colno = node.start_point
                 if var_name in deprecated:
+                    lineno, _colno = node.start_point
                     line = pkg.node_str(node)
                     replacement = deprecated[var_name]
                     if not isinstance(replacement, str):
@@ -161,22 +181,23 @@ class EclassUsageCheck(Check):
                         var_name, replacement, line=line, lineno=lineno + 1, pkg=pkg
                     )
 
-    def check_deprecated_functions(self, pkg, inherits):
-        """Check for usage of @DEPRECATED variables or functions."""
-        deprecated = {}
-        # determine if any inherited eclasses have @DEPRECATED variables or functions
-        for eclasses, _ in inherits:
-            for eclass in eclasses:
-                for func in self.eclass_cache[eclass].functions:
-                    if func.deprecated:
-                        deprecated[func.name] = func.deprecated
+    def check_deprecated_functions(self, pkg, inherits: list[tuple[list[str], int]]):
+        """Check for usage of @DEPRECATED functions."""
+        # determine if any inherited eclasses have @DEPRECATED functions
+        deprecated = {
+            func.name: func.deprecated
+            for eclasses, _ in inherits
+            for eclass in eclasses
+            for func in self.eclass_cache[eclass].functions
+            if func.deprecated
+        }
 
         # scan for usage of @DEPRECATED functions
         if deprecated:
             for node, _ in bash.cmd_query.captures(pkg.tree.root_node):
                 func_name = pkg.node_str(node.child_by_field_name("name"))
-                lineno, _colno = node.start_point
                 if func_name in deprecated:
+                    lineno, _colno = node.start_point
                     line = pkg.node_str(node)
                     replacement = deprecated[func_name]
                     if not isinstance(replacement, str):
@@ -185,10 +206,22 @@ class EclassUsageCheck(Check):
                         func_name, replacement, line=line, lineno=lineno + 1, pkg=pkg
                     )
 
+    def check_provided_eclasses(self, pkg, inherits: list[tuple[list[str], int]]):
+        """Check for usage of eclasses (i.e. redundant inherits) that are
+        provided by another inherited eclass."""
+        provided_eclasses = {
+            provided: (eclass, lineno + 1)
+            for eclasses, lineno in inherits
+            for eclass in eclasses
+            for provided in pkg.inherit.intersection(self.eclass_cache[eclass].provides)
+        }
+        for provided, (eclass, lineno) in provided_eclasses.items():
+            yield ProvidedEclassInherit(eclass, pkg=pkg, line=provided, lineno=lineno)
+
     def feed(self, pkg):
         if pkg.inherit:
             inherited = set()
-            inherits = []
+            inherits: list[tuple[list[str], int]] = []
             for node, _ in bash.cmd_query.captures(pkg.tree.root_node):
                 name = pkg.node_str(node.child_by_field_name("name"))
                 if name == "inherit":
@@ -207,6 +240,7 @@ class EclassUsageCheck(Check):
                                     eclass, line=call, lineno=lineno + 1, pkg=pkg
                                 )
 
+            yield from self.check_provided_eclasses(pkg, inherits)
             # verify @PRE_INHERIT variable placement
             yield from self.check_pre_inherits(pkg, inherits)
             # verify @DEPRECATED variables or functions
@@ -281,7 +315,7 @@ class EclassParseCheck(Check):
                 for var_node, _ in bash.var_query.captures(func_node):
                     var_name = eclass.node_str(var_node)
                     if var_name in variables:
-                        lineno, colno = var_node.start_point
+                        lineno, _colno = var_node.start_point
                         usage[var_name].add(lineno + 1)
                 for var, lines in sorted(usage.items()):
                     yield EclassVariableScope(
@@ -369,7 +403,12 @@ class EclassCheck(Check):
 
     _source = sources.EclassRepoSource
     known_results = frozenset(
-        [EclassBashSyntaxError, EclassDocError, EclassDocMissingFunc, EclassDocMissingVar]
+        [
+            EclassBashSyntaxError,
+            EclassDocError,
+            EclassDocMissingFunc,
+            EclassDocMissingVar,
+        ]
     )
 
     def __init__(self, *args):
@@ -393,7 +432,7 @@ class EclassCheck(Check):
             lineno = 0
             error = []
             for line in p.stderr.splitlines():
-                path, line, msg = line.split(": ", 2)
+                _path, line, msg = line.split(": ", 2)
                 lineno = line[5:]
                 error.append(msg.strip("\n"))
             error = ": ".join(error)

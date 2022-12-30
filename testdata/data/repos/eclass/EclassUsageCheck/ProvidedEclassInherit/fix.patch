@@ -1,0 +1,10 @@
+diff -Naur eclass/EclassUsageCheck/ProvidedEclassInherit/ProvidedEclassInherit-0.ebuild fixed/EclassUsageCheck/ProvidedEclassInherit/ProvidedEclassInherit-0.ebuild
+--- eclass/EclassUsageCheck/ProvidedEclassInherit/ProvidedEclassInherit-0.ebuild	2021-05-23 20:23:16.423009026 -0600
++++ fixed/EclassUsageCheck/ProvidedEclassInherit/ProvidedEclassInherit-0.ebuild	2021-05-23 20:23:43.734588313 -0600
+@@ -1,5 +1,5 @@
+ EAPI=7
+-inherit inherit deep-provided-inherit
++inherit deep-provided-inherit
+ DESCRIPTION="Ebuild inheriting provided eclass"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
