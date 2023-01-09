@@ -280,7 +280,7 @@ class _GitCommitPkg(cpv.VersionedCPV):
             self.old.category,
             self.old.package,
             self.status,
-            self.old.version,
+            self.old.fullver,
             self.time,
             self.commit,
         )

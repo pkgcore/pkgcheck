@@ -621,6 +621,35 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         self.init_check()
         self.assertNoReport(self.check, self.source)
 
+    def test_revision_move(self):
+        self.parent_git_repo.move(
+            "cat/pkg/pkg-0.ebuild",
+            "cat/pkg/pkg-0-r1.ebuild",
+            msg="cat/pkg: some random fixes",
+        )
+        self.parent_repo.create_ebuild("cat/newpkg-0-r1", keywords=["~amd64"])
+        self.parent_git_repo.add_all("cat/newpkg: new package, v0")
+
+        self.child_git_repo.run(["git", "pull", "origin", "main"])
+        self.child_git_repo.run(["git", "remote", "set-head", "origin", "main"])
+
+        # moving revision version won't crash check
+        self.child_git_repo.move(
+            "cat/pkg/pkg-0-r1.ebuild",
+            "cat/pkg/pkg-0-r2.ebuild",
+            msg="cat/pkg: some extra random fixes",
+            signoff=True,
+        )
+        self.child_git_repo.move(
+            "cat/newpkg/newpkg-0-r1.ebuild",
+            "cat/newpkg/newpkg-0-r2.ebuild",
+            msg="cat/newpkg: some random fixes",
+            signoff=True,
+        )
+
+        self.init_check()
+        self.assertNoReport(self.check, self.source)
+
 
 class TestGitEclassCommitsCheck(ReportTestCase):
 
