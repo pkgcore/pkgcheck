@@ -783,6 +783,12 @@ class InheritsCheck(Check):
     def feed(self, pkg):
         conditional = set()
 
+        # collect globally defined functions in ebuild
+        defined_funcs = {
+            pkg.node_str(func_node.child_by_field_name("name"))
+            for func_node, _ in bash.func_query.captures(pkg.tree.root_node)
+        }
+
         # register variables assigned in ebuilds
         assigned_vars = dict()
         for node, _ in bash.var_assign_query.captures(pkg.tree.root_node):
@@ -802,8 +808,8 @@ class InheritsCheck(Check):
                     conditional.update(eclasses)
             # Also ignore vars since any used in arithmetic expansions, i.e.
             # $((...)), are captured as commands.
-            elif name not in self.eapi_funcs[pkg.eapi] | assigned_vars.keys():
-                lineno, colno = node.start_point
+            elif name not in self.eapi_funcs[pkg.eapi] | assigned_vars.keys() | defined_funcs:
+                lineno, _colno = node.start_point
                 if eclass := self.get_eclass(name, pkg):
                     used[eclass].append((lineno + 1, name, call.split("\n", 1)[0]))
 
