@@ -47,6 +47,18 @@ class DeprecatedEclassVariable(results.LineResult, results.Warning):
         return f"uses deprecated variable on line {self.lineno}: {self.variable} ({replacement})"
 
 
+class EclassUserVariableUsage(results.LineResult, results.Warning):
+    """Package uses a user variable from an eclass."""
+
+    def __init__(self, eclass, **kwargs):
+        super().__init__(**kwargs)
+        self.eclass = eclass
+
+    @property
+    def desc(self):
+        return f"line {self.lineno}: uses user variable {self.line!r} from eclass {self.eclass!r}"
+
+
 class DeprecatedEclassFunction(results.LineResult, results.Warning):
     """Package uses a deprecated function from an eclass."""
 
@@ -125,6 +137,7 @@ class EclassUsageCheck(Check):
             DeprecatedEclassVariable,
             DeprecatedEclassFunction,
             DuplicateEclassInherit,
+            EclassUserVariableUsage,
             MisplacedEclassVar,
             ProvidedEclassInherit,
         }
@@ -155,6 +168,27 @@ class EclassUsageCheck(Check):
                 if var_name in pre_inherits and lineno > pre_inherits[var_name]:
                     line = pkg.node_str(node)
                     yield MisplacedEclassVar(var_name, line=line, lineno=lineno + 1, pkg=pkg)
+
+    def check_user_variables(self, pkg: bash.ParseTree, inherits: list[tuple[list[str], int]]):
+        """Check for usage of @USER_VARIABLE variables."""
+        # determine if any inherited eclasses have @USER_VARIABLE variables
+        user_variables = {
+            var.name: eclass
+            for eclasses, _ in inherits
+            for eclass in eclasses
+            for var in self.eclass_cache[eclass].variables
+            if var.user_variable
+        }
+
+        # scan for usage of @USER_VARIABLE variables
+        if user_variables:
+            for node, _ in bash.var_assign_query.captures(pkg.tree.root_node):
+                var_name = pkg.node_str(node.child_by_field_name("name"))
+                if var_name in user_variables:
+                    lineno, _colno = node.start_point
+                    yield EclassUserVariableUsage(
+                        user_variables[var_name], line=var_name, lineno=lineno + 1, pkg=pkg
+                    )
 
     def check_deprecated_variables(self, pkg, inherits: list[tuple[list[str], int]]):
         """Check for usage of @DEPRECATED variables."""
@@ -220,7 +254,7 @@ class EclassUsageCheck(Check):
 
     def feed(self, pkg):
         if pkg.inherit:
-            inherited = set()
+            inherited: set[str] = set()
             inherits: list[tuple[list[str], int]] = []
             for node, _ in bash.cmd_query.captures(pkg.tree.root_node):
                 name = pkg.node_str(node.child_by_field_name("name"))
@@ -241,6 +275,7 @@ class EclassUsageCheck(Check):
                                 )
 
             yield from self.check_provided_eclasses(pkg, inherits)
+            yield from self.check_user_variables(pkg, inherits)
             # verify @PRE_INHERIT variable placement
             yield from self.check_pre_inherits(pkg, inherits)
             # verify @DEPRECATED variables or functions
