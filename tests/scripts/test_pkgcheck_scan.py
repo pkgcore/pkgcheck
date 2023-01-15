@@ -611,7 +611,7 @@ class TestPkgcheckScan:
         if repo not in self._results:
             self.test_scan_repo(repo, tmp_path, verbosity=0)
         if repo not in self._verbose_results:
-            self.test_scan_repo(repo, tmp_path, verbosity=0)
+            self.test_scan_repo(repo, tmp_path, verbosity=1)
         for check, keywords in self._checks[repo].items():
             for keyword in keywords:
                 # verify the expected results were seen during the repo scans

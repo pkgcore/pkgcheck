@@ -1,0 +1,6 @@
+diff -Naur profiledir/profiles/unknown_arch/make.defaults fixed/profiles/unknown_arch/make.defaults
+--- profiledir/profiles/unknown_arch/make.defaults	2019-11-12 20:35:43.195830784 -0700
++++ fixed/profiles/unknown_arch/make.defaults	2019-11-12 20:45:16.582848028 -0700
+@@ -1 +1 @@
+-ARCH="unknown"
++ARCH="amd64"

@@ -108,6 +108,19 @@ class UnknownProfileUseExpand(results.ProfilesResult, results.Warning):
         return f"{self.path!r}: unknown USE_EXPAND group{s}: {groups}"
 
 
+class UnknownProfileArch(results.ProfilesResult, results.Warning):
+    """Profile includes unknown ARCH."""
+
+    def __init__(self, path: str, arch: str):
+        super().__init__()
+        self.path = path
+        self.arch = arch
+
+    @property
+    def desc(self):
+        return f"{self.path!r}: unknown ARCH {self.arch!r}"
+
+
 class ProfileWarning(results.ProfilesResult, results.LogWarning):
     """Badly formatted data in various profile files."""
 
@@ -146,22 +159,23 @@ class ProfilesCheck(Check):
     _source = sources.ProfilesRepoSource
     required_addons = (addons.UseAddon, addons.KeywordsAddon)
     known_results = frozenset(
-        [
+        {
             UnknownProfilePackage,
             UnmatchedProfilePackageUnmask,
             UnknownProfilePackageUse,
             UnknownProfileUse,
             UnknownProfilePackageKeywords,
             UnknownProfileUseExpand,
+            UnknownProfileArch,
             ProfileWarning,
             ProfileError,
-        ]
+        }
     )
 
     # mapping between known files and verification methods
     known_files = {}
 
-    def __init__(self, *args, use_addon, keywords_addon):
+    def __init__(self, *args, use_addon: addons.UseAddon, keywords_addon: addons.KeywordsAddon):
         super().__init__(*args)
         repo = self.options.target_repo
         self.keywords = keywords_addon
@@ -275,10 +289,13 @@ class ProfilesCheck(Check):
                     yield UnknownProfilePackage(pjoin(node.name, filename), a)
 
     @verify_files(("make.defaults", "make_defaults"))
-    def _make_defaults(self, filename, node, vals):
+    def _make_defaults(self, filename: str, node, vals: dict[str, str]):
         if defined := set(vals.get("USE_EXPAND", "").split()):
             if unknown := defined - self.use_expand_groups:
                 yield UnknownProfileUseExpand(pjoin(node.name, filename), sorted(unknown))
+        if arch := vals.get("ARCH", None):
+            if arch not in self.keywords.arches:
+                yield UnknownProfileArch(pjoin(node.name, filename), arch)
 
     def feed(self, profile):
         for f in profile.files.intersection(self.known_files):
