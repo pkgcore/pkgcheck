@@ -2,6 +2,7 @@
 
 import os
 from collections import defaultdict
+from typing import Iterable
 
 from pkgcore.ebuild import misc
 from pkgcore.ebuild import profiles as profiles_mod
@@ -96,16 +97,17 @@ class UnknownProfilePackageKeywords(results.ProfilesResult, results.Warning):
 class UnknownProfileUseExpand(results.ProfilesResult, results.Warning):
     """Profile includes nonexistent USE_EXPAND group(s)."""
 
-    def __init__(self, path, groups):
+    def __init__(self, path: str, var: str, groups: Iterable[str]):
         super().__init__()
         self.path = path
+        self.var = var
         self.groups = tuple(groups)
 
     @property
     def desc(self):
         s = pluralism(self.groups)
         groups = ", ".join(self.groups)
-        return f"{self.path!r}: unknown USE_EXPAND group{s}: {groups}"
+        return f"{self.path!r}: unknown USE_EXPAND group{s} in {self.var!r}: {groups}"
 
 
 class UnknownProfileArch(results.ProfilesResult, results.Warning):
@@ -181,7 +183,10 @@ class ProfilesCheck(Check):
         self.keywords = keywords_addon
         self.search_repo = self.options.search_repo
         self.profiles_dir = repo.config.profiles_base
-        self.use_expand_groups = frozenset(x.upper() for x in repo.config.use_expand_desc)
+        self.use_expand_groups = {
+            use.upper(): frozenset({val.removeprefix(f"{use}_") for val, _desc in vals})
+            for use, vals in repo.config.use_expand_desc.items()
+        }
 
         local_iuse = {use for _pkg, (use, _desc) in repo.config.use_local_desc}
         self.available_iuse = frozenset(
@@ -289,7 +294,7 @@ class ProfilesCheck(Check):
                     yield UnknownProfilePackage(pjoin(node.name, filename), a)
 
     @verify_files(("make.defaults", "make_defaults"))
-    def _make_defaults(self, filename: str, node, vals: dict[str, str]):
+    def _make_defaults(self, filename: str, node: sources.ProfileNode, vals: dict[str, str]):
         if use_flags := {
             use.removeprefix("-")
             for use_group in ("USE", "IUSE_IMPLICIT")
@@ -297,14 +302,22 @@ class ProfilesCheck(Check):
         }:
             if unknown := use_flags - self.available_iuse:
                 yield UnknownProfileUse(pjoin(node.name, filename), sorted(unknown))
-        if defined := set(vals.get("USE_EXPAND", "").split()):
-            if unknown := defined - self.use_expand_groups:
-                yield UnknownProfileUseExpand(pjoin(node.name, filename), sorted(unknown))
+        implicit_use_expands = set(vals.get("USE_EXPAND_IMPLICIT", "").split())
+        for use_group in (
+            "USE_EXPAND",
+            "USE_EXPAND_HIDDEN",
+            "USE_EXPAND_UNPREFIXED",
+        ):
+            values = {use.removeprefix("-") for use in vals.get(use_group, "").split()}
+            if unknown := values - self.use_expand_groups.keys() - implicit_use_expands:
+                yield UnknownProfileUseExpand(
+                    pjoin(node.name, filename), use_group, sorted(unknown)
+                )
         if arch := vals.get("ARCH", None):
             if arch not in self.keywords.arches:
                 yield UnknownProfileArch(pjoin(node.name, filename), arch)
 
-    def feed(self, profile):
+    def feed(self, profile: sources.Profile):
         for f in profile.files.intersection(self.known_files):
             attr, func = self.known_files[f]
             with base.LogReports(*_logmap) as log_reports:

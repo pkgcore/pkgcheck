@@ -1,0 +1,26 @@
+diff -Naur profiledir/profiles/desc/python_single_target.desc fixed/profiles/desc/python_single_target.desc
+new file mode 100644
+index 00000000..dcf7e163
+--- /dev/null
++++ fixed/profiles/desc/python_single_target.desc
+@@ -0,0 +1,3 @@
++python3_10 - Build for Python 3.10 only
++python3_11 - Build for Python 3.11 only
++
+diff -Naur profiledir/profiles/unknown_use/make.defaults fixed/profiles/unknown_use/make.defaults
+diff --git a/testdata/repos/profiledir/profiles/unknown_use/make.defaults b/testdata/repos/profiledir/profiles/unknown_use/make.defaults
+index 6d789215..2c98efd3 100644
+--- profiledir/profiles/unknown_use/make.defaults
++++ fixed/profiles/unknown_use/make.defaults
+@@ -1,9 +1,8 @@
+ USE="defaults_use used"
+ IUSE_IMPLICIT="defaults_iuse_implicit used"
+ USE_EXPAND_IMPLICIT="ARCH ELIBC"
+-USE_EXPAND="PYTHON_TARGETS PYTHON_SINGLE_TARGET"
+-USE_EXPAND_UNPREFIXED="ARCH LUA_TARGETS PYTHON_TARGETS"
++USE_EXPAND="PYTHON_TARGETS"
++USE_EXPAND_UNPREFIXED="ARCH PYTHON_TARGETS"
+ USE_EXPAND_VALUES_ARCH="amd64 x86"
+-USE_EXPAND_VALUES_LUA_TARGETS="lua5_1"
+ USE_EXPAND_VALUES_PYTHON_TARGETS="python3_9 python3_10"
+ PYTHON_TARGETS="python3_9 python3_10"
