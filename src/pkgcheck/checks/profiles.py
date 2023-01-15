@@ -290,6 +290,13 @@ class ProfilesCheck(Check):
 
     @verify_files(("make.defaults", "make_defaults"))
     def _make_defaults(self, filename: str, node, vals: dict[str, str]):
+        if use_flags := {
+            use.removeprefix("-")
+            for use_group in ("USE", "IUSE_IMPLICIT")
+            for use in vals.get(use_group, "").split()
+        }:
+            if unknown := use_flags - self.available_iuse:
+                yield UnknownProfileUse(pjoin(node.name, filename), sorted(unknown))
         if defined := set(vals.get("USE_EXPAND", "").split()):
             if unknown := defined - self.use_expand_groups:
                 yield UnknownProfileUseExpand(pjoin(node.name, filename), sorted(unknown))
