@@ -1,0 +1,13 @@
+diff -Naur profiledir/profiles/unknown_use/make.defaults fixed/profiles/unknown_use/make.defaults
+diff --git a/testdata/repos/profiledir/profiles/unknown_use/make.defaults b/testdata/repos/profiledir/profiles/unknown_use/make.defaults
+index 6d789215..2c98efd3 100644
+--- profiledir/profiles/unknown_use/make.defaults
++++ fixed/profiles/unknown_use/make.defaults
+@@ -5,5 +5,5 @@
+ USE_EXPAND_UNPREFIXED="ARCH LUA_TARGETS PYTHON_TARGETS"
+ USE_EXPAND_VALUES_ARCH="amd64 x86"
+ USE_EXPAND_VALUES_LUA_TARGETS="lua5_1"
+-USE_EXPAND_VALUES_PYTHON_TARGETS="python3_9 python3_10"
+-PYTHON_TARGETS="python3_9 python3_10"
++USE_EXPAND_VALUES_PYTHON_TARGETS="python3_10"
++PYTHON_TARGETS="python3_10"

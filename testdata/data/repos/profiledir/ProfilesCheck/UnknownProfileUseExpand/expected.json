@@ -1,2 +1,3 @@
 {"__class__": "UnknownProfileUseExpand", "path": "unknown_use/make.defaults", "var": "USE_EXPAND", "groups": ["PYTHON_SINGLE_TARGET"]}
 {"__class__": "UnknownProfileUseExpand", "path": "unknown_use/make.defaults", "var": "USE_EXPAND_UNPREFIXED", "groups": ["LUA_TARGETS"]}
+{"__class__": "UnknownProfileUseExpand", "path": "unknown_use/make.defaults", "var": "USE_EXPAND_VALUES_LUA_TARGETS", "groups": ["LUA_TARGETS"]}

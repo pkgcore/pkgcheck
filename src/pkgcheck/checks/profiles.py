@@ -110,6 +110,22 @@ class UnknownProfileUseExpand(results.ProfilesResult, results.Warning):
         return f"{self.path!r}: unknown USE_EXPAND group{s} in {self.var!r}: {groups}"
 
 
+class UnknownProfileUseExpandValue(results.ProfilesResult, results.Warning):
+    """Profile defines unknown default values for USE_EXPAND group."""
+
+    def __init__(self, path: str, group: str, values: Iterable[str]):
+        super().__init__()
+        self.path = path
+        self.group = group
+        self.values = tuple(values)
+
+    @property
+    def desc(self):
+        s = pluralism(self.values)
+        values = ", ".join(self.values)
+        return f"{self.path!r}: unknown value{s} for {self.group!r}: {values}"
+
+
 class UnknownProfileArch(results.ProfilesResult, results.Warning):
     """Profile includes unknown ARCH."""
 
@@ -168,6 +184,7 @@ class ProfilesCheck(Check):
             UnknownProfileUse,
             UnknownProfilePackageKeywords,
             UnknownProfileUseExpand,
+            UnknownProfileUseExpandValue,
             UnknownProfileArch,
             ProfileWarning,
             ProfileError,
@@ -313,6 +330,21 @@ class ProfilesCheck(Check):
                 yield UnknownProfileUseExpand(
                     pjoin(node.name, filename), use_group, sorted(unknown)
                 )
+        for key, val in vals.items():
+            if key.startswith("USE_EXPAND_VALUES_"):
+                use_group = key[18:]
+                if use_group in implicit_use_expands:
+                    continue
+                elif allowed_values := self.use_expand_groups.get(use_group, None):
+                    if unknown := set(val.split()) - allowed_values:
+                        yield UnknownProfileUseExpandValue(
+                            pjoin(node.name, filename), key, sorted(unknown)
+                        )
+                else:
+                    yield UnknownProfileUseExpand(pjoin(node.name, filename), key, [use_group])
+        for key in vals.keys() & self.use_expand_groups.keys():
+            if unknown := set(vals.get(key, "").split()) - self.use_expand_groups[key]:
+                yield UnknownProfileUseExpandValue(pjoin(node.name, filename), key, sorted(unknown))
         if arch := vals.get("ARCH", None):
             if arch not in self.keywords.arches:
                 yield UnknownProfileArch(pjoin(node.name, filename), arch)
