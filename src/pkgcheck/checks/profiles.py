@@ -126,6 +126,21 @@ class UnknownProfileUseExpandValue(results.ProfilesResult, results.Warning):
         return f"{self.path!r}: unknown value{s} for {self.group!r}: {values}"
 
 
+class ProfileMissingImplicitExpandValues(results.ProfilesResult, results.Warning):
+    """Profile is missing USE_EXPAND_VALUES for implicit USE_EXPAND group."""
+
+    def __init__(self, path: str, groups: Iterable[str]):
+        super().__init__()
+        self.path = path
+        self.groups = tuple(groups)
+
+    @property
+    def desc(self):
+        s = pluralism(self.groups)
+        groups = ", ".join(self.groups)
+        return f"{self.path!r}: missing USE_EXPAND_VALUES for USE_EXPAND group{s}: {groups}"
+
+
 class UnknownProfileArch(results.ProfilesResult, results.Warning):
     """Profile includes unknown ARCH."""
 
@@ -185,6 +200,7 @@ class ProfilesCheck(Check):
             UnknownProfilePackageKeywords,
             UnknownProfileUseExpand,
             UnknownProfileUseExpandValue,
+            ProfileMissingImplicitExpandValues,
             UnknownProfileArch,
             ProfileWarning,
             ProfileError,
@@ -345,6 +361,14 @@ class ProfilesCheck(Check):
         for key in vals.keys() & self.use_expand_groups.keys():
             if unknown := set(vals.get(key, "").split()) - self.use_expand_groups[key]:
                 yield UnknownProfileUseExpandValue(pjoin(node.name, filename), key, sorted(unknown))
+        if missing_values := {
+            use_group
+            for use_group in implicit_use_expands
+            if f"USE_EXPAND_VALUES_{use_group}" not in vals
+        }:
+            yield ProfileMissingImplicitExpandValues(
+                pjoin(node.name, filename), sorted(missing_values)
+            )
         if arch := vals.get("ARCH", None):
             if arch not in self.keywords.arches:
                 yield UnknownProfileArch(pjoin(node.name, filename), arch)
