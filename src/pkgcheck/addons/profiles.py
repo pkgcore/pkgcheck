@@ -267,7 +267,7 @@ class ProfileAddon(caches.CachedAddon):
                     for profile_obj, profile in self.arch_profiles.get(arch, []):
                         files = self.profile_data.get(profile)
                         try:
-                            cached_profile = cached_profiles[profile.base][profile.path]
+                            cached_profile = cached_profiles[repo.config.profiles_base][profile.path]
                             if files != cached_profile["files"]:
                                 # force refresh of outdated cache entry
                                 raise KeyError
@@ -329,8 +329,8 @@ class ProfileAddon(caches.CachedAddon):
                                 # unsupported EAPI or other issue, profile checks will catch this
                                 continue
 
-                            cached_profiles[profile.base]["update"] = True
-                            cached_profiles[profile.base][profile.path] = {
+                            cached_profiles[repo.config.profiles_base]["update"] = True
+                            cached_profiles[repo.config.profiles_base][profile.path] = {
                                 "files": files,
                                 "masks": masks,
                                 "unmasks": unmasks,
