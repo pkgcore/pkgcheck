@@ -796,6 +796,8 @@ class InheritsCheck(Check):
             if eclass := self.get_eclass(name, pkg):
                 assigned_vars[name] = eclass
 
+        # eclasses which might be used indirectly, so we won't trigger UnusedInherits
+        weak_used_eclasses = set()
         # match captured commands with eclasses
         used = defaultdict(list)
         for node, _ in bash.cmd_query.captures(pkg.tree.root_node):
@@ -806,12 +808,18 @@ class InheritsCheck(Check):
                 eclasses = call.split()[1:]
                 if not pkg.inherited.intersection(eclasses):
                     conditional.update(eclasses)
+                continue
             # Also ignore vars since any used in arithmetic expansions, i.e.
             # $((...)), are captured as commands.
             elif name not in self.eapi_funcs[pkg.eapi] | assigned_vars.keys() | defined_funcs:
                 lineno, _colno = node.start_point
                 if eclass := self.get_eclass(name, pkg):
                     used[eclass].append((lineno + 1, name, call.split("\n", 1)[0]))
+
+            for arg in node.children[1:]:
+                arg_name = pkg.node_str(arg).strip("'\"")
+                if eclass := self.get_eclass(arg_name, pkg):
+                    weak_used_eclasses.add(eclass)
 
         # match captured variables with eclasses
         for node, _ in bash.var_query.captures(pkg.tree.root_node):
@@ -828,7 +836,7 @@ class InheritsCheck(Check):
         # missing inherits
         missing = used.keys() - pkg.inherit - indirect_allowed - conditional
 
-        unused = set(pkg.inherit) - used.keys() - set(assigned_vars.values())
+        unused = set(pkg.inherit) - used.keys() - set(assigned_vars.values()) - weak_used_eclasses
         # remove eclasses that use implicit phase functions
         if unused and pkg.defined_phases:
             phases = [pkg.eapi.phases[x] for x in pkg.defined_phases]
