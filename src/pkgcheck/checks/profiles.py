@@ -498,6 +498,20 @@ class NonexistentCategories(results.ProfilesResult, results.Warning):
         return f"nonexistent profiles/categories entr{ies}: {categories}"
 
 
+class ArchesOutOfSync(results.ProfilesResult, results.Error):
+    """``profiles/arches.desc`` is out of sync with ``arch.list``."""
+
+    def __init__(self, arches):
+        super().__init__()
+        self.arches = tuple(arches)
+
+    @property
+    def desc(self):
+        es = pluralism(self.arches, plural="es")
+        arches = ", ".join(self.arches)
+        return f"'profiles/arches.desc' is out of sync with 'arch.list', arch{es}: {arches}"
+
+
 def dir_parents(path):
     """Yield all directory path parents excluding the root directory.
 
@@ -533,6 +547,7 @@ class RepoProfilesCheck(RepoCheck):
             ProfileWarning,
             BannedProfileEapi,
             DeprecatedProfileEapi,
+            ArchesOutOfSync,
         ]
     )
 
@@ -614,3 +629,7 @@ class RepoProfilesCheck(RepoCheck):
 
         if unused_profile_dirs := available_profile_dirs - seen_profile_dirs:
             yield UnusedProfileDirs(sorted(unused_profile_dirs))
+
+        if arches_desc := frozenset().union(*self.repo.config.arches_desc.values()):
+            if arches_mis_sync := self.repo.known_arches ^ arches_desc:
+                yield ArchesOutOfSync(sorted(arches_mis_sync))
