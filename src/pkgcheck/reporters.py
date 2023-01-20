@@ -166,7 +166,7 @@ class XmlReporter(Reporter):
 
     @coroutine
     def _process_report(self):
-        result_template = "<result><class>%(class)s</class>" "<msg>%(msg)s</msg></result>"
+        result_template = "<result><class>%(class)s</class><msg>%(msg)s</msg></result>"
         cat_template = (
             "<result><category>%(category)s</category>"
             "<class>%(class)s</class><msg>%(msg)s</msg></result>"
@@ -239,7 +239,10 @@ class _ResultFormatter(Formatter):
 
 
 class FormatReporter(Reporter):
-    """Custom format string reporter."""
+    """Custom format string reporter.
+
+    This formatter uses custom format string passed using the ``--format``
+    command line argument."""
 
     priority = -1001
 
