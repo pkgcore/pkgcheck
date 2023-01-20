@@ -4,6 +4,7 @@ from difflib import SequenceMatcher
 from itertools import chain
 
 from pkgcore import fetch
+from pkgcore.ebuild.digest import Manifest
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
@@ -80,14 +81,14 @@ class PackageUpdatesCheck(RepoCheck):
 
     _source = (sources.EmptySource, (base.profiles_scope,))
     known_results = frozenset(
-        [
+        {
             MultiMovePackageUpdate,
             OldMultiMovePackageUpdate,
             OldPackageUpdate,
             MovedPackageUpdate,
             BadPackageUpdate,
             RedundantPackageUpdate,
-        ]
+        }
     )
 
     def __init__(self, *args):
@@ -377,17 +378,16 @@ class GlobalUseCheck(RepoCheck):
     """Check global USE and USE_EXPAND flags for various issues."""
 
     _source = (sources.RepositoryRepoSource, (), (("source", sources.PackageRepoSource),))
-    required_addons = (addons.UseAddon,)
     known_results = frozenset(
-        [
+        {
             PotentialLocalUse,
             PotentialGlobalUse,
             UnusedGlobalUse,
             UnusedGlobalUseExpand,
-        ]
+        }
     )
 
-    def __init__(self, *args, use_addon):
+    def __init__(self, *args):
         super().__init__(*args)
         self.global_flag_usage = defaultdict(set)
         self.repo = self.options.target_repo
@@ -405,8 +405,8 @@ class GlobalUseCheck(RepoCheck):
         """Yield groups of packages with similar local USE flag descriptions."""
         # calculate USE flag description difference ratios
         diffs = {}
-        for i, (i_pkg, i_desc) in enumerate(pkgs):
-            for j, (j_pkg, j_desc) in enumerate(pkgs[i + 1 :]):
+        for i, (_i_pkg, i_desc) in enumerate(pkgs):
+            for j, (_j_pkg, j_desc) in enumerate(pkgs[i + 1 :]):
                 diffs[(i, i + j + 1)] = SequenceMatcher(None, i_desc, j_desc).ratio()
 
         # create an adjacency list using all closely matching flags pairs
@@ -571,17 +571,17 @@ class ManifestCheck(Check):
     required_addons = (addons.UseAddon,)
     _source = sources.PackageRepoSource
     known_results = frozenset(
-        [
+        {
             MissingChksum,
             MissingManifest,
             UnknownManifest,
             UnnecessaryManifest,
             DeprecatedChksum,
             InvalidManifest,
-        ]
+        }
     )
 
-    def __init__(self, *args, use_addon):
+    def __init__(self, *args, use_addon: addons.UseAddon):
         super().__init__(*args)
         repo = self.options.target_repo
         self.preferred_checksums = frozenset(
@@ -593,7 +593,8 @@ class ManifestCheck(Check):
         self.iuse_filter = use_addon.get_filter("fetchables")
 
     def feed(self, pkgset):
-        pkg_manifest = pkgset[0].manifest
+        pkg_manifest: Manifest = pkgset[0].manifest
+        pkg_manifest.allow_missing = True
         manifest_distfiles = set(pkg_manifest.distfiles.keys())
         seen = set()
         for pkg in pkgset:
@@ -625,14 +626,13 @@ class ManifestCheck(Check):
                 seen.add(f_inst.filename)
 
         if pkg_manifest.thin:
-            unnecessary_manifests = []
+            unnecessary_manifests = set()
             for attr in ("aux_files", "ebuilds", "misc"):
-                unnecessary_manifests.extend(getattr(pkg_manifest, attr, []))
+                unnecessary_manifests.update(getattr(pkg_manifest, attr, ()))
             if unnecessary_manifests:
                 yield UnnecessaryManifest(sorted(unnecessary_manifests), pkg=pkgset[0])
 
-        unknown_manifests = manifest_distfiles.difference(seen)
-        if unknown_manifests:
+        if unknown_manifests := manifest_distfiles.difference(seen):
             yield UnknownManifest(sorted(unknown_manifests), pkg=pkgset[0])
 
 
@@ -753,6 +753,6 @@ class ProjectMetadataCheck(RepoCheck):
         self.repo = self.options.target_repo
 
     def finish(self):
-        for key, project in self.repo.projects_xml.projects.items():
+        for _key, project in self.repo.projects_xml.projects.items():
             if not project.recursive_members:
                 yield EmptyProject(project)
