@@ -34,7 +34,7 @@ class GitCommitsRepoSource(sources.RepoSource):
 
     required_addons = (git.GitAddon,)
 
-    def __init__(self, options, git_addon):
+    def __init__(self, options, git_addon: git.GitAddon):
         source = git_addon.commits_repo(git.GitChangedRepo)
         super().__init__(options, source)
 
@@ -49,7 +49,7 @@ class GitCommitsSource(sources.Source):
     scope = base.commit_scope
     required_addons = (git.GitAddon,)
 
-    def __init__(self, *args, git_addon):
+    def __init__(self, *args, git_addon: git.GitAddon):
         super().__init__(*args, source=git_addon.commits())
 
 
@@ -100,9 +100,7 @@ class _DroppedKeywords(results.PackageResult):
     def desc(self):
         s = pluralism(self.keywords)
         keywords = ", ".join(self.keywords)
-        return (
-            f"commit {self.commit} (or later) dropped {self._status} " f"keyword{s}: [ {keywords} ]"
-        )
+        return f"commit {self.commit} (or later) dropped {self._status} keyword{s}: [ {keywords} ]"
 
 
 class DroppedUnstableKeywords(_DroppedKeywords, results.Error):
@@ -243,11 +241,11 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
     # package categories that are committed with stable keywords
     allowed_direct_stable = frozenset(["acct-user", "acct-group"])
 
-    def __init__(self, *args, git_addon):
+    def __init__(self, *args, git_addon: git.GitAddon):
         super().__init__(*args)
         self.today = datetime.today()
         self.repo = self.options.target_repo
-        self.valid_arches = self.options.target_repo.known_arches
+        self.valid_arches: frozenset[str] = self.options.target_repo.known_arches
         self._git_addon = git_addon
         self._cleanup = []
 
@@ -280,7 +278,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
         old_keywords = set().union(*(p.keywords for p in removal_repo.match(pkg.unversioned_atom)))
         new_keywords = set().union(*(p.keywords for p in self.repo.match(pkg.unversioned_atom)))
 
-        dropped_keywords = old_keywords - new_keywords
+        dropped_keywords: set[str] = old_keywords - new_keywords
         dropped_stable_keywords = dropped_keywords & self.valid_arches
         dropped_unstable_keywords = set()
         for keyword in (x for x in dropped_keywords if x[0] == "~"):
@@ -482,7 +480,7 @@ class BadCommitSummary(results.CommitResult, results.Style):
         return f"commit {self.commit}, {self.error}: {self.summary!r}"
 
 
-def verify_tags(*tags, required=False):
+def verify_tags(*tags: str, required: bool = False):
     """Decorator to register commit tag verification methods."""
 
     class decorator:
@@ -534,21 +532,20 @@ class GitCommitMessageCheck(GentooRepoCheck, GitCommitsCheck):
         )
 
     @verify_tags("Signed-off-by", required=True)
-    def _signed_off_by_tag(self, tag, values, commit):
+    def _signed_off_by_tag(self, tag: str, values: list[str], commit: git.GitCommit):
         """Verify commit contains all required sign offs in accordance with GLEP 76."""
         required_sign_offs = {commit.author, commit.committer}
-        missing_sign_offs = required_sign_offs.difference(values)
-        if missing_sign_offs:
+        if missing_sign_offs := required_sign_offs.difference(values):
             yield MissingSignOff(sorted(missing_sign_offs), commit=commit)
 
     @verify_tags("Gentoo-Bug")
-    def _deprecated_tag(self, tag, values, commit):
+    def _deprecated_tag(self, tag: str, values: list[str], commit: git.GitCommit):
         """Flag deprecated tags that shouldn't be used."""
         for value in values:
             yield InvalidCommitTag(tag, value, f"{tag} tag is no longer valid", commit=commit)
 
     @verify_tags("Bug", "Closes")
-    def _bug_tag(self, tag, values, commit):
+    def _bug_tag(self, tag: str, values: list[str], commit: git.GitCommit):
         """Verify values are URLs for Bug/Closes tags."""
         for value in values:
             parsed = urlparse(value)
@@ -574,7 +571,7 @@ class GitCommitMessageCheck(GentooRepoCheck, GitCommitsCheck):
         )
 
     @verify_tags("Fixes", "Reverts")
-    def _commit_tag(self, tag, values, commit):
+    def _commit_tag(self, tag, values, commit: git.GitCommit):
         """Verify referenced commits exist for Fixes/Reverts tags."""
         self.git_cat_file.stdin.write("\n".join(values) + "\n")
         if self.git_cat_file.poll() is None:
@@ -586,7 +583,7 @@ class GitCommitMessageCheck(GentooRepoCheck, GitCommitsCheck):
                     if not status.startswith("commit "):
                         yield InvalidCommitTag(tag, value, f"{status} commit", commit=commit)
 
-    def feed(self, commit):
+    def feed(self, commit: git.GitCommit):
         if len(commit.message) == 0:
             yield InvalidCommitMessage("no commit message", commit=commit)
             return
