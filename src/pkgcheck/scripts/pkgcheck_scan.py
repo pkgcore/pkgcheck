@@ -475,7 +475,10 @@ def _default_enabled_checks(namespace, attr):
 @scan.bind_delayed_default(1000, "filtered_keywords")
 def _default_filtered_keywords(namespace, attr):
     """Enable all keywords to be shown by default."""
-    setattr(namespace, attr, set(objects.KEYWORDS.values()))
+    filtered_keywords = set(objects.KEYWORDS.values())
+    if namespace.verbosity < 0:  # quiet mode, include only errors
+        filtered_keywords = {x for x in filtered_keywords if x.level == "error"}
+    setattr(namespace, attr, filtered_keywords)
 
 
 @scan.bind_delayed_default(9999, "restrictions")

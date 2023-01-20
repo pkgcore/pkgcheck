@@ -486,6 +486,19 @@ class TestPkgcheckScan:
         results = list(self.scan(self.scan_args + ["-r", repo.location, "cat/unknown"]))
         assert not results
 
+    def test_scan_quiet(self, repo):
+        # create an ebuild referencing variable in homepage
+        repo.create_ebuild("cat/pkg-0", homepage="https://example.com/${PN}")
+
+        # in non-quiet mode, the result is shown
+        results = list(self.scan(self.scan_args + ["-r", repo.location]))
+        assert len(results) == 1
+
+        # in quiet mode, the result is suppressed
+        for arg in ("-q", "--quiet"):
+            results = list(self.scan(self.scan_args + ["-r", repo.location, arg]))
+            assert not results
+
     def test_explict_skip_check(self):
         """SkipCheck exceptions are raised when triggered for explicitly enabled checks."""
         error = "network checks not enabled"
