@@ -50,7 +50,7 @@ class RepoDirCheck(GentooRepoCheck, RepoCheck):
                         yield BinaryFile(rel_path)
 
 
-class EmptyCategoryDir(results.CategoryResult, results.Warning):
+class EmptyCategoryDir(results.CategoryResult, results.Error):
     """Empty category directory in the repository."""
 
     scope = base.repo_scope
@@ -60,7 +60,7 @@ class EmptyCategoryDir(results.CategoryResult, results.Warning):
         return f"empty category directory: {self.category}"
 
 
-class EmptyPackageDir(results.PackageResult, results.Warning):
+class EmptyPackageDir(results.PackageResult, results.Error):
     """Empty package directory in the repository."""
 
     scope = base.repo_scope
@@ -74,7 +74,7 @@ class EmptyDirsCheck(GentooRepoCheck, RepoCheck):
     """Scan for empty category or package directories."""
 
     _source = (sources.EmptySource, (base.repo_scope,))
-    known_results = frozenset([EmptyCategoryDir, EmptyPackageDir])
+    known_results = frozenset({EmptyCategoryDir, EmptyPackageDir})
 
     def __init__(self, *args):
         super().__init__(*args)
