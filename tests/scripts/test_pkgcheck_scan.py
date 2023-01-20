@@ -499,6 +499,11 @@ class TestPkgcheckScan:
             results = list(self.scan(self.scan_args + ["-r", repo.location, arg]))
             assert not results
 
+        results = list(
+            self.scan(self.scan_args + ["-r", repo.location, "-q", "-k=-UnknownKeywords"])
+        )
+        assert not results
+
     def test_explict_skip_check(self):
         """SkipCheck exceptions are raised when triggered for explicitly enabled checks."""
         error = "network checks not enabled"

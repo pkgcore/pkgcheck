@@ -302,6 +302,10 @@ class KeywordArgs(arghparse.CommaSeparatedNegations):
             enabled_keywords = set().union(*(c.known_results for c in namespace.enabled_checks))
 
         namespace.filtered_keywords = enabled_keywords - disabled_keywords
+        if namespace.verbosity < 0:  # quiet mode, include only errors
+            namespace.filtered_keywords = {
+                x for x in namespace.filtered_keywords if x.level == "error"
+            }
         # restrict enabled checks if none have been selected
         if not namespace.selected_checks:
             namespace.enabled_checks = set()
