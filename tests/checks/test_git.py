@@ -702,6 +702,12 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         self.init_check()
         r = self.assertReport(self.check, self.source)
         assert r == git_mod.SuspiciousSrcUriChange(old_url, new_url, distfile[1], pkg=CP("cat/pkg"))
+        # revert change and check for no report with same mirror url
+        self.child_git_repo.run(["git", "reset", "--hard", "origin/main"])
+        self.child_repo.create_ebuild("cat/pkg-1", src_uri=old_url, eapi="8")
+        self.child_git_repo.add_all("cat/pkg: bump EAPI", signoff=True)
+        self.init_check()
+        self.assertNoReport(self.check, self.source)
 
 
 class TestGitEclassCommitsCheck(ReportTestCase):

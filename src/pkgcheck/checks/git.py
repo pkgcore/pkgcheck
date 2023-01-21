@@ -186,16 +186,10 @@ class SrcUriChecksumChange(results.PackageResult, results.Error):
 class SuspiciousSrcUriChange(results.PackageResult, results.Warning):
     """Suspicious SRC_URI changing URI without distfile rename."""
 
-    def __init__(self, old_uri, new_uri, filename, **kwargs):
+    def __init__(self, old_uri: str, new_uri: str, filename: str, **kwargs):
         super().__init__(**kwargs)
-        if isinstance(old_uri, tuple):
-            self.old_uri = f"mirror://{old_uri[0].mirror_name}/{old_uri[1]}"
-        else:
-            self.old_uri = str(old_uri)
-        if isinstance(new_uri, tuple):
-            self.new_uri = f"mirror://{new_uri[0].mirror_name}/{new_uri[1]}"
-        else:
-            self.new_uri = str(new_uri)
+        self.old_uri = old_uri
+        self.new_uri = new_uri
         self.filename = filename
 
     @property
@@ -381,18 +375,26 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
             else:
                 yield MissingSlotmove(old_slot, new_slot, pkg=new_pkg)
 
+    @staticmethod
+    def _fetchable_str(fetch: fetchable) -> str:
+        uri = tuple(fetch.uri._uri_source)[0]
+        if isinstance(uri, tuple):
+            return f"mirror://{uri[0].mirror_name}/{uri[1]}"
+        else:
+            return str(uri)
+
     def src_uri_changes(self, pkgset):
         pkg = pkgset[0].unversioned_atom
 
         try:
             new_checksums = {
-                fetch.filename: (fetch.chksums, tuple(fetch.uri._uri_source))
+                fetch.filename: (fetch.chksums, self._fetchable_str(fetch))
                 for pkg in self.repo.match(pkg)
                 for fetch in iflatten_instance(pkg.fetchables, fetchable)
             }
 
             old_checksums = {
-                fetch.filename: (fetch.chksums, tuple(fetch.uri._uri_source))
+                fetch.filename: (fetch.chksums, self._fetchable_str(fetch))
                 for pkg in self.modified_repo(pkgset).match(pkg)
                 for fetch in iflatten_instance(pkg.fetchables, fetchable)
             }
@@ -406,7 +408,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
             if old_checksum != new_checksum:
                 yield SrcUriChecksumChange(filename, pkg=pkg)
             elif old_uri != new_uri:
-                yield SuspiciousSrcUriChange(old_uri[0], new_uri[0], filename, pkg=pkg)
+                yield SuspiciousSrcUriChange(old_uri, new_uri, filename, pkg=pkg)
 
     def feed(self, pkgset: list[git.GitPkgChange]):
         # Mapping of commit types to pkgs, available commit types can be seen
