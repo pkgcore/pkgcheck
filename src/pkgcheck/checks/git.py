@@ -340,7 +340,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
         else:
             yield MissingMove(old_key, new_key, pkg=pkg)
 
-    def modified_checks(self, pkgs):
+    def modified_checks(self, pkgs, added):
         """Check for issues due to package modifications."""
         pkg = pkgs[0]
 
@@ -361,7 +361,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
             # ignore broken ebuild
             return
 
-        if old_pkg.rdepend != new_pkg.rdepend:
+        if pkg not in added and old_pkg.rdepend != new_pkg.rdepend:
             yield RdependChange(pkg=new_pkg)
 
         old_slot, new_slot = old_pkg.slot, new_pkg.slot
@@ -437,7 +437,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
             yield from self.rename_checks(list(pkg_map["R"]))
         # run modified package checks
         if modified := [pkg for pkg in pkg_map["M"] if pkg not in pkg_map["D"]]:
-            yield from self.modified_checks(modified)
+            yield from self.modified_checks(modified, list(pkg_map["A"]))
 
         for git_pkg in pkgset:
             # remaining checks are irrelevant for removed packages
