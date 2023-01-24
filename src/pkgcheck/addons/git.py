@@ -264,6 +264,12 @@ class GitRepoPkgs(_ParseGitRepo):
 class _GitCommitPkg(cpv.VersionedCPV):
     """Fake packages encapsulating commits parsed from git log."""
 
+    __slots__ = ("commit", "old", "status", "time")
+
+    # set multiple defaults for the fake package
+    live = False
+    slot = "0"
+
     def __init__(self, category, package, status, version, time, commit, old=None):
         super().__init__(category, package, version)
 
