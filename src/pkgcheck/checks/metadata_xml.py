@@ -294,6 +294,19 @@ class InvalidRemoteID(results.PackageResult, results.Warning):
         )
 
 
+class InvalidMetadataRestrict(results.PackageResult, results.Error):
+    """Invalid package restrictions used in metadata.xml."""
+
+    def __init__(self, restrict: str, msg: str, **kwargs):
+        super().__init__(**kwargs)
+        self.restrict = restrict
+        self.msg = msg
+
+    @property
+    def desc(self):
+        return f"metadata.xml: invalid package restrictions {self.restrict!r}: {self.msg}"
+
+
 class _XmlBaseCheck(Check):
     """Base class for metadata.xml scans."""
 
@@ -433,6 +446,7 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
             NonexistentProjectMaintainer,
             WrongMaintainerType,
             InvalidRemoteID,
+            InvalidMetadataRestrict,
         ]
     )
 
@@ -533,6 +547,26 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
             elif len(pkg.longdescription) < 100:
                 msg = "metadata.xml longdescription is too short"
                 yield RedundantLongDescription(msg, pkg=pkg)
+
+    def _check_restricts(self, pkg, loc, doc):
+        restricts = (
+            c.get("restrict")
+            for path in ("maintainer", "use/flag")
+            for c in doc.xpath(f"/pkgmetadata/{path}[string(@restrict)]")
+        )
+        for restrict_str in restricts:
+            try:
+                restrict = atom(restrict_str, eapi="0")
+                if restrict.key != pkg.key:
+                    yield InvalidMetadataRestrict(
+                        restrict_str, "references another package", pkg=pkg
+                    )
+                if restrict.use:
+                    yield InvalidMetadataRestrict(
+                        restrict_str, "USE-conditionals are prohibited", pkg=pkg
+                    )
+            except MalformedAtom as exc:
+                yield InvalidMetadataRestrict(restrict_str, exc, pkg=pkg)
 
     def _check_remote_id(self, pkg, loc, doc):
         for u in pkg.upstreams:

@@ -1,0 +1,1 @@
+{"__class__": "InvalidMetadataRestrict", "category": "PackageMetadataXmlCheck", "package": "InvalidMetadataRestrict", "restrict": "<=PackageMetadataXmlCheck2/InvalidMetadataRestrict-5", "msg": "references another package"}

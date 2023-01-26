@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person" restrict="&lt;=PackageMetadataXmlCheck2/InvalidMetadataRestrict-5">
+		<email>random.gentoo.dev@gentoo.org</email>
+	</maintainer>
+	<use>
+		<flag name="flag1" restrict="&lt;=PackageMetadataXmlCheck/InvalidMetadataRestrict-5">Some explanation</flag>
+	</use>
+</pkgmetadata>
