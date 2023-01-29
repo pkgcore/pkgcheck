@@ -12,6 +12,7 @@ pkgcheck
 .. include:: pkgcheck/reporters.rst
 
 .. include:: config.rst
+.. include:: skip.rst
 
 Reporting Bugs
 ==============
