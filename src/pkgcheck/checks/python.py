@@ -24,6 +24,8 @@ GITHUB_ARCHIVE_RE = re.compile(r"^https://github\.com/[^/]+/[^/]+/archive/")
 SNAPSHOT_RE = re.compile(r"[a-fA-F0-9]{40}\.tar\.gz$")
 USE_FLAGS_PYTHON_USEDEP = re.compile(r"\[(.+,)?\$\{PYTHON_USEDEP\}(,.+)?\]$")
 
+PEP503_SYMBOL_NORMALIZE_RE = re.compile(r"[-_.]")
+
 
 def get_python_eclass(pkg):
     eclasses = ECLASSES.intersection(pkg.inherited)
@@ -694,3 +696,48 @@ class PythonGHDistfileSuffixCheck(Check):
                 if GITHUB_ARCHIVE_RE.match(uri):
                     yield PythonGHDistfileSuffix(f.filename, uri, pkg=pkg)
                     break
+
+
+class PythonMismatchedPackageName(results.PackageResult, results.Info):
+    """Package name does not follow PyPI-based naming policy"""
+
+    def __init__(self, recommended: str, **kwargs):
+        super().__init__(**kwargs)
+        self.recommended = recommended
+
+    @property
+    def desc(self) -> str:
+        return ("package name does not match remote-id, recommended name: "
+                f"{self.recommended!r}")
+
+
+class PythonPackageNameCheck(Check):
+    """Check ebuild names in dev-python/*."""
+
+    _source = sources.PackageRepoSource
+    known_results = frozenset([PythonMismatchedPackageName])
+
+    def feed(self, pkgs):
+        pkg = next(iter(pkgs))
+
+        # the policy applies to dev-python/* only
+        if pkg.category != "dev-python":
+            return
+
+        # consider only packages with a single pypi remote-id
+        pypi_remotes = [x for x in pkg.upstreams if x.type == "pypi"]
+        if len(pypi_remotes) != 1:
+            return
+
+        def normalize(project: str) -> str:
+            """
+            Normalize project name using PEP 503 rules
+
+            https://peps.python.org/pep-0503/#normalized-names
+            """
+            return PEP503_SYMBOL_NORMALIZE_RE.sub("-", project).lower()
+
+        pypi_name = pypi_remotes[0].name
+        if normalize(pkg.package) != normalize(pypi_name):
+            yield PythonMismatchedPackageName(pypi_name.replace(".", "-"),
+                                              pkg=pkg)
