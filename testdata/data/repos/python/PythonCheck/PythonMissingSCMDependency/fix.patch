@@ -1,0 +1,8 @@
+--- python/PythonCheck/PythonMissingSCMDependency/PythonMissingSCMDependency-0.ebuild
++++ fixed/PythonCheck/PythonMissingSCMDependency/PythonMissingSCMDependency-0.ebuild
+@@ -10,4 +10,5 @@
+ LICENSE="BSD"
+ SLOT="0"
+
++BDEPEND="dev-python/hatch-vcs[${PYTHON_USEDEP}]"
+ export SETUPTOOLS_SCM_PRETEND_VERSION=${PV}

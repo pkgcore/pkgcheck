@@ -1,6 +1,7 @@
-from collections import defaultdict
 import itertools
 import re
+from collections import defaultdict
+from operator import attrgetter
 
 from pkgcore import fetch
 from pkgcore.ebuild.atom import atom
@@ -222,6 +223,20 @@ class PythonAnyMismatchedDepHasVersionCheck(results.VersionResult, results.Warni
         return f"{self.dep_category}: missing check for {self.dep_atom}[{use_flags}] in {self.location!r}"
 
 
+class PythonMissingSCMDependency(results.VersionResult, results.Warning):
+    """Package is missing BDEPEND on setuptools_scm or alike.
+
+    Packages which define ``SETUPTOOLS_SCM_PRETEND_VERSION`` should BDEPEND
+    on ``dev-python/setuptools_scm`` or a similar package [#]_.
+
+    .. [#] https://projects.gentoo.org/python/guide/distutils.html#setuptools-scm-flit-scm-hatch-vcs-and-snapshots
+    """
+
+    desc = (
+        "defines SETUPTOOLS_SCM_PRETEND_VERSION but is missing BDEPEND on setuptools_scm or alike"
+    )
+
+
 class PythonCheck(Check):
     """Python eclass checks.
 
@@ -242,6 +257,7 @@ class PythonCheck(Check):
             PythonHasVersionMissingPythonUseDep,
             PythonAnyMismatchedUseHasVersionCheck,
             PythonAnyMismatchedDepHasVersionCheck,
+            PythonMissingSCMDependency,
         ]
     )
 
@@ -262,6 +278,14 @@ class PythonCheck(Check):
         "python-any-r1": "python_gen_any_dep",
         "python-r1": "python_gen_any_dep",
     }
+
+    setuptools_scm = frozenset(
+        {
+            "dev-python/setuptools_scm",
+            "dev-python/flit_scm",
+            "dev-python/hatch-vcs",
+        }
+    )
 
     def scan_tree_recursively(self, deptree, expected_cls):
         for x in deptree:
@@ -319,6 +343,7 @@ class PythonCheck(Check):
         """
         has_distutils_optional = None
         has_distutils_deps = False
+        uses_setuptools_scm = False
         pep517_value = None
 
         for var_node, _ in bash.var_assign_query.captures(pkg.tree.root_node):
@@ -328,11 +353,15 @@ class PythonCheck(Check):
                 has_distutils_optional = True
             elif var_name == "DISTUTILS_USE_PEP517":
                 pep517_value = pkg.node_str(var_node.children[-1])
+            elif var_name == "SETUPTOOLS_SCM_PRETEND_VERSION":
+                uses_setuptools_scm = True
 
             if "DISTUTILS_DEPS" in pkg.node_str(var_node.parent):
                 # If they're referencing the eclass' dependency variable,
                 # there's nothing for us to do anyway.
                 has_distutils_deps = True
+
+        bdepends = frozenset(map(attrgetter("key"), iflatten_instance(pkg.bdepend, atom)))
 
         if pep517_value is None:
             yield DistutilsNonPEP517Build(pkg=pkg)
@@ -340,8 +369,12 @@ class PythonCheck(Check):
             # We always need BDEPEND for these if != no.
             # We are looking for USE-conditional on appropriate target
             # flag, with dep on dev-python/gpep517.
-            if "dev-python/gpep517" not in iflatten_instance(pkg.bdepend, atom):
+            if "dev-python/gpep517" not in bdepends:
                 yield PythonMissingDeps("BDEPEND", pkg=pkg, dep_value="DISTUTILS_DEPS")
+
+        if uses_setuptools_scm:
+            if not self.setuptools_scm.intersection(bdepends):
+                yield PythonMissingSCMDependency(pkg=pkg)
 
     @staticmethod
     def _prepare_deps(deps: str):
