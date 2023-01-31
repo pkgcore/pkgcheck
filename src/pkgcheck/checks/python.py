@@ -41,7 +41,7 @@ def is_python_interpreter(pkg):
         # ignore python:2.7 deps since they are being phased out from eclass
         # support
         return pkg.slot is None or not pkg.slot.startswith("2")
-    return pkg.key in ["dev-python/pypy3"]
+    return pkg.key in ("dev-python/pypy3",)
 
 
 class MissingPythonEclass(results.VersionResult, results.Warning):
@@ -74,9 +74,7 @@ class PythonMissingRequiredUse(results.VersionResult, results.Warning):
     used conditionally, it can be wrapped in appropriate USE conditionals.
     """
 
-    @property
-    def desc(self):
-        return 'missing REQUIRED_USE="${PYTHON_REQUIRED_USE}"'
+    desc = 'missing REQUIRED_USE="${PYTHON_REQUIRED_USE}"'
 
 
 class PythonMissingDeps(results.VersionResult, results.Warning):
@@ -138,9 +136,7 @@ class PythonEclassError(results.VersionResult, results.Error):
 class DistutilsNonPEP517Build(results.VersionResult, results.Warning):
     """Ebuild uses the deprecated non-PEP517 build"""
 
-    @property
-    def desc(self):
-        return "uses deprecated non-PEP517 build mode, please switch to " "DISTUTILS_USE_PEP517=..."
+    desc = "uses deprecated non-PEP517 build mode, please switch to DISTUTILS_USE_PEP517=..."
 
 
 class PythonHasVersionUsage(results.LinesResult, results.Style):
@@ -173,7 +169,7 @@ class PythonHasVersionMissingPythonUseDep(results.LineResult, results.Error):
     @property
     def desc(self):
         return (
-            f'line: {self.lineno}: missing [${{PYTHON_USEDEP}}] suffix for argument "{self.line}"'
+            f"line: {self.lineno}: missing [${{PYTHON_USEDEP}}] suffix for argument {self.line!r}"
         )
 
 
@@ -270,8 +266,7 @@ class PythonCheck(Check):
     def scan_tree_recursively(self, deptree, expected_cls):
         for x in deptree:
             if not isinstance(x, expected_cls):
-                for y in self.scan_tree_recursively(x, expected_cls):
-                    yield y
+                yield from self.scan_tree_recursively(x, expected_cls)
         yield deptree
 
     def check_required_use(self, requse, flags, prefix, container_cls):
@@ -576,12 +571,12 @@ class PythonCompatCheck(Check):
     def deps(self, pkg, attrs=None):
         """Set of dependencies for a given package's attributes."""
         attrs = attrs if attrs is not None else pkg.eapi.dep_keys
-        deps = set()
-        for attr in (x.lower() for x in attrs):
-            for p in iflatten_instance(getattr(pkg, attr), atom):
-                if not p.blocks:
-                    deps.add(p)
-        return deps
+        return {
+            p
+            for attr in (x.lower() for x in attrs)
+            for p in iflatten_instance(getattr(pkg, attr), atom)
+            if not p.blocks
+        }
 
     def feed(self, pkg):
         try:
