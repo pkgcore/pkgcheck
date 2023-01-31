@@ -699,7 +699,13 @@ class PythonGHDistfileSuffixCheck(Check):
 
 
 class PythonMismatchedPackageName(results.PackageResult, results.Info):
-    """Package name does not follow PyPI-based naming policy"""
+    """Package name does not follow PyPI-based naming policy.
+
+    All packages in ``dev-python/*`` that are published on PyPI, must be named to
+    match their respective PyPI names [#]_.
+
+    .. [#] https://projects.gentoo.org/python/guide/package-maintenance.html#package-name-policy
+    """
 
     def __init__(self, recommended: str, **kwargs):
         super().__init__(**kwargs)
@@ -707,8 +713,7 @@ class PythonMismatchedPackageName(results.PackageResult, results.Info):
 
     @property
     def desc(self) -> str:
-        return ("package name does not match remote-id, recommended name: "
-                f"{self.recommended!r}")
+        return f"package name does not match remote-id, recommended name: {self.recommended!r}"
 
 
 class PythonPackageNameCheck(Check):
@@ -739,5 +744,4 @@ class PythonPackageNameCheck(Check):
 
         pypi_name = pypi_remotes[0].name
         if normalize(pkg.package) != normalize(pypi_name):
-            yield PythonMismatchedPackageName(pypi_name.replace(".", "-"),
-                                              pkg=pkg)
+            yield PythonMismatchedPackageName(pypi_name.replace(".", "-"), pkg=pkg)
