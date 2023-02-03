@@ -169,7 +169,6 @@ class Test_profile_data:
 
 
 class TestProfileAddon:
-
     addon_kls = addons.profiles.ProfileAddon
 
     @pytest.fixture(autouse=True)

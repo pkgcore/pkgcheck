@@ -16,6 +16,7 @@ syslib = find_library("tree-sitter-bash")
 # path to bash parsing library (vendored)
 lib = pjoin(os.path.dirname(__file__), "lang.so")
 
+
 # copied from tree-sitter with the following changes:
 # - prefer stdc++ over c++ when linking
 # - perform platform-specific compiler customizations

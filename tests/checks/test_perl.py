@@ -22,7 +22,6 @@ def perl_deps_missing():
 
 @pytest.mark.skipif(perl_deps_missing(), reason=REASON)
 class TestPerlCheck(misc.ReportTestCase):
-
     check_kls = perl.PerlCheck
 
     def mk_check(self, verbosity=0):

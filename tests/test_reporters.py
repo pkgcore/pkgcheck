@@ -11,7 +11,6 @@ from snakeoil.formatters import PlainTextFormatter
 
 
 class BaseReporter:
-
     reporter_cls = reporters.Reporter
 
     @pytest.fixture(autouse=True)
@@ -47,7 +46,6 @@ class BaseReporter:
 
 
 class TestStrReporter(BaseReporter):
-
     reporter_cls = reporters.StrReporter
     add_report_output = dedent(
         """\
@@ -63,7 +61,6 @@ class TestStrReporter(BaseReporter):
 
 
 class TestFancyReporter(BaseReporter):
-
     reporter_cls = reporters.FancyReporter
     add_report_output = dedent(
         """\
@@ -86,7 +83,6 @@ class TestFancyReporter(BaseReporter):
 
 
 class TestJsonReporter(BaseReporter):
-
     reporter_cls = reporters.JsonReporter
     add_report_output = dedent(
         """\
@@ -102,7 +98,6 @@ class TestJsonReporter(BaseReporter):
 
 
 class TestXmlReporter(BaseReporter):
-
     reporter_cls = reporters.XmlReporter
     add_report_output = dedent(
         """\
@@ -120,7 +115,6 @@ class TestXmlReporter(BaseReporter):
 
 
 class TestCsvReporter(BaseReporter):
-
     reporter_cls = reporters.CsvReporter
     add_report_output = dedent(
         """\
@@ -136,7 +130,6 @@ class TestCsvReporter(BaseReporter):
 
 
 class TestFormatReporter(BaseReporter):
-
     reporter_cls = partial(reporters.FormatReporter, "")
 
     def test_add_report(self, capsys):
@@ -167,7 +160,6 @@ class TestFormatReporter(BaseReporter):
 
 
 class TestJsonStream(BaseReporter):
-
     reporter_cls = reporters.JsonStream
 
     def test_add_report(self, capsys):
@@ -202,7 +194,6 @@ class TestJsonStream(BaseReporter):
 
 
 class TestFlycheckReporter(BaseReporter):
-
     reporter_cls = reporters.FlycheckReporter
     add_report_output = dedent(
         """\

@@ -5,7 +5,6 @@ from .. import misc
 
 
 class TestDroppedKeywords(misc.ReportTestCase):
-
     check_kls = dropped_keywords.DroppedKeywordsCheck
 
     def mk_pkg(self, ver, keywords="", eclasses=(), **kwargs):

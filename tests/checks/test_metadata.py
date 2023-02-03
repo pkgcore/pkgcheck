@@ -19,7 +19,6 @@ from .. import misc
 
 
 class TestDescriptionCheck(misc.ReportTestCase):
-
     check_kls = metadata.DescriptionCheck
     check = metadata.DescriptionCheck(None)
 
@@ -51,7 +50,6 @@ class TestDescriptionCheck(misc.ReportTestCase):
 
 
 class TestHomepageCheck(misc.ReportTestCase):
-
     check_kls = metadata.HomepageCheck
     check = metadata.HomepageCheck(None)
 
@@ -129,7 +127,6 @@ class IUSE_Options(misc.Tmpdir):
 
 
 class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
-
     check_kls = metadata.KeywordsCheck
 
     @pytest.fixture
@@ -289,7 +286,6 @@ class TestKeywordsCheck(IUSE_Options, misc.ReportTestCase):
 
 
 class TestIuseCheck(IUSE_Options, misc.ReportTestCase):
-
     check_kls = metadata.IuseCheck
 
     @pytest.fixture
@@ -326,7 +322,6 @@ class TestIuseCheck(IUSE_Options, misc.ReportTestCase):
 
 
 class TestEapiCheck(misc.ReportTestCase, misc.Tmpdir):
-
     check_kls = metadata.EapiCheck
 
     def mk_check(self, deprecated=(), banned=()):
@@ -385,7 +380,6 @@ class TestEapiCheck(misc.ReportTestCase, misc.Tmpdir):
 
 
 class TestSourcingCheck(misc.ReportTestCase, misc.Tmpdir):
-
     check_kls = metadata.SourcingCheck
     _repo_id = 0
 
@@ -456,7 +450,6 @@ class TestSourcingCheck(misc.ReportTestCase, misc.Tmpdir):
 
 
 class TestRequiredUseCheck(IUSE_Options, misc.ReportTestCase):
-
     check_kls = metadata.RequiredUseCheck
 
     @pytest.fixture
@@ -685,24 +678,20 @@ class _TestRestrictPropertiesCheck(use_based(), misc.ReportTestCase):
 
 
 class TestRestrictCheck(_TestRestrictPropertiesCheck):
-
     check_kls = metadata.RestrictCheck
 
 
 class TestPropertiesCheck(_TestRestrictPropertiesCheck):
-
     check_kls = metadata.PropertiesCheck
 
 
 class _TestRestrictPropertiesCheck(use_based(), misc.ReportTestCase):
-
     check_kls = metadata.RestrictCheck
     attr = None
     unknown_result_cls = None
 
 
 class TestRestrictTestCheck(misc.ReportTestCase):
-
     check_kls = metadata.RestrictTestCheck
     check = metadata.RestrictTestCheck(None)
 
@@ -741,7 +730,6 @@ class TestRestrictTestCheck(misc.ReportTestCase):
 
 
 class TestLicenseCheck(use_based(), misc.ReportTestCase):
-
     check_kls = metadata.LicenseCheck
 
     def mk_check(self, licenses=(), **kwargs):
@@ -813,7 +801,6 @@ class TestLicenseCheck(use_based(), misc.ReportTestCase):
 
 
 class TestMissingSlotDepCheck(use_based(), misc.ReportTestCase):
-
     check_kls = metadata.MissingSlotDepCheck
 
     def mk_check(self, pkgs=None, **kwargs):
@@ -874,7 +861,6 @@ class TestMissingSlotDepCheck(use_based(), misc.ReportTestCase):
 
 
 class TestDependencyCheck(use_based(), misc.ReportTestCase):
-
     check_kls = metadata.DependencyCheck
 
     def mk_pkg(self, attr, depset="", eapi="0", iuse=""):
@@ -1034,7 +1020,6 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
 
 
 class TestOutdatedBlockersCheck(misc.ReportTestCase):
-
     check_kls = metadata.OutdatedBlockersCheck
 
     @pytest.fixture(autouse=True)
@@ -1117,7 +1102,6 @@ class TestOutdatedBlockersCheck(misc.ReportTestCase):
 
 
 class TestSrcUriCheck(use_based(), misc.ReportTestCase):
-
     check_kls = metadata.SrcUriCheck
 
     def mk_pkg(
@@ -1313,7 +1297,6 @@ class TestSrcUriCheck(use_based(), misc.ReportTestCase):
 
 
 class TestMissingUnpackerDepCheck(use_based(), misc.ReportTestCase):
-
     check_kls = metadata.MissingUnpackerDepCheck
 
     def mk_pkg(self, exts, eapi="7", **data):

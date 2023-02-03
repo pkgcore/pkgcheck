@@ -9,7 +9,6 @@ from pkgcore.ebuild.cpv import VersionedCPV
 
 
 class TestPkgcheckCi:
-
     script = partial(run, "pkgcheck")
 
     @pytest.fixture(autouse=True)

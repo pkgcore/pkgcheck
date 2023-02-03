@@ -26,7 +26,6 @@ def mk_pkg(ver, keywords="", slot="0"):
 
 
 class TestImlateCheck(misc.ReportTestCase):
-
     check_kls = imlate.ImlateCheck
 
     def test_all_unstable(self):

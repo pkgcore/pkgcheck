@@ -10,7 +10,6 @@ from pkgcheck.scripts import run
 
 
 class TestPkgcheckShow:
-
     script = partial(run, project)
 
     @pytest.fixture(autouse=True)

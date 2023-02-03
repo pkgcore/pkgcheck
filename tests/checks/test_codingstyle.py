@@ -9,7 +9,6 @@ from .. import misc
 
 
 class TestInsintoCheck(misc.ReportTestCase):
-
     check_kls = codingstyle.InsintoCheck
 
     def test_insinto(self):
@@ -60,7 +59,6 @@ class TestInsintoCheck(misc.ReportTestCase):
 
 
 class TestAbsoluteSymlink(misc.ReportTestCase):
-
     check_kls = codingstyle.AbsoluteSymlinkCheck
 
     def test_it(self):
@@ -108,7 +106,6 @@ class TestAbsoluteSymlink(misc.ReportTestCase):
 
 
 class TestPathVariablesCheck(misc.ReportTestCase):
-
     check_kls = codingstyle.PathVariablesCheck
     check = check_kls(None)
 
@@ -222,7 +219,6 @@ class TestPathVariablesCheck(misc.ReportTestCase):
 
 
 class TestObsoleteUri(misc.ReportTestCase):
-
     check_kls = codingstyle.ObsoleteUriCheck
 
     def test_github_archive_uri(self):
@@ -300,7 +296,6 @@ class TestObsoleteUri(misc.ReportTestCase):
 
 
 class TestBetterCompression(misc.ReportTestCase):
-
     check_kls = codingstyle.BetterCompressionCheck
 
     def test_github_archive_uri(self):
@@ -341,7 +336,6 @@ class TestBetterCompression(misc.ReportTestCase):
 
 
 class TestStaticSrcUri(misc.ReportTestCase):
-
     check_kls = codingstyle.MetadataVarCheck
     check = check_kls(None)
 
@@ -428,7 +422,6 @@ class TestStaticSrcUri(misc.ReportTestCase):
 
 
 class TestExcessiveLineLength(misc.ReportTestCase):
-
     check_kls = codingstyle.LineLengthCheck
     check = check_kls(None)
     word_length = codingstyle.ExcessiveLineLength.word_length

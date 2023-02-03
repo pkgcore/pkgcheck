@@ -19,7 +19,6 @@ requests = pytest.importorskip("requests")
 
 
 class TestNetworkChecks:
-
     repos_data = pytest.REPO_ROOT / "testdata/data/repos"
     repos_dir = pytest.REPO_ROOT / "testdata/repos"
 

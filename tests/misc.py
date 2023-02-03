@@ -66,7 +66,6 @@ class FakePkg(package):
 
 
 class FakeTimedPkg(package):
-
     __slots__ = "_mtime_"
 
     def __init__(self, cpvstr, mtime, data=None, shared=None, repo=None):
@@ -79,7 +78,6 @@ class FakeTimedPkg(package):
 
 
 class FakeFilesDirPkg(package):
-
     __slots__ = ("path",)
 
     def __init__(self, cpvstr, repo, data=None, shared=None):

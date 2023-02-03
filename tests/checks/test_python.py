@@ -4,7 +4,6 @@ from .. import misc
 
 
 class TestPythonCheck(misc.ReportTestCase):
-
     check = python.PythonCheck(None)
     check_kls = python.PythonCheck
 

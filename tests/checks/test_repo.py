@@ -13,7 +13,6 @@ from .. import misc
 
 
 class TestRepoDirCheck(misc.Tmpdir, misc.ReportTestCase):
-
     check_kls = repo.RepoDirCheck
 
     def mk_check(self):

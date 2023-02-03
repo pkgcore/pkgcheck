@@ -264,7 +264,6 @@ class TestPkgcheckScanParseArgs:
     )
     def test_makeopts_parsing(self, parser, makeopts, expected_jobs):
         with patch("os.cpu_count", return_value=4), os_environ(MAKEOPTS=makeopts):
-
             options = parser.parse_args(["scan"])
             assert options.jobs == expected_jobs
             assert options.tasks == 5 * expected_jobs
@@ -374,7 +373,6 @@ class TestPkgcheckScanParseConfigArgs:
 
 
 class TestPkgcheckScan:
-
     script = staticmethod(partial(run, project))
 
     repos_data = pytest.REPO_ROOT / "testdata/data/repos"

@@ -412,7 +412,6 @@ class TestUnknownPkgDirEntry(PkgDirCheckBase):
 
 
 class TestLiveOnlyCheck(misc.ReportTestCase):
-
     check_kls = pkgdir.LiveOnlyCheck
 
     @pytest.fixture(autouse=True)

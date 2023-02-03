@@ -25,7 +25,6 @@ def check(tmp_path):
 
 
 class TestVulnerabilitiesCheck(misc.ReportTestCase):
-
     check_kls = glsa.GlsaCheck
 
     def test_no_glsa_dir(self, tmp_path):

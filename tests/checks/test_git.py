@@ -247,7 +247,6 @@ class TestGitCommitMessageCheck(ReportTestCase):
 
 
 class TestGitCommitMessageRepoCheck(ReportTestCase):
-
     check_kls = git_mod.GitCommitMessageCheck
 
     @pytest.fixture(autouse=True)
@@ -384,7 +383,6 @@ class TestGitCommitMessageRepoCheck(ReportTestCase):
 
 
 class TestGitPkgCommitsCheck(ReportTestCase):
-
     check_kls = git_mod.GitPkgCommitsCheck
 
     @pytest.fixture(autouse=True)
@@ -711,7 +709,6 @@ class TestGitPkgCommitsCheck(ReportTestCase):
 
 
 class TestGitEclassCommitsCheck(ReportTestCase):
-
     check_kls = git_mod.GitEclassCommitsCheck
 
     @pytest.fixture(autouse=True)

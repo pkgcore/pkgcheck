@@ -11,7 +11,6 @@ def mk_pkg(ver, keywords=("x86", "amd64"), slot="0", **kwds):
 
 
 class TestRedundantVersion(misc.ReportTestCase):
-
     check_kls = cleanup.RedundantVersionCheck
     check = check_kls(arghparse.Namespace(stable_only=True), profile_addon={})
 
@@ -61,7 +60,6 @@ class TestRedundantVersion(misc.ReportTestCase):
 
 
 class TestRedundantVersionByStable(misc.ReportTestCase):
-
     check_kls = cleanup.RedundantVersionCheck
     check = cleanup.RedundantVersionCheck(arghparse.Namespace(stable_only=True), profile_addon={})
 

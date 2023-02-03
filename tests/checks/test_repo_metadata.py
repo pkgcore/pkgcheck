@@ -10,7 +10,6 @@ from .. import misc
 
 
 class TestPackageUpdatesCheck(misc.Tmpdir, misc.ReportTestCase):
-
     check_kls = repo_metadata.PackageUpdatesCheck
 
     def mk_check(self, pkgs=(), **kwargs):

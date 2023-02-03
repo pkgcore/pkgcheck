@@ -9,7 +9,6 @@ from .. import misc
 
 
 class TestAcctUser(misc.ReportTestCase):
-
     check_kls = acct.AcctCheck
 
     kind = "user"

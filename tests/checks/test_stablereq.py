@@ -11,7 +11,6 @@ from ..misc import ReportTestCase, init_check
 
 
 class TestStableRequestCheck(ReportTestCase):
-
     check_kls = StableRequestCheck
 
     @pytest.fixture(autouse=True)

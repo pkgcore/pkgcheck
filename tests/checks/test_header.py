@@ -5,7 +5,6 @@ from .. import misc
 
 
 class TestEbuildHeaderCheck(misc.ReportTestCase):
-
     check_kls = header.EbuildHeaderCheck
 
     def mk_check(self):

@@ -40,7 +40,6 @@ def test_script_run(capsys):
 
 
 class TestPkgcheck:
-
     script = partial(run, project)
 
     def test_version(self, capsys):
