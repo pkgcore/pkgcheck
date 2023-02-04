@@ -3,6 +3,77 @@ Release Notes
 =============
 
 ----------------------------
+pkgcheck 0.10.21 (2023-02-04)
+----------------------------
+
+**New checks:**
+
+- ProvidedEclassInherit: new check for inheriting provided eclases (Arthur
+  Zamarin, #509)
+
+- MissingInherits: don't show for functions defined in ebuild (Arthur Zamarin,
+  #513)
+
+- EclassUsageCheck: check for setting user variables in ebuilds (Arthur
+  Zamarin, #518)
+
+- VariableScopeCheck: Disallow ``D`` and ``ED`` in ``pkg_postinst`` (Ulrich
+  Müller, #523)
+
+- ProfilesCheck: check for unknown ``ARCH`` in make.defaults (Arthur Zamarin,
+  #525)
+
+- ProfilesCheck: check for unknown ``USE`` & ``IUSE_IMPLICIT`` in make.defaults
+  (Arthur Zamarin, #525)
+
+- ProfilesCheck: check for unknown ``USE_EXPAND_*`` in make.defaults (Arthur
+  Zamarin, #525)
+
+- ProfilesCheck: check ``USE_EXPAND_VALUES_*`` in make.defaults (Arthur
+  Zamarin, #525)
+
+- ProfilesCheck: check missing values for implicit in make.defaults (Arthur
+  Zamarin, #525)
+
+- ArchesMisSync: check for missync between ``arch.list`` and ``arches.desc``
+  (Arthur Zamarin, #529)
+
+- SrcUriChecksumChange: check for changing checksums of distfiles without
+  distfile rename (Arthur Zamarin, #497)
+
+- SuspiciousSrcUriChange: check for changing URLs of distfiles without distfile
+  rename (Arthur Zamarin, #497)
+
+- InvalidMetadataRestrict: check for invalid restricts in metadata.xml (Arthur
+  Zamarin, #532)
+
+- PythonPackageNameCheck: check for mismatching python package names (Michał
+  Górny, Arthur Zamarin, #534)
+
+- PythonCheck: check for missing BDEPEND on setuptools_scm or alike (Arthur
+  Zamarin, #534)
+
+**Fixed bugs:**
+
+- git checks: include revision for old name during ``git mv`` (Arthur Zamarin,
+  #511)
+
+- Profile caching: use REPO profile base to improve cache hits (Daniel M.
+  Weeks, #528)
+
+- MissingManifest: fix behavior under thick repos (Arthur Zamarin, #530)
+
+- scan: suppress non-error results in quiet mode (Arthur Zamarin, #413)
+
+- RdependChange: skip when revbumped in same batch (Arthur Zamarin, #459)
+
+- scan: fix no attribute live or slot for commits scanning (Arthur Zamarin,
+  #380)
+
+- setup.py: fix usage of absolute path, which fixes compatibility with new
+  setuptools (Arthur Zamarin, https://bugs.gentoo.org/892938)
+
+----------------------------
 pkgcheck 0.10.20 (2022-12-29)
 ----------------------------
 
