@@ -375,13 +375,15 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
             else:
                 yield MissingSlotmove(old_slot, new_slot, pkg=new_pkg)
 
-    @staticmethod
-    def _fetchable_str(fetch: fetchable) -> str:
+    def _fetchable_str(self, fetch: fetchable) -> tuple[str, str]:
         uri = tuple(fetch.uri._uri_source)[0]
         if isinstance(uri, tuple):
-            return f"mirror://{uri[0].mirror_name}/{uri[1]}"
+            mirror = uri[0].mirror_name
+            expands = self.repo.mirrors.get(mirror)
+            expand = (expands or (f"mirror://{mirror}",))[0].lstrip("/")
+            return f"{expand}/{uri[1]}", f"mirror://{uri[0].mirror_name}/{uri[1]}"
         else:
-            return str(uri)
+            return (str(uri),) * 2
 
     def src_uri_changes(self, pkgset):
         pkg = pkgset[0].unversioned_atom
@@ -403,11 +405,11 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
             return
 
         for filename in old_checksums.keys() & new_checksums.keys():
-            old_checksum, old_uri = old_checksums[filename]
-            new_checksum, new_uri = new_checksums[filename]
+            old_checksum, (old_expand, old_uri) = old_checksums[filename]
+            new_checksum, (new_expand, new_uri) = new_checksums[filename]
             if old_checksum != new_checksum:
                 yield SrcUriChecksumChange(filename, pkg=pkg)
-            elif old_uri != new_uri:
+            elif old_expand != new_expand:
                 yield SuspiciousSrcUriChange(old_uri, new_uri, filename, pkg=pkg)
 
     def feed(self, pkgset: list[git.GitPkgChange]):
