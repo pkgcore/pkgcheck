@@ -3,7 +3,7 @@
 import re
 from collections import defaultdict
 
-from pkgcore.ebuild.eapi import EAPI
+from pkgcore.ebuild.eapi import EAPI, common_mandatory_metadata_keys
 from snakeoil.mappings import ImmutableDict
 from snakeoil.sequences import stable_unique
 from snakeoil.strings import pluralism
@@ -758,10 +758,9 @@ class InheritsCheck(Check):
 
         # register EAPI-related vars to ignore
         # TODO: add ebuild env vars via pkgcore setting, e.g. PN, PV, P, FILESDIR, etc
-        self.eapi_vars = {}
-        for eapi in EAPI.known_eapis.values():
-            s = set(eapi.eclass_keys)
-            self.eapi_vars[eapi] = frozenset(s)
+        self.eapi_vars = {eapi: frozenset(eapi.eclass_keys) for eapi in EAPI.known_eapis.values()}
+
+        self.unused_eclass_skiplist = frozenset(common_mandatory_metadata_keys) - {"IUSE"}
 
     def get_eclass(self, export, pkg):
         """Return the eclass related to a given exported variable or function name."""
@@ -851,10 +850,12 @@ class InheritsCheck(Check):
                 # ignore eclasses with parsing failures
                 unused.discard(eclass)
             else:
-                exported_eclass_keys = pkg.eapi.eclass_keys.intersection(
+                exported_eclass_keys: set[str] = pkg.eapi.eclass_keys.intersection(
                     self.eclass_cache[eclass].exported_variable_names
                 )
-                if not self.eclass_cache[eclass].exported_function_names and exported_eclass_keys:
+                if exported_eclass_keys.intersection(self.unused_eclass_skiplist):
+                    unused.discard(eclass)
+                elif not self.eclass_cache[eclass].exported_function_names and exported_eclass_keys:
                     # ignore eclasses that export ebuild metadata (e.g.
                     # SRC_URI, S, ...) and no functions
                     unused.discard(eclass)
