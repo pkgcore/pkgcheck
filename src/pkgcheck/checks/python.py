@@ -1,5 +1,6 @@
 import itertools
 import re
+import typing
 from collections import defaultdict
 from operator import attrgetter
 
@@ -23,6 +24,15 @@ IUSE_PREFIX_S = "python_single_target_"
 
 GITHUB_ARCHIVE_RE = re.compile(r"^https://github\.com/[^/]+/[^/]+/archive/")
 SNAPSHOT_RE = re.compile(r"[a-fA-F0-9]{40}\.tar\.gz$")
+PYPI_URI_PREFIX = "https://files.pythonhosted.org/packages/"
+PYPI_SDIST_URI_RE = re.compile(
+    re.escape(PYPI_URI_PREFIX) + r"source/[^/]/(?P<package>[^/]+)/"
+    r"(?P<fn_package>(?P=package)|[^/-]+)-(?P<version>[^/]+)(?P<suffix>\.tar\.gz|\.zip)$"
+)
+PYPI_WHEEL_URI_RE = re.compile(
+    re.escape(PYPI_URI_PREFIX) + r"(?P<pytag>[^/]+)/[^/]/(?P<package>[^/]+)/"
+    r"(?P<fn_package>[^/-]+)-(?P<version>[^/-]+)-(?P=pytag)-(?P<abitag>[^/]+)\.whl$"
+)
 USE_FLAGS_PYTHON_USEDEP = re.compile(r"\[(.+,)?\$\{PYTHON_USEDEP\}(,.+)?\]$")
 
 PROJECT_SYMBOL_NORMALIZE_RE = re.compile(r"[-_.]+")
@@ -687,11 +697,44 @@ class PythonGHDistfileSuffix(results.VersionResult, results.Warning):
         )
 
 
+class PythonInlinePyPIURI(results.VersionResult, results.Warning):
+    """PyPI URI used inline instead of via pypi.eclass"""
+
+    def __init__(
+        self,
+        url: str,
+        replacement: typing.Optional[tuple[str, ...]] = None,
+        normalize: typing.Optional[bool] = None,
+        append: typing.Optional[bool] = None,
+        **kwargs,
+    ) -> None:
+        super().__init__(**kwargs)
+        self.url = url
+        self.replacement = tuple(replacement) if replacement is not None else None
+        self.normalize = normalize
+        self.append = append
+
+    @property
+    def desc(self) -> str:
+        if self.replacement is None:
+            no_norm = "" if self.normalize else "set PYPI_NO_NORMALIZE=1, "
+            final = "use SRC_URI+= for other URIs" if self.append else "remove SRC_URI"
+            return (
+                "inline PyPI URI found matching pypi.eclass default, inherit the eclass, "
+                f"{no_norm}and {final} instead"
+            )
+        else:
+            return (
+                f"inline PyPI URI found: {self.url}, inherit pypi.eclass and replace with "
+                f"$({' '.join(self.replacement)})"
+            )
+
+
 class PythonFetchableCheck(Check):
-    """Perform Python-specific checks on fetchables."""
+    """Perform Python-specific checks to fetchables."""
 
     required_addons = (addons.UseAddon,)
-    known_results = frozenset({PythonGHDistfileSuffix})
+    known_results = frozenset({PythonGHDistfileSuffix, PythonInlinePyPIURI})
 
     def __init__(self, *args, use_addon):
         super().__init__(*args)
@@ -718,6 +761,111 @@ class PythonFetchableCheck(Check):
                     yield PythonGHDistfileSuffix(f.filename, uri, pkg=pkg)
                     break
 
+    @staticmethod
+    def simplify_pn_pv(pn: str, pv: str, pkg, allow_none: bool) -> tuple[str, str]:
+        if pv == pkg.version:
+            pv = None if allow_none else '"${PV}"'
+
+        if pn == pkg.package:
+            pn = None if pv is None else '"${PN}"'
+        # check for common PN transforms that conform to naming policy
+        elif pn == pkg.package.replace("-", ".", 1):
+            pn = '"${PN/-/.}"'
+        elif pn == pkg.package.replace("-", "."):
+            pn = '"${PN//-/.}"'
+        elif pn == pkg.package.replace("-", "_", 1):
+            pn = '"${PN/-/_}"'
+        elif pn == pkg.package.replace("-", "_"):
+            pn = '"${PN//-/_}"'
+        # .title() is not exactly the same as ^
+        elif pn == f"{pkg.package[:1].upper()}{pkg.package[1:]}":
+            pn = '"${PN^}"'
+
+        return pn, pv
+
+    @staticmethod
+    def normalize_distribution_name(name: str) -> str:
+        """Normalize the distribution according to sdist/wheel spec"""
+        return PROJECT_SYMBOL_NORMALIZE_RE.sub("_", name).lower()
+
+    @staticmethod
+    def translate_version(version: str) -> str:
+        """Translate Gentoo version into PEP 440 version"""
+        return (
+            version.replace("_alpha", "a")
+            .replace("_beta", "b")
+            .replace("_rc", "rc")
+            .replace("_p", ".post")
+        )
+
+    def check_pypi_mirror(self, pkg, fetchables):
+        # consider only packages that don't inherit pypi.eclass already
+        if "pypi" in pkg.inherited:
+            return
+
+        uris = [(uri, f.filename) for f in fetchables for uri in f.uri]
+        # check if we have any mirror://pypi URLs in the first place
+        pypi_uris = [uri for uri in uris if uri[0].startswith(PYPI_URI_PREFIX)]
+        if not pypi_uris:
+            return
+
+        # if there's exactly one PyPI URI, perhaps inheriting the eclass will suffice
+        if len(pypi_uris) == 1:
+            uri, filename = pypi_uris[0]
+
+            def matches_fn(expected_fn: str) -> bool:
+                expected = f"{PYPI_URI_PREFIX}source/{pkg.package[0]}/{pkg.package}/{expected_fn}"
+                return uri == expected and filename == expected_fn
+
+            version = self.translate_version(pkg.version)
+            append = len(uris) > 1
+            if matches_fn(f"{self.normalize_distribution_name(pkg.package)}-{version}.tar.gz"):
+                yield PythonInlinePyPIURI(uri, normalize=True, append=append, pkg=pkg)
+                return
+            if matches_fn(f"{pkg.package}-{version}.tar.gz"):
+                yield PythonInlinePyPIURI(uri, normalize=False, append=append, pkg=pkg)
+                return
+
+        # otherwise, yield result for every URL, with suggested replacement
+        for uri, dist_filename in pypi_uris:
+            if source_match := PYPI_SDIST_URI_RE.match(uri):
+                pn, filename_pn, pv, suffix = source_match.groups()
+
+                if filename_pn == self.normalize_distribution_name(pn):
+                    no_normalize_arg = None
+                elif filename_pn == pn:
+                    no_normalize_arg = "--no-normalize"
+                else:  # incorrect project name?
+                    continue
+                if suffix == ".tar.gz":
+                    suffix = None
+                pn, pv = self.simplify_pn_pv(pn, pv, pkg, suffix is None)
+
+                args = tuple(filter(None, ("pypi_sdist_url", no_normalize_arg, pn, pv, suffix)))
+                yield PythonInlinePyPIURI(uri, args, pkg=pkg)
+                continue
+
+            if wheel_match := PYPI_WHEEL_URI_RE.match(uri):
+                pytag, pn, filename_pn, pv, abitag = wheel_match.groups()
+                unpack_arg = None
+
+                # only normalized wheel names are supported
+                if filename_pn != self.normalize_distribution_name(pn):
+                    return
+                if dist_filename in (
+                    f"{filename_pn}-{pv}-{pytag}-{abitag}.whl.zip",
+                    f"{filename_pn}-{pv}-{pytag}-{abitag}.zip",
+                ):
+                    unpack_arg = "--unpack"
+                if abitag == "none-any":
+                    abitag = None
+                if pytag == "py3" and abitag is None:
+                    pytag = None
+                pn, pv = self.simplify_pn_pv(pn, pv, pkg, abitag is None)
+
+                args = tuple(filter(None, ("pypi_wheel_url", unpack_arg, pn, pv, pytag, abitag)))
+                yield PythonInlinePyPIURI(uri, args, pkg=pkg)
+
     def feed(self, pkg):
         fetchables, _ = self.iuse_filter(
             (fetch.fetchable,),
@@ -728,6 +876,7 @@ class PythonFetchableCheck(Check):
         )
 
         yield from self.check_gh_suffix(pkg, fetchables)
+        yield from self.check_pypi_mirror(pkg, fetchables)
 
 
 class PythonMismatchedPackageName(results.PackageResult, results.Info):
