@@ -687,29 +687,22 @@ class PythonGHDistfileSuffix(results.VersionResult, results.Warning):
         )
 
 
-class PythonGHDistfileSuffixCheck(Check):
-    """Check ebuilds with PyPI remotes for missing ".gh.tar.gz" suffixes."""
+class PythonFetchableCheck(Check):
+    """Perform Python-specific checks on fetchables."""
 
     required_addons = (addons.UseAddon,)
-    known_results = frozenset([PythonGHDistfileSuffix])
+    known_results = frozenset({PythonGHDistfileSuffix})
 
     def __init__(self, *args, use_addon):
         super().__init__(*args)
         self.iuse_filter = use_addon.get_filter("fetchables")
 
-    def feed(self, pkg):
+    def check_gh_suffix(self, pkg, fetchables):
         # consider only packages with pypi remote-id
         if not any(u.type == "pypi" for u in pkg.upstreams):
             return
 
         # look for GitHub archives
-        fetchables, _ = self.iuse_filter(
-            (fetch.fetchable,),
-            pkg,
-            pkg.generate_fetchables(
-                allow_missing_checksums=True, ignore_unknown_mirrors=True, skip_default_mirrors=True
-            ),
-        )
         for f in fetchables:
             # skip files that have the correct suffix already
             if f.filename.endswith(".gh.tar.gz"):
@@ -724,6 +717,17 @@ class PythonGHDistfileSuffixCheck(Check):
                 if GITHUB_ARCHIVE_RE.match(uri):
                     yield PythonGHDistfileSuffix(f.filename, uri, pkg=pkg)
                     break
+
+    def feed(self, pkg):
+        fetchables, _ = self.iuse_filter(
+            (fetch.fetchable,),
+            pkg,
+            pkg.generate_fetchables(
+                allow_missing_checksums=True, ignore_unknown_mirrors=True, skip_default_mirrors=True
+            ),
+        )
+
+        yield from self.check_gh_suffix(pkg, fetchables)
 
 
 class PythonMismatchedPackageName(results.PackageResult, results.Info):
