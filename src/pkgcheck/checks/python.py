@@ -25,7 +25,7 @@ GITHUB_ARCHIVE_RE = re.compile(r"^https://github\.com/[^/]+/[^/]+/archive/")
 SNAPSHOT_RE = re.compile(r"[a-fA-F0-9]{40}\.tar\.gz$")
 USE_FLAGS_PYTHON_USEDEP = re.compile(r"\[(.+,)?\$\{PYTHON_USEDEP\}(,.+)?\]$")
 
-PEP503_SYMBOL_NORMALIZE_RE = re.compile(r"[-_.]+")
+PROJECT_SYMBOL_NORMALIZE_RE = re.compile(r"[-_.]+")
 
 
 def get_python_eclass(pkg):
@@ -768,7 +768,7 @@ class PythonPackageNameCheck(Check):
 
             https://peps.python.org/pep-0503/#normalized-names
             """
-            return PEP503_SYMBOL_NORMALIZE_RE.sub("-", project).lower()
+            return PROJECT_SYMBOL_NORMALIZE_RE.sub("-", project).lower()
 
         pypi_name = pypi_remotes[0].name
         if normalize(pkg.package) != normalize(pypi_name):
