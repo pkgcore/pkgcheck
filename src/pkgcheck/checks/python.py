@@ -25,7 +25,7 @@ GITHUB_ARCHIVE_RE = re.compile(r"^https://github\.com/[^/]+/[^/]+/archive/")
 SNAPSHOT_RE = re.compile(r"[a-fA-F0-9]{40}\.tar\.gz$")
 USE_FLAGS_PYTHON_USEDEP = re.compile(r"\[(.+,)?\$\{PYTHON_USEDEP\}(,.+)?\]$")
 
-PEP503_SYMBOL_NORMALIZE_RE = re.compile(r"[-_.]")
+PEP503_SYMBOL_NORMALIZE_RE = re.compile(r"[-_.]+")
 
 
 def get_python_eclass(pkg):
