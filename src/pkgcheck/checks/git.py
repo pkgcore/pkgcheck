@@ -507,7 +507,7 @@ class InvalidCommitTag(results.CommitResult, results.Style):
     .. [#] https://www.gentoo.org/glep/glep-0066.html#commit-messages
     """
 
-    def __init__(self, tag, value, error, **kwargs):
+    def __init__(self, tag: str, value: str, error: str, **kwargs):
         super().__init__(**kwargs)
         self.tag, self.value, self.error = tag, value, error
 
@@ -571,18 +571,19 @@ class GitCommitMessageCheck(GentooRepoCheck, GitCommitsCheck):
 
     _source = GitCommitsSource
     known_results = frozenset(
-        [
+        {
             MissingSignOff,
             InvalidCommitTag,
             InvalidCommitMessage,
             BadCommitSummary,
-        ]
+        }
     )
 
     # mapping between known commit tags and verification methods
     known_tags = {}
     _commit_footer_regex = re.compile(r"^(?P<tag>[a-zA-Z0-9_-]+): (?P<value>.*)$")
     _git_cat_file_regex = re.compile(r"^(?P<object>.+?) (?P<status>.+)$")
+    _commit_ref_regex = re.compile(r"^(?P<object>[0-9a-fA-F]+?)( \(.+?\))?\.?$")
 
     # categories exception for rule of having package version in summary
     skipped_categories = frozenset(
@@ -642,15 +643,23 @@ class GitCommitMessageCheck(GentooRepoCheck, GitCommitsCheck):
     @verify_tags("Fixes", "Reverts")
     def _commit_tag(self, tag, values, commit: git.GitCommit):
         """Verify referenced commits exist for Fixes/Reverts tags."""
-        self.git_cat_file.stdin.write("\n".join(values) + "\n")
+        commits: dict[str, str] = {}
+        for value in values:
+            if mo := self._commit_ref_regex.match(value):
+                commits[mo.group("object")] = value
+            else:
+                yield InvalidCommitTag(tag, value, "invalid format", commit=commit)
+        self.git_cat_file.stdin.write("\n".join(commits.keys()) + "\n")
         if self.git_cat_file.poll() is None:
-            for _ in range(len(values)):
+            for _ in range(len(commits)):
                 line = self.git_cat_file.stdout.readline().strip()
                 if mo := self._git_cat_file_regex.match(line):
                     value = mo.group("object")
                     status = mo.group("status")
                     if not status.startswith("commit "):
-                        yield InvalidCommitTag(tag, value, f"{status} commit", commit=commit)
+                        yield InvalidCommitTag(
+                            tag, commits[value], f"{status} commit", commit=commit
+                        )
 
     def feed(self, commit: git.GitCommit):
         if len(commit.message) == 0:
