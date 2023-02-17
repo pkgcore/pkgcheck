@@ -392,13 +392,27 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
             new_checksums = {
                 fetch.filename: (fetch.chksums, self._fetchable_str(fetch))
                 for pkg in self.repo.match(pkg)
-                for fetch in iflatten_instance(pkg.fetchables, fetchable)
+                for fetch in iflatten_instance(
+                    pkg.generate_fetchables(
+                        allow_missing_checksums=True,
+                        ignore_unknown_mirrors=True,
+                        skip_default_mirrors=True,
+                    ),
+                    fetchable,
+                )
             }
 
             old_checksums = {
                 fetch.filename: (fetch.chksums, self._fetchable_str(fetch))
                 for pkg in self.modified_repo(pkgset).match(pkg)
-                for fetch in iflatten_instance(pkg.fetchables, fetchable)
+                for fetch in iflatten_instance(
+                    pkg.generate_fetchables(
+                        allow_missing_checksums=True,
+                        ignore_unknown_mirrors=True,
+                        skip_default_mirrors=True,
+                    ),
+                    fetchable,
+                )
             }
         except (IndexError, FileNotFoundError, tarfile.ReadError):
             # ignore broken ebuild
