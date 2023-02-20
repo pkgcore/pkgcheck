@@ -3,6 +3,29 @@ Release Notes
 =============
 
 ----------------------------
+pkgcheck 0.10.22 (2023-02-20)
+----------------------------
+
+**New checks:**
+
+- PythonInlinePyPIURI: new check for using inline PyPI URI instead of via new
+  ``pypi.eclass`` (Michał Górny, #543)
+
+**Fixed bugs:**
+
+- SuspiciousSrcUriChange: fix false positives for ``SRC_URI`` mirror expanded
+  (Arthur Zamarin, #542)
+
+- SuspiciousSrcUriChange: fix false positives on user configuration with
+  default mirror (Arthur Zamarin, #548, #549)
+
+- InvalidCommitTag: fix false positives with advanced formatted ``Fixes`` and
+  ``Reverts`` tags (Arthur Zamarin, #546)
+
+- UnusedInherits: fix false positives for eclasses defining special global
+  variables such as ``SRC_URI`` and ``HOMEPAGE`` (Arthur Zamarin, #361, #540)
+
+----------------------------
 pkgcheck 0.10.21 (2023-02-04)
 ----------------------------
 
