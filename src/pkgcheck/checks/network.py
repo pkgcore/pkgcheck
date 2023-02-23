@@ -293,6 +293,7 @@ class MetadataUrlCheck(_UrlCheck):
             "gitlab": "https://gitlab.com/{project}",
             "gnome-gitlab": "https://gitlab.gnome.org/{project}.git/",
             "hackage": "https://hackage.haskell.org/package/{project}",
+            "kde-invent": "https://invent.kde.org/{project}",
             "launchpad": "https://launchpad.net/{project}",
             "osdn": "https://osdn.net/projects/{project}/",
             "pecl": "https://pecl.php.net/package/{project}",
