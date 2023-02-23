@@ -1,0 +1,1 @@
+{"__class__": "DeadUrl", "category": "MetadataUrlCheck", "package": "DeadUrl-kde-invent", "version": "0", "attr": "metadata.xml: remote-id", "url": "https://invent.kde.org/pkgcore/pkgcheck", "message": "404 Client Error: Not Found for url: https://invent.kde.org/pkgcore/pkgcheck"}

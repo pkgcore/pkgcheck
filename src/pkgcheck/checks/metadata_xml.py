@@ -653,6 +653,7 @@ class MissingRemoteIdCheck(Check):
         ("gitlab", rf"https://gitlab.com/{_gitlab_match}"),
         ("gnome-gitlab", rf"https://gitlab.gnome.org/{_gitlab_match}"),
         ("heptapod", rf"https://foss.heptapod.net/{_gitlab_match}"),
+        ("kde-invent", rf"https://invent.kde.org/{_gitlab_match}"),
         ("launchpad", r"https://launchpad.net/(?P<value>[^/]+)"),
         ("pypi", r"https://pypi.org/project/(?P<value>[^/]+)"),
         ("pypi", r"https://files.pythonhosted.org/packages/source/\S/(?P<value>[^/]+)"),
