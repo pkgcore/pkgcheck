@@ -279,12 +279,12 @@ class TestPkgcheckScanParseArgs:
         )
 
         args = ("scan", "--config", str(config_file))
-        with os_environ("NOCOLOR"):
+        with os_environ("NO_COLOR"):
             assert parser.parse_args(args).color is True
-        with os_environ(NOCOLOR="1"):
-            # NOCOLOR overrides config file
+        with os_environ(NO_COLOR="1"):
+            # NO_COLOR overrides config file
             assert parser.parse_args(args).color is False
-            # cmd line option overrides NOCOLOR
+            # cmd line option overrides NO_COLOR
             assert parser.parse_args([*args, "--color", "n"]).color is False
             assert parser.parse_args([*args, "--color", "y"]).color is True
 
