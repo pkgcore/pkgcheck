@@ -1,6 +1,5 @@
 """bash parsing support"""
 
-from functools import partial
 import os
 
 from snakeoil.osutils import pjoin
@@ -100,7 +99,7 @@ except ImportError:  # pragma: no cover
 
 if syslib is not None or os.path.exists(lib):
     lang = Language(syslib or lib, "bash")
-    query = partial(lang.query)
+    query = lang.query
     parser = Parser()
     parser.set_language(lang)
 
@@ -114,7 +113,7 @@ if syslib is not None or os.path.exists(lib):
 class ParseTree:
     """Bash parse tree object and support."""
 
-    def __init__(self, data, **kwargs):
+    def __init__(self, data: bytes, **kwargs):
         super().__init__(**kwargs)
         self.data = data
         self.tree = parser.parse(data)

@@ -1,4 +1,5 @@
 import re
+import string
 
 from pkgcore.ebuild.eapi import EAPI
 
@@ -22,7 +23,7 @@ class _ReservedNameCheck(Check):
     """Approved good exceptions to using of variables."""
     variables_usage_whitelist = {"EBUILD_PHASE", "EBUILD_PHASE_FUNC"}
 
-    def _check(self, used_type: str, used_names):
+    def _check(self, used_type: str, used_names: dict[str, tuple[int, int]]):
         for used_name, (lineno, _) in used_names.items():
             if used_name in self.special_whitelist:
                 continue
@@ -36,7 +37,7 @@ class _ReservedNameCheck(Check):
             if self.reserved_ebuild_regex.match(test_name):
                 yield used_name, used_type, "ebuild", "substring", lineno + 1
 
-    def _feed(self, item):
+    def _feed(self, item: bash.ParseTree):
         yield from self._check(
             "function",
             {
@@ -82,7 +83,7 @@ class EclassReservedCheck(_ReservedNameCheck):
         super().__init__(*args)
         self.eclass_cache = eclass_addon.eclasses
 
-    def feed(self, eclass):
+    def feed(self, eclass: sources._ParsedEclass):
         for *args, _ in self._feed(eclass):
             yield EclassReservedName(*args, eclass=eclass.name)
 
@@ -101,11 +102,34 @@ class EbuildReservedName(results.LineResult, results.Warning):
         return f'line {self.lineno}: {self.used_type} name "{self.line}" is disallowed because "{self.reserved_word}" is a reserved {self.reserved_type}'
 
 
+class EbuildSemiReservedName(results.LineResult, results.Warning):
+    """Ebuild uses semi-reserved variable or function name.
+
+    Ebuild is using in global scope semi-reserved variable or function names,
+    which is likely to clash with future EAPIs. Currently it include
+    single-letter uppercase variables, and ``[A-Z]DEPEND`` variables.
+    """
+
+    def __init__(self, used_type: str, **kwargs):
+        super().__init__(**kwargs)
+        self.used_type = used_type
+
+    @property
+    def desc(self):
+        return f'line {self.lineno}: uses semi-reserved {self.used_type} name "{self.line}", likely to clash with future EAPIs'
+
+
 class EbuildReservedCheck(_ReservedNameCheck):
     """Scan ebuilds for reserved function or variable names."""
 
     _source = sources.EbuildParseRepoSource
-    known_results = frozenset([EbuildReservedName])
+    known_results = frozenset({EbuildReservedName, EbuildSemiReservedName})
+
+    global_reserved = (
+        frozenset(string.ascii_uppercase)
+        .union(c + "DEPEND" for c in string.ascii_uppercase)
+        .difference(("CDEPEND",))
+    )
 
     def __init__(self, options, **kwargs):
         super().__init__(options, **kwargs)
@@ -116,7 +140,7 @@ class EbuildReservedCheck(_ReservedNameCheck):
             for eapi_name, eapi in EAPI.known_eapis.items()
         }
 
-    def feed(self, pkg):
+    def feed(self, pkg: sources._ParsedPkg):
         for used_name, *args, lineno in self._feed(pkg):
             yield EbuildReservedName(*args, lineno=lineno, line=used_name, pkg=pkg)
 
@@ -126,4 +150,18 @@ class EbuildReservedCheck(_ReservedNameCheck):
                 lineno, _ = node.start_point
                 yield EbuildReservedName(
                     "function", used_name, "phase hook", lineno=lineno + 1, line=used_name, pkg=pkg
+                )
+
+        current_global_reserved = self.global_reserved.difference(
+            pkg.eapi.eclass_keys, pkg.eapi.dep_keys
+        )
+        for node in pkg.global_query(bash.var_assign_query):
+            used_name = pkg.node_str(node.child_by_field_name("name"))
+            if used_name in current_global_reserved:
+                lineno, _ = node.start_point
+                yield EbuildSemiReservedName(
+                    "variable",
+                    lineno=lineno + 1,
+                    line=used_name,
+                    pkg=pkg,
                 )

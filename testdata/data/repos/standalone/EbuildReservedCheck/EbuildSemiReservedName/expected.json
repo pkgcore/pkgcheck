@@ -1,0 +1,5 @@
+{"__class__": "EbuildSemiReservedName", "category": "DependencyCheck", "package": "MisplacedWeakBlocker", "version": "6", "line": "BDEPEND", "lineno": 8, "used_type": "variable"}
+{"__class__": "EbuildSemiReservedName", "category": "DependencyCheck", "package": "MisplacedWeakBlocker", "version": "6", "line": "IDEPEND", "lineno": 12, "used_type": "variable"}
+{"__class__": "EbuildSemiReservedName", "category": "DependencyCheck", "package": "MisplacedWeakBlocker", "version": "7", "line": "IDEPEND", "lineno": 12, "used_type": "variable"}
+{"__class__": "EbuildSemiReservedName", "category": "EbuildReservedCheck", "package": "EbuildSemiReservedName", "version": "0", "line": "B", "lineno": 9, "used_type": "variable"}
+{"__class__": "EbuildSemiReservedName", "category": "EbuildReservedCheck", "package": "EbuildSemiReservedName", "version": "0", "line": "TDEPEND", "lineno": 13, "used_type": "variable"}
