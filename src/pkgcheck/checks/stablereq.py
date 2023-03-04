@@ -71,12 +71,17 @@ class StableRequestCheck(GentooRepoCheck):
             pkg_keywords.update(pkg.keywords)
 
         if stable_pkg_keywords := {x for x in pkg_keywords if x[0] not in {"-", "~"}}:
+            keyworded_pkg_keywords = {"~" + x for x in stable_pkg_keywords}
             for slot, pkgs in sorted(pkg_slotted.items()):
                 slot_keywords = set().union(*(pkg.keywords for pkg in pkgs))
                 stable_slot_keywords = slot_keywords.intersection(stable_pkg_keywords)
                 for pkg in reversed(pkgs):
                     # stop if stable keywords are found
                     if stable_pkg_keywords.intersection(pkg.keywords):
+                        break
+
+                    # stop if not keyworded for stable
+                    if not keyworded_pkg_keywords.intersection(pkg.keywords):
                         break
 
                     try:

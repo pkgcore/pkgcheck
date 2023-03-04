@@ -118,6 +118,15 @@ class TestStableRequestCheck(ReportTestCase):
         expected = StableRequest("1", ["~amd64"], 30, pkg=VersionedCPV("cat/pkg-2"))
         assert r == expected
 
+    def test_unkeyworded_new_pkg(self):
+        self.parent_repo.create_ebuild("cat/pkg-1", keywords=["amd64"])
+        self.parent_git_repo.add_all("cat/pkg-1")
+        self.parent_repo.create_ebuild("cat/pkg-2", keywords=["~x86"])
+        self.parent_git_repo.add_all("cat/pkg-2")
+        self.child_git_repo.run(["git", "pull", "origin", "main"])
+        self.init_check(future=30)
+        self.assertNoReport(self.check, self.source)
+
     def test_moved_category(self):
         self.parent_repo.create_ebuild("cat/pkg-1", keywords=["amd64"])
         self.parent_git_repo.add_all("cat/pkg-1")
