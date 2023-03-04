@@ -675,6 +675,25 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         r = self.assertReport(self.check, self.source)
         assert r == git_mod.SrcUriChecksumChange(distfile[1], pkg=CP("cat/pkg"))
 
+    def test_python_pep517_change(self):
+        with open(pjoin(self.parent_git_repo.path, "eclass/distutils-r1.eclass"), "w") as f:
+            f.write("# Copyright 1999-2019 Gentoo Authors")
+        self.parent_git_repo.add_all("eclass: add distutils-r1")
+
+        # add pkgs to parent repo
+        self.parent_repo.create_ebuild("newcat/newpkg-1", data="inherit distutils-r1")
+        self.parent_git_repo.add_all("newcat/newpkg: initial import")
+        # pull changes to child repo
+        self.child_git_repo.run(["git", "pull", "origin", "main"])
+        # change an existing ebuild to have DISTUTILS_USE_PEP517 with no revbump
+        with open(pjoin(self.child_git_repo.path, "newcat/newpkg/newpkg-1.ebuild"), "a") as f:
+            f.write("\nDISTUTILS_USE_PEP517=setuptools\n")
+        self.child_git_repo.add_all("newcat/newpkg: use PEP517")
+        self.init_check()
+        r = self.assertReport(self.check, self.source)
+        expected = git_mod.PythonPEP517WithoutRevbump(pkg=CPV("newcat/newpkg-1"))
+        assert r == expected
+
     def test_src_uri_change(self):
         distfile = [
             "DIST",
