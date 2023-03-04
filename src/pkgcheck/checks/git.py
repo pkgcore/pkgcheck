@@ -171,6 +171,18 @@ class MissingMove(results.PackageResult, results.Error):
         return f"renamed package: {self.old} -> {self.new}"
 
 
+class PythonPEP517WithoutRevbump(results.PackageResult, results.Warning):
+    """Package has started/stopped using DISTUTILS_USE_PEP517 without revbump.
+
+    The package has started or stopped using DISTUTILS_USE_PEP517 without
+    a new revision. PEP517 affects the files installed by a package
+    and might lead to some files missing.
+
+    """
+
+    desc = "changed DISTUTILS_USE_PEP517 without new revision"
+
+
 class SrcUriChecksumChange(results.PackageResult, results.Error):
     """SRC_URI changing checksum without distfile rename."""
 
@@ -265,8 +277,11 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
             MissingMove,
             SrcUriChecksumChange,
             SuspiciousSrcUriChange,
+            PythonPEP517WithoutRevbump,
         ]
     )
+
+    python_pep517_regex = re.compile("^DISTUTILS_USE_PEP517=")
 
     # package categories that are committed with stable keywords
     allowed_direct_stable = frozenset(["acct-user", "acct-group"])
@@ -363,6 +378,19 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
 
         if pkg not in added and old_pkg.rdepend != new_pkg.rdepend:
             yield RdependChange(pkg=new_pkg)
+
+        if "distutils-r1" in new_pkg.inherited:
+
+            def found_pep517_lines(cmp_pkg):
+                return any(
+                    self.python_pep517_regex.match(line) for line in cmp_pkg.ebuild.text_fileobj()
+                )
+
+            found_old_pep517_line = found_pep517_lines(old_pkg)
+            found_new_pep517_line = found_pep517_lines(new_pkg)
+
+            if found_old_pep517_line ^ found_new_pep517_line:
+                yield PythonPEP517WithoutRevbump(pkg=new_pkg)
 
         old_slot, new_slot = old_pkg.slot, new_pkg.slot
         if old_slot != new_slot:
