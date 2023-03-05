@@ -183,6 +183,18 @@ class PythonPEP517WithoutRevbump(results.PackageResult, results.Warning):
     desc = "changed DISTUTILS_USE_PEP517 without new revision"
 
 
+class EAPIChangeWithoutRevbump(results.PackageResult, results.Warning):
+    """Package has changed EAPI without revbump.
+
+    The package has changed EAPI without a new revision. An EAPI bump
+    might affect the installed files (EAPI changes, eclass functions
+    may change behavior, new portage features might be used, etc.).
+    The change should also be reflected in the vdb's EAPI file.
+    """
+
+    desc = "changed EAPI without new revision"
+
+
 class SrcUriChecksumChange(results.PackageResult, results.Error):
     """SRC_URI changing checksum without distfile rename."""
 
@@ -278,6 +290,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
             SrcUriChecksumChange,
             SuspiciousSrcUriChange,
             PythonPEP517WithoutRevbump,
+            EAPIChangeWithoutRevbump,
         ]
     )
 
@@ -391,6 +404,9 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
 
             if found_old_pep517_line ^ found_new_pep517_line:
                 yield PythonPEP517WithoutRevbump(pkg=new_pkg)
+
+        if old_pkg.eapi != new_pkg.eapi:
+            yield EAPIChangeWithoutRevbump(pkg=new_pkg)
 
         old_slot, new_slot = old_pkg.slot, new_pkg.slot
         if old_slot != new_slot:

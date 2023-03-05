@@ -395,7 +395,7 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         self.parent_repo = make_repo(self.parent_git_repo.path, repo_id="gentoo", arches=["amd64"])
         self.parent_git_repo.add_all("initial commit")
         # create a stub pkg and commit it
-        self.parent_repo.create_ebuild("cat/pkg-0")
+        self.parent_repo.create_ebuild("cat/pkg-0", eapi="7")
         self.parent_git_repo.add_all("cat/pkg-0")
 
         # initialize child repo
@@ -694,6 +694,16 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         expected = git_mod.PythonPEP517WithoutRevbump(pkg=CPV("newcat/newpkg-1"))
         assert r == expected
 
+    def test_eapi_change(self):
+        # bump eapi
+        self.child_repo.create_ebuild("cat/pkg-0", eapi="8")
+        self.child_git_repo.add_all("cat/pkg-0")
+        # pull changes to child repo
+        self.init_check()
+        r = self.assertReport(self.check, self.source)
+        expected = git_mod.EAPIChangeWithoutRevbump(pkg=CPV("cat/pkg-0"))
+        assert r == expected
+
     def test_src_uri_change(self):
         distfile = [
             "DIST",
@@ -721,8 +731,8 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         assert r == git_mod.SuspiciousSrcUriChange(old_url, new_url, distfile[1], pkg=CP("cat/pkg"))
         # revert change and check for no report with same mirror url
         self.child_git_repo.run(["git", "reset", "--hard", "origin/main"])
-        self.child_repo.create_ebuild("cat/pkg-1", src_uri=old_url, eapi="8")
-        self.child_git_repo.add_all("cat/pkg: bump EAPI", signoff=True)
+        self.child_repo.create_ebuild("cat/pkg-1", src_uri=old_url, homepage="https://gentoo.org")
+        self.child_git_repo.add_all("cat/pkg: update HOMEPAGE", signoff=True)
         self.init_check()
         self.assertNoReport(self.check, self.source)
 
