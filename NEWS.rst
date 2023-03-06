@@ -3,6 +3,34 @@ Release Notes
 =============
 
 ----------------------------
+pkgcheck 0.10.23 (2023-03-06)
+----------------------------
+
+- scan: use ``NO_COLOR`` environment variable to disable colors instead of
+  ``NOCOLOR`` (Ulrich Müller, https://bugs.gentoo.org/898230)
+
+**New checks:**
+
+- network: add ``kde-invent`` remote-id (Sam James, #551)
+
+- EbuildSemiReservedName: check for usage of semi-reserved names in ebuilds
+  (Arthur Zamarin, #552)
+
+- PythonPEP517WithoutRevbump: check for DISTUTILS_USE_PEP517 addition or
+  removal without revision bump (Sam James, #556)
+
+- EAPIChangeWithoutRevbump: check for EAPI change without revision bump (Arthur
+  Zamarin, #558)
+
+**Fixed bugs:**
+
+- StableRequestCheck: ignore versions which aren't keyworded for stable arches
+  (Arthur Zamarin, #544)
+
+- PythonMissingSCMDependency: update to new canonical package names of SCM
+  python packages (Arthur Zamarin)
+
+----------------------------
 pkgcheck 0.10.22 (2023-02-20)
 ----------------------------
 
