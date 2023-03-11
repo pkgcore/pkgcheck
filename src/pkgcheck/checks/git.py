@@ -497,7 +497,11 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
             yield from self.rename_checks(list(pkg_map["R"]))
         # run modified package checks
         if modified := [pkg for pkg in pkg_map["M"] if pkg not in pkg_map["D"]]:
-            yield from self.modified_checks(modified, list(pkg_map["A"]))
+            version_modifications = defaultdict(list)
+            for pkg in modified:
+                version_modifications[pkg.fullver].append(pkg)
+            for modified in version_modifications.values():
+                yield from self.modified_checks(modified, pkg_map["A"])
 
         for git_pkg in pkgset:
             # remaining checks are irrelevant for removed packages

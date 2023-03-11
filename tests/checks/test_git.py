@@ -1,5 +1,6 @@
 import os
 import textwrap
+import time
 from datetime import datetime, timedelta
 from unittest.mock import patch
 
@@ -735,6 +736,20 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         self.child_git_repo.add_all("cat/pkg: update HOMEPAGE", signoff=True)
         self.init_check()
         self.assertNoReport(self.check, self.source)
+
+    def test_modified_added_file(self):
+        self.child_repo.create_ebuild("cat/pkg-0", homepage="https://gentoo.org")
+        self.child_git_repo.add_all("cat/pkg: update HOMEPAGE")
+        time.sleep(1)
+        self.child_repo.create_ebuild("cat/pkg-1", eapi="7")
+        self.child_git_repo.add_all("cat/pkg: add 1")
+        time.sleep(1)
+        self.child_repo.create_ebuild("cat/pkg-1", eapi="8")
+        self.child_git_repo.add_all("cat/pkg: bump EAPI")
+        self.init_check()
+        r = self.assertReport(self.check, self.source)
+        expected = git_mod.EAPIChangeWithoutRevbump(pkg=CPV("cat/pkg-1"))
+        assert r == expected
 
 
 class TestGitEclassCommitsCheck(ReportTestCase):
