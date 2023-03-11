@@ -444,6 +444,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
                     ),
                     fetchable,
                 )
+                if fetch.chksums
             }
 
             old_checksums = {
@@ -457,6 +458,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
                     ),
                     fetchable,
                 )
+                if fetch.chksums
             }
         except (IndexError, FileNotFoundError, tarfile.ReadError):
             # ignore broken ebuild
