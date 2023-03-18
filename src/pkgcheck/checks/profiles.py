@@ -536,7 +536,7 @@ class RepoProfilesCheck(RepoCheck):
     _source = (sources.EmptySource, (base.profiles_scope,))
     required_addons = (addons.profiles.ProfileAddon,)
     known_results = frozenset(
-        [
+        {
             ArchesWithoutProfiles,
             UnusedProfileDirs,
             NonexistentProfilePath,
@@ -548,11 +548,13 @@ class RepoProfilesCheck(RepoCheck):
             BannedProfileEapi,
             DeprecatedProfileEapi,
             ArchesOutOfSync,
-        ]
+        }
     )
 
     # known profile status types for the gentoo repo
-    known_profile_statuses = frozenset(["stable", "dev", "exp"])
+    known_profile_statuses = frozenset({"stable", "dev", "exp"})
+
+    unknown_categories_whitelist = ("scripts",)
 
     def __init__(self, *args, profile_addon):
         super().__init__(*args)
@@ -562,11 +564,10 @@ class RepoProfilesCheck(RepoCheck):
         self.non_profile_dirs = profile_addon.non_profile_dirs
 
     def finish(self):
-        if self.options.gentoo_repo:
-            if unknown_category_dirs := set(self.repo.category_dirs).difference(
-                self.repo.categories
-            ):
-                yield UnknownCategoryDirs(sorted(unknown_category_dirs))
+        if unknown_category_dirs := set(self.repo.category_dirs).difference(
+            self.repo.categories, self.unknown_categories_whitelist
+        ):
+            yield UnknownCategoryDirs(sorted(unknown_category_dirs))
         if nonexistent_categories := set(self.repo.config.categories).difference(
             self.repo.category_dirs
         ):
