@@ -708,6 +708,7 @@ class PythonInlinePyPIURI(results.VersionResult, results.Warning):
         replacement: typing.Optional[tuple[str, ...]] = None,
         normalize: typing.Optional[bool] = None,
         append: typing.Optional[bool] = None,
+        pypi_pn: typing.Optional[str] = None,
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
@@ -715,15 +716,17 @@ class PythonInlinePyPIURI(results.VersionResult, results.Warning):
         self.replacement = tuple(replacement) if replacement is not None else None
         self.normalize = normalize
         self.append = append
+        self.pypi_pn = pypi_pn
 
     @property
     def desc(self) -> str:
         if self.replacement is None:
             no_norm = "" if self.normalize else "set PYPI_NO_NORMALIZE=1, "
+            pypi_pn = "" if self.pypi_pn is None else f"set PYPI_PN={self.pypi_pn}, "
             final = "use SRC_URI+= for other URIs" if self.append else "remove SRC_URI"
             return (
                 "inline PyPI URI found matching pypi.eclass default, inherit the eclass, "
-                f"{no_norm}and {final} instead"
+                f"{no_norm}{pypi_pn}and {final} instead"
             )
         else:
             return (
@@ -823,9 +826,11 @@ class PythonFetchableCheck(Check):
                     if not normalize and filename_pn != pn:
                         # ignore malformed URLs
                         return
-                    if pn == pkg.package:
-                        yield PythonInlinePyPIURI(uri, normalize=normalize, append=append, pkg=pkg)
-                        return
+                    pn, _ = self.simplify_pn_pv(pn, None, pkg, True)
+                    yield PythonInlinePyPIURI(
+                        uri, normalize=normalize, append=append, pypi_pn=pn, pkg=pkg
+                    )
+                    return
 
         # otherwise, yield result for every URL, with suggested replacement
         for uri, dist_filename in pypi_uris:
