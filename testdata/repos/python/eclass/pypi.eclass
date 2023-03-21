@@ -13,6 +13,11 @@
 # @DEFAULT_UNSET
 # @DESCRIPTION:
 
+# @ECLASS_VARIABLE: PYPI_PN
+# @PRE_INHERIT
+# @DESCRIPTION:
+: ${PYPI_PN:=${PN}}
+
 # @FUNCTION: pypi_normalize_name
 # @USAGE: <name>
 # @DESCRIPTION:
@@ -56,7 +61,7 @@ pypi_sdist_url() {
 		shift
 	fi
 
-	local project=${1-"${PN}"}
+	local project=${1-"${PYPI_PN}"}
 	local version=${2-"$(pypi_translate_version "${PV}")"}
 	local suffix=${3-.tar.gz}
 	local fn_project=${project}
@@ -69,7 +74,7 @@ pypi_sdist_url() {
 # @USAGE: [<project> [<version> [<python-tag> [<abi-platform-tag>]]]]
 # @DESCRIPTION:
 pypi_wheel_name() {
-	local project=$(pypi_normalize_name "${1-"${PN}"}")
+	local project=$(pypi_normalize_name "${1-"${PYPI_PN}"}")
 	local version=${2-"$(pypi_translate_version "${PV}")"}
 	local pytag=${3-py3}
 	local abitag=${4-none-any}
@@ -87,7 +92,7 @@ pypi_wheel_url() {
 	fi
 
 	local filename=$(pypi_wheel_name "${@}")
-	local project=${1-"${PN}"}
+	local project=${1-"${PYPI_PN}"}
 	local version=${2-"$(pypi_translate_version "${PV}")"}
 	local pytag=${3-py3}
 	printf "https://files.pythonhosted.org/packages/%s" \
@@ -100,8 +105,8 @@ pypi_wheel_url() {
 
 if [[ ${PYPI_NO_NORMALIZE} ]]; then
 	SRC_URI="$(pypi_sdist_url --no-normalize)"
-	S="${WORKDIR}/${PN}-$(pypi_translate_version "${PV}")"
+	S="${WORKDIR}/${PYPI_PN}-$(pypi_translate_version "${PV}")"
 else
 	SRC_URI="$(pypi_sdist_url)"
-	S="${WORKDIR}/$(pypi_normalize_name "${PN}")-$(pypi_translate_version "${PV}")"
+	S="${WORKDIR}/$(pypi_normalize_name "${PYPI_PN}")-$(pypi_translate_version "${PV}")"
 fi

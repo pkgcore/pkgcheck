@@ -1,155 +1,194 @@
 diff -Naur python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-0.ebuild fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-0.ebuild
---- python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-0.ebuild	2023-02-13 18:02:07.141313182 +0100
-+++ fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-0.ebuild	2023-02-13 18:16:47.391898323 +0100
-@@ -3,9 +3,11 @@
+--- python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-0.ebuild	2023-03-02 17:59:30.071679391 +0100
++++ fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-0.ebuild	2023-03-21 17:27:31.612748202 +0100
+@@ -3,10 +3,13 @@
  
  EAPI=8
  
++PYPI_NO_NORMALIZE=1
++PYPI_PN=${PN/-/.}
++
 +inherit pypi
 +
  DESCRIPTION="Ebuild with PyPI URL"
  HOMEPAGE="https://example.com"
 -SRC_URI="mirror://pypi/${PN::1}/${PN/-/.}/${P/-/.}.tar.gz"
-+SRC_URI="$(pypi_sdist_url --no-normalize "${PN/-/.}")"
- S=${WORKDIR}/${P/-/.}
+-S=${WORKDIR}/${P/-/.}
  
  LICENSE="BSD"
+ SLOT="0"
 diff -Naur python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000.ebuild fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000.ebuild
---- python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000.ebuild	2023-02-13 18:02:37.101867819 +0100
-+++ fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000.ebuild	2023-02-13 18:16:52.222022177 +0100
-@@ -3,10 +3,11 @@
+--- python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000.ebuild	2023-03-02 17:59:30.071679391 +0100
++++ fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000.ebuild	2023-03-21 17:28:15.590371586 +0100
+@@ -3,10 +3,12 @@
  
  EAPI=8
  
++PYPI_PN=${PN/-/.}
++
 +inherit pypi
 +
  DESCRIPTION="Ebuild with PyPI URL"
  HOMEPAGE="https://example.com"
 -SRC_URI="mirror://pypi/${PN::1}/${PN/-/.}/${PN//-/_}-${PV}.tar.gz"
 -S=${WORKDIR}/${PN//-/_}-${PV}
-+SRC_URI="$(pypi_sdist_url "${PN/-/.}")"
  
  LICENSE="BSD"
  SLOT="0"
 diff -Naur python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000-r100.ebuild fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000-r100.ebuild
---- python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000-r100.ebuild	2023-02-13 18:05:32.871560794 +0100
-+++ fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000-r100.ebuild	2023-02-13 18:16:55.365435891 +0100
-@@ -3,10 +3,11 @@
+--- python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000-r100.ebuild	2023-03-02 17:59:30.071679391 +0100
++++ fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000-r100.ebuild	2023-03-21 17:28:22.750527209 +0100
+@@ -3,10 +3,12 @@
  
  EAPI=8
  
++PYPI_PN=${PN/-/_}
++
 +inherit pypi
 +
  DESCRIPTION="Ebuild with PyPI URL"
  HOMEPAGE="https://example.com"
 -SRC_URI="mirror://pypi/${PN::1}/${PN/-/_}/${PN//-/_}-${PV}.tar.gz"
 -S=${WORKDIR}/${PN//-/_}-${PV}
-+SRC_URI="$(pypi_sdist_url "${PN/-/_}")"
  
  LICENSE="BSD"
  SLOT="0"
 diff -Naur python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000-r101.ebuild fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000-r101.ebuild
---- python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000-r101.ebuild	2023-02-13 18:05:45.775104791 +0100
-+++ fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000-r101.ebuild	2023-02-13 18:16:57.982169331 +0100
-@@ -3,10 +3,11 @@
+--- python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000-r101.ebuild	2023-03-02 17:59:30.071679391 +0100
++++ fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000-r101.ebuild	2023-03-21 17:28:29.327336791 +0100
+@@ -3,10 +3,12 @@
  
  EAPI=8
  
++PYPI_PN=${PN//-/_}
++
 +inherit pypi
 +
  DESCRIPTION="Ebuild with PyPI URL"
  HOMEPAGE="https://example.com"
 -SRC_URI="mirror://pypi/${PN::1}/${PN//-/_}/${PN//-/_}-${PV}.tar.gz"
 -S=${WORKDIR}/${PN//-/_}-${PV}
-+SRC_URI="$(pypi_sdist_url "${PN//-/_}")"
  
  LICENSE="BSD"
  SLOT="0"
 diff -Naur python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000-r1.ebuild fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000-r1.ebuild
---- python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000-r1.ebuild	2023-02-13 18:04:32.533891351 +0100
-+++ fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000-r1.ebuild	2023-02-13 18:17:01.165583737 +0100
-@@ -3,10 +3,11 @@
+--- python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000-r1.ebuild	2023-03-02 17:59:30.071679391 +0100
++++ fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000-r1.ebuild	2023-03-21 17:28:35.514137872 +0100
+@@ -3,10 +3,12 @@
  
  EAPI=8
  
++PYPI_PN=${PN//-/.}
++
 +inherit pypi
 +
  DESCRIPTION="Ebuild with PyPI URL"
  HOMEPAGE="https://example.com"
 -SRC_URI="mirror://pypi/${PN::1}/${PN//-/.}/${PN//-/_}-${PV}.tar.gz"
 -S=${WORKDIR}/${PN//-/_}-${PV}
-+SRC_URI="$(pypi_sdist_url "${PN//-/.}")"
  
  LICENSE="BSD"
  SLOT="0"
 diff -Naur python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000-r200.ebuild fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000-r200.ebuild
---- python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000-r200.ebuild	2023-02-13 18:06:26.842434235 +0100
-+++ fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000-r200.ebuild	2023-02-13 18:17:04.392332387 +0100
-@@ -3,10 +3,11 @@
+--- python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000-r200.ebuild	2023-03-02 17:59:30.071679391 +0100
++++ fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1000-r200.ebuild	2023-03-21 17:28:42.704294057 +0100
+@@ -3,10 +3,12 @@
  
  EAPI=8
  
++PYPI_PN=${PN^}
++
 +inherit pypi
 +
  DESCRIPTION="Ebuild with PyPI URL"
  HOMEPAGE="https://example.com"
 -SRC_URI="mirror://pypi/P/${PN^}/${PN//-/_}-${PV}.tar.gz"
 -S=${WORKDIR}/${PN//-/_}-${PV}
-+SRC_URI="$(pypi_sdist_url "${PN^}")"
  
  LICENSE="BSD"
  SLOT="0"
 diff -Naur python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-100.ebuild fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-100.ebuild
---- python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-100.ebuild	2023-02-13 18:10:56.409921917 +0100
-+++ fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-100.ebuild	2023-02-13 18:17:19.662717926 +0100
-@@ -3,9 +3,11 @@
+--- python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-100.ebuild	2023-03-02 17:59:30.071679391 +0100
++++ fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-100.ebuild	2023-03-21 17:28:57.301277709 +0100
+@@ -3,10 +3,12 @@
  
  EAPI=8
  
++PYPI_PN=${PN/-/_}
++
 +inherit pypi
 +
  DESCRIPTION="Ebuild with PyPI URL"
  HOMEPAGE="https://example.com"
 -SRC_URI="mirror://pypi/${PN::1}/${PN/-/_}/${P/-/_}.tar.gz"
-+SRC_URI="$(pypi_sdist_url --no-normalize "${PN/-/_}")"
- S=${WORKDIR}/${P/-/_}
+-S=${WORKDIR}/${P/-/_}
  
  LICENSE="BSD"
+ SLOT="0"
 diff -Naur python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1.ebuild fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1.ebuild
---- python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1.ebuild	2023-02-13 18:10:03.499125550 +0100
-+++ fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1.ebuild	2023-02-13 18:17:19.666051344 +0100
-@@ -3,9 +3,11 @@
+--- python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1.ebuild	2023-03-02 17:59:30.071679391 +0100
++++ fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-1.ebuild	2023-03-21 17:27:53.069881865 +0100
+@@ -3,10 +3,13 @@
  
  EAPI=8
  
++PYPI_NO_NORMALIZE=1
++PYPI_PN=${PN//-/.}
++
 +inherit pypi
 +
  DESCRIPTION="Ebuild with PyPI URL"
  HOMEPAGE="https://example.com"
 -SRC_URI="mirror://pypi/${PN::1}/${PN//-/.}/${PN//-/.}-${PV}.tar.gz"
-+SRC_URI="$(pypi_sdist_url --no-normalize "${PN//-/.}")"
- S=${WORKDIR}/${PN//-/.}-${PV}
+-S=${WORKDIR}/${PN//-/.}-${PV}
  
  LICENSE="BSD"
-diff -Naur python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-200.ebuild fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-200.ebuild
---- python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-200.ebuild	2023-02-13 18:12:05.330950479 +0100
-+++ fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-200.ebuild	2023-02-13 18:17:19.666051344 +0100
-@@ -3,9 +3,11 @@
+ SLOT="0"
+diff -Naur python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-2000.ebuild fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-2000.ebuild
+--- python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-2000.ebuild	2023-03-21 17:20:27.603389499 +0100
++++ fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-2000.ebuild	2023-03-21 17:30:27.623252678 +0100
+@@ -3,13 +3,15 @@
  
  EAPI=8
  
++PYPI_PN=${PN/-/.}
++
++inherit pypi
++
+ DESCRIPTION="Ebuild with two PyPI URLs"
+ HOMEPAGE="https://example.com"
+-SRC_URI="
+-	mirror://pypi/${PN::1}/${PN/-/.}/${PN//-/_}-${PV}.tar.gz
+-	mirror://pypi/${PN::1}/${PN/-/.}_vectors/${PN/-/.}_vectors-151.tar.gz
++SRC_URI+="
++	$(pypi_sdist_url --no-normalize python.inline-pypi-url_vectors 151)
+ "
+-S=${WORKDIR}/${PN//-/_}-${PV}
+ 
+ LICENSE="BSD"
+ SLOT="0"
+diff -Naur python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-200.ebuild fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-200.ebuild
+--- python/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-200.ebuild	2023-03-02 17:59:30.071679391 +0100
++++ fixed/PythonFetchableCheck/python-inline-pypi-url/python-inline-pypi-url-200.ebuild	2023-03-21 17:28:06.286835989 +0100
+@@ -3,10 +3,13 @@
+ 
+ EAPI=8
+ 
++PYPI_NO_NORMALIZE=1
++PYPI_PN=${PN^}
++
 +inherit pypi
 +
  DESCRIPTION="Ebuild with PyPI URL"
  HOMEPAGE="https://example.com"
 -SRC_URI="mirror://pypi/P/${PN^}/${P^}.tar.gz"
-+SRC_URI="$(pypi_sdist_url --no-normalize "${PN^}")"
- S=${WORKDIR}/${P^}
+-S=${WORKDIR}/${P^}
  
  LICENSE="BSD"
+ SLOT="0"
 diff -Naur python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-0.ebuild fixed/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-0.ebuild
---- python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-0.ebuild	2023-02-13 13:53:39.474144315 +0100
-+++ fixed/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-0.ebuild	2023-02-13 18:13:52.757100032 +0100
+--- python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-0.ebuild	2023-03-02 17:59:30.068345977 +0100
++++ fixed/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-0.ebuild	2023-03-21 17:26:48.258469809 +0100
 @@ -3,9 +3,11 @@
  
  EAPI=8
@@ -164,8 +203,8 @@ diff -Naur python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-0
  LICENSE="BSD"
  SLOT="0"
 diff -Naur python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-1_alpha1.ebuild fixed/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-1_alpha1.ebuild
---- python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-1_alpha1.ebuild	2023-02-13 13:45:21.784711215 +0100
-+++ fixed/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-1_alpha1.ebuild	2023-02-13 18:13:52.757100032 +0100
+--- python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-1_alpha1.ebuild	2023-03-02 17:59:30.068345977 +0100
++++ fixed/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-1_alpha1.ebuild	2023-03-21 17:26:48.258469809 +0100
 @@ -3,11 +3,11 @@
  
  EAPI=8
@@ -182,8 +221,8 @@ diff -Naur python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-1
  LICENSE="BSD"
  SLOT="0"
 diff -Naur python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-1_alpha1-r1.ebuild fixed/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-1_alpha1-r1.ebuild
---- python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-1_alpha1-r1.ebuild	2023-02-13 13:45:46.604987058 +0100
-+++ fixed/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-1_alpha1-r1.ebuild	2023-02-13 18:13:52.757100032 +0100
+--- python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-1_alpha1-r1.ebuild	2023-03-02 17:59:30.068345977 +0100
++++ fixed/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-1_alpha1-r1.ebuild	2023-03-21 17:26:48.258469809 +0100
 @@ -3,14 +3,14 @@
  
  EAPI=8
@@ -204,8 +243,8 @@ diff -Naur python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-1
  LICENSE="BSD"
  SLOT="0"
 diff -Naur python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-2_p4.ebuild fixed/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-2_p4.ebuild
---- python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-2_p4.ebuild	2023-02-13 13:46:34.949608190 +0100
-+++ fixed/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-2_p4.ebuild	2023-02-13 18:13:52.757100032 +0100
+--- python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-2_p4.ebuild	2023-03-02 17:59:30.068345977 +0100
++++ fixed/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-2_p4.ebuild	2023-03-21 17:26:48.258469809 +0100
 @@ -3,11 +3,10 @@
  
  EAPI=8
@@ -221,8 +260,8 @@ diff -Naur python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-2
  LICENSE="BSD"
  SLOT="0"
 diff -Naur python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-2_p4-r1.ebuild fixed/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-2_p4-r1.ebuild
---- python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-2_p4-r1.ebuild	2023-02-13 13:46:34.949608190 +0100
-+++ fixed/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-2_p4-r1.ebuild	2023-02-13 18:13:52.757100032 +0100
+--- python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-2_p4-r1.ebuild	2023-03-02 17:59:30.068345977 +0100
++++ fixed/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-2_p4-r1.ebuild	2023-03-21 17:26:48.258469809 +0100
 @@ -3,14 +3,13 @@
  
  EAPI=8
@@ -242,8 +281,8 @@ diff -Naur python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-2
  LICENSE="BSD"
  SLOT="0"
 diff -Naur python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-3.ebuild fixed/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-3.ebuild
---- python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-3.ebuild	2023-02-13 15:30:06.802489789 +0100
-+++ fixed/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-3.ebuild	2023-02-13 18:13:52.757100032 +0100
+--- python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-3.ebuild	2023-03-02 17:59:30.071679391 +0100
++++ fixed/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-3.ebuild	2023-03-21 17:26:48.258469809 +0100
 @@ -3,13 +3,14 @@
  
  EAPI=8
@@ -263,8 +302,8 @@ diff -Naur python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-3
  S=${WORKDIR}/${MY_P}
  
 diff -Naur python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-3-r1.ebuild fixed/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-3-r1.ebuild
---- python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-3-r1.ebuild	2023-02-13 15:24:31.819467907 +0100
-+++ fixed/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-3-r1.ebuild	2023-02-13 18:13:52.757100032 +0100
+--- python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-3-r1.ebuild	2023-03-02 17:59:30.071679391 +0100
++++ fixed/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-3-r1.ebuild	2023-03-21 17:26:48.258469809 +0100
 @@ -3,12 +3,14 @@
  
  EAPI=8
@@ -283,8 +322,8 @@ diff -Naur python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-3
  S=${WORKDIR}/${MY_P}
  
 diff -Naur python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-4.ebuild fixed/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-4.ebuild
---- python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-4.ebuild	2023-02-13 15:30:54.598707954 +0100
-+++ fixed/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-4.ebuild	2023-02-13 18:13:52.757100032 +0100
+--- python/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-4.ebuild	2023-03-02 17:59:30.071679391 +0100
++++ fixed/PythonFetchableCheck/PythonInlinePyPIURL/PythonInlinePyPIURL-4.ebuild	2023-03-21 17:26:48.258469809 +0100
 @@ -3,12 +3,14 @@
  
  EAPI=8
