@@ -815,18 +815,17 @@ class PythonFetchableCheck(Check):
         if len(pypi_uris) == 1:
             uri, filename = pypi_uris[0]
 
-            def matches_fn(expected_fn: str) -> bool:
-                expected = f"{PYPI_URI_PREFIX}source/{pkg.package[0]}/{pkg.package}/{expected_fn}"
-                return uri == expected and filename == expected_fn
-
-            version = self.translate_version(pkg.version)
-            append = len(uris) > 1
-            if matches_fn(f"{self.normalize_distribution_name(pkg.package)}-{version}.tar.gz"):
-                yield PythonInlinePyPIURI(uri, normalize=True, append=append, pkg=pkg)
-                return
-            if matches_fn(f"{pkg.package}-{version}.tar.gz"):
-                yield PythonInlinePyPIURI(uri, normalize=False, append=append, pkg=pkg)
-                return
+            if source_match := PYPI_SDIST_URI_RE.match(uri):
+                pn, filename_pn, pv, suffix = source_match.groups()
+                if pv == self.translate_version(pkg.version) and suffix == ".tar.gz":
+                    append = len(uris) > 1
+                    normalize = filename_pn == self.normalize_distribution_name(pn)
+                    if not normalize and filename_pn != pn:
+                        # ignore malformed URLs
+                        return
+                    if pn == pkg.package:
+                        yield PythonInlinePyPIURI(uri, normalize=normalize, append=append, pkg=pkg)
+                        return
 
         # otherwise, yield result for every URL, with suggested replacement
         for uri, dist_filename in pypi_uris:
