@@ -1,4 +1,5 @@
 EAPI=2
+
 DESCRIPTION="Ebuild with SRC_URI using .zip archive when .tar* is available"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 SRC_URI="

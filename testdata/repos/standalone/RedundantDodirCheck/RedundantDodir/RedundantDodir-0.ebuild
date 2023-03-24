@@ -1,4 +1,5 @@
 EAPI=7
+
 DESCRIPTION="Ebuild with redundant dodir calls"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 SLOT="0"

@@ -1,4 +1,5 @@
 EAPI=7
+
 DESCRIPTION="Ebuild uses bad whitespace character"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 SLOT="0"

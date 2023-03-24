@@ -73,6 +73,12 @@ class BadWhitespaceCharacter(results.LineResult, results.Warning):
         )
 
 
+class MissingEAPIBlankLine(results.VersionResult, results.Style):
+    """Missing blank line after ``EAPI=`` assignment."""
+
+    desc = "missing blank line after EAPI= assignment"
+
+
 class WhitespaceData(NamedTuple):
     """Data format to register hardcoded list of bad whitespace characters."""
 
@@ -118,14 +124,15 @@ class WhitespaceCheck(Check):
 
     _source = sources.EbuildFileRepoSource
     known_results = frozenset(
-        [
+        {
             WhitespaceFound,
             WrongIndentFound,
             DoubleEmptyLine,
             TrailingEmptyLine,
             NoFinalNewline,
             BadWhitespaceCharacter,
-        ]
+            MissingEAPIBlankLine,
+        }
     )
 
     _indent_regex = re.compile("^\t* \t+")
@@ -141,8 +148,14 @@ class WhitespaceCheck(Check):
         leading = []
         indent = []
         double_empty = []
+        eapi_lineno = None
 
         for lineno, line in enumerate(pkg.lines, 1):
+            if line.startswith("EAPI="):
+                eapi_lineno = lineno
+            elif eapi_lineno is not None and lineno == eapi_lineno + 1 and line != "\n":
+                yield MissingEAPIBlankLine(pkg=pkg)
+
             for match in self.bad_whitespace_regex.finditer(line):
                 yield BadWhitespaceCharacter(
                     repr(match.group("char")),

@@ -1,9 +1,9 @@
 diff -Naur standalone/WhitespaceCheck/BadWhitespaceCharacter/BadWhitespaceCharacter-0.ebuild fixed/WhitespaceCheck/BadWhitespaceCharacter/BadWhitespaceCharacter-0.ebuild
 --- standalone/WhitespaceCheck/BadWhitespaceCharacter/BadWhitespaceCharacter-0.ebuild	2019-12-03 14:20:02.089699996 -0700
 +++ fixed/WhitespaceCheck/BadWhitespaceCharacter/BadWhitespaceCharacter-0.ebuild	2019-12-03 14:24:43.960923352 -0700
-@@ -5,7 +5,7 @@
+@@ -6,7 +6,7 @@
  LICENSE="BSD"
- 
+
  src_test() {
 -	# bad chars aren't ignored in comments
 -	cd "${S}"/cpp || die # or inline comments

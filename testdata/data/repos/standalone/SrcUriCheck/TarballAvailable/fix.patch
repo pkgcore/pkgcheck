@@ -7,7 +7,7 @@ diff -Naur standalone/SrcUriCheck/TarballAvailable/Manifest fixed/SrcUriCheck/Ta
 diff -Naur standalone/SrcUriCheck/TarballAvailable/TarballAvailable-0.ebuild fixed/SrcUriCheck/TarballAvailable/TarballAvailable-0.ebuild
 --- standalone/SrcUriCheck/TarballAvailable/TarballAvailable-0.ebuild	2019-08-23 17:07:52.527170936 -0600
 +++ fixed/SrcUriCheck/TarballAvailable/TarballAvailable-0.ebuild	2019-08-23 17:16:30.793240821 -0600
-@@ -2,9 +2,8 @@
+@@ -3,9 +3,8 @@
  DESCRIPTION="Ebuild with SRC_URI using .zip archive when .tar* is available"
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
  SRC_URI="

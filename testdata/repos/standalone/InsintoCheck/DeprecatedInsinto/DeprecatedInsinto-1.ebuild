@@ -1,4 +1,5 @@
 EAPI=4
+
 DESCRIPTION="Ebuild with deprecated insinto usage"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 SLOT="0"

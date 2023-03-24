@@ -1,4 +1,5 @@
 EAPI=7
+
 DESCRIPTION="Ebuild with bad dependencies"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 SLOT="0"

@@ -1,4 +1,5 @@
 EAPI=7
+
 DESCRIPTION="Ebuild missing USE dependency default"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 SLOT="0"

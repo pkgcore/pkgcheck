@@ -3,7 +3,7 @@ diff -Naur standalone/InsintoCheck/DeprecatedInsinto/DeprecatedInsinto-0.ebuild 
 +++ fixed/InsintoCheck/DeprecatedInsinto/DeprecatedInsinto-0.ebuild	2020-01-21 13:28:02.414341321 -0700
 @@ -4,14 +4,9 @@
  LICENSE="BSD"
- 
+
  src_install() {
 -	insinto /etc/conf.d
 -	doins foo
@@ -24,9 +24,9 @@ diff -Naur standalone/InsintoCheck/DeprecatedInsinto/DeprecatedInsinto-0.ebuild 
 diff -Naur standalone/InsintoCheck/DeprecatedInsinto/DeprecatedInsinto-1.ebuild fixed/InsintoCheck/DeprecatedInsinto/DeprecatedInsinto-1.ebuild
 --- standalone/InsintoCheck/DeprecatedInsinto/DeprecatedInsinto-1.ebuild	2020-01-21 13:20:18.815286720 -0700
 +++ fixed/InsintoCheck/DeprecatedInsinto/DeprecatedInsinto-1.ebuild	2020-01-21 13:26:43.359992323 -0700
-@@ -5,14 +5,11 @@
+@@ -6,14 +6,11 @@
  LICENSE="BSD"
- 
+
  src_install() {
 -	insinto /usr/share/doc/${PF}
 -	doins foo

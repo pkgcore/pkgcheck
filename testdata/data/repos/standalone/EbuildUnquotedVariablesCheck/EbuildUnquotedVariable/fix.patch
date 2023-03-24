@@ -1,6 +1,6 @@
 --- standalone/EbuildUnquotedVariablesCheck/EbuildUnquotedVariable/EbuildUnquotedVariable-0.ebuild	2022-05-18 20:27:34.657647175 +0200
 +++ fixed/EbuildUnquotedVariablesCheck/EbuildUnquotedVariable/EbuildUnquotedVariable-0.ebuild	2022-05-18 20:50:00.271294657 +0200
-@@ -6,7 +6,7 @@
+@@ -7,7 +7,7 @@
  S=${WORKDIR}/${PV} # ok
 
  PATCHES=(
@@ -9,7 +9,7 @@
  	"${FILESDIR}"/foo.patch # ok
  	"${FILESDIR}/foo.patch" # ok
  )
-@@ -16,28 +16,28 @@
+@@ -17,28 +17,28 @@
  		:
  	fi
 

@@ -10,7 +10,7 @@ diff -Naur standalone/IuseCheck/InvalidUseFlags/InvalidUseFlags-0.ebuild fixed/I
 diff -Naur standalone/IuseCheck/InvalidUseFlags/InvalidUseFlags-4.ebuild fixed/IuseCheck/InvalidUseFlags/InvalidUseFlags-4.ebuild
 --- standalone/IuseCheck/InvalidUseFlags/InvalidUseFlags-4.ebuild	2021-05-24 04:15:45.921607273 -0600
 +++ fixed/IuseCheck/InvalidUseFlags/InvalidUseFlags-4.ebuild	2021-05-24 04:26:36.519704480 -0600
-@@ -3,4 +3,4 @@
+@@ -4,4 +4,4 @@
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
  SLOT="0"
  LICENSE="BSD"

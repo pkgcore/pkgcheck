@@ -1,4 +1,5 @@
 EAPI=4
+
 DESCRIPTION="Ebuild with REQUIRED_USE failing by default"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 SLOT="0"
