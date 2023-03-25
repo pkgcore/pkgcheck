@@ -820,7 +820,12 @@ class PythonFetchableCheck(Check):
 
             if source_match := PYPI_SDIST_URI_RE.match(uri):
                 pn, filename_pn, pv, suffix = source_match.groups()
-                if pv == self.translate_version(pkg.version) and suffix == ".tar.gz":
+                translated_version = self.translate_version(pkg.version)
+                if (
+                    pv == translated_version
+                    and suffix == ".tar.gz"
+                    and filename == f"{filename_pn}-{translated_version}.tar.gz"
+                ):
                     append = len(uris) > 1
                     normalize = filename_pn == self.normalize_distribution_name(pn)
                     if not normalize and filename_pn != pn:
