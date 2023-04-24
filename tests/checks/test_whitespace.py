@@ -150,3 +150,21 @@ class TestMultipleChecks(WhitespaceCheckTest):
 
         reports = self.assertReports(self.check, fake_pkg)
         assert len(reports) == 4
+
+
+class TestMissingWhitespaceCheck(misc.ReportTestCase):
+    check_kls = whitespace.MissingWhitespaceCheck
+    check = whitespace.MissingWhitespaceCheck(None)
+
+    def test_it(self):
+        fake_src = [
+            "# This is a comment\n",
+            "# This is a comment\n",
+            "# This is a comment, and no blank line before EAPI\n",
+            "EAPI=8\n",
+            "inherit fake\n",  # no blank line after EAPI=
+        ]
+        fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
+
+        r = self.assertReport(self.check, fake_pkg)
+        assert isinstance(r, whitespace.MissingEAPIBlankLine)

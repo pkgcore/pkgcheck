@@ -4,7 +4,7 @@ import re
 from typing import NamedTuple
 
 from .. import results, sources
-from . import Check
+from . import Check, OptionalCheck
 
 
 class _Whitespace(results.LinesResult, results.Style):
@@ -131,7 +131,6 @@ class WhitespaceCheck(Check):
             TrailingEmptyLine,
             NoFinalNewline,
             BadWhitespaceCharacter,
-            MissingEAPIBlankLine,
         }
     )
 
@@ -148,14 +147,8 @@ class WhitespaceCheck(Check):
         leading = []
         indent = []
         double_empty = []
-        eapi_lineno = None
 
         for lineno, line in enumerate(pkg.lines, 1):
-            if line.startswith("EAPI="):
-                eapi_lineno = lineno
-            elif eapi_lineno is not None and lineno == eapi_lineno + 1 and line != "\n":
-                yield MissingEAPIBlankLine(pkg=pkg)
-
             for match in self.bad_whitespace_regex.finditer(line):
                 yield BadWhitespaceCharacter(
                     repr(match.group("char")),
@@ -191,3 +184,23 @@ class WhitespaceCheck(Check):
         # Dealing with empty ebuilds is just paranoia
         if pkg.lines and not pkg.lines[-1].endswith("\n"):
             yield NoFinalNewline(pkg=pkg)
+
+
+class MissingWhitespaceCheck(OptionalCheck):
+    """Scan ebuild for missing whitespace."""
+
+    _source = sources.EbuildFileRepoSource
+    known_results = frozenset(
+        {
+            MissingEAPIBlankLine,
+        }
+    )
+
+    def feed(self, pkg):
+        eapi_lineno = None
+
+        for lineno, line in enumerate(pkg.lines, 1):
+            if line.startswith("EAPI="):
+                eapi_lineno = lineno
+            elif eapi_lineno is not None and lineno == eapi_lineno + 1 and line != "\n":
+                yield MissingEAPIBlankLine(pkg=pkg)

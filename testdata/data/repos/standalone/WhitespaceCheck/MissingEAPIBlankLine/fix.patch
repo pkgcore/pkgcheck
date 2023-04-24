@@ -1,9 +1,0 @@
-diff -Naur standalone/WhitespaceCheck/MissingEAPIBlankLine/MissingEAPIBlankLine-0.ebuild fixed/WhitespaceCheck/MissingEAPIBlankLine/MissingEAPIBlankLine-0.ebuild
---- standalone/WhitespaceCheck/MissingEAPIBlankLine/MissingEAPIBlankLine-0.ebuild
-+++ fixed/WhitespaceCheck/MissingEAPIBlankLine/MissingEAPIBlankLine-0.ebuild
-@@ -1,4 +1,5 @@
- EAPI=7
-+
- DESCRIPTION="Ebuild is missing blank line after EAPI"
- HOMEPAGE="https://github.com/pkgcore/pkgcheck"
- SLOT="0"
