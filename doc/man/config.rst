@@ -4,10 +4,11 @@ Config file support
 Config files are supported by ``pkgcheck scan`` from any of four locations.
 Listed in order of increasing precedence these include the following:
 
-- system config -- /etc/pkgcheck/pkgcheck.conf
-- user config -- ~/.config/pkgcheck/pkgcheck.conf
-- repo config -- metadata/pkgcheck.conf inside an ebuild repo
-- custom config -- specified via the --config option
+- system config -- ``/etc/pkgcheck/pkgcheck.conf``
+- user config -- ``${XDG_CONFIG_HOME}/pkgcheck/pkgcheck.conf``
+- user config -- ``~/.config/pkgcheck/pkgcheck.conf``
+- repo config -- ``metadata/pkgcheck.conf`` inside an ebuild repo
+- custom config -- specified via the ``--config`` option
 
 Any settings from a config file with higher precedence will override matching
 settings from a config file with a lower precedence, e.g. repo settings
