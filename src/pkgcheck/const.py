@@ -32,7 +32,7 @@ for xdg_var, var_name, fallback_dir in (
     setattr(
         _module,
         var_name,
-        os.environ.get(xdg_var, os.path.join(os.path.expanduser(fallback_dir), "pkgcheck")),
+        os.path.join(os.environ.get(xdg_var, os.path.expanduser(fallback_dir)), "pkgcheck"),
     )
 
 REPO_PATH = _GET_CONST("REPO_PATH", _reporoot)
