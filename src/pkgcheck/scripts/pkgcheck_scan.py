@@ -2,6 +2,7 @@ import argparse
 import os
 import shlex
 from contextlib import ExitStack
+from unittest.mock import patch
 
 from pkgcore import const as pkgcore_const
 from pkgcore.repository import errors as repo_errors
@@ -370,7 +371,8 @@ def _setup_scan(parser, namespace, args):
     # have to be parsed twice, will probably require a custom snakeoil
     # arghparse method.
     # parse command line args to override config defaults
-    namespace, _ = parser._parse_known_args(args, namespace)
+    with patch("pkgcheck.scripts.argparse_actions.ChecksetArgs.__call__", lambda *a, **k: None):
+        namespace, _ = parser._parse_known_args(args, namespace)
 
     # Get the current working directory for repo detection and restriction
     # creation, fallback to the root dir if it's be removed out from under us.
