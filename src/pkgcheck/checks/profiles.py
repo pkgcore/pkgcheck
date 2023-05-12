@@ -278,7 +278,7 @@ class ProfilesCheck(Check):
     )
     def _pkg_atoms(self, filename, node, vals):
         for x in iflatten_instance(vals, atom_cls):
-            if not self.search_repo.match(x):
+            if not isinstance(x, bool) and not self.search_repo.match(x):
                 yield UnknownProfilePackage(pjoin(node.name, filename), x)
 
     @verify_files(
