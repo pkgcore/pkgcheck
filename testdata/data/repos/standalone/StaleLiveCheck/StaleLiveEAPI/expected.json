@@ -1,0 +1,3 @@
+{"__class__": "StaleLiveEAPI", "category": "StaleLiveCheck", "package": "StaleLiveEAPI", "version": "2.9999", "old_eapi": 7, "new_eapi": 8}
+{"__class__": "StaleLiveEAPI", "category": "StaleLiveCheck", "package": "StaleLiveEAPI", "version": "3.9999", "old_eapi": 7, "new_eapi": 8}
+{"__class__": "StaleLiveEAPI", "category": "EclassUsageCheck", "package": "DuplicateEclassInherit", "version": "0", "old_eapi": 0, "new_eapi": 7}

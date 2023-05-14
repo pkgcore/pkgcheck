@@ -1782,3 +1782,39 @@ class VirtualProvidersCheck(Check):
                 }
                 if len(unversioned_rdepends) == 1 and not self.pkg_has_conditional_exception(pkgs):
                     yield VirtualWithSingleProvider(unversioned_rdepends.pop(), pkg=pkgs[0])
+
+
+class StaleLiveEAPI(results.VersionResult, results.Warning):
+    """Live ebuild is using older an EAPI then release ebuilds.
+
+    Live ebuilds should always use an EAPI version at least as new as the
+    release ebuilds.
+    """
+
+    def __init__(self, old_eapi, new_eapi, **kwargs):
+        super().__init__(**kwargs)
+        self.old_eapi = old_eapi
+        self.new_eapi = new_eapi
+
+    @property
+    def desc(self):
+        return f"live ebuild uses older EAPI={self.old_eapi} than release ebuilds (EAPI={self.new_eapi})"
+
+
+class StaleLiveCheck(Check):
+    """Check for stale live ebuilds."""
+
+    _source = sources.PackageRepoSource
+    known_results = frozenset({StaleLiveEAPI})
+
+    def feed(self, pkgs):
+        slots_pkgs = defaultdict(list)
+        for pkg in pkgs:
+            slots_pkgs[pkg.slot].append(pkg)
+
+        for pkgs in slots_pkgs.values():
+            if non_live := [pkg for pkg in pkgs if not pkg.live]:
+                max_non_live_eapi = max(int(str(pkg.eapi)) for pkg in non_live)
+                for pkg in pkgs:
+                    if pkg.live and (old_eapi := int(str(pkg.eapi))) < max_non_live_eapi:
+                        yield StaleLiveEAPI(old_eapi=old_eapi, new_eapi=max_non_live_eapi, pkg=pkg)
