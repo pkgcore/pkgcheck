@@ -2,6 +2,46 @@
 Release Notes
 =============
 
+-----------------------------
+pkgcheck 0.10.24 (2023-05-17)
+-----------------------------
+
+**New checks:**
+
+- UnknownCategoryDirs: enable for overlays and ignore scripts dir (Arthur
+  Zamarin, #564)
+
+- PythonFetchableCheck: rewrite check to reuse ``PYPI_SDIST_URI_RE`` (Michał
+  Górny, #569)
+
+- PythonFetchableCheck: include ``PYPI_PN`` opportunities in
+  ``PythonInlinePyPIURI`` (Michał Górny, #568, #569)
+
+- PythonFetchableCheck: restore filename check in pypi.eclass default case
+  (Michał Górny, #572)
+
+- MissingEAPIBlankLine: new optional check for missing blank after EAPI (Arthur
+  Zamarin, #570, #571)
+
+- StaleLiveCheck: new check for stale live ebuilds EAPI version (Arthur
+  Zamarin, #578)
+
+**Fixed bugs:**
+
+- GitPkgCommitsCheck: fix modification check for added ebuilds in packages set
+  (Arthur Zamarin, #563)
+
+- SrcUriChecksumChange: fix false positive with new ebuilds (Arthur Zamarin,
+  #553)
+
+- fix config loading when ``XDG_CONFIG_HOME`` is defined (Alberto Gireud, #573)
+
+- scan: fix unknown checkset during initial config load for checksets declared
+  in repository config (Arthur Zamarin, #576)
+
+- ProfilesCheck: fix handling of profiles with ``-*`` declared in ``packages``
+  (Arthur Zamarin, #577)
+
 ----------------------------
 pkgcheck 0.10.23 (2023-03-06)
 ----------------------------
