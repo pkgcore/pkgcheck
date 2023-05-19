@@ -7,7 +7,9 @@ Listed in order of increasing precedence these include the following:
 - system config -- ``/etc/pkgcheck/pkgcheck.conf``
 - user config -- ``${XDG_CONFIG_HOME}/pkgcheck/pkgcheck.conf``
 - user config -- ``~/.config/pkgcheck/pkgcheck.conf``
-- repo config -- ``metadata/pkgcheck.conf`` inside an ebuild repo
+- repo config -- ``metadata/pkgcheck.conf`` inside an ebuild repo (only
+  considered when the current directory is inside the repo, or when specified
+  using ``--repo`` option)
 - custom config -- specified via the ``--config`` option
 
 Any settings from a config file with higher precedence will override matching
