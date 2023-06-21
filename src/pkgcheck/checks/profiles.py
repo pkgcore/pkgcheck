@@ -1,5 +1,6 @@
 """Various profile-related checks."""
 
+from datetime import datetime
 import os
 from collections import defaultdict
 from typing import Iterable
@@ -14,6 +15,21 @@ from snakeoil.strings import pluralism
 
 from .. import addons, base, results, sources
 from . import Check, RepoCheck
+
+
+class OutdatedProfilePackage(results.ProfilesResult, results.Warning):
+    """Profile files includes package entry that doesn't exist in the repo
+    for a mentioned period of time."""
+
+    def __init__(self, path, atom, age):
+        super().__init__()
+        self.path = path
+        self.atom = str(atom)
+        self.age = float(age)
+
+    @property
+    def desc(self):
+        return f"{self.path!r}: outdated package entry: {self.atom!r}, last match removed {self.age} years ago"
 
 
 class UnknownProfilePackage(results.ProfilesResult, results.Warning):
@@ -190,9 +206,10 @@ class ProfilesCheck(Check):
     """Scan repo profiles for unknown flags/packages."""
 
     _source = sources.ProfilesRepoSource
-    required_addons = (addons.UseAddon, addons.KeywordsAddon)
+    required_addons = (addons.UseAddon, addons.KeywordsAddon, addons.git.GitAddon)
     known_results = frozenset(
         {
+            OutdatedProfilePackage,
             UnknownProfilePackage,
             UnmatchedProfilePackageUnmask,
             UnknownProfilePackageUse,
@@ -210,12 +227,20 @@ class ProfilesCheck(Check):
     # mapping between known files and verification methods
     known_files = {}
 
-    def __init__(self, *args, use_addon: addons.UseAddon, keywords_addon: addons.KeywordsAddon):
+    def __init__(
+        self,
+        *args,
+        use_addon: addons.UseAddon,
+        keywords_addon: addons.KeywordsAddon,
+        git_addon: addons.git.GitAddon,
+    ):
         super().__init__(*args)
         repo = self.options.target_repo
         self.keywords = keywords_addon
         self.search_repo = self.options.search_repo
         self.profiles_dir = repo.config.profiles_base
+        self.today = datetime.today()
+        self.existence_repo = git_addon.cached_repo(addons.git.GitRemovedRepo)
         self.use_expand_groups = {
             use.upper(): frozenset({val.removeprefix(f"{use}_") for val, _desc in vals})
             for use, vals in repo.config.use_expand_desc.items()
@@ -228,6 +253,17 @@ class ProfilesCheck(Check):
             | use_addon.global_iuse_expand
             | use_addon.global_iuse_implicit
         )
+
+    def _report_unknown_atom(self, path, atom):
+        if not isinstance(atom, atom_cls):
+            atom = atom_cls(atom)
+        if matches := self.existence_repo.match(atom):
+            removal = max(x.time for x in matches)
+            removal = datetime.fromtimestamp(removal)
+            years = (self.today - removal).days / 365.2425
+            return OutdatedProfilePackage(path, atom, round(years, 2))
+        else:
+            return UnknownProfilePackage(path, atom)
 
     @verify_files(("parent", "parents"), ("eapi", "eapi"))
     def _pull_attr(self, *args):
@@ -279,7 +315,7 @@ class ProfilesCheck(Check):
     def _pkg_atoms(self, filename, node, vals):
         for x in iflatten_instance(vals, atom_cls):
             if not isinstance(x, bool) and not self.search_repo.match(x):
-                yield UnknownProfilePackage(pjoin(node.name, filename), x)
+                yield self._report_unknown_atom(pjoin(node.name, filename), x)
 
     @verify_files(
         ("package.mask", "masks"),
@@ -292,10 +328,10 @@ class ProfilesCheck(Check):
         unmasked, masked = vals
         for x in masked:
             if not self.search_repo.match(x):
-                yield UnknownProfilePackage(pjoin(node.name, filename), x)
+                yield self._report_unknown_atom(pjoin(node.name, filename), x)
         for x in unmasked:
             if not self.search_repo.match(x):
-                yield UnknownProfilePackage(pjoin(node.name, filename), x)
+                yield self._report_unknown_atom(pjoin(node.name, filename), x)
             elif x not in all_masked:
                 yield UnmatchedProfilePackageUnmask(pjoin(node.name, filename), x)
 
@@ -324,7 +360,7 @@ class ProfilesCheck(Check):
                             pjoin(node.name, filename), a, unknown_enabled
                         )
                 else:
-                    yield UnknownProfilePackage(pjoin(node.name, filename), a)
+                    yield self._report_unknown_atom(pjoin(node.name, filename), a)
 
     @verify_files(("make.defaults", "make_defaults"))
     def _make_defaults(self, filename: str, node: sources.ProfileNode, vals: dict[str, str]):
