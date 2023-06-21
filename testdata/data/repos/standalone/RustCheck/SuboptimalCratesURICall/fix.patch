@@ -1,0 +1,18 @@
+diff -Naur standalone/RustCheck/SuboptimalCratesURICall/SuboptimalCratesURICall-0.ebuild fixed/RustCheck/SuboptimalCratesURICall/SuboptimalCratesURICall-0.ebuild
+--- standalone/RustCheck/SuboptimalCratesURICall/SuboptimalCratesURICall-0.ebuild
++++ fixed/RustCheck/SuboptimalCratesURICall/SuboptimalCratesURICall-0.ebuild
+@@ -10,4 +10,4 @@ DESCRIPTION="Ebuild with suboptimal cargo_crate_uris"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+-SRC_URI="$(cargo_crate_uris)"
++SRC_URI="${CARGO_CRATE_URIS}"
+diff -Naur standalone/RustCheck/SuboptimalCratesURICall/SuboptimalCratesURICall-1.ebuild fixed/RustCheck/SuboptimalCratesURICall/SuboptimalCratesURICall-1.ebuild
+--- standalone/RustCheck/SuboptimalCratesURICall/SuboptimalCratesURICall-1.ebuild
++++ fixed/RustCheck/SuboptimalCratesURICall/SuboptimalCratesURICall-1.ebuild
+@@ -10,4 +10,4 @@ DESCRIPTION="Ebuild with suboptimal cargo_crate_uris"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
+-SRC_URI="$(cargo_crate_uris ${CRATES})"
++SRC_URI="${CARGO_CRATE_URIS}"
