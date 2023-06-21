@@ -1,0 +1,14 @@
+diff -Naur standalone/RustCheck/SuboptimalCratesSeparator/SuboptimalCratesSeparator-0.ebuild fixed/RustCheck/SuboptimalCratesSeparator/SuboptimalCratesSeparator-0.ebuild
+--- standalone/RustCheck/SuboptimalCratesSeparator/SuboptimalCratesSeparator-0.ebuild
++++ fixed/RustCheck/SuboptimalCratesSeparator/SuboptimalCratesSeparator-0.ebuild
+@@ -1,7 +1,7 @@
+ CRATES="
+-	random@0.10.0 snakeoil-0.10.0
+-	pkgcore-0.10.0
+-	pkgcheck-0.10.0
++	random@0.10.0 snakeoil@0.10.0
++	pkgcore@0.10.0
++	pkgcheck@0.10.0
+ "
+
+ inherit cargo
