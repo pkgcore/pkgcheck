@@ -11,3 +11,9 @@ EXPORT_FUNCTIONS src_prepare
 # @DESCRIPTION:
 # Public src_prepare stub function.
 stub_src_prepare() { :; }
+
+# @ECLASS_VARIABLE: LARRY_EASTER_EGG
+# @USER_VARIABLE
+# @DEFAULT_UNSET
+# @DESCRIPTION:
+# A special user variable, an easter egg if you can find it.

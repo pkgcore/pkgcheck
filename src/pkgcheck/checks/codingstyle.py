@@ -749,6 +749,16 @@ class InheritsCheck(Check):
             for name in eclass_obj.variable_names:
                 self.exported.setdefault(name, set()).add(eclass)
 
+        # collect all @USER_VARIABLEs, which are excluded from MissingInherits
+        self.user_variables = frozenset(
+            {
+                x.name
+                for eclass_obj in self.eclass_cache.values()
+                for x in eclass_obj.variables
+                if x.user_variable
+            }
+        )
+
         # register EAPI-related funcs/cmds to ignore
         self.eapi_funcs = {}
         for eapi in EAPI.known_eapis.values():
@@ -826,7 +836,9 @@ class InheritsCheck(Check):
             if node.parent.type == "unset_command":
                 continue
             if name not in self.eapi_vars[pkg.eapi] | assigned_vars.keys():
-                lineno, colno = node.start_point
+                if name in self.user_variables:
+                    continue
+                lineno, _colno = node.start_point
                 if eclass := self.get_eclass(name, pkg):
                     used[eclass].append((lineno + 1, name, name))
 

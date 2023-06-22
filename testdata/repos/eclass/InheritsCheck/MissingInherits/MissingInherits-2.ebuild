@@ -11,5 +11,5 @@ src_prepare() {
 }
 
 inherit_public_func() {
-	echo "inherit_public_func"
+	echo "inherit_public_func" "${LARRY_EASTER_EGG}"
 }
