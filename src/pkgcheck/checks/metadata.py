@@ -1315,6 +1315,23 @@ class InvalidSrcUri(results.MetadataError, results.VersionResult):
     attr = "fetchables"
 
 
+class SrcUriFilenameDotPrefix(results.VersionResult, results.Error):
+    """SRC_URI's filename starts with a dot.
+
+    This is usually a mistake, as referencing empty variable before the dot.
+    Also those files might appear as hidden in many file system viewers.
+    Rename the filename using the ``->`` operator.
+    """
+
+    def __init__(self, filename, **kwargs):
+        super().__init__(**kwargs)
+        self.filename = filename
+
+    @property
+    def desc(self):
+        return f"SRC_URI filename {self.filename!r} starts with a dot"
+
+
 class SrcUriCheck(Check):
     """SRC_URI related checks.
 
@@ -1324,7 +1341,7 @@ class SrcUriCheck(Check):
 
     required_addons = (addons.UseAddon,)
     known_results = frozenset(
-        [
+        {
             BadFilename,
             BadProtocol,
             MissingUri,
@@ -1333,10 +1350,11 @@ class SrcUriCheck(Check):
             TarballAvailable,
             UnknownMirror,
             UnstatedIuse,
-        ]
+            SrcUriFilenameDotPrefix,
+        }
     )
 
-    valid_protos = frozenset(["http", "https", "ftp"])
+    valid_protos = frozenset({"http", "https", "ftp"})
 
     def __init__(self, *args, use_addon):
         super().__init__(*args)
@@ -1389,6 +1407,8 @@ class SrcUriCheck(Check):
             bad_filenames_re = rf"^({PN}|v?{PV}|[0-9a-f]{{40}}){exts}$"
             if re.match(bad_filenames_re, f_inst.filename):
                 bad_filenames.add(f_inst.filename)
+            elif f_inst.filename.startswith("."):
+                yield SrcUriFilenameDotPrefix(pkg=pkg, filename=f_inst.filename)
 
             restricts = set().union(*(x.vals for x in restrictions if not x.negate))
             if not f_inst.uri and "fetch" not in pkg.restrict.evaluate_depset(restricts):
