@@ -1,0 +1,43 @@
+name: New check request
+description: Suggest a new check for pkgcheck.
+title: '[New Check]: '
+labels: ["check"]
+
+body:
+  - type: checkboxes
+    attributes:
+      label: Is there an existing such new check request for this?
+      description: Please search to see if a similar suggestion already exists.
+      options:
+      - label: I have searched the existing issues
+        required: true
+  - type: textarea
+    attributes:
+      label: Explain
+      description: A concise description of what you're requesting, why, how, and more.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Examples
+      description: Example ebuild and line number with "bad" code.
+      placeholder: |
+        Preferably add a link to an ebuild in overlay (or main Gentoo tree) with specific commit id (in case the ebuild changes, we can find the original version). By using an example we can have easier time to test the new check, and understanding the desired behavior.
+  - type: input
+    attributes:
+      label: Output message
+      description: The message to output
+  - type: textarea
+    attributes:
+      label: Documentation
+      description: Longer help message which would be shown in documentation
+  - type: dropdown
+    attributes:
+      label: Result level
+      description: The expected result level
+      multiple: false
+      options:
+        - error
+        - warning
+        - info
+        - style

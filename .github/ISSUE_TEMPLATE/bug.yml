@@ -1,0 +1,33 @@
+name: Bug in pkgcheck
+description: Bug in pkgcheck, not commits scan
+title: '[Bug]: '
+labels: ["bug"]
+
+body:
+  - type: checkboxes
+    attributes:
+      label: Is there an existing issue for this?
+      description: Please search to see if an issue already exists for the bug you encountered.
+      options:
+      - label: I have searched the existing issues
+        required: true
+  - type: textarea
+    attributes:
+      label: Current Behavior
+      description: A concise description of what you're experiencing.
+  - type: textarea
+    attributes:
+      label: Expected Behavior
+      description: A concise description of what you expected to happen.
+  - type: input
+    attributes:
+      label: pkgcheck version
+      placeholder: "Output of `pkgcheck --version`"
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: pkgcore version
+      placeholder: "Output of `pkgcore --version`"
+    validations:
+      required: true

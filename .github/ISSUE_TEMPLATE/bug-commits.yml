@@ -1,0 +1,53 @@
+name: Bug in pkgcheck commits
+description: Bug during pkgcheck scan --commits or pkgdev push.
+title: '[Commits Bug]: '
+labels: ["bug"]
+
+body:
+  - type: checkboxes
+    attributes:
+      label: Is there an existing issue for this?
+      description: Please search to see if an issue already exists for the bug you encountered.
+      options:
+      - label: I have searched the existing issues
+        required: true
+  - type: textarea
+    attributes:
+      label: Current Behavior
+      description: A concise description of what you're experiencing.
+  - type: textarea
+    attributes:
+      label: Expected Behavior
+      description: A concise description of what you expected to happen.
+  - type: input
+    attributes:
+      label: master commit id
+      description: pkgcheck is using this commit as base of the commit range.
+      placeholder: "Output of `git rev-parse origin/master`"
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: HEAD link
+      description: Link to branch containing exact state of master (HEAD) during scan
+      placeholder: link
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: pkgcheck version
+      placeholder: "Output of `pkgcheck --version`"
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: pkgcore version
+      placeholder: "Output of `pkgcore --version`"
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: git remotes configuration
+      placeholder: "Output of `git remote -v`"
+    validations:
+      required: true
