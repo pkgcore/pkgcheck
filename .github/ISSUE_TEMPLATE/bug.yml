@@ -28,6 +28,6 @@ body:
   - type: input
     attributes:
       label: pkgcore version
-      placeholder: "Output of `pkgcore --version`"
+      placeholder: "Output of `pquery --version`"
     validations:
       required: true
