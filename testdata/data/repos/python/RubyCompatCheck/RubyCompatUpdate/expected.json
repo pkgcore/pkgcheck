@@ -1,0 +1,2 @@
+{"__class__": "RubyCompatUpdate", "category": "RubyCompatCheck", "package": "RubyCompatUpdate", "version": "0", "updates": ["ruby31", "ruby32"]}
+{"__class__": "RubyCompatUpdate", "category": "RubyCompatCheck", "package": "RubyCompatUpdate", "version": "1", "updates": ["ruby32"]}
