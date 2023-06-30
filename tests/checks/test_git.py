@@ -394,6 +394,10 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         # initialize parent repo
         self.parent_git_repo = make_git_repo()
         self.parent_repo = make_repo(self.parent_git_repo.path, repo_id="gentoo", arches=["amd64"])
+        os.makedirs(pjoin(self.parent_git_repo.path, "profiles/desc"), exist_ok=True)
+        with open(pjoin(self.parent_git_repo.path, "profiles/desc/python_targets.desc"), "w") as f:
+            f.write("python3_10 - Build with Python 3.10\n")
+            f.write("python3_11 - Build with Python 3.11\n")
         self.parent_git_repo.add_all("initial commit")
         # create a stub pkg and commit it
         self.parent_repo.create_ebuild("cat/pkg-0", eapi="7")
@@ -749,6 +753,29 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         self.init_check()
         r = self.assertReport(self.check, self.source)
         expected = git_mod.EAPIChangeWithoutRevbump(pkg=CPV("cat/pkg-1"))
+        assert r == expected
+
+    def test_old_python_compat(self):
+        # good compat
+        self.child_repo.create_ebuild("cat/pkg-0", data="PYTHON_COMPAT=( python3_10 python3_11 )")
+        self.child_git_repo.add_all("cat/pkg-0")
+        self.init_check()
+        self.assertNoReport(self.check, self.source)
+        # one old compat
+        self.child_repo.create_ebuild("cat/pkg-0", data="PYTHON_COMPAT=( python3_9 python3_10 )")
+        self.child_git_repo.add_all("cat/pkg-0")
+        self.init_check()
+        r = self.assertReport(self.check, self.source)
+        expected = git_mod.OldPythonCompat(["python3_9"], pkg=CPV("cat/pkg-0"))
+        assert r == expected
+        # two old compat
+        self.child_repo.create_ebuild(
+            "cat/pkg-0", data="PYTHON_COMPAT=( python3_9 python3_8 python3_10 )"
+        )
+        self.child_git_repo.add_all("cat/pkg-0")
+        self.init_check()
+        r = self.assertReport(self.check, self.source)
+        expected = git_mod.OldPythonCompat(["python3_8", "python3_9"], pkg=CPV("cat/pkg-0"))
         assert r == expected
 
 

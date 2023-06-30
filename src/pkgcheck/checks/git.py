@@ -221,6 +221,20 @@ class SuspiciousSrcUriChange(results.PackageResult, results.Warning):
         return f"{self.filename!r} has changed SRC_URI from {self.old_uri!r} to {self.new_uri!r}"
 
 
+class OldPythonCompat(results.VersionResult, results.Warning):
+    """Package still lists old targets in ``PYTHON_COMPAT``."""
+
+    def __init__(self, old_targets, **kwargs):
+        super().__init__(**kwargs)
+        self.old_targets = tuple(old_targets)
+
+    @property
+    def desc(self):
+        s = pluralism(self.old_targets)
+        targets = ", ".join(self.old_targets)
+        return f"old PYTHON_COMPAT target{s} listed: [ {targets} ]"
+
+
 class _RemovalRepo(UnconfiguredTree):
     """Repository of removed packages stored in a temporary directory."""
 
@@ -278,7 +292,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
     _source = (sources.PackageRepoSource, (), (("source", GitCommitsRepoSource),))
     required_addons = (git.GitAddon,)
     known_results = frozenset(
-        [
+        {
             DirectStableKeywords,
             DirectNoMaintainer,
             RdependChange,
@@ -291,10 +305,13 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
             SuspiciousSrcUriChange,
             PythonPEP517WithoutRevbump,
             EAPIChangeWithoutRevbump,
-        ]
+            OldPythonCompat,
+        }
     )
 
     python_pep517_regex = re.compile("^DISTUTILS_USE_PEP517=")
+    python_compat_declare_regex = re.compile(r"^declare -a PYTHON_COMPAT=(?P<value>.+)$")
+    env_array_elem_regex = re.compile(r'\[\d+\]="(?P<val>.+?)"')
 
     # package categories that are committed with stable keywords
     allowed_direct_stable = frozenset(["acct-user", "acct-group"])
@@ -306,6 +323,10 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
         self.valid_arches: frozenset[str] = self.options.target_repo.known_arches
         self._git_addon = git_addon
         self._cleanup = []
+        self.valid_python_targets = {
+            use.removeprefix("python_targets_")
+            for use, _ in self.repo.use_expand_desc.get("python_targets", ())
+        }
 
     def cleanup(self):
         for repo in self._cleanup:
@@ -418,6 +439,14 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
                     break
             else:
                 yield MissingSlotmove(old_slot, new_slot, pkg=new_pkg)
+
+        for env_line in new_pkg.environment.data.splitlines():
+            if mo := self.python_compat_declare_regex.match(env_line):
+                if old_compat := {
+                    m.group("val")
+                    for m in re.finditer(self.env_array_elem_regex, mo.group("value"))
+                }.difference(self.valid_python_targets):
+                    yield OldPythonCompat(sorted(old_compat), pkg=new_pkg)
 
     def _fetchable_str(self, fetch: fetchable) -> tuple[str, str]:
         uri = tuple(fetch.uri._uri_source)[0]
