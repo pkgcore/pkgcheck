@@ -73,3 +73,39 @@ class TestPerlCheck(misc.ReportTestCase):
             for verbosity in (0, 1):
                 with pytest.raises(SkipCheck, match="failed to run perl script"):
                     self.mk_check(verbosity=verbosity)
+
+    @pytest.mark.parametrize(
+        "cpv", ("dev-lang/perl-0", "perl-core/pkgcheck-0", "virtual/perl-pkgcheck-0")
+    )
+    def test_missing_op_virtual_good_packages(self, cpv):
+        pkg = misc.FakePkg(cpv, data={"RDEPEND": "virtual/perl-pkgcheck"})
+        self.assertNoReport(self.mk_check(), pkg)
+
+    @pytest.mark.parametrize(
+        "rdepend",
+        (
+            ">=virtual/perl-pkgcheck-0",
+            "<virtual/perl-pkgcheck-0",
+            "virtual/pkgcheck",
+            "dev-cpp/perl-pkgcheck-0",
+        ),
+    )
+    def test_missing_op_virtual_good_deps(self, rdepend):
+        pkg = misc.FakePkg("dev-cpp/perl-pkgcheck-0", data={"RDEPEND": rdepend})
+        self.assertNoReport(self.mk_check(), pkg)
+
+    def test_missing_op_virtual_bad(self):
+        pkg = misc.FakePkg(
+            "dev-cpp/perl-pkgcheck-0",
+            data={
+                "RDEPEND": "virtual/perl-pkgcore virtual/perl-pkgcheck",
+                "DEPEND": "virtual/perl-pkgcheck",
+                "BDEPEND": ">=virtual/perl-pkgcore-0",
+            },
+        )
+        reports = self.assertReports(self.mk_check(), pkg)
+        assert len(reports) == 2
+        for r in reports:
+            assert isinstance(r, perl.MissingVersionedVirtualPerlDependency)
+        assert reports[0].atom == "virtual/perl-pkgcheck"
+        assert reports[1].atom == "virtual/perl-pkgcore"

@@ -2,8 +2,11 @@ import multiprocessing
 import re
 import subprocess
 
+from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.restrictions import packages, values
+from pkgcore.package.errors import MetadataException
 from snakeoil.osutils import pjoin
+from snakeoil.sequences import iflatten_instance
 
 from .. import const, results, sources
 from . import OptionalCheck, SkipCheck
@@ -20,6 +23,24 @@ class MismatchedPerlVersion(results.VersionResult, results.Warning):
     @property
     def desc(self):
         return f"DIST_VERSION={self.dist_version} normalizes to {self.normalized}"
+
+
+class MissingVersionedVirtualPerlDependency(results.VersionResult, results.Warning):
+    """Missing version restriction for virtual perl dependency.
+
+    The virtuals ``virtual/perl-*`` stand for packages that have releases both
+    as part of ``dev-lang/perl`` and standalone in ``perl-core/*``. Apart from
+    rare special cases, if you require "any" version of such a virtual, this
+    will always be fulfilled by ``dev-lang/perl``.
+    """
+
+    def __init__(self, atom, **kwargs):
+        super().__init__(**kwargs)
+        self.atom = atom
+
+    @property
+    def desc(self):
+        return f"missing version restriction for virtual perl: {self.atom!r}"
 
 
 class _PerlException(Exception):
@@ -70,12 +91,13 @@ class _PerlConnection:
 class PerlCheck(OptionalCheck):
     """Perl ebuild related checks."""
 
-    _restricted_source = (
-        sources.RestrictionRepoSource,
-        (packages.PackageRestriction("inherited", values.ContainmentMatch2("perl-module")),),
+    _source = sources.EbuildFileRepoSource
+    known_results = frozenset(
+        {
+            MismatchedPerlVersion,
+            MissingVersionedVirtualPerlDependency,
+        }
     )
-    _source = (sources.EbuildFileRepoSource, (), (("source", _restricted_source),))
-    known_results = frozenset([MismatchedPerlVersion])
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -86,12 +108,32 @@ class PerlCheck(OptionalCheck):
         # it easier to disable this check if required perl deps are missing.
         try:
             self.perl = _PerlConnection(self.options)
-        except _PerlException as e:
-            raise SkipCheck(self, str(e))
+        except _PerlException as exc:
+            raise SkipCheck(self, str(exc))
 
     def feed(self, pkg):
-        if mo := self.dist_version_re.search("".join(pkg.lines)):
-            dist_version = mo.group("dist_version")
-            normalized = self.perl.normalize(dist_version)
-            if normalized != pkg.version:
-                yield MismatchedPerlVersion(dist_version, normalized, pkg=pkg)
+        if "perl-module" in pkg.inherited:
+            if mo := self.dist_version_re.search("".join(pkg.lines)):
+                dist_version = mo.group("dist_version")
+                normalized = self.perl.normalize(dist_version)
+                if normalized != pkg.version:
+                    yield MismatchedPerlVersion(dist_version, normalized, pkg=pkg)
+
+        missing_virtual_perl = set()
+        for attr in (x.lower() for x in pkg.eapi.dep_keys):
+            try:
+                deps = getattr(pkg, attr)
+            except MetadataException:
+                continue
+            for atom in iflatten_instance(deps, (atom_cls,)):
+                if (
+                    not atom.op
+                    and atom.key.startswith("virtual/perl-")
+                    and pkg.key != "dev-lang/perl"
+                    and pkg.category != "perl-core"
+                    and not pkg.key.startswith("virtual/perl-")
+                ):
+                    missing_virtual_perl.add(str(atom))
+
+        for atom in sorted(missing_virtual_perl):
+            yield MissingVersionedVirtualPerlDependency(str(atom), pkg=pkg)
