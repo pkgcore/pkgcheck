@@ -12,6 +12,9 @@ from .. import addons, base, results, sources
 from . import Check, MirrorsCheck, RepoCheck
 
 
+DEPRECATED_HASHES = frozenset({"md5", "rmd160", "sha1", "whirlpool"})
+
+
 class MultiMovePackageUpdate(results.ProfilesResult, results.Warning):
     """Entry for package moved multiple times in profiles/updates files."""
 
@@ -174,7 +177,7 @@ class UnusedLicensesCheck(RepoCheck):
     """Check for unused license files."""
 
     _source = sources.RepositoryRepoSource
-    known_results = frozenset([UnusedLicenses])
+    known_results = frozenset({UnusedLicenses})
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -213,7 +216,7 @@ class UnusedMirrorsCheck(MirrorsCheck, RepoCheck):
     """Check for unused mirrors."""
 
     _source = sources.RepositoryRepoSource
-    known_results = frozenset([UnusedMirrors])
+    known_results = frozenset({UnusedMirrors})
 
     def start(self):
         master_mirrors = set()
@@ -249,7 +252,7 @@ class UnusedEclassesCheck(RepoCheck):
     """Check for unused eclasses."""
 
     _source = sources.RepositoryRepoSource
-    known_results = frozenset([UnusedEclasses])
+    known_results = frozenset({UnusedEclasses})
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -291,7 +294,7 @@ class LicenseGroupsCheck(RepoCheck):
     """Scan license groups for unknown licenses."""
 
     _source = (sources.EmptySource, (base.repo_scope,))
-    known_results = frozenset([UnknownLicenses])
+    known_results = frozenset({UnknownLicenses})
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -682,7 +685,7 @@ class ManifestCollisionCheck(Check):
     """
 
     _source = (sources.RepositoryRepoSource, (), (("source", sources.PackageRepoSource),))
-    known_results = frozenset([ConflictingChksums, MatchingChksums])
+    known_results = frozenset({ConflictingChksums, MatchingChksums})
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -746,13 +749,45 @@ class ProjectMetadataCheck(RepoCheck):
     """Check projects.xml for issues."""
 
     _source = (sources.EmptySource, (base.repo_scope,))
-    known_results = frozenset([EmptyProject])
+    known_results = frozenset({EmptyProject})
 
     def __init__(self, *args):
         super().__init__(*args)
         self.repo = self.options.target_repo
 
     def finish(self):
-        for _key, project in self.repo.projects_xml.projects.items():
+        for project in self.repo.projects_xml.projects.values():
             if not project.recursive_members:
                 yield EmptyProject(project)
+
+
+class DeprecatedRepoHash(results.Warning):
+    """Repositories ``manifest-hashes`` defines deprecated hashes.
+
+    The repository defines deprecated hashes in ``manifest-hashes``.
+    """
+
+    def __init__(self, hashes):
+        super().__init__()
+        self.hashes = tuple(hashes)
+
+    @property
+    def desc(self):
+        s = pluralism(self.hashes)
+        hashes = ", ".join(self.hashes)
+        return f"defines deprecated manifest-hash{s}: [ {hashes} ]"
+
+
+class RepoManifestHashCheck(RepoCheck):
+    """Check ``manifest-hashes`` config for issues."""
+
+    _source = (sources.EmptySource, (base.repo_scope,))
+    known_results = frozenset({DeprecatedRepoHash})
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.repo = self.options.target_repo
+
+    def finish(self):
+        if deprecated_hashes := DEPRECATED_HASHES.intersection(self.repo.config.manifests.hashes):
+            yield DeprecatedRepoHash(sorted(deprecated_hashes))
