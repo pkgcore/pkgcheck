@@ -564,6 +564,23 @@ class InvalidManifest(results.MetadataError, results.PackageResult):
     attr = "manifest"
 
 
+class DeprecatedManifestHash(results.PackageResult, results.Warning):
+    """Manifest uses deprecated hashes.
+
+    The package uses deprecated hash types in its Manifest file.
+    """
+
+    def __init__(self, hashes, **kwargs):
+        super().__init__(**kwargs)
+        self.hashes = tuple(hashes)
+
+    @property
+    def desc(self):
+        s = pluralism(self.hashes)
+        hashes = ", ".join(self.hashes)
+        return f"defines deprecated manifest hash types{s}: [ {hashes} ]"
+
+
 class ManifestCheck(Check):
     """Manifest related checks.
 
@@ -581,6 +598,7 @@ class ManifestCheck(Check):
             UnnecessaryManifest,
             DeprecatedChksum,
             InvalidManifest,
+            DeprecatedManifestHash,
         }
     )
 
@@ -623,9 +641,9 @@ class ManifestCheck(Check):
                     yield MissingChksum(
                         f_inst.filename, sorted(missing), sorted(f_inst.chksums), pkg=pkg
                     )
-                elif f_inst.chksums and self.preferred_checksums != frozenset(f_inst.chksums):
-                    deprecated = set(f_inst.chksums).difference(self.preferred_checksums)
-                    yield DeprecatedChksum(f_inst.filename, sorted(deprecated), pkg=pkg)
+                elif f_inst.chksums:
+                    if deprecated := frozenset(f_inst.chksums).difference(self.preferred_checksums):
+                        yield DeprecatedChksum(f_inst.filename, sorted(deprecated), pkg=pkg)
                 seen.add(f_inst.filename)
 
         if pkg_manifest.thin:
@@ -637,6 +655,10 @@ class ManifestCheck(Check):
 
         if unknown_manifests := manifest_distfiles.difference(seen):
             yield UnknownManifest(sorted(unknown_manifests), pkg=pkgset[0])
+
+        used_hashes = frozenset().union(*pkg_manifest.distfiles.values())
+        if deprecated_hashes := DEPRECATED_HASHES.intersection(used_hashes):
+            yield DeprecatedManifestHash(sorted(deprecated_hashes), pkg=pkgset[0])
 
 
 class ConflictingChksums(results.VersionResult, results.Error):
