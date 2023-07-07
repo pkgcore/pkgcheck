@@ -1332,6 +1332,24 @@ class SrcUriFilenameDotPrefix(results.VersionResult, results.Error):
         return f"SRC_URI filename {self.filename!r} starts with a dot"
 
 
+class UnstableSrcUri(results.VersionResult, results.Warning):
+    """SRC_URI uses unstable URIs.
+
+    This is usually a mistake, as those URIs are not guaranteed to be unchanged
+    which might cause checksum mismatch.
+    """
+
+    def __init__(self, uris, **kwargs):
+        super().__init__(**kwargs)
+        self.uris = tuple(uris)
+
+    @property
+    def desc(self):
+        s = pluralism(self.uris)
+        uris = " ".join(self.uris)
+        return f"unstable SRC_URI{s}: [ {uris} ]"
+
+
 class SrcUriCheck(Check):
     """SRC_URI related checks.
 
@@ -1351,6 +1369,7 @@ class SrcUriCheck(Check):
             UnknownMirror,
             UnstatedIuse,
             SrcUriFilenameDotPrefix,
+            UnstableSrcUri,
         }
     )
 
@@ -1363,6 +1382,10 @@ class SrcUriCheck(Check):
             r"https?://(github\.com/.*?/.*?/archive/.+\.zip|"
             r"gitlab\.com/.*?/.*?/-/archive/.+\.zip)"
         )
+        self.unstable_uris = re.compile(
+            r"^https?://patch-diff.githubusercontent.com/raw/.*/pull/[0-9]+.(patch|diff)$|"
+            r"^https?://github.com/.*/pull/[0-9]+.(patch|diff)$"
+        )
 
     def feed(self, pkg):
         lacks_uri = set()
@@ -1370,6 +1393,7 @@ class SrcUriCheck(Check):
         seen = set()
         bad_filenames = set()
         tarball_available = set()
+        unstable_uris = set()
 
         report_uris = LogMap("pkgcore.log.logger.info", partial(RedundantUriRename, pkg))
         with LogReports(report_uris) as log_reports:
@@ -1395,8 +1419,11 @@ class SrcUriCheck(Check):
                 (m, sub_uri) for m, sub_uri in mirrors if isinstance(m, unknown_mirror)
             ]
             for mirror, sub_uri in unknown_mirrors:
-                uri = f"{mirror}/{sub_uri}"
-                yield UnknownMirror(mirror.mirror_name, uri, pkg=pkg)
+                yield UnknownMirror(mirror.mirror_name, uri=f"{mirror}/{sub_uri}", pkg=pkg)
+
+            for uri in f_inst.uri:
+                if self.unstable_uris.match(uri):
+                    unstable_uris.add(uri)
 
             # Check for unspecific filenames of the form ${PN}.ext, ${PV}.ext,
             # and v${PV}.ext as well as archives named using only the raw git
@@ -1432,6 +1459,8 @@ class SrcUriCheck(Check):
             yield BadFilename(sorted(bad_filenames), pkg=pkg)
         if tarball_available:
             yield TarballAvailable(sorted(tarball_available), pkg=pkg)
+        if unstable_uris:
+            yield UnstableSrcUri(sorted(unstable_uris), pkg=pkg)
 
 
 class BadDescription(results.VersionResult, results.Style):

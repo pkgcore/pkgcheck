@@ -1,0 +1,1 @@
+{"__class__": "UnstableSrcUri", "category": "SrcUriCheck", "package": "UnstableSrcUri", "version": "0", "uris": ["https://github.com/pkgcore/pkgcheck/pull/1234.patch", "https://patch-diff.githubusercontent.com/raw/pkgcore/pkgcheck/pull/599.patch"]}
