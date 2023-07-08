@@ -7,8 +7,8 @@ from snakeoil.iterables import caching_iter
 from snakeoil.sequences import iflatten_func, iflatten_instance, stable_unique
 from snakeoil.strings import pluralism
 
-from .. import addons, feeds, results
-from . import Check
+from .. import addons, feeds, results, sources
+from . import Check, OptionalCheck, RepoCheck
 
 
 class FakeConfigurable:
@@ -465,3 +465,74 @@ class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
                         failures.update(required)
             if failures:
                 yield profile, failures
+
+
+class RdependCycle(results.VersionResult, results.Warning):
+    def __init__(self, cycle, **kwargs):
+        super().__init__(**kwargs)
+        self.cycle = cycle
+
+    @property
+    def desc(self):
+        return f"cycle detected: {' -> '.join(self.cycle)}"
+
+
+class RdependCycleCheck(RepoCheck, OptionalCheck):
+    _source = sources.PackageRepoSource
+    known_results = frozenset({RdependCycle})
+
+    def __init__(self, options, **kwargs):
+        super().__init__(options, **kwargs)
+        self.visited_packages: dict[str, frozenset[str]] = {}
+        self.repo = self.options.target_repo
+        self.no_cycle = set()
+
+    def _verify_dfs(self, key: str, path: list[str], visited: set[str]):
+        if key in path:
+            path.append(key)
+            return path
+        assert key in self.visited_packages
+
+        visited.add(key)
+        path.append(key)
+        for dep in self.visited_packages[key] - self.no_cycle:
+            if cycle := self._verify_dfs(dep, path, visited):
+                return cycle
+        path.pop()
+        self.no_cycle.add(key)
+        return []
+
+    def _collect_deps_graph(self, pkgset):
+        key = pkgset[0].key
+
+        if key in self.visited_packages:
+            return
+
+        pkg_deps = {
+            pkg: {dep.key for dep in pkg.rdepend if isinstance(dep, atom) and not dep.blocks}
+            for pkg in pkgset
+        }
+        self.visited_packages[key] = all_deps = frozenset().union(*pkg_deps.values())
+        if missing := all_deps - self.visited_packages.keys():
+            for missing_key in missing:
+                try:
+                    self._collect_deps_graph(self.repo.match(atom(missing_key)))
+                except IndexError:
+                    self.visited_packages[missing_key] = frozenset()
+        return pkg_deps
+
+    def feed(self, pkgset):
+        key = pkgset[0].key
+
+        if key in self.visited_packages:
+            pkg_deps = {
+                pkg: {dep.key for dep in pkg.rdepend if isinstance(dep, atom) and not dep.blocks}
+                for pkg in pkgset
+            }
+        else:
+            pkg_deps = self._collect_deps_graph(pkgset)
+
+        for pkg in pkgset:
+            for dep in pkg_deps[pkg]:
+                if (cycle := self._verify_dfs(dep, [key], set())) and cycle[-1] == key:
+                    yield RdependCycle(cycle, pkg=pkg)
