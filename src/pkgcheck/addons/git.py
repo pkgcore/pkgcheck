@@ -342,15 +342,15 @@ class _ScanGit(argparse.Action):
     def __init__(self, *args, staged=False, **kwargs):
         super().__init__(*args, **kwargs)
         if staged:
-            default_ref = "HEAD"
             diff_cmd = ["git", "diff-index", "--name-only", "--cached", "-z"]
         else:
-            default_ref = "origin..HEAD"
             diff_cmd = ["git", "diff-tree", "-r", "--name-only", "-z"]
 
         self.staged = staged
-        self.default_ref = default_ref
         self.diff_cmd = diff_cmd
+
+    def default_ref(self, remote):
+        return "HEAD" if self.staged else f"{remote}..HEAD"
 
     def generate_restrictions(self, parser, namespace, ref):
         """Generate restrictions for a given diff command."""
@@ -363,10 +363,10 @@ class _ScanGit(argparse.Action):
                 check=True,
                 encoding="utf8",
             )
-        except FileNotFoundError as e:
-            parser.error(str(e))
-        except subprocess.CalledProcessError as e:
-            error = e.stderr.splitlines()[0]
+        except FileNotFoundError as exc:
+            parser.error(str(exc))
+        except subprocess.CalledProcessError as exc:
+            error = exc.stderr.splitlines()[0]
             parser.error(f"failed running git: {error}")
 
         if not p.stdout:
@@ -417,7 +417,7 @@ class _ScanGit(argparse.Action):
             namespace.enabled_checks.update(objects.CHECKS.select(GitCommitsCheck).values())
 
         # determine target ref
-        ref = value if value is not None else self.default_ref
+        ref = value if value is not None else self.default_ref(namespace.git_remote)
         setattr(namespace, self.dest, ref)
 
         # generate scanning restrictions
@@ -441,6 +441,9 @@ class GitAddon(caches.CachedAddon):
     Additionally, the origin/HEAD ref must exist. If it doesn't, running ``git
     remote set-head origin master`` or similar for other branches will create
     it.
+
+    You can override the default git remote used for all git comparison using
+    ``--git-remote``.
     """
 
     # cache registry
@@ -448,7 +451,7 @@ class GitAddon(caches.CachedAddon):
 
     @classmethod
     def mangle_argparser(cls, parser):
-        group = parser.add_argument_group("git", docs=cls.__doc__)
+        group: argparse.ArgumentParser = parser.add_argument_group("git", docs=cls.__doc__)
         git_opts = group.add_mutually_exclusive_group()
         git_opts.add_argument(
             "--commits",
@@ -482,6 +485,17 @@ class GitAddon(caches.CachedAddon):
                 Targets are determined using all staged changes for the git
                 repo. Unstaged changes and untracked files are ignored by
                 temporarily stashing them during the scanning process.
+            """,
+        )
+        group.add_argument(
+            "--git-remote",
+            default="origin",
+            metavar="REMOTE",
+            help="git remote used for all git comparison and operations",
+            docs="""
+                The git remote to be used for all operations by pkgcheck. The
+                default value, and the recommended value is ``origin``, but
+                you can use any valid git remote name.
             """,
         )
 
@@ -551,11 +565,11 @@ class GitAddon(caches.CachedAddon):
         return p.stdout.strip()
 
     @staticmethod
-    def _get_default_branch(path):
+    def _get_default_branch(path, remote):
         """Retrieve a git repo's default branch used with origin remote."""
         try:
             p = subprocess.run(
-                ["git", "symbolic-ref", "refs/remotes/origin/HEAD"],
+                ["git", "symbolic-ref", f"refs/remotes/{remote}/HEAD"],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.DEVNULL,
                 cwd=path,
@@ -591,10 +605,11 @@ class GitAddon(caches.CachedAddon):
 
     def update_cache(self, force=False):
         """Update related cache and push updates to disk."""
+        remote = self.options.git_remote
         for repo in self.options.target_repo.trees:
             try:
                 branch = self._get_current_branch(repo.location)
-                default_branch = self._get_default_branch(repo.location)
+                default_branch = self._get_default_branch(repo.location, remote)
                 # skip cache usage when not running on the default branch
                 if branch != default_branch:
                     logger.debug(
@@ -603,7 +618,7 @@ class GitAddon(caches.CachedAddon):
                         branch,
                     )
                     continue
-                commit = self._get_commit_hash(repo.location, "origin/HEAD")
+                commit = self._get_commit_hash(repo.location, f"{remote}/HEAD")
             except GitError:
                 continue
 
@@ -619,17 +634,17 @@ class GitAddon(caches.CachedAddon):
                 logger.debug("updating %s git repo cache to %s", repo, commit[:13])
                 if git_cache is None:
                     data = {}
-                    commit_range = "origin/HEAD"
+                    commit_range = f"{remote}/HEAD"
                 else:
                     data = git_cache.data
-                    commit_range = f"{git_cache.commit}..origin/HEAD"
+                    commit_range = f"{git_cache.commit}..{remote}/HEAD"
 
                 try:
                     self.pkg_history(
                         repo, commit_range, data=data, verbosity=self.options.verbosity
                     )
-                except GitError as e:
-                    raise PkgcheckUserException(str(e))
+                except GitError as exc:
+                    raise PkgcheckUserException(str(exc))
                 git_cache = GitCache(data, self.cache, commit=commit)
             else:
                 cache_repo = False
@@ -652,29 +667,31 @@ class GitAddon(caches.CachedAddon):
 
     def commits_repo(self, repo_cls):
         target_repo = self.options.target_repo
+        remote = self.options.git_remote
         data = {}
 
         try:
-            origin = self._get_commit_hash(target_repo.location, "origin/HEAD")
+            origin = self._get_commit_hash(target_repo.location, f"{remote}/HEAD")
             head = self._get_commit_hash(target_repo.location, "HEAD")
             if origin != head:
-                data = self.pkg_history(target_repo, "origin/HEAD..HEAD", local=True)
-        except GitError as e:
-            raise PkgcheckUserException(str(e))
+                data = self.pkg_history(target_repo, f"{remote}/HEAD..HEAD", local=True)
+        except GitError as exc:
+            raise PkgcheckUserException(str(exc))
 
         repo_id = f"{target_repo.repo_id}-commits"
         return repo_cls(data, repo_id=repo_id)
 
     def commits(self):
         target_repo = self.options.target_repo
+        remote = self.options.git_remote
         commits = ()
 
         try:
-            origin = self._get_commit_hash(target_repo.location, "origin/HEAD")
+            origin = self._get_commit_hash(target_repo.location, f"{remote}/HEAD")
             head = self._get_commit_hash(target_repo.location, "HEAD")
             if origin != head:
-                commits = GitRepoCommits(target_repo.location, "origin/HEAD..HEAD")
-        except GitError as e:
-            raise PkgcheckUserException(str(e))
+                commits = GitRepoCommits(target_repo.location, f"{remote}/HEAD..HEAD")
+        except GitError as exc:
+            raise PkgcheckUserException(str(exc))
 
         return iter(commits)

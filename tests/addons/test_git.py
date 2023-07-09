@@ -71,7 +71,8 @@ class TestPkgcheckScanCommitsParseArgs:
             options, _func = self.tool.parse_args(self.args + ["-r", local.path, "--commits"])
         assert excinfo.value.code == 0
 
-    def test_commits_existing(self, make_repo, make_git_repo, tmp_path):
+    @pytest.mark.parametrize("remote", ("origin", "pkgcheck"))
+    def test_commits_existing(self, remote, make_repo, make_git_repo, tmp_path):
         # create parent repo
         parent = make_repo()
         origin = make_git_repo(parent.location, commit=True)
@@ -80,9 +81,9 @@ class TestPkgcheckScanCommitsParseArgs:
 
         # create child repo and pull from parent
         local = make_git_repo(str(tmp_path), commit=False)
-        local.run(["git", "remote", "add", "origin", origin.path])
-        local.run(["git", "pull", "origin", "main"])
-        local.run(["git", "remote", "set-head", "origin", "main"])
+        local.run(["git", "remote", "add", remote, origin.path])
+        local.run(["git", "pull", remote, "main"])
+        local.run(["git", "remote", "set-head", remote, "main"])
         child = make_repo(local.path)
 
         # create local commits on child repo
@@ -91,7 +92,9 @@ class TestPkgcheckScanCommitsParseArgs:
         child.create_ebuild("cat/pkg-2")
         local.add_all("cat/pkg-2")
 
-        options, _func = self.tool.parse_args(self.args + ["-r", local.path, "--commits"])
+        options, _func = self.tool.parse_args(
+            self.args + ["-r", local.path, "--commits", "--git-remote", remote]
+        )
         atom_restricts = [atom_cls("cat/pkg")]
         assert list(options.restrictions) == [
             (base.package_scope, packages.OrRestriction(*atom_restricts))
