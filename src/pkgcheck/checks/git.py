@@ -1,5 +1,6 @@
 """Various git-related checks."""
 
+import contextlib
 import os
 import re
 import subprocess
@@ -440,13 +441,14 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
             else:
                 yield MissingSlotmove(old_slot, new_slot, pkg=new_pkg)
 
-        for env_line in new_pkg.environment.data.splitlines():
-            if mo := self.python_compat_declare_regex.match(env_line):
-                if old_compat := {
-                    m.group("val")
-                    for m in re.finditer(self.env_array_elem_regex, mo.group("value"))
-                }.difference(self.valid_python_targets):
-                    yield OldPythonCompat(sorted(old_compat), pkg=new_pkg)
+        with contextlib.suppress(Exception):
+            for env_line in new_pkg.environment.data.splitlines():
+                if mo := self.python_compat_declare_regex.match(env_line):
+                    if old_compat := {
+                        m.group("val")
+                        for m in re.finditer(self.env_array_elem_regex, mo.group("value"))
+                    }.difference(self.valid_python_targets):
+                        yield OldPythonCompat(sorted(old_compat), pkg=new_pkg)
 
     def _fetchable_str(self, fetch: fetchable) -> tuple[str, str]:
         uri = tuple(fetch.uri._uri_source)[0]
