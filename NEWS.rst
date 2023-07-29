@@ -3,6 +3,51 @@ Release Notes
 =============
 
 -----------------------------
+pkgcheck 0.10.25 (2023-07-29)
+-----------------------------
+
+- scan: add ``--git-remote`` option to select remote used for git operations
+  (Arthur Zamarin, #601)
+
+**New checks:**
+
+- RustCheck: check for suboptimal ``-`` ``CRATES`` separator (Arthur Zamarin,
+  #589)
+
+- RustCheck: check for suboptimal ``cargo_crate_uris`` call (Arthur Zamarin,
+  #589)
+
+- OutdatedProfilePackage: show unknown packages in profile with last match date
+  (Arthur Zamarin, #590)
+
+- SrcUriFilenameDotPrefix: new check for ``SRC_URI`` filenames with dot prefix
+  (Arthur Zamarin, #592)
+
+- RubyCompatCheck: new check for new ``USE_RUBY`` compatible values, similar to
+  ``PythonCompatCheck`` (Arthur Zamarin, #595)
+
+- OldPythonCompat: check for old ``PYTHON_COMPAT`` in commit's modified ebuilds
+  (Arthur Zamarin, #596)
+
+- RepoManifestHashCheck: check for deprecated repo ``manifest-hashes`` (Arthur
+  Zamarin, #598)
+
+- DeprecatedManifestHash: check for deprecated checksums in Manifest files
+  (Arthur Zamarin, #598)
+
+- PerlCheck: optional check for versioned virtual perl dependencies (Arthur
+  Zamarin, #597)
+
+**Fixed bugs:**
+
+- MissingInherits: exclude ``@USER_VARIABLEs`` (Arthur Zamarin, #575)
+
+- scan: fix unknown exit checkset during initial config load (Arthur Zamarin,
+  #594)
+
+- GitPkgCommitsCheck: fix failure during compute of environment (ArthurZamarin)
+
+-----------------------------
 pkgcheck 0.10.24 (2023-05-17)
 -----------------------------
 
