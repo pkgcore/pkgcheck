@@ -5,6 +5,8 @@ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 SLOT="0"
 LICENSE="BSD"
 
+DOC_CONTENTS="Hello ${ROOT}"
+
 src_configure() {
 	# EROOT isn't allowed in src_* phases
 	econf --sysconfdir="${EROOT}/etc/${PN}"

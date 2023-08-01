@@ -1,1 +1,2 @@
-{"__class__": "EbuildVariableScope", "category": "VariableScopeCheck", "package": "EbuildVariableScope", "version": "0", "variable": "EROOT", "func": "src_configure", "lines": [10]}
+{"__class__": "EbuildVariableScope", "category": "VariableScopeCheck", "package": "EbuildVariableScope", "version": "0", "lines": [12], "variable": "EROOT", "func": "src_configure"}
+{"__class__": "EbuildVariableScope", "category": "VariableScopeCheck", "package": "EbuildVariableScope", "version": "0", "lines": [8], "variable": "ROOT", "func": "global scope"}

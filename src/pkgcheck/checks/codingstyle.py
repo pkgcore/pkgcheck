@@ -72,7 +72,7 @@ class BadCommandsCheck(Check):
             for node, _ in bash.cmd_query.captures(func_node):
                 call = pkg.node_str(node)
                 name = pkg.node_str(node.child_by_field_name("name"))
-                lineno, colno = node.start_point
+                lineno, _colno = node.start_point
                 if name in pkg.eapi.bash_cmds_banned:
                     yield BannedEapiCommand(
                         name, line=call, lineno=lineno + 1, eapi=pkg.eapi, pkg=pkg
@@ -942,7 +942,7 @@ class ReadonlyVariableCheck(Check):
             name = pkg.node_str(node.child_by_field_name("name"))
             if name in self.readonly_vars:
                 call = pkg.node_str(node)
-                lineno, colno = node.start_point
+                lineno, _colno = node.start_point
                 yield ReadonlyVariable(name, line=call, lineno=lineno + 1, pkg=pkg)
 
 
@@ -969,7 +969,7 @@ class VariableScopeCheck(Check):
     """Scan ebuilds for variables that are only allowed in certain scopes."""
 
     _source = sources.EbuildParseRepoSource
-    known_results = frozenset([EbuildVariableScope])
+    known_results = frozenset({EbuildVariableScope})
 
     # see https://projects.gentoo.org/pms/7/pms.html#x1-10900011.1
     variable_map = ImmutableDict(
@@ -987,13 +987,34 @@ class VariableScopeCheck(Check):
             "SYSROOT": ("src_", "pkg_setup"),
             "ESYSROOT": ("src_", "pkg_setup"),
             "BROOT": ("src_", "pkg_setup"),
-            "D": ("src_install", "pkg_preinst"),
-            "ED": ("src_install", "pkg_preinst"),
+            "D": ("src_install", "pkg_preinst", "pkg_postinst"),
+            "ED": ("src_install", "pkg_preinst", "pkg_postinst"),
             "DESTTREE": "src_install",
             "INSDESTTREE": "src_install",
             "MERGE_TYPE": "pkg_",
             "REPLACING_VERSIONS": "pkg_",
             "REPLACED_BY_VERSION": ("pkg_prerm", "pkg_postrm"),
+        }
+    )
+
+    not_global_scope = frozenset(
+        {
+            "A",
+            "AA",
+            "BROOT",
+            "D",
+            "DESTTREE",
+            "ECLASSDIR",
+            "ED",
+            "EROOT",
+            "ESYSROOT",
+            "INSDESTTREE",
+            "MERGE_TYPE",
+            "PORTDIR",
+            "REPLACED_BY_VERSION",
+            "REPLACING_VERSIONS",
+            "ROOT",
+            "SYSROOT",
         }
     )
 
@@ -1014,10 +1035,21 @@ class VariableScopeCheck(Check):
                 for var_node, _ in bash.var_query.captures(func_node):
                     var_name = pkg.node_str(var_node)
                     if var_name in variables:
-                        lineno, colno = var_node.start_point
+                        lineno, _colno = var_node.start_point
                         usage[var_name].add(lineno + 1)
                 for var, lines in sorted(usage.items()):
                     yield EbuildVariableScope(var, func_name, lines=sorted(lines), pkg=pkg)
+
+        global_usage = defaultdict(set)
+        for global_node in pkg.tree.root_node.children:
+            if global_node.type not in ("function_definition", "ERROR"):
+                for var_node, _ in bash.var_query.captures(global_node):
+                    var_name = pkg.node_str(var_node)
+                    if var_name in self.not_global_scope:
+                        lineno, _colno = var_node.start_point
+                        global_usage[var_name].add(lineno + 1)
+        for var, lines in sorted(global_usage.items()):
+            yield EbuildVariableScope(var, "global scope", lines=sorted(lines), pkg=pkg)
 
 
 class RedundantDodir(results.LineResult, results.Style):
