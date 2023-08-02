@@ -986,7 +986,7 @@ class VariableScopeCheck(Check):
             "EROOT": "pkg_",
             "SYSROOT": ("src_", "pkg_setup"),
             "ESYSROOT": ("src_", "pkg_setup"),
-            "BROOT": ("src_", "pkg_setup"),
+            "BROOT": ("src_", "pkg_setup", "pkg_preinst", "pkg_prerm", "pkg_post"),
             "D": ("src_install", "pkg_preinst"),  # pkg_postinst is forbidden by QA policy PG 107
             "ED": ("src_install", "pkg_preinst"),  # pkg_postinst is forbidden by QA policy PG 107
             "DESTTREE": "src_install",
