@@ -1,0 +1,3 @@
+{"__class__": "GlobDistdir", "category": "GlobCheck", "package": "GlobDistdir", "version": "0", "line": "\"${DISTDIR}\"/foo-*.bar", "lineno": 7}
+{"__class__": "GlobDistdir", "category": "GlobCheck", "package": "GlobDistdir", "version": "0", "line": "\"${DISTDIR}\"/\"${DISTDIR}\"/foo-?.bar", "lineno": 8}
+{"__class__": "GlobDistdir", "category": "GlobCheck", "package": "GlobDistdir", "version": "0", "line": "\"${DISTDIR}\"/foo-?-*.bar", "lineno": 9}

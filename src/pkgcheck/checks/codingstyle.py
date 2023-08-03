@@ -1363,3 +1363,37 @@ class NonPosixCheck(Check):
             call_name = pkg.node_str(call_node.child_by_field_name("name"))
             if call_name in ("head", "tail"):
                 yield from self.check_head_tail(pkg, call_node, call_name)
+
+
+class GlobDistdir(results.LineResult, results.Warning):
+    """Filename expansion with ``${DISTDIR}`` is unsafe.
+
+    Filename expansion could accidentally match irrelevant files in
+    ``${DISTDIR}``, e.g. from other packages or other versions of the
+    same package.
+    """
+
+    @property
+    def desc(self):
+        return f"line {self.lineno}: unsafe filename expansion used with DISTDIR: {self.line}"
+
+
+class GlobCheck(Check):
+    """Scan ebuilds for unsafe glob usage."""
+
+    _source = sources.EbuildParseRepoSource
+    known_results = frozenset({GlobDistdir})
+
+    def __init__(self, options, **kwargs):
+        super().__init__(options, **kwargs)
+        self.glob_query = bash.query('(concatenation (word) @word (.match? @word "[*?]")) @usage')
+
+    def feed(self, pkg):
+        for node, capture in self.glob_query.captures(pkg.tree.root_node):
+            if capture == "usage":
+                for var_node, _ in bash.var_query.captures(node):
+                    var_name = pkg.node_str(var_node)
+                    if var_name == "DISTDIR":
+                        lineno, _colno = node.start_point
+                        yield GlobDistdir(line=pkg.node_str(node), lineno=lineno + 1, pkg=pkg)
+                        break
