@@ -62,7 +62,7 @@ class TestRepoDirCheck(misc.Tmpdir, misc.ReportTestCase):
     def test_null_bytes(self):
         check = self.mk_check()
         with open(pjoin(self.repo.location, "foo"), "wb") as f:
-            f.write(b"foo\x00\xffbar")
+            f.write(b"foo\x00\xffbar\x12")
         r = self.assertReport(check, [])
         assert isinstance(r, repo.BinaryFile)
         assert r.path == "foo"
@@ -72,7 +72,7 @@ class TestRepoDirCheck(misc.Tmpdir, misc.ReportTestCase):
         check = self.mk_check()
         bin_path = pjoin(self.repo.location, "foo")
         with open(bin_path, "wb") as f:
-            f.write(b"\xd3\xad\xbe\xef")
+            f.write(b"\xd3\xad\xbe\xef\x02")
         r = self.assertReport(check, [])
         assert isinstance(r, repo.BinaryFile)
         assert r.path == "foo"
@@ -82,7 +82,7 @@ class TestRepoDirCheck(misc.Tmpdir, misc.ReportTestCase):
         check = self.mk_check()
         filesdir = self.mk_pkg("dev-util/foo")
         with open(pjoin(filesdir, "foo"), "wb") as f:
-            f.write(b"\xd3\xad\xbe\xef")
+            f.write(b"\xd3\xad\xbe\xef\x01")
         r = self.assertReport(check, [])
         assert isinstance(r, repo.BinaryFile)
         assert r.path == "dev-util/foo/files/foo"
@@ -94,7 +94,7 @@ class TestRepoDirCheck(misc.Tmpdir, misc.ReportTestCase):
         distfiles = pjoin(self.repo.location, "distfiles")
         os.mkdir(distfiles)
         with open(pjoin(distfiles, "foo-0.tar.gz"), "wb") as f:
-            f.write(b"\xd3\xad\xbe\xef")
+            f.write(b"\xd3\xad\xbe\xef\x03")
         r = self.assertReport(check, [])
         assert isinstance(r, repo.BinaryFile)
         assert "distfiles/foo-0.tar.gz" in str(r)

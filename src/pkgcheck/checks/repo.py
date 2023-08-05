@@ -1,10 +1,10 @@
 import os
 
+from charset_normalizer import is_binary
 from snakeoil.osutils import pjoin
 
 from .. import addons, base, results, sources
 from ..packages import RawCPV
-from ..utils import is_binary
 from . import GentooRepoCheck, RepoCheck
 
 
