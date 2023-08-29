@@ -544,7 +544,7 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
             if match_ratio > 0.75:
                 msg = "metadata.xml longdescription closely matches DESCRIPTION"
                 yield RedundantLongDescription(msg, pkg=pkg)
-            elif len(pkg.longdescription) < 100:
+            elif len(pkg.longdescription) < 80:
                 msg = "metadata.xml longdescription is too short"
                 yield RedundantLongDescription(msg, pkg=pkg)
 
