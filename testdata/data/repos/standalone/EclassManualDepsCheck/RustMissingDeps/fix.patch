@@ -1,0 +1,9 @@
+diff -Naur standalone/EclassManualDepsCheck/RustMissingDeps/RustMissingDeps-1.ebuild fixed/EclassManualDepsCheck/RustMissingDeps/RustMissingDeps-1.ebuild
+--- standalone/EclassManualDepsCheck/RustMissingDeps/RustMissingDeps-1.ebuild
++++ fixed/EclassManualDepsCheck/RustMissingDeps/RustMissingDeps-1.ebuild
+@@ -8,3 +8,5 @@ DESCRIPTION="Optional inherit without deps"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ SLOT="0"
+ LICENSE="BSD"
++
++BDEPEND="virtual/rust"

@@ -3,8 +3,10 @@ import subprocess
 from collections import defaultdict
 from functools import partial
 
+from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.ebuild.eapi import EAPI
 from pkgcore.ebuild.eclass import EclassDoc
+from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
 from .. import addons, bash, results, sources
@@ -498,3 +500,93 @@ class EclassCheck(Check):
         )
         if vars_missing_docs:
             yield EclassDocMissingVar(sorted(vars_missing_docs), eclass=eclass)
+
+
+class GoMissingDeps(results.VersionResult, results.Warning):
+    """Package sets ``GO_OPTIONAL`` but does not depend on ``dev-lang/go``."""
+
+    desc = "sets GO_OPTIONAL but does not depend on dev-lang/go"
+
+
+class RubyMissingDeps(results.VersionResult, results.Warning):
+    """Package sets ``RUBY_OPTIONAL`` but does not depend on ``dev-lang/ruby``
+    or ``virtual/rubygems``."""
+
+    desc = "sets RUBY_OPTIONAL but does not depend on dev-lang/ruby or virtual/rubygems"
+
+
+class RustMissingDeps(results.VersionResult, results.Warning):
+    """Package sets ``CARGO_OPTIONAL`` but does not depend on ``virtual/rust``."""
+
+    desc = "sets CARGO_OPTIONAL but does not depend on virtual/rust"
+
+
+class TmpfilesMissingDeps(results.VersionResult, results.Warning):
+    """Package sets ``TMPFILES_OPTIONAL`` but does not depend on ``virtual/tmpfiles``."""
+
+    desc = "sets TMPFILES_OPTIONAL but does not depend on virtual/tmpfiles"
+
+
+class EclassManualDepsCheck(Check):
+    """Check for missing deps when inheriting eclasses in special mode."""
+
+    _source = sources.EbuildParseRepoSource
+    known_results = frozenset(
+        {
+            GoMissingDeps,
+            RustMissingDeps,
+            RubyMissingDeps,
+            TmpfilesMissingDeps,
+        }
+    )
+
+    dependencies = (
+        # eclass, variable, one of deps, class
+        ("cargo", "CARGO_OPTIONAL", {"virtual/rust"}, RustMissingDeps),
+        ("go-module", "GO_OPTIONAL", {"dev-lang/go"}, GoMissingDeps),
+        (
+            "ruby-ng",
+            "RUBY_OPTIONAL",
+            {"dev-lang/ruby", "virtual/rubygems", "dev-ruby"},
+            RubyMissingDeps,
+        ),
+        ("tmpfiles", "TMPFILES_OPTIONAL", {"virtual/tmpfiles"}, TmpfilesMissingDeps),
+    )
+
+    def __init__(self, options, **kwargs):
+        super().__init__(options, **kwargs)
+
+        self.queries_by_eclass = defaultdict(list)
+        for eclass, variable, deps, cls in self.dependencies:
+            pkgs = frozenset({x for x in deps if "/" in x})
+            categories = frozenset({x for x in deps if "/" not in x})
+            self.queries_by_eclass[eclass].append(
+                (
+                    bash.query(
+                        # has variable assignment to a variable named
+                        f'(variable_assignment name: (variable_name) @name (.eq? @name "{variable}"))'
+                    ),
+                    pkgs,
+                    categories,
+                    cls,
+                )
+            )
+
+    def feed(self, pkg: bash.ParseTree):
+        for eclass, queries in self.queries_by_eclass.items():
+            if eclass not in pkg.inherited:
+                continue
+            for query, pkgs, categories, cls in queries:
+                # is the variable assigned in global scope
+                try:
+                    next(pkg.global_query(query))
+                except StopIteration:
+                    continue
+
+                # does any dep attr have any of the deps
+                if all(
+                    atom.key not in pkgs and atom.category not in categories
+                    for attr in pkg.eapi.dep_keys
+                    for atom in iflatten_instance(getattr(pkg, attr.lower()), atom_cls)
+                ):
+                    yield cls(pkg)
