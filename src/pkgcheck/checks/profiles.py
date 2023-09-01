@@ -303,9 +303,9 @@ class ProfilesCheck(Check):
             for _, disabled, enabled in entries:
                 if unknown_disabled := set(disabled) - self.available_iuse:
                     flags = ("-" + u for u in unknown_disabled)
-                    yield UnknownProfileUse(pjoin(node.name, filename), flags)
+                    yield UnknownProfileUse(pjoin(node.name, filename), sorted(flags))
                 if unknown_enabled := set(enabled) - self.available_iuse:
-                    yield UnknownProfileUse(pjoin(node.name, filename), unknown_enabled)
+                    yield UnknownProfileUse(pjoin(node.name, filename), sorted(unknown_enabled))
 
     @verify_files(
         ("packages", "packages"),

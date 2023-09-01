@@ -64,7 +64,7 @@ class RustCheck(Check):
             call_name = pkg.node_str(node.child_by_field_name("name"))
             if call_name == "cargo_crate_uris":
                 row, _ = node.start_point
-                line = pkg.node_str(node.parent)
+                line = pkg.node_str(node.parent).strip()
                 if node.child_count == 1 or (
                     node.child_count == 2
                     and any(

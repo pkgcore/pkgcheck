@@ -681,7 +681,7 @@ class UseFlagsWithoutEffectsCheck(GentooRepoCheck):
 
         flags = self.warn_use_small_files.intersection(pkg.iuse_stripped).difference(used_flags)
         if flags:
-            yield UseFlagWithoutDeps(flags, pkg=pkg)
+            yield UseFlagWithoutDeps(sorted(flags), pkg=pkg)
 
 
 class MissingSlotDep(results.VersionResult, results.Warning):
