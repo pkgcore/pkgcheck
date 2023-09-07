@@ -155,6 +155,7 @@ class _ParseGitRepo:
         cmd = shlex.split(self._git_cmd)
         cmd.append(f"--pretty=tformat:%n{'%n'.join(self._format)}")
         cmd.append(commit_range)
+        cmd.extend(("--no-find-copies", "--no-find-copies-harder", "--find-renames"))
 
         self.git_log = GitLog(cmd, self.path)
         # discard the initial newline
