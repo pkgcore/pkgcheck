@@ -471,6 +471,7 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
         "launchpad": (re.compile(r"^(?!lp:)[^/]+$"), "{project}"),
         # {owner}/{name}-style remotes
         "bitbucket": (_two_components_validator_re, "{username}/{project}"),
+        "codeberg": (_two_components_validator_re, "{username}/{project}"),
         "github": (_two_components_validator_re, "{username}/{project}"),
         # gitlab (2+ components)
         "gitlab": (_gitlab_validator_re, "{username}/[{group}/...]{repo}"),
@@ -648,6 +649,7 @@ class MissingRemoteIdCheck(Check):
 
     remotes_map = (
         ("bitbucket", r"https://bitbucket.org/(?P<value>[^/]+/[^/]+)"),
+        ("codeberg", r"https://codeberg.org/(?P<value>[^/]+/[^/]+)"),
         ("freedesktop-gitlab", rf"https://gitlab.freedesktop.org/{_gitlab_match}"),
         ("github", r"https://github.com/(?P<value>[^/]+/[^/]+)"),
         ("gitlab", rf"https://gitlab.com/{_gitlab_match}"),
