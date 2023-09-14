@@ -281,6 +281,7 @@ class MetadataUrlCheck(_UrlCheck):
         self.protocols = ("http://", "https://", "ftp://")
         self.remote_map = {
             "bitbucket": "https://bitbucket.org/{project}",
+            "codeberg": "https://codeberg.org/{project}",
             "cpan": "https://metacpan.org/dist/{project}",
             # some packages include a lot of modules, and scanning them
             # DoS-es metacpan
