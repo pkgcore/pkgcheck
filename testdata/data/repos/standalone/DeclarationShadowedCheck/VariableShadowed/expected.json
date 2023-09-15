@@ -1,0 +1,3 @@
+{"__class__": "VariableShadowed", "category": "DeclarationShadowedCheck", "package": "VariableShadowed", "version": "0", "lines": [11, 13], "var_name": "RDEPEND"}
+{"__class__": "VariableShadowed", "category": "DeclarationShadowedCheck", "package": "VariableShadowed", "version": "0", "lines": [9, 15], "var_name": "RESTRICT"}
+{"__class__": "VariableShadowed", "category": "DeclarationShadowedCheck", "package": "VariableShadowed", "version": "0", "lines": [5, 16], "var_name": "VAL"}

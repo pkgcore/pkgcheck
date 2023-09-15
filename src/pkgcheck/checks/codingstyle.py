@@ -1443,3 +1443,43 @@ class GlobCheck(Check):
                         lineno, _colno = node.start_point
                         yield GlobDistdir(line=pkg.node_str(node), lineno=lineno + 1, pkg=pkg)
                         break
+
+
+class VariableShadowed(results.LinesResult, results.Warning):
+    """Variable is shadowed or repeatedly declared. This is a possible typo."""
+
+    def __init__(self, var_name, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.var_name = var_name
+
+    @property
+    def desc(self):
+        return f"variable {self.var_name!r} may be shadowed, {self.lines_str}"
+
+
+class DeclarationShadowedCheck(Check):
+    """Scan ebuilds for shadowed variable assignments in global scope."""
+
+    _source = sources.EbuildParseRepoSource
+    known_results = frozenset({VariableShadowed})
+
+    def feed(self, pkg: bash.ParseTree):
+        assigns = defaultdict(list)
+
+        for node in pkg.tree.root_node.children:
+            if node.type == "variable_assignment":
+                used_name = pkg.node_str(node.child_by_field_name("name"))
+                if pkg.node_str(node).startswith(used_name + "+="):
+                    continue
+                if value_node := node.child_by_field_name("value"):
+                    if any(
+                        pkg.node_str(node) == used_name
+                        for node, _ in bash.var_query.captures(value_node)
+                    ):
+                        continue
+                assigns[used_name].append(node)
+
+        for var_name, nodes in assigns.items():
+            if len(nodes) > 1:
+                lines = sorted(node.start_point[0] + 1 for node in nodes)
+                yield VariableShadowed(var_name, lines=lines, pkg=pkg)
