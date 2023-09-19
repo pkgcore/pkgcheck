@@ -1457,14 +1457,27 @@ class VariableShadowed(results.LinesResult, results.Warning):
         return f"variable {self.var_name!r} may be shadowed, {self.lines_str}"
 
 
+class DuplicateFunctionDefinition(results.LinesResult, results.Error):
+    """Function is defined multiple times. This is a definetly typo."""
+
+    def __init__(self, func_name, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.func_name = func_name
+
+    @property
+    def desc(self):
+        return f"multiple definitions of function {self.func_name!r} were found, {self.lines_str}"
+
+
 class DeclarationShadowedCheck(Check):
     """Scan ebuilds for shadowed variable assignments in global scope."""
 
     _source = sources.EbuildParseRepoSource
-    known_results = frozenset({VariableShadowed})
+    known_results = frozenset({VariableShadowed, DuplicateFunctionDefinition})
 
     def feed(self, pkg: bash.ParseTree):
-        assigns = defaultdict(list)
+        var_assigns = defaultdict(list)
+        func_declares = defaultdict(list)
 
         for node in pkg.tree.root_node.children:
             if node.type == "variable_assignment":
@@ -1477,9 +1490,16 @@ class DeclarationShadowedCheck(Check):
                         for node, _ in bash.var_query.captures(value_node)
                     ):
                         continue
-                assigns[used_name].append(node)
+                var_assigns[used_name].append(node)
+            elif node.type == "function_definition":
+                used_name = pkg.node_str(node.child_by_field_name("name"))
+                func_declares[used_name].append(node)
 
-        for var_name, nodes in assigns.items():
+        for var_name, nodes in var_assigns.items():
             if len(nodes) > 1:
                 lines = sorted(node.start_point[0] + 1 for node in nodes)
                 yield VariableShadowed(var_name, lines=lines, pkg=pkg)
+        for func_name, nodes in func_declares.items():
+            if len(nodes) > 1:
+                lines = sorted(node.start_point[0] + 1 for node in nodes)
+                yield DuplicateFunctionDefinition(func_name, lines=lines, pkg=pkg)

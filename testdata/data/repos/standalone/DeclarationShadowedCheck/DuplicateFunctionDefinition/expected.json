@@ -1,0 +1,2 @@
+{"__class__": "DuplicateFunctionDefinition", "category": "DeclarationShadowedCheck", "package": "DuplicateFunctionDefinition", "version": "0", "lines": [11, 15], "func_name": "any_function"}
+{"__class__": "DuplicateFunctionDefinition", "category": "DeclarationShadowedCheck", "package": "DuplicateFunctionDefinition", "version": "0", "lines": [7, 19], "func_name": "pkg_preinst"}
