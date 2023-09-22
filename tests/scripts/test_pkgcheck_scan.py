@@ -549,12 +549,7 @@ class TestPkgcheckScan:
             error = exc.stderr if exc.stderr else exc.stdout
             pytest.fail(error)
 
-    # mapping of repos to scanned results
-    _results = {}
-    _verbose_results = {}
-
-    @pytest.mark.parametrize("repo", repos)
-    def test_scan_repo(self, repo, tmp_path, verbosity=0):
+    def _scan_results(self, repo, tmp_path, verbosity):
         """Scan a target repo, saving results for verification."""
         repo_dir = self.repos_dir / repo
 
@@ -584,24 +579,15 @@ class TestPkgcheckScan:
         results = []
         for result in self.scan(self.scan_args + args):
             # ignore results generated from stubs
-            stubs = (getattr(result, x, "") for x in ("category", "package"))
-            if any(x.startswith("stub") for x in stubs):
+            if any(getattr(result, x, "").startswith("stub") for x in ("category", "package")):
                 continue
             results.append(result)
 
-        if verbosity:
-            self._verbose_results[repo] = set(results)
-            assert len(results) == len(self._verbose_results[repo])
-        else:
-            self._results[repo] = set(results)
-            assert len(results) == len(self._results[repo])
+        results_set = set(results)
+        assert len(results) == len(results_set)
+        return results_set
 
-    @pytest.mark.parametrize("repo", repos)
-    def test_scan_repo_verbose(self, repo, tmp_path):
-        """Scan a target repo in verbose mode, saving results for verification."""
-        return self.test_scan_repo(repo, tmp_path, verbosity=1)
-
-    def _get_results(self, path):
+    def _get_results(self, path: str):
         """Return the set of result objects from a given json stream file."""
         try:
             with (self.repos_data / path).open() as f:
@@ -620,14 +606,12 @@ class TestPkgcheckScan:
             return output
 
     @pytest.mark.parametrize("repo", repos)
-    def test_scan_verify(self, repo, tmp_path):
+    def test_scan_repo(self, repo, tmp_path_factory):
         """Run pkgcheck against test pkgs in bundled repo, verifying result output."""
         results = set()
         verbose_results = set()
-        if repo not in self._results:
-            self.test_scan_repo(repo, tmp_path, verbosity=0)
-        if repo not in self._verbose_results:
-            self.test_scan_repo(repo, tmp_path, verbosity=1)
+        scan_results = self._scan_results(repo, tmp_path_factory.mktemp("scan"), verbosity=0)
+        scan_verbose_results = self._scan_results(repo, tmp_path_factory.mktemp("ver"), verbosity=1)
         for check, keywords in self._checks[repo].items():
             for keyword in keywords:
                 # verify the expected results were seen during the repo scans
@@ -648,24 +632,24 @@ class TestPkgcheckScan:
                 else:
                     verbose_results.update(expected_results)
 
-        if results != self._results[repo]:
-            missing = self._render_results(results - self._results[repo])
-            unknown = self._render_results(self._results[repo] - results)
-            error = ["unmatched repo scan results:"]
+        if results != scan_results:
+            missing = self._render_results(results - scan_results)
+            unknown = self._render_results(scan_results - results)
+            error = ["unmatched repo scan results:\n\n"]
             if missing:
                 error.append(f"{repo} repo missing expected results:\n{missing}")
             if unknown:
                 error.append(f"{repo} repo unknown results:\n{unknown}")
-            pytest.fail("\n".join(error))
-        if verbose_results != self._verbose_results[repo]:
-            missing = self._render_results(verbose_results - self._verbose_results[repo])
-            unknown = self._render_results(self._verbose_results[repo] - verbose_results)
-            error = ["unmatched verbose repo scan results:"]
+            pytest.fail("\n".join(error), pytrace=False)
+        if verbose_results != scan_verbose_results:
+            missing = self._render_results(verbose_results - scan_verbose_results)
+            unknown = self._render_results(scan_verbose_results - verbose_results)
+            error = ["unmatched verbose repo scan results:\n\n"]
             if missing:
                 error.append(f"{repo} repo missing expected results:\n{missing}")
             if unknown:
                 error.append(f"{repo} repo unknown results:\n{unknown}")
-            pytest.fail("\n".join(error))
+            pytest.fail("\n".join(error), pytrace=False)
 
     @staticmethod
     def _patch(fix, repo_path):
@@ -715,9 +699,9 @@ class TestPkgcheckScan:
 
             results = list(self.scan(self.scan_args + args))
             if results:
-                error = ["unexpected repo scan results:"]
+                error = ["unexpected repo scan results:\n"]
                 error.append(self._render_results(results))
-                pytest.fail("\n".join(error))
+                pytest.fail("\n".join(error), pytrace=False)
 
             shutil.rmtree(fixed_repo)
             tested = True
