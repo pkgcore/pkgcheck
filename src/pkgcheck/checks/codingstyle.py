@@ -61,11 +61,19 @@ class BannedEapiCommand(_EapiCommandResult, results.Error):
     _status = "banned"
 
 
+class BannedPhaseCall(results.Error, results.LineResult):
+    """Ebuild calls a phase function directly."""
+
+    @property
+    def desc(self):
+        return f"line {self.lineno}: calling phase function {self.line!r} directly is invalid"
+
+
 class BadCommandsCheck(Check):
     """Scan ebuild for various deprecated and banned command usage."""
 
     _source = sources.EbuildParseRepoSource
-    known_results = frozenset([DeprecatedEapiCommand, BannedEapiCommand])
+    known_results = frozenset({DeprecatedEapiCommand, BannedEapiCommand, BannedPhaseCall})
 
     def feed(self, pkg):
         for func_node, _ in bash.func_query.captures(pkg.tree.root_node):
@@ -81,6 +89,8 @@ class BadCommandsCheck(Check):
                     yield DeprecatedEapiCommand(
                         name, line=call, lineno=lineno + 1, eapi=pkg.eapi, pkg=pkg
                     )
+                elif name in pkg.eapi.phases.values():
+                    yield BannedPhaseCall(line=name, lineno=lineno + 1, pkg=pkg)
 
 
 class EendMissingArg(results.LineResult, results.Warning):

@@ -1,0 +1,1 @@
+{"__class__": "BannedPhaseCall", "category": "BadCommandsCheck", "package": "BannedPhaseCall", "version": "0", "line": "pkg_postinst", "lineno": 13}
