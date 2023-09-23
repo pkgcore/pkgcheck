@@ -547,6 +547,14 @@ class MultipleKeywordsLines(results.LinesResult, results.Style):
         return f"KEYWORDS specified {self.lines_str}"
 
 
+class EmptyGlobalAssignment(results.LineResult, results.Style):
+    """Global scope useless empty assignment."""
+
+    @property
+    def desc(self):
+        return f"line {self.lineno}: empty global assignment: {self.line}"
+
+
 def verify_vars(*variables):
     """Decorator to register raw variable verification methods."""
 
@@ -569,7 +577,13 @@ class MetadataVarCheck(Check):
 
     _source = sources.EbuildParseRepoSource
     known_results = frozenset(
-        [HomepageInSrcUri, StaticSrcUri, ReferenceInMetadataVar, MultipleKeywordsLines]
+        {
+            HomepageInSrcUri,
+            StaticSrcUri,
+            ReferenceInMetadataVar,
+            MultipleKeywordsLines,
+            EmptyGlobalAssignment,
+        }
     )
 
     # mapping between registered variables and verification methods
@@ -644,6 +658,11 @@ class MetadataVarCheck(Check):
         keywords_lines = set()
         for node in pkg.global_query(bash.var_assign_query):
             name = pkg.node_str(node.child_by_field_name("name"))
+            value = node.child_by_field_name("value")
+            if name in pkg.eapi.eclass_keys:
+                if not value or not pkg.node_str(value).strip("\"'"):
+                    lineno, _ = node.start_point
+                    yield EmptyGlobalAssignment(line=pkg.node_str(node), lineno=lineno + 1, pkg=pkg)
             if name in self.known_variables:
                 # RHS value node should be last
                 val_node = node.children[-1]
