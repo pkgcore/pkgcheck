@@ -555,6 +555,14 @@ class EmptyGlobalAssignment(results.LineResult, results.Style):
         return f"line {self.lineno}: empty global assignment: {self.line}"
 
 
+class SelfAssignment(results.LineResult, results.Warning):
+    """Global scope useless empty assignment."""
+
+    @property
+    def desc(self):
+        return f"line {self.lineno}: self assignment: {self.line}"
+
+
 def verify_vars(*variables):
     """Decorator to register raw variable verification methods."""
 
@@ -583,6 +591,7 @@ class MetadataVarCheck(Check):
             ReferenceInMetadataVar,
             MultipleKeywordsLines,
             EmptyGlobalAssignment,
+            SelfAssignment,
         }
     )
 
@@ -658,19 +667,27 @@ class MetadataVarCheck(Check):
         keywords_lines = set()
         for node in pkg.global_query(bash.var_assign_query):
             name = pkg.node_str(node.child_by_field_name("name"))
-            value = node.child_by_field_name("value")
+            value_node = node.child_by_field_name("value")
+            value_str = pkg.node_str(value_node).strip("\"'") if value_node else ""
             if name in pkg.eapi.eclass_keys:
-                if not value or not pkg.node_str(value).strip("\"'"):
+                if not value_str:
                     lineno, _ = node.start_point
                     yield EmptyGlobalAssignment(line=pkg.node_str(node), lineno=lineno + 1, pkg=pkg)
+                elif pkg.node_str(value_node.prev_sibling) == "=":
+                    for var_node, _ in bash.var_query.captures(value_node):
+                        if (
+                            pkg.node_str(var_node) == name
+                            and pkg.node_str(var_node.parent) == value_str
+                            and var_node.next_named_sibling is None
+                        ):
+                            node_str = pkg.node_str(node).replace("\n", "").replace("\t", " ")
+                            lineno, _ = node.start_point
+                            yield SelfAssignment(line=node_str, lineno=lineno + 1, pkg=pkg)
             if name in self.known_variables:
-                # RHS value node should be last
-                val_node = node.children[-1]
-                val_str = pkg.node_str(val_node)
                 if name == "KEYWORDS":
                     keywords_lines.add(node.start_point[0] + 1)
                     keywords_lines.add(node.end_point[0] + 1)
-                yield from self.known_variables[name](self, name, val_node, val_str, pkg)
+                yield from self.known_variables[name](self, name, value_node, value_str, pkg)
 
         if len(keywords_lines) > 1:
             yield MultipleKeywordsLines(sorted(keywords_lines), pkg=pkg)
