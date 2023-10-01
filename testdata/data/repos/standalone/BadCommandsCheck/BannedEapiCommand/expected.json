@@ -1,1 +1,3 @@
 {"__class__": "BannedEapiCommand", "category": "BadCommandsCheck", "package": "BannedEapiCommand", "version": "0", "line": "dohtml doc/*", "lineno": 9, "command": "dohtml", "eapi": "7"}
+{"__class__": "BannedEapiCommand", "category": "BadCommandsCheck", "package": "BannedEapiCommand", "version": "1", "line": "has_version --host-root stub/stub1", "lineno": 9, "command": "has_version --host-root", "eapi": "7"}
+{"__class__": "BannedEapiCommand", "category": "BadCommandsCheck", "package": "BannedEapiCommand", "version": "1", "line": "best_version --host-root stub/stub1:2", "lineno": 12, "command": "best_version --host-root", "eapi": "7"}

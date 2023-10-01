@@ -91,6 +91,15 @@ class BadCommandsCheck(Check):
                     )
                 elif name in pkg.eapi.phases.values():
                     yield BannedPhaseCall(line=name, lineno=lineno + 1, pkg=pkg)
+                elif name in ("has_version", "best_version"):
+                    if not pkg.eapi.options.query_host_root and any(
+                        pkg.node_str(n) == "--host-root"
+                        for n in node.children_by_field_name("argument")
+                    ):
+                        name = f"{name} --host-root"
+                        yield BannedEapiCommand(
+                            name, line=call, lineno=lineno + 1, eapi=pkg.eapi, pkg=pkg
+                        )
 
 
 class EendMissingArg(results.LineResult, results.Warning):
