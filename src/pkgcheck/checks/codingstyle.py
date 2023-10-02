@@ -682,12 +682,15 @@ class MetadataVarCheck(Check):
         for static_str, replacement in static_urls.items():
             yield StaticSrcUri(static_str, replacement=replacement, pkg=pkg)
 
+    def canonicalize_assign(self, value: str):
+        return value.strip("\"'").replace("\n", "").replace("\t", " ")
+
     def feed(self, pkg):
         keywords_lines = set()
         for node in pkg.global_query(bash.var_assign_query):
             name = pkg.node_str(node.child_by_field_name("name"))
             value_node = node.child_by_field_name("value")
-            value_str = pkg.node_str(value_node).strip("\"'") if value_node else ""
+            value_str = self.canonicalize_assign(pkg.node_str(value_node)) if value_node else ""
             if name in pkg.eapi.eclass_keys:
                 if not value_str:
                     lineno, _ = node.start_point
@@ -696,7 +699,7 @@ class MetadataVarCheck(Check):
                     for var_node, _ in bash.var_query.captures(value_node):
                         if (
                             pkg.node_str(var_node) == name
-                            and pkg.node_str(var_node.parent) == value_str
+                            and self.canonicalize_assign(pkg.node_str(var_node.parent)) == value_str
                             and var_node.next_named_sibling is None
                         ):
                             node_str = pkg.node_str(node).replace("\n", "").replace("\t", " ")

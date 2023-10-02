@@ -2,4 +2,6 @@
 {"__class__": "SelfAssignment", "category": "MetadataVarCheck", "package": "SelfAssignment", "version": "0", "line": "RDEPEND=\"$RDEPEND\"", "lineno": 7}
 {"__class__": "SelfAssignment", "category": "MetadataVarCheck", "package": "SelfAssignment", "version": "0", "line": "RDEPEND=${RDEPEND}", "lineno": 8}
 {"__class__": "SelfAssignment", "category": "MetadataVarCheck", "package": "SelfAssignment", "version": "0", "line": "RDEPEND=$RDEPEND", "lineno": 9}
+{"__class__": "SelfAssignment", "category": "MetadataVarCheck", "package": "SelfAssignment", "version": "0", "line": "RDEPEND=\"${RDEPEND}\"", "lineno": 10}
 {"__class__": "SelfAssignment", "category": "MetadataVarCheck", "package": "SelfAssignment", "version": "0", "line": "RDEPEND=\" ${RDEPEND}\"", "lineno": 12}
+{"__class__": "SelfAssignment", "category": "MetadataVarCheck", "package": "SelfAssignment", "version": "0", "line": "RDEPEND=\" ${RDEPEND}\"", "lineno": 14}
