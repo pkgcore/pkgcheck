@@ -17,7 +17,6 @@ lib = pjoin(os.path.dirname(__file__), "lang.so")
 
 
 # copied from tree-sitter with the following changes:
-# - prefer stdc++ over c++ when linking
 # - perform platform-specific compiler customizations
 def build_library(output_path, repo_paths):  # pragma: no cover
     """
@@ -30,7 +29,6 @@ def build_library(output_path, repo_paths):  # pragma: no cover
     """
     from distutils.ccompiler import new_compiler
     from distutils.sysconfig import customize_compiler
-    from distutils.unixccompiler import UnixCCompiler
     from os import path
     from platform import system
     from tempfile import TemporaryDirectory
@@ -40,26 +38,17 @@ def build_library(output_path, repo_paths):  # pragma: no cover
     if not repo_paths:
         raise ValueError("Must provide at least one language folder")
 
-    cpp = False
     source_paths = []
     for repo_path in repo_paths:
         src_path = path.join(repo_path, "src")
         source_paths.append(path.join(src_path, "parser.c"))
-        if path.exists(path.join(src_path, "scanner.cc")):
-            cpp = True
-            source_paths.append(path.join(src_path, "scanner.cc"))
-        elif path.exists(path.join(src_path, "scanner.c")):
-            source_paths.append(path.join(src_path, "scanner.c"))
+        source_paths.append(path.join(src_path, "scanner.c"))
     source_mtimes = [path.getmtime(__file__)] + [path.getmtime(path_) for path_ in source_paths]
-
-    compiler = new_compiler()
-    # force `c++` compiler so the appropriate standard library is used
-    if isinstance(compiler, UnixCCompiler):
-        compiler.compiler_cxx[0] = "c++"
 
     if max(source_mtimes) <= output_mtime:
         return False
 
+    compiler = new_compiler()
     # perform platform-specific compiler customizations
     customize_compiler(compiler)
 
@@ -80,7 +69,7 @@ def build_library(output_path, repo_paths):  # pragma: no cover
         compiler.link_shared_object(
             object_paths,
             output_path,
-            target_lang="c++" if cpp else "c",
+            target_lang="c",
         )
     return True
 

@@ -19,7 +19,7 @@ support in various ways if found on the host system including the following:
 - requests_: supports various network-related checks
 - Gentoo-PerlMod-Version_: supports Perl package version checks
 - tree-sitter-bash_: used in checks that inspect the CST of ebuilds and
-  eclasess. Must be language version >= 13.
+  eclasess. Must be language version >= 14.
 
 Installing
 ==========

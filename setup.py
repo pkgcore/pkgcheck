@@ -41,7 +41,7 @@ class build_treesitter(Command, SubCommand):
             src + "GNUmakefile",
             src + "tree_sitter/parser.h",
             src + "parser.c",
-            src + "scanner.cc",
+            src + "scanner.c",
         ]
 
     library_path = Path(__file__).parent / "src/pkgcheck/bash/lang.so"
