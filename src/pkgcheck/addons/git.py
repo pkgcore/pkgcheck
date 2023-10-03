@@ -353,6 +353,26 @@ class _ScanGit(argparse.Action):
     def default_ref(self, remote):
         return "HEAD" if self.staged else f"{remote}..HEAD"
 
+    def _try_git_remote(self, parser, namespace):
+        """Try to catch case of missing git remote HEAD ref."""
+        try:
+            subprocess.run(
+                ["git", "rev-parse", namespace.git_remote],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                cwd=namespace.target_repo.location,
+                check=True,
+                encoding="utf8",
+            )
+        except FileNotFoundError as exc:
+            parser.error(str(exc))
+        except subprocess.CalledProcessError as exc:
+            error = exc.stderr.splitlines()[0]
+            if "ambiguous argument" in error and "unknown revision" in error:
+                parser.error(
+                    f"failed running git: {error}\nSuggested to configure the remote by running 'git remote set-head {namespace.git_remote} -a'"
+                )
+
     def generate_restrictions(self, parser, namespace, ref):
         """Generate restrictions for a given diff command."""
         try:
@@ -368,6 +388,8 @@ class _ScanGit(argparse.Action):
             parser.error(str(exc))
         except subprocess.CalledProcessError as exc:
             error = exc.stderr.splitlines()[0]
+            if "ambiguous argument" in error and "unknown revision" in error:
+                self._try_git_remote(parser, namespace)
             parser.error(f"failed running git: {error}")
 
         if not p.stdout:
