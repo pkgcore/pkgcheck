@@ -75,6 +75,19 @@ class BadCommandsCheck(Check):
     _source = sources.EbuildParseRepoSource
     known_results = frozenset({DeprecatedEapiCommand, BannedEapiCommand, BannedPhaseCall})
 
+    extra_banned_commands = frozenset(
+        {
+            # commands that modify user/group databases, not portable
+            "gpasswd",
+            "groupadd",
+            "groupdel",
+            "groupmod",
+            "useradd",
+            "userdel",
+            "usermod",
+        }
+    )
+
     def feed(self, pkg):
         for func_node, _ in bash.func_query.captures(pkg.tree.root_node):
             for node, _ in bash.cmd_query.captures(func_node):
@@ -100,6 +113,10 @@ class BadCommandsCheck(Check):
                         yield BannedEapiCommand(
                             name, line=call, lineno=lineno + 1, eapi=pkg.eapi, pkg=pkg
                         )
+                elif name in self.extra_banned_commands:
+                    yield BannedEapiCommand(
+                        name, line=call, lineno=lineno + 1, eapi=pkg.eapi, pkg=pkg
+                    )
 
 
 class EendMissingArg(results.LineResult, results.Warning):
