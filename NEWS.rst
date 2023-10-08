@@ -3,6 +3,64 @@ Release Notes
 =============
 
 -----------------------------
+pkgcheck 0.10.26 (2023-10-08)
+-----------------------------
+
+- tree-sitter-bash: use and bundle the latest version of the bash grammar. This
+  version is capable to parse all the bash code that was used in gentoo
+  repository, meaning various false positives or parsing errors were fixed.
+  (Arthur Zamarin)
+
+- git addon: pass options to disable finding copies (Sam James, #618)
+
+- git addon: add helping message on failure of git remote setup (Arthur
+  Zamarin, #608)
+
+**New checks:**
+
+- VariableScopeCheck: add check for usage of prohibited variables in global
+  scope (Arthur Zamarin, #607)
+
+- VariableScopeCheck: BROOT is allowed also in ``pkg_{pre,post}{inst,rm}``
+  (Ulrich Müller, #609)
+
+- GlobDistdir: check for unsafe filename expansion with ``${DISTDIR}`` (Arthur
+  Zamarin, #610)
+
+- EclassManualDepsCheck: check for missing manual deps for specific eclasses
+  (Arthur Zamarin, #616)
+
+- UnstableSrcUri: check for known unstable ``SRC_URI`` sources (Arthur Zamarin,
+  #599)
+
+- network: add codeberg remote-id (Thomas Bracht Laumann Jespersen, #620)
+
+- EmptyGlobalAssignment: check for empty global assignments (Arthur Zamarin,
+  #629)
+
+- SelfAssignment: check for global scope self assignments (Arthur Zamarin, #629)
+
+- BannedPhaseCall: detect calls of phase functions directly in ebuilds (Arthur
+  Zamarin, #627)
+
+- VariableShadowed: check to detect shadowed variable assignments (Arthur
+  Zamarin, #623)
+
+- DuplicateFunctionDefinition: check for duplicate global functions (Arthur
+  Zamarin, #624)
+
+- BannedEapiCommand: also check for ``has_version --host-root`` and
+  ``best_version --host-root`` in EAPI>=7 (Arthur Zamarin, #630)
+
+- BannedEapiCommand: add some extra user and group commands (Arthur Zamarin)
+
+**Fixed bugs:**
+
+- RedundantLongDescription: lower too short threshold (Arthur Zamarin, #614)
+
+- tests.test_pkgcheck_scan: fix issues with xdist testing (Arthur Zamarin)
+
+-----------------------------
 pkgcheck 0.10.25 (2023-07-29)
 -----------------------------
 
@@ -45,7 +103,7 @@ pkgcheck 0.10.25 (2023-07-29)
 - scan: fix unknown exit checkset during initial config load (Arthur Zamarin,
   #594)
 
-- GitPkgCommitsCheck: fix failure during compute of environment (ArthurZamarin)
+- GitPkgCommitsCheck: fix failure during compute of environment (Arthur Zamarin)
 
 -----------------------------
 pkgcheck 0.10.24 (2023-05-17)
