@@ -825,7 +825,7 @@ class InheritsCheck(Check):
                 self.exported.setdefault(name, set()).add(eclass)
 
         # collect all @USER_VARIABLEs, which are excluded from MissingInherits
-        self.user_variables = frozenset(
+        user_variables = frozenset(
             {
                 x.name
                 for eclass_obj in self.eclass_cache.values()
@@ -833,6 +833,7 @@ class InheritsCheck(Check):
                 if x.user_variable
             }
         )
+        self.exclude_missing_inherit = user_variables | {"CTARGET", "BUILD_DIR"}
 
         # register EAPI-related funcs/cmds to ignore
         self.eapi_funcs = {}
@@ -911,7 +912,7 @@ class InheritsCheck(Check):
             if node.parent.type == "unset_command":
                 continue
             if name not in self.eapi_vars[pkg.eapi] | assigned_vars.keys():
-                if name in self.user_variables:
+                if name in self.exclude_missing_inherit:
                     continue
                 lineno, _colno = node.start_point
                 if eclass := self.get_eclass(name, pkg):
