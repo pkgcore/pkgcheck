@@ -20,7 +20,7 @@ class WhitespaceFound(_Whitespace):
 
     @property
     def desc(self):
-        return f"ebuild has {self.leadtrail} whitespace on {self.lines_str}"
+        return f"ebuild has {self.leadtrail} whitespace {self.lines_str}"
 
 
 class WrongIndentFound(_Whitespace):
@@ -28,7 +28,7 @@ class WrongIndentFound(_Whitespace):
 
     @property
     def desc(self):
-        return f"ebuild has whitespace in indentation on {self.lines_str}"
+        return f"ebuild has whitespace in indentation {self.lines_str}"
 
 
 class DoubleEmptyLine(_Whitespace):
@@ -36,7 +36,7 @@ class DoubleEmptyLine(_Whitespace):
 
     @property
     def desc(self):
-        return f"ebuild has unneeded empty line on {self.lines_str}"
+        return f"ebuild has unneeded empty line {self.lines_str}"
 
 
 class TrailingEmptyLine(results.VersionResult, results.Style):
