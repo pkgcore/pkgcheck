@@ -848,6 +848,8 @@ class InheritsCheck(Check):
 
         self.unused_eclass_skiplist = frozenset(common_mandatory_metadata_keys) - {"IUSE"}
 
+        self.weak_eclass_usage = {"elisp": ("readme.gentoo-r1",)}
+
     def get_eclass(self, export, pkg):
         """Return the eclass related to a given exported variable or function name."""
         try:
@@ -920,8 +922,12 @@ class InheritsCheck(Check):
 
         # allowed indirect inherits
         indirect_allowed = set().union(*(self.eclass_cache[x].provides for x in pkg.inherit))
+        all_inherits = set().union(pkg.inherit, indirect_allowed, conditional)
         # missing inherits
-        missing = used.keys() - pkg.inherit - indirect_allowed - conditional
+        missing = used.keys() - all_inherits
+
+        for eclass in all_inherits:
+            weak_used_eclasses.update(self.weak_eclass_usage.get(eclass, ()))
 
         unused = set(pkg.inherit) - used.keys() - set(assigned_vars.values()) - weak_used_eclasses
         # remove eclasses that use implicit phase functions
