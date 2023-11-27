@@ -645,7 +645,9 @@ class MissingRemoteIdCheck(Check):
     _source = sources.PackageRepoSource
     known_results = frozenset([MissingRemoteId])
 
-    _gitlab_match = r"(?P<value>(\w[^/]*/)*\w[^/]*/\w[^/]*)"
+    # Exclude api groups and raw project names to conform with https://docs.gitlab.com/ee/user/reserved_names.html
+    # with the URI's which are most likely to end up in SRC_URI
+    _gitlab_match = r"(?P<value>((?!api/)\w[^/]*/)+(?!raw/)\w[^/]*)"
 
     remotes_map = (
         ("bitbucket", r"https://bitbucket.org/(?P<value>[^/]+/[^/]+)"),
