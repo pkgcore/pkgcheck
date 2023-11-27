@@ -283,6 +283,10 @@ class _RemovalRepo(UnconfiguredTree):
         if old_files.poll():
             error = old_files.stderr.read().decode().strip()
             raise PkgcheckUserException(f"failed populating archive repo: {error}")
+        # https://docs.python.org/3.12/library/tarfile.html#tarfile-extraction-filter
+        if hasattr(tarfile, "data_filter"):
+            # https://docs.python.org/3.12/library/tarfile.html#tarfile.TarFile.extraction_filter
+            tarfile.TarFile.extraction_filter = staticmethod(tarfile.data_filter)
         with tarfile.open(mode="r|", fileobj=old_files.stdout) as tar:
             tar.extractall(path=self.location)
 
