@@ -19,7 +19,11 @@ from . import Check, RepoCheck
 
 class OutdatedProfilePackage(results.ProfilesResult, results.Warning):
     """Profile files includes package entry that doesn't exist in the repo
-    for a mentioned period of time."""
+    for a mentioned period of time.
+
+    This is only reported if the version was removed more than 3 months ago,
+    or all versions of this package were removed (i.e. last-rite).
+    """
 
     def __init__(self, path, atom, age):
         super().__init__()
@@ -261,9 +265,10 @@ class ProfilesCheck(Check):
             removal = max(x.time for x in matches)
             removal = datetime.fromtimestamp(removal)
             years = (self.today - removal).days / 365.2425
-            return OutdatedProfilePackage(path, atom, round(years, 2))
-        else:
-            return UnknownProfilePackage(path, atom)
+            # show years value if it's greater than 3 month, or if the package was removed
+            if years > 0.25 or not self.search_repo.match(atom.unversioned_atom):
+                return OutdatedProfilePackage(path, atom, round(years, 2))
+        return UnknownProfilePackage(path, atom)
 
     @verify_files(("parent", "parents"), ("eapi", "eapi"))
     def _pull_attr(self, *args):
