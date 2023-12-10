@@ -5,6 +5,6 @@ SLOT="0"
 LICENSE="BSD"
 KEYWORDS="~amd64"
 RDEPEND="
-	!stub/deprecated
-	|| ( stub/unstable stub/deprecated )
+	!stub/deprecated:0
+	|| ( stub/unstable stub/deprecated:0 )
 "

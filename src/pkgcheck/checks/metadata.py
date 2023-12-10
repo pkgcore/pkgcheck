@@ -942,7 +942,7 @@ class DependencyCheck(Check):
                     if not atom.blocks and self.deprecated(atom):
                         # verify all matching packages are deprecated
                         pkgs = self.options.search_repo.match(atom.no_usedeps)
-                        if all(self.deprecated(x.versioned_atom) for x in pkgs):
+                        if all(map(self.deprecated, pkgs)):
                             deprecated[attr].add(atom)
 
                     if in_or_restriction and atom.slot_operator == "=":
