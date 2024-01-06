@@ -13,8 +13,8 @@ diff -Naur standalone/SrcUriCheck/BadFilename/BadFilename-0.ebuild fixed/SrcUriC
 +	https://github.com/pkgcore/pkgcheck/${PV}.tar.gz -> ${P}.tar.gz
 +	https://github.com/pkgcore/pkgcheck/v${PV}.tar.gz -> ${P}.tar.gz
  "
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"
 diff -Naur standalone/SrcUriCheck/BadFilename/Manifest fixed/SrcUriCheck/BadFilename/Manifest
 --- standalone/SrcUriCheck/BadFilename/Manifest	2019-09-07 06:29:08.537163522 -0600
 +++ fixed/SrcUriCheck/BadFilename/Manifest	2019-09-07 06:33:35.393236829 -0600

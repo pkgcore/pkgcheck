@@ -6,6 +6,6 @@ SRC_URI="
 	https://github.com/pkgcore/pkgcheck/archive/${PV}.zip -> ${P}.zip
 	https://gitlab.com/pkgcore/pkgcheck/-/archive/${PV}.zip -> ${P}.zip
 "
-SLOT="0"
 LICENSE="BSD"
+SLOT="0"
 DEPEND="app-arch/unzip"

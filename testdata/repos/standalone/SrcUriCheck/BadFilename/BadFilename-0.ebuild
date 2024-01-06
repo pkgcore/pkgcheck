@@ -5,5 +5,5 @@ SRC_URI="
 	https://github.com/pkgcore/pkgcheck/${PV}.tar.gz
 	https://github.com/pkgcore/pkgcheck/v${PV}.tar.gz
 "
-SLOT="0"
 LICENSE="BSD"
+SLOT="0"

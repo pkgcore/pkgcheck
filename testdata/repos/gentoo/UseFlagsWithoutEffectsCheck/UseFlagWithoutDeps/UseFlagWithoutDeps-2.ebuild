@@ -6,8 +6,8 @@ EAPI=8
 DESCRIPTION="Ebuild with unnecessary USE flags"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 
-SLOT="0"
 LICENSE="BSD"
+SLOT="0"
 IUSE="bash-completion ipv6"
 
 src_compile() {

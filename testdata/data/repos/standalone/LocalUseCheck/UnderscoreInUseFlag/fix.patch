@@ -14,7 +14,7 @@ diff -Naur standalone/LocalUseCheck/UnderscoreInUseFlag/UnderscoreInUseFlag-0.eb
 +++ fixed/LocalUseCheck/UnderscoreInUseFlag/UnderscoreInUseFlag-0.ebuild	2019-09-04 11:07:32.300826502 +0200
 @@ -2,4 +2,4 @@
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"
 -IUSE="foo_bar"
 +IUSE="foo-bar"

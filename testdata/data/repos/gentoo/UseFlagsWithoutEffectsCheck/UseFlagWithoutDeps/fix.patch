@@ -2,8 +2,8 @@
 +++ fixed/UseFlagsWithoutEffectsCheck/UseFlagWithoutDeps/UseFlagWithoutDeps-2.ebuild
 @@ -8,8 +8,8 @@ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"
 -IUSE="bash-completion ipv6"
 +IUSE="ipv6"
 

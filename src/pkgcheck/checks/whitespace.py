@@ -7,7 +7,8 @@ from .. import results, sources
 from . import Check, OptionalCheck
 
 
-class _Whitespace(results.LinesResult, results.Style): ...
+class _Whitespace(results.LinesResult, results.Style):
+    ...
 
 
 class WhitespaceFound(_Whitespace):

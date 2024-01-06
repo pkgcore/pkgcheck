@@ -2,6 +2,6 @@ inherit vcs
 
 DESCRIPTION="VCS ebuild with keywords"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
-SLOT="0"
 LICENSE="BSD"
+SLOT="0"
 KEYWORDS="amd64"

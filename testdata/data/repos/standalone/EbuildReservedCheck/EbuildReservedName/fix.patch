@@ -2,8 +2,8 @@ diff -Naur standalone/EbuildReservedCheck/EbuildReservedName/EbuildReservedName-
 --- standalone/EbuildReservedCheck/EbuildReservedName/EbuildReservedName-0.ebuild
 +++ fixed/EbuildReservedCheck/EbuildReservedName/EbuildReservedName-0.ebuild
 @@ -3,20 +3,19 @@ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"
 
 -prepare_locale() {
 -	DYNAMIC_DEPS="2"

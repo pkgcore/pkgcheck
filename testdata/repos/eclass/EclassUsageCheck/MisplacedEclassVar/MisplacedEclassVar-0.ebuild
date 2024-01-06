@@ -9,8 +9,8 @@ PRE_INHERIT_VAR="foo"
 
 DESCRIPTION="Ebuild with misplaced pre-inherit eclass variable"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
-SLOT="0"
 LICENSE="BSD"
+SLOT="0"
 
 src_prepare() {
 	default

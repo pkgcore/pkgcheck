@@ -1,7 +1,7 @@
 DESCRIPTION="Ebuild with various self assignments"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
-SLOT="0"
 LICENSE="BSD"
+SLOT="0"
 
 RDEPEND="${RDEPEND}" # FAIL
 RDEPEND="$RDEPEND" # FAIL

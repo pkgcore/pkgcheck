@@ -2,8 +2,8 @@ EAPI=6
 
 DESCRIPTION="Ebuild using banned commands"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
-SLOT="0"
 LICENSE="BSD"
+SLOT="0"
 
 pkg_preinst() {
 	usermod -s /bin/bash uucp || die

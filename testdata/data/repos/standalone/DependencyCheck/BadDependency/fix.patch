@@ -2,8 +2,8 @@ diff -Naur standalone/DependencyCheck/BadDependency/BadDependency-0.ebuild fixed
 --- standalone/DependencyCheck/BadDependency/BadDependency-0.ebuild	2019-09-17 10:51:41.687925138 -0600
 +++ fixed/DependencyCheck/BadDependency/BadDependency-0.ebuild	2019-09-17 10:52:16.737103819 -0600
 @@ -4,7 +4,6 @@
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"
  DEPEND="
 -	!DependencyCheck/BadDependency
 -	|| ( stub/stub1:= stub/stub2:= )

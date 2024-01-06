@@ -3,6 +3,6 @@ diff -Naur standalone/SrcUriCheck/UnstatedIuse/UnstatedIuse-0.ebuild fixed/SrcUr
 +++ fixed/SrcUriCheck/UnstatedIuse/UnstatedIuse-0.ebuild	2019-08-23 16:31:11.854468001 -0600
 @@ -3,3 +3,4 @@
  SRC_URI="used? ( https://github.com/pkgcore/pkgcheck/${P}.tar.gz )"
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"
 +IUSE="used"

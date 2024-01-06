@@ -8,5 +8,5 @@ inherit cargo
 
 DESCRIPTION="Ebuild with suboptimal CRATES separator"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
-SLOT="0"
 LICENSE="BSD"
+SLOT="0"

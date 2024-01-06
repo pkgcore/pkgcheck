@@ -2,8 +2,8 @@ EAPI=7
 
 DESCRIPTION="Ebuild with redundant dodir calls"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
-SLOT="0"
 LICENSE="BSD"
+SLOT="0"
 
 src_install() {
 	touch blah

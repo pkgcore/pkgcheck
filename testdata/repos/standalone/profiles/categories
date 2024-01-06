@@ -49,6 +49,7 @@ SrcUriCheck
 StaleLiveCheck
 stub
 test
+VariableOrderCheck
 VariableScopeCheck
 virtual
 VisibilityCheck

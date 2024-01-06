@@ -1,11 +1,11 @@
-HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 DESCRIPTION="ebuild with shadowed variables"
+HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 S=${WORKDIR}
 
 VAL=
 
-SLOT="0"
 LICENSE="BSD"
+SLOT="0"
 RESTRICT="!test? ( test )"
 
 RDEPEND="dev-lang/ruby"

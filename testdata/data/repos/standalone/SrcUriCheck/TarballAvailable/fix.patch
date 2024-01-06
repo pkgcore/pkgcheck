@@ -16,6 +16,6 @@ diff -Naur standalone/SrcUriCheck/TarballAvailable/TarballAvailable-0.ebuild fix
 +	https://github.com/pkgcore/pkgcheck/archive/${PV}.tar.gz -> ${P}.tar.gz
 +	https://gitlab.com/pkgcore/pkgcheck/-/archive/${PV}.tar.gz -> ${P}.tar.gz
  "
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"
 -DEPEND="app-arch/unzip"

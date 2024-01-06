@@ -2,7 +2,7 @@ diff -Naur standalone/BadCommandsCheck/DeprecatedEapiCommand/DeprecatedEapiComma
 --- standalone/BadCommandsCheck/DeprecatedEapiCommand/DeprecatedEapiCommand-0.ebuild	2019-10-01 15:50:01.517881845 -0600
 +++ fixed/BadCommandsCheck/DeprecatedEapiCommand/DeprecatedEapiCommand-0.ebuild	2019-10-01 15:51:40.877292175 -0600
 @@ -6,5 +6,6 @@
- LICENSE="BSD"
+ SLOT="0"
 
  src_install() {
 -	dohtml doc/*

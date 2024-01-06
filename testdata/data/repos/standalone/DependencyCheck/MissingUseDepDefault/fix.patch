@@ -2,8 +2,8 @@ diff -Naur standalone/DependencyCheck/MissingUseDepDefault/MissingUseDepDefault-
 --- standalone/DependencyCheck/MissingUseDepDefault/MissingUseDepDefault-0.ebuild	2019-12-02 21:50:34.617257001 -0700
 +++ fixed/DependencyCheck/MissingUseDepDefault/MissingUseDepDefault-0.ebuild	2019-12-02 21:52:56.547749364 -0700
 @@ -4,7 +4,7 @@
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"
  IUSE="foo"
 -DEPEND="stub/stub1[foo]"
 -RDEPEND="|| ( stub/stub2[used] stub/stub2[-foo] )"

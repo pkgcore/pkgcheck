@@ -13,7 +13,7 @@ diff -Naur standalone/IuseCheck/UnknownUseFlags/UnknownUseFlags-0.ebuild fixed/I
 +++ fixed/IuseCheck/UnknownUseFlags/UnknownUseFlags-0.ebuild	2021-05-24 04:22:44.096668337 -0600
 @@ -4,4 +4,4 @@
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"
 -IUSE="amd64 used flag1 +flag2 +flag3"
 +IUSE="used flag1 +flag2 +flag3"

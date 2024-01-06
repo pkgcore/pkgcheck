@@ -2,8 +2,8 @@ diff -Naur standalone/PropertiesCheck/InvalidProperties/InvalidProperties-0.ebui
 --- standalone/PropertiesCheck/InvalidProperties/InvalidProperties-0.ebuild	2019-11-23 17:07:16.294940718 -0700
 +++ fixed/PropertiesCheck/InvalidProperties/InvalidProperties-0.ebuild	2019-11-23 17:09:39.252447491 -0700
 @@ -3,4 +3,4 @@
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"
  IUSE="used"
 -PROPERTIES="!used ( interactive )"
 +PROPERTIES="!used? ( interactive )"

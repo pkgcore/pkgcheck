@@ -4,15 +4,15 @@ diff -Naur standalone/DroppedKeywordsCheck/DroppedKeywords/DroppedKeywords-0.ebu
 @@ -1,5 +0,0 @@
 -DESCRIPTION="Ebuild with dropped keywords"
 -HOMEPAGE="https://github.com/pkgcore/pkgcheck"
--SLOT="0"
 -LICENSE="BSD"
+-SLOT="0"
 -KEYWORDS="~amd64 ~x86"
 diff -Naur standalone/DroppedKeywordsCheck/DroppedKeywords/DroppedKeywords-1.ebuild fixed/DroppedKeywordsCheck/DroppedKeywords/DroppedKeywords-1.ebuild
 --- standalone/DroppedKeywordsCheck/DroppedKeywords/DroppedKeywords-1.ebuild	2019-10-09 06:27:06.151870892 -0600
 +++ fixed/DroppedKeywordsCheck/DroppedKeywords/DroppedKeywords-1.ebuild	2019-10-09 06:27:27.411971799 -0600
 @@ -2,4 +2,4 @@
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"
 -KEYWORDS="~amd64"
 +KEYWORDS="~amd64 ~x86"
