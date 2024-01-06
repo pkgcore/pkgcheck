@@ -6,5 +6,5 @@ diff -Naur standalone/MetadataVarCheck/HomepageInSrcUri/HomepageInSrcUri-0.ebuil
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 -SRC_URI="${HOMEPAGE}/${P}.tar.gz"
 +SRC_URI="https://github.com/pkgcore/pkgcheck/${P}.tar.gz"
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"

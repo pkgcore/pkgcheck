@@ -3,5 +3,5 @@
 
 DESCRIPTION="Package metadata.xml with invalid missing maintainer-needed comment"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
-SLOT="0"
 LICENSE="BSD"
+SLOT="0"

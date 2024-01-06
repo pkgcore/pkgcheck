@@ -2,8 +2,8 @@ diff -Naur visibility/NonsolvableDepsInStable/masked/masked-0.ebuild fixed/Nonso
 --- visibility/NonsolvableDepsInStable/masked/masked-0.ebuild	2019-11-27 18:19:04.793488335 -0700
 +++ fixed/NonsolvableDepsInStable/masked/masked-0.ebuild	2019-11-27 18:39:14.864528333 -0700
 @@ -4,4 +4,4 @@
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"
  KEYWORDS="amd64"
 -DEPEND="stub/masked"
 +DEPEND="stub/stable"
@@ -11,8 +11,8 @@ diff -Naur visibility/NonsolvableDepsInStable/unstable/unstable-0.ebuild fixed/N
 --- visibility/NonsolvableDepsInStable/unstable/unstable-0.ebuild	2019-11-27 18:19:37.794651982 -0700
 +++ fixed/NonsolvableDepsInStable/unstable/unstable-0.ebuild	2019-11-27 18:39:23.950567166 -0700
 @@ -4,4 +4,4 @@
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"
  KEYWORDS="amd64"
 -DEPEND="stub/unstable"
 +DEPEND="stub/stable"

@@ -8,8 +8,8 @@ diff -Naur standalone/SrcUriCheck/RedundantUriRename/RedundantUriRename-0.ebuild
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 -SRC_URI="https://github.com/pkgcore/pkgcheck/${P}.tar.gz -> ${P}.tar.gz"
 +SRC_URI="https://github.com/pkgcore/pkgcheck/${P}.tar.gz"
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"
 diff -Naur standalone/SrcUriCheck/RedundantUriRename/RedundantUriRename-1.ebuild fixed/SrcUriCheck/RedundantUriRename/RedundantUriRename-1.ebuild
 --- standalone/SrcUriCheck/RedundantUriRename/RedundantUriRename-1.ebuild	2020-01-13 19:05:11.310754211 -0700
 +++ fixed/SrcUriCheck/RedundantUriRename/RedundantUriRename-1.ebuild	2020-01-13 19:07:22.031371966 -0700
@@ -20,5 +20,5 @@ diff -Naur standalone/SrcUriCheck/RedundantUriRename/RedundantUriRename-1.ebuild
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 -SRC_URI="mirror://used/pkgcore/pkgcheck/${P}.tar.gz -> ${P}.tar.gz"
 +SRC_URI="mirror://used/pkgcore/pkgcheck/${P}.tar.gz"
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"

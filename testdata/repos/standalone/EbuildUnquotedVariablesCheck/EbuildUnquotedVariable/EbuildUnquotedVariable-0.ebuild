@@ -2,9 +2,11 @@ EAPI=8
 
 DESCRIPTION="Ebuild with variables that must be quoted"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
-SLOT="0"
-LICENSE="BSD"
+
 S=${WORKDIR}/${PV} # ok
+
+LICENSE="BSD"
+SLOT="0"
 
 PATCHES=(
 	${FILESDIR}/foo.patch # FAIL

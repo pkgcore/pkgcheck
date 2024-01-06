@@ -1,7 +1,7 @@
 DESCRIPTION="Ebuild with reserved names"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
-SLOT="0"
 LICENSE="BSD"
+SLOT="0"
 
 prepare_locale() {
 	DYNAMIC_DEPS="2"

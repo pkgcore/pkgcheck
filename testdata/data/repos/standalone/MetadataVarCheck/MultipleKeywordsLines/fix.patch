@@ -14,8 +14,8 @@ diff -Naur standalone/MetadataVarCheck/MultipleKeywordsLines/MultipleKeywordsLin
 +++ fixed/MetadataVarCheck/MultipleKeywordsLines/MultipleKeywordsLines-1.ebuild	2021-03-18 16:18:57.268011946 -0600
 @@ -2,7 +2,4 @@
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"
 -KEYWORDS="
 -~amd64
 -~x86

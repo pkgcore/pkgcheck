@@ -2,8 +2,8 @@ EAPI=6
 
 DESCRIPTION="Ebuild with misplaced weak blocker"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
-SLOT="0"
 LICENSE="BSD"
+SLOT="0"
 
 BDEPEND="!DependencyCheck/InvalidRdepend"
 DEPEND="!DependencyCheck/BadDependency"

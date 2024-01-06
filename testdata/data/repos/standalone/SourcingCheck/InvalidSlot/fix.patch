@@ -4,9 +4,9 @@ diff -Naur standalone/SourcingCheck/InvalidSlot/InvalidSlot-0.ebuild fixed/Sourc
 @@ -1,4 +1,4 @@
  DESCRIPTION="Ebuild with invalid SLOT"
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ LICENSE="BSD"
 -SLOT="?"
 +SLOT="0"
- LICENSE="BSD"
 diff -Naur standalone/SourcingCheck/InvalidSlot/InvalidSlot-1.ebuild fixed/SourcingCheck/InvalidSlot/InvalidSlot-1.ebuild
 --- standalone/SourcingCheck/InvalidSlot/InvalidSlot-1.ebuild	2020-12-22 23:11:01.614953942 -0700
 +++ fixed/SourcingCheck/InvalidSlot/InvalidSlot-1.ebuild	2021-01-21 15:11:28.009423864 -0700
@@ -14,7 +14,7 @@ diff -Naur standalone/SourcingCheck/InvalidSlot/InvalidSlot-1.ebuild fixed/Sourc
 +EAPI=7
  DESCRIPTION="Ebuild with invalid SLOT"
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
- SLOT="0/1"
+ LICENSE="BSD"
 diff -Naur standalone/SourcingCheck/InvalidSlot/InvalidSlot-2.ebuild fixed/SourcingCheck/InvalidSlot/InvalidSlot-2.ebuild
 --- standalone/SourcingCheck/InvalidSlot/InvalidSlot-2.ebuild	2020-12-22 23:11:01.614953942 -0700
 +++ fixed/SourcingCheck/InvalidSlot/InvalidSlot-2.ebuild	2021-01-21 15:11:28.009423864 -0700
@@ -22,9 +22,9 @@ diff -Naur standalone/SourcingCheck/InvalidSlot/InvalidSlot-2.ebuild fixed/Sourc
  EAPI=7
  DESCRIPTION="Ebuild with invalid SLOT"
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ LICENSE="BSD"
 -SLOT="0/-1"
 +SLOT="0/1"
- LICENSE="BSD"
 diff -Naur standalone/SourcingCheck/InvalidSlot/InvalidSlot-3.ebuild fixed/SourcingCheck/InvalidSlot/InvalidSlot-3.ebuild
 --- standalone/SourcingCheck/InvalidSlot/InvalidSlot-3.ebuild	2020-12-22 23:11:01.614953942 -0700
 +++ fixed/SourcingCheck/InvalidSlot/InvalidSlot-3.ebuild	2021-01-21 15:11:28.009423864 -0700
@@ -32,9 +32,9 @@ diff -Naur standalone/SourcingCheck/InvalidSlot/InvalidSlot-3.ebuild fixed/Sourc
  EAPI=7
  DESCRIPTION="Ebuild with invalid SLOT"
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ LICENSE="BSD"
 -SLOT="0/foo?"
 +SLOT="0/foo"
- LICENSE="BSD"
 diff -Naur standalone/SourcingCheck/InvalidSlot/InvalidSlot-4.ebuild fixed/SourcingCheck/InvalidSlot/InvalidSlot-4.ebuild
 --- standalone/SourcingCheck/InvalidSlot/InvalidSlot-4.ebuild	2021-01-21 15:07:23.383092793 -0700
 +++ fixed/SourcingCheck/InvalidSlot/InvalidSlot-4.ebuild	2021-01-21 15:11:36.714613571 -0700
@@ -42,9 +42,9 @@ diff -Naur standalone/SourcingCheck/InvalidSlot/InvalidSlot-4.ebuild fixed/Sourc
  EAPI=7
  DESCRIPTION="Ebuild with empty SLOT"
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ LICENSE="BSD"
 -SLOT=""
 +SLOT="0"
- LICENSE="BSD"
 diff -Naur standalone/SourcingCheck/InvalidSlot/InvalidSlot-5.ebuild fixed/SourcingCheck/InvalidSlot/InvalidSlot-5.ebuild
 --- standalone/SourcingCheck/InvalidSlot/InvalidSlot-5.ebuild	2021-01-21 15:07:05.581704850 -0700
 +++ fixed/SourcingCheck/InvalidSlot/InvalidSlot-5.ebuild	2021-01-21 15:11:42.733744744 -0700
@@ -52,5 +52,5 @@ diff -Naur standalone/SourcingCheck/InvalidSlot/InvalidSlot-5.ebuild fixed/Sourc
  EAPI=7
  DESCRIPTION="Ebuild with missing SLOT"
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
-+SLOT="0"
  LICENSE="BSD"
++SLOT="0"

@@ -1572,3 +1572,53 @@ class SandboxCallCheck(Check):
                 if len(args) != 1 or ":" in pkg.node_str(args[0]):
                     lineno, _ = node.start_point
                     yield InvalidSandboxCall(line=pkg.node_str(node), lineno=lineno + 1, pkg=pkg)
+
+
+class VariableOrderWrong(results.VersionResult, results.Style):
+    """Variable were defined in an unexpected error."""
+
+    def __init__(self, first_var, second_var, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.first_var = first_var
+        self.second_var = second_var
+
+    @property
+    def desc(self):
+        return f"variable {self.first_var} should occur before {self.second_var}"
+
+
+class VariableOrderCheck(Check):
+    """Scan ebuilds for variables defined in a different order than skel.ebuild dictates."""
+
+    _source = sources.EbuildParseRepoSource
+    known_results = frozenset({VariableOrderWrong})
+
+    # Order from skel.ebuild
+    variable_order = (
+        "DESCRIPTION",
+        "HOMEPAGE",
+        "SRC_URI",
+        "S",
+        "LICENSE",
+        "SLOT",
+        "KEYWORDS",
+        "IUSE",
+        "RESTRICT",
+    )
+
+    def feed(self, pkg: bash.ParseTree):
+        var_assigns = []
+
+        for node in pkg.tree.root_node.children:
+            if node.type == "variable_assignment":
+                used_name = pkg.node_str(node.child_by_field_name("name"))
+                if used_name in self.variable_order:
+                    var_assigns.append(used_name)
+
+        index = 0
+        for first_var in var_assigns:
+            if first_var in self.variable_order:
+                new_index = self.variable_order.index(first_var)
+                if new_index < index:
+                    yield VariableOrderWrong(first_var, self.variable_order[index], pkg=pkg)
+                index = new_index

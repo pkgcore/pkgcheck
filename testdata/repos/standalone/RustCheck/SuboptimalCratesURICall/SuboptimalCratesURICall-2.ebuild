@@ -8,6 +8,6 @@ inherit cargo
 
 DESCRIPTION="Ebuild with suboptimal cargo_crate_uris"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
-SLOT="0"
-LICENSE="BSD"
 SRC_URI="$(cargo_crate_uris ${CRATES} something)"
+LICENSE="BSD"
+SLOT="0"

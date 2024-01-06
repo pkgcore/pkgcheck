@@ -3,5 +3,5 @@
 
 DESCRIPTION="Ebuild with non gentoo maintainer without proxy in metadata.xml"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
-SLOT="0"
 LICENSE="BSD"
+SLOT="0"

@@ -3,7 +3,7 @@ diff -Naur standalone/EclassManualDepsCheck/RubyMissingDeps/RubyMissingDeps-1.eb
 +++ fixed/EclassManualDepsCheck/RubyMissingDeps/RubyMissingDeps-1.ebuild
 @@ -6,3 +6,5 @@ DESCRIPTION="Optional inherit without dep"
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"
 +
 +DEPEND="virtual/rubygems"

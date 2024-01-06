@@ -1,8 +1,8 @@
 EAPI=7
 DESCRIPTION="Ebuild with uncheckable large amount of USE deps"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
-SLOT="0"
 LICENSE="BSD"
+SLOT="0"
 
 # This example is pulled out of dev-lang/rust:
 # https://gitweb.gentoo.org/repo/gentoo.git/tree/dev-lang/rust/rust-1.62.1.ebuild?id=60de1a24bbd551cb852f54ebf2b1aa5620c2aa2c#n55

@@ -4,6 +4,6 @@ diff -Naur standalone/LicenseCheck/UnstatedIuse/UnstatedIuse-0.ebuild fixed/Lice
 @@ -1,4 +1,5 @@
  DESCRIPTION="Ebuild with unstated USE flags in LICENSE"""
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
- SLOT="0"
 +IUSE="used"
  LICENSE="used? ( BSD )"
+ SLOT="0"

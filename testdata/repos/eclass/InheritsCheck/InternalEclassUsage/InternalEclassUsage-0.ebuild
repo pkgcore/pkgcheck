@@ -4,8 +4,8 @@ inherit inherit
 
 DESCRIPTION="Ebuild using an internal eclass function"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
-SLOT="0"
 LICENSE="BSD"
+SLOT="0"
 
 src_prepare() {
 	inherit_public_func

@@ -1,0 +1,2 @@
+{"__class__": "VariableOrderWrong", "category": "VariableOrderCheck", "package": "VariableOrderWrong", "version": "0", "first_var": "DESCRIPTION", "second_var": "HOMEPAGE"}
+{"__class__": "VariableOrderWrong", "category": "VariableOrderCheck", "package": "VariableOrderWrong", "version": "0", "first_var": "HOMEPAGE", "second_var": "KEYWORDS" }

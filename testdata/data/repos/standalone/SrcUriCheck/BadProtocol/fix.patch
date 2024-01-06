@@ -9,5 +9,5 @@ diff -Naur standalone/SrcUriCheck/BadProtocol/BadProtocol-0.ebuild fixed/SrcUriC
 -	gopher://github.com/pkgcore/pkgcheck/${P}.tar.gz
 -"
 +SRC_URI="https://github.com/pkgcore/pkgcheck/${P}.tar.gz"
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"

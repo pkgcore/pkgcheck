@@ -12,5 +12,5 @@ diff -Naur standalone/test/MatchingChksums/MatchingChksums-0.ebuild fixed/test/M
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 -SRC_URI="https://github.com/pkgcore/pkgcheck/foo2.tar.gz"
 +SRC_URI="https://github.com/pkgcore/pkgcheck/foo1.tar.gz"
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"

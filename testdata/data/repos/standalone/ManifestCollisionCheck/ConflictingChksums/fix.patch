@@ -7,8 +7,8 @@ diff -Naur standalone/ManifestCollisionCheck/ConflictingChksums/ConflictingChksu
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 -SRC_URI="https://github.com/pkgcore/pkgcheck/foo.tar.gz"
 +SRC_URI="https://github.com/pkgcore/pkgcheck/foo.tar.gz -> ${P}-foo.tar.gz"
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"
 diff -Naur standalone/ManifestCollisionCheck/ConflictingChksums/Manifest fixed/ManifestCollisionCheck/ConflictingChksums/Manifest
 --- standalone/ManifestCollisionCheck/ConflictingChksums/Manifest	2019-10-02 01:55:58.600631675 -0600
 +++ fixed/ManifestCollisionCheck/ConflictingChksums/Manifest	2019-10-02 01:59:57.189601733 -0600

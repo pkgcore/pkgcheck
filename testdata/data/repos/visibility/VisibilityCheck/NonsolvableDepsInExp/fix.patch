@@ -2,8 +2,8 @@ diff -Naur visibility/NonsolvableDepsInExp/masked/masked-0.ebuild fixed/Nonsolva
 --- visibility/NonsolvableDepsInExp/masked/masked-0.ebuild	2019-11-27 18:23:39.530850730 -0700
 +++ fixed/NonsolvableDepsInExp/masked/masked-0.ebuild	2019-11-27 18:38:54.209440054 -0700
 @@ -4,4 +4,4 @@
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"
  KEYWORDS="~amd64"
 -DEPEND="stub/masked"
 +DEPEND="stub/unstable"

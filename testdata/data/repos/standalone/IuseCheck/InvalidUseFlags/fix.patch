@@ -3,8 +3,8 @@ diff -Naur standalone/IuseCheck/InvalidUseFlags/InvalidUseFlags-0.ebuild fixed/I
 +++ fixed/IuseCheck/InvalidUseFlags/InvalidUseFlags-0.ebuild	2021-05-24 04:26:29.092543549 -0600
 @@ -2,4 +2,4 @@
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"
 -IUSE="used +flag1 -flag2 + -"
 +IUSE="used flag1 flag2"
 diff -Naur standalone/IuseCheck/InvalidUseFlags/InvalidUseFlags-4.ebuild fixed/IuseCheck/InvalidUseFlags/InvalidUseFlags-4.ebuild
@@ -12,7 +12,7 @@ diff -Naur standalone/IuseCheck/InvalidUseFlags/InvalidUseFlags-4.ebuild fixed/I
 +++ fixed/IuseCheck/InvalidUseFlags/InvalidUseFlags-4.ebuild	2021-05-24 04:26:36.519704480 -0600
 @@ -4,4 +4,4 @@
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"
 -IUSE="used +flag1 +flag2 + -"
 +IUSE="used +flag1 +flag2"

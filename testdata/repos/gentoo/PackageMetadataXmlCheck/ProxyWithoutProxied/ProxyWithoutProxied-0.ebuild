@@ -3,5 +3,5 @@
 
 DESCRIPTION="Ebuild with proxy-maint in metadata.xml without proxied non-dev"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
-SLOT="0"
 LICENSE="BSD"
+SLOT="0"

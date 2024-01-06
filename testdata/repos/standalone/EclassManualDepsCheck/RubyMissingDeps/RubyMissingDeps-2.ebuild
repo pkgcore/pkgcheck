@@ -6,8 +6,8 @@ inherit ruby-ng
 
 DESCRIPTION="Optional inherit with category whitelist"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
-SLOT="0"
 LICENSE="BSD"
+SLOT="0"
 
 IUSE="test"
 RESTRICT="!test? ( test )"

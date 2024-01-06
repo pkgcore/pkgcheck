@@ -5,8 +5,8 @@ diff -Naur standalone/SrcUriCheck/InvalidSrcUri/InvalidSrcUri-0.ebuild fixed/Src
  DESCRIPTION="Ebuild with invalid SRC_URI"
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 -SRC_URI="?"
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"
 diff -Naur standalone/SrcUriCheck/InvalidSrcUri/InvalidSrcUri-1.ebuild fixed/SrcUriCheck/InvalidSrcUri/InvalidSrcUri-1.ebuild
 --- standalone/SrcUriCheck/InvalidSrcUri/InvalidSrcUri-1.ebuild	2019-11-14 15:53:18.481394769 -0700
 +++ fixed/SrcUriCheck/InvalidSrcUri/InvalidSrcUri-1.ebuild	2019-11-14 15:56:32.897105805 -0700
@@ -14,8 +14,8 @@ diff -Naur standalone/SrcUriCheck/InvalidSrcUri/InvalidSrcUri-1.ebuild fixed/Src
  DESCRIPTION="Ebuild with invalid SRC_URI"
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 -SRC_URI="( )"
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"
 diff -Naur standalone/SrcUriCheck/InvalidSrcUri/InvalidSrcUri-2.ebuild fixed/SrcUriCheck/InvalidSrcUri/InvalidSrcUri-2.ebuild
 --- standalone/SrcUriCheck/InvalidSrcUri/InvalidSrcUri-2.ebuild	2019-11-14 15:56:03.873999657 -0700
 +++ fixed/SrcUriCheck/InvalidSrcUri/InvalidSrcUri-2.ebuild	2019-11-14 15:56:36.366118491 -0700
@@ -24,8 +24,8 @@ diff -Naur standalone/SrcUriCheck/InvalidSrcUri/InvalidSrcUri-2.ebuild fixed/Src
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 -SRC_URI="https://github.com/pkgcore/pkgcheck/${P}.tar.gz/"
 +SRC_URI="https://github.com/pkgcore/pkgcheck/${P}.tar.gz"
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"
 diff -Naur standalone/SrcUriCheck/InvalidSrcUri/Manifest fixed/SrcUriCheck/InvalidSrcUri/Manifest
 --- standalone/SrcUriCheck/InvalidSrcUri/Manifest	1969-12-31 17:00:00.000000000 -0700
 +++ fixed/SrcUriCheck/InvalidSrcUri/Manifest	2019-11-14 15:57:52.611397338 -0700

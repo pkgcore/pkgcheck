@@ -2,8 +2,8 @@ diff -Naur visibility/DeprecatedDep/nonoptional/nonoptional-0.ebuild fixed/Depre
 --- visibility/DeprecatedDep/nonoptional/nonoptional-0.ebuild	2019-12-04 01:58:11.110158861 -0700
 +++ fixed/DeprecatedDep/nonoptional/nonoptional-0.ebuild	2019-12-26 20:39:32.575678628 -0700
 @@ -4,4 +4,4 @@
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"
  KEYWORDS="~amd64"
 -RDEPEND="stub/deprecated:0"
 +RDEPEND="stub/unstable"

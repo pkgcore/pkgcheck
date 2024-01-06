@@ -3,8 +3,8 @@ diff -Naur standalone/RequiredUseCheck/InvalidRequiredUse/InvalidRequiredUse-0.e
 +++ fixed/RequiredUseCheck/InvalidRequiredUse/InvalidRequiredUse-0.ebuild	2019-11-23 13:40:55.077141263 -0700
 @@ -3,4 +3,5 @@
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"
 -REQUIRED_USE="|| ( )"
 +IUSE="required used"
 +REQUIRED_USE="|| ( required used )"
@@ -13,8 +13,8 @@ diff -Naur standalone/RequiredUseCheck/InvalidRequiredUse/InvalidRequiredUse-1.e
 +++ fixed/RequiredUseCheck/InvalidRequiredUse/InvalidRequiredUse-1.ebuild	2019-11-23 13:41:17.866239168 -0700
 @@ -3,4 +3,5 @@
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"
 -REQUIRED_USE="?"
 +IUSE="required used"
 +REQUIRED_USE="used? ( required )"
@@ -23,8 +23,8 @@ diff -Naur standalone/RequiredUseCheck/InvalidRequiredUse/InvalidRequiredUse-2.e
 +++ fixed/RequiredUseCheck/InvalidRequiredUse/InvalidRequiredUse-2.ebuild	2019-11-23 13:41:31.418297387 -0700
 @@ -3,5 +3,5 @@
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"
 -IUSE="required"
 -REQUIRED_USE="required?"
 +IUSE="required used"

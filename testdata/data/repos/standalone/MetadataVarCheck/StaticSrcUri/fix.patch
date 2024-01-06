@@ -6,5 +6,5 @@ diff -Naur standalone/MetadataVarCheck/StaticSrcUri/StaticSrcUri-0.ebuild fixed/
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 -SRC_URI="https://github.com/pkgcore/pkgcheck/StaticSrcUri-0.tar.gz"
 +SRC_URI="https://github.com/pkgcore/pkgcheck/${P}.tar.gz"
- SLOT="0"
  LICENSE="BSD"
+ SLOT="0"

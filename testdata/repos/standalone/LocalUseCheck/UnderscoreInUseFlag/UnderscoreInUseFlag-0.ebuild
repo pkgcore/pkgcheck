@@ -1,5 +1,5 @@
 DESCRIPTION="Ebuild has underscore in local USE flag"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
-SLOT="0"
 LICENSE="BSD"
+SLOT="0"
 IUSE="foo_bar"

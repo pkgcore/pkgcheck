@@ -2,7 +2,7 @@ diff -Naur standalone/BadCommandsCheck/BannedEapiCommand/BannedEapiCommand-0.ebu
 --- standalone/BadCommandsCheck/BannedEapiCommand/BannedEapiCommand-0.ebuild
 +++ fixed/BadCommandsCheck/BannedEapiCommand/BannedEapiCommand-0.ebuild
 @@ -6,5 +6,6 @@
- LICENSE="BSD"
+ SLOT="0"
 
  src_install() {
 -	dohtml doc/*
@@ -14,7 +14,7 @@ diff -Naur standalone/BadCommandsCheck/BannedEapiCommand/BannedEapiCommand-1.ebu
 --- standalone/BadCommandsCheck/BannedEapiCommand/BannedEapiCommand-1.ebuild
 +++ fixed/BadCommandsCheck/BannedEapiCommand/BannedEapiCommand-1.ebuild
 @@ -6,8 +6,8 @@ SLOT="0"
- LICENSE="BSD"
+ SLOT="0"
 
  src_install() {
 -	if has_version --host-root stub/stub1; then
@@ -30,7 +30,7 @@ diff -Naur standalone/BadCommandsCheck/BannedEapiCommand/BannedEapiCommand-2.ebu
 @@ -4,11 +4,3 @@ DESCRIPTION="Ebuild using banned commands"
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
  SLOT="0"
- LICENSE="BSD"
+ SLOT="0"
 -
 -pkg_preinst() {
 -	usermod -s /bin/bash uucp || die

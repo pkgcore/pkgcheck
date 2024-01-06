@@ -1,8 +1,8 @@
 
-HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 DESCRIPTION="ebuild with shadowed variables"
-SLOT="0"
+HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 LICENSE="BSD"
+SLOT="0"
 
 pkg_preinst() {
 	:
