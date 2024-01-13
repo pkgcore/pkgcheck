@@ -1539,3 +1539,36 @@ class DeclarationShadowedCheck(Check):
             if len(nodes) > 1:
                 lines = sorted(node.start_point[0] + 1 for node in nodes)
                 yield DuplicateFunctionDefinition(func_name, lines=lines, pkg=pkg)
+
+
+class InvalidSandboxCall(results.LineResult, results.Error):
+    """Invalid call to a sandbox function.
+
+    According to PMS and the Devmanual [#]_, only a single item is allowed as
+    argument for ``addread``, ``addwrite``, ``adddeny``, and ``addpredict``.
+    Multiple path items should not be passed as a colon-separated list.
+
+    .. [#] https://devmanual.gentoo.org/function-reference/sandbox-functions/
+    """
+
+    @property
+    def desc(self):
+        return f"line {self.lineno}: invalid call to sandbox function: {self.line}"
+
+
+class SandboxCallCheck(Check):
+    """Scan ebuilds for correct sandbox funcitons usage."""
+
+    _source = sources.EbuildParseRepoSource
+    known_results = frozenset({InvalidSandboxCall})
+
+    functions = frozenset({"addread", "addwrite", "adddeny", "addpredict"})
+
+    def feed(self, pkg: bash.ParseTree):
+        for node, _ in bash.cmd_query.captures(pkg.tree.root_node):
+            name = pkg.node_str(node.child_by_field_name("name"))
+            if name in self.functions:
+                args = node.children_by_field_name("argument")
+                if len(args) != 1 or ":" in pkg.node_str(args[0]):
+                    lineno, _ = node.start_point
+                    yield InvalidSandboxCall(line=pkg.node_str(node), lineno=lineno + 1, pkg=pkg)

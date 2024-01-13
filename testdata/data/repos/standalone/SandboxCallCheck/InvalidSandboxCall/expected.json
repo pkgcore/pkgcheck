@@ -1,0 +1,2 @@
+{"__class__": "InvalidSandboxCall", "category": "SandboxCallCheck", "package": "InvalidSandboxCall", "version": "0", "line": "addpredict /etc/dfs:/dev/zfs", "lineno": 7}
+{"__class__": "InvalidSandboxCall", "category": "SandboxCallCheck", "package": "InvalidSandboxCall", "version": "0", "line": "addwrite /dev /etc", "lineno": 11}

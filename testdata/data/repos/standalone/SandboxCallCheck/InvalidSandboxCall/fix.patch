@@ -1,0 +1,17 @@
+diff -Naur standalone/SandboxCallCheck/InvalidSandboxCall/InvalidSandboxCall-0.ebuild fixed/SandboxCallCheck/InvalidSandboxCall/InvalidSandboxCall-0.ebuild
+--- standalone/SandboxCallCheck/InvalidSandboxCall/InvalidSandboxCall-0.ebuild
++++ fixed/SandboxCallCheck/InvalidSandboxCall/InvalidSandboxCall-0.ebuild
+@@ -4,9 +4,11 @@ SLOT="0"
+ LICENSE="BSD"
+
+ src_compile() {
+-	addpredict /etc/dfs:/dev/zfs
++	addpredict /etc/dfs
++	addpredict /dev/zfs
+ }
+
+ src_test() {
+-	addwrite /dev /etc
++	addwrite /dev
++	addwrite /etc
+ }
