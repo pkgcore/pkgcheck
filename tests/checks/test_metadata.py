@@ -953,7 +953,7 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
     @pytest.mark.parametrize("attr", dep_attrs)
     def test_depset_missing_usedep_default(self, attr):
         chk = self.mk_check()
-        mk_pkg = partial(self.mk_pkg, attr)
+        mk_pkg = partial(self.mk_pkg, attr, iuse="foo bar baz blah")
 
         # USE flag exists on all matching pkgs
         self.assertNoReport(chk, mk_pkg(eapi="4", depset="dev-libs/foo[bar?]"))

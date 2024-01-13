@@ -1,1 +1,2 @@
+{"__class__": "UnstatedIuse", "category": "DependencyCheck", "package": "UnstatedIuse", "version": "0", "attr": "depend", "flags": ["used"], "profile": null, "num_profiles": null}
 {"__class__": "UnstatedIuse", "category": "DependencyCheck", "package": "UnstatedIuse", "version": "0", "attr": "rdepend", "flags": ["used"], "profile": "default/amd64", "num_profiles": 2}

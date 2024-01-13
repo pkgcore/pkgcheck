@@ -7,8 +7,8 @@ from difflib import SequenceMatcher
 from functools import partial
 from operator import attrgetter
 
-from pkgcore.ebuild import atom as atom_mod, restricts
-from pkgcore.ebuild.atom import atom as atom_cls
+from pkgcore.ebuild import restricts
+from pkgcore.ebuild.atom import atom as atom_cls, transitive_use_atom
 from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.fetch import fetchable, unknown_mirror
@@ -871,7 +871,7 @@ class DependencyCheck(Check):
 
     required_addons = (addons.UseAddon,)
     known_results = frozenset(
-        [
+        {
             BadDependency,
             MissingPackageRevision,
             MissingUseDepDefault,
@@ -883,7 +883,7 @@ class DependencyCheck(Check):
             InvalidBdepend,
             InvalidIdepend,
             MisplacedWeakBlocker,
-        ]
+        }
     )
 
     def __init__(self, *args, use_addon):
@@ -929,12 +929,9 @@ class DependencyCheck(Check):
             )
             yield from unstated
 
+            unknowns_useflags = set()
             for node in nodes:
-                if isinstance(node, boolean.OrRestriction):
-                    in_or_restriction = True
-                else:
-                    in_or_restriction = False
-
+                in_or_restriction = isinstance(node, boolean.OrRestriction)
                 for atom in iflatten_instance(node, (atom_cls,)):
                     # Skip reporting blockers on deprecated packages; the primary
                     # purpose of deprecations is to get rid of dependencies
@@ -959,6 +956,15 @@ class DependencyCheck(Check):
                     if atom.op == "=" and not atom.revision:
                         yield MissingPackageRevision(attr, str(atom), pkg=pkg)
 
+                    if isinstance(atom, transitive_use_atom) and atom.use is not None:
+                        for useflag in atom.use:
+                            if useflag[-1] == "?":
+                                useflag = useflag[:-1].removeprefix("!")
+                                if useflag[-1] == ")":
+                                    useflag = useflag[:-3]
+                                if useflag not in pkg.iuse_stripped:
+                                    unknowns_useflags.add(useflag)
+
                     if atom.blocks:
                         if atom.match(pkg):
                             yield BadDependency(attr, atom, "package blocks itself", pkg=pkg)
@@ -968,6 +974,9 @@ class DependencyCheck(Check):
                             )
                         elif not atom.blocks_strongly:
                             weak_blocks[attr].add(atom)
+
+            if unknowns_useflags:
+                yield UnstatedIuse(attr, sorted(unknowns_useflags), pkg=pkg)
 
         for attr in ("depend", "bdepend"):
             weak_blocks[attr].difference_update(weak_blocks["rdepend"])
@@ -1597,7 +1606,7 @@ class InvalidProperties(results.MetadataError, results.VersionResult):
 class _RestrictPropertiesCheck(Check):
     """Generic check for RESTRICT and PROPERTIES."""
 
-    _attr = None
+    _attr: str = None
     _unknown_result_cls = None
     required_addons = (addons.UseAddon,)
 
@@ -1606,9 +1615,9 @@ class _RestrictPropertiesCheck(Check):
         self.filter = use_addon.get_filter(self._attr)
 
         # pull allowed values from a repo and its masters
-        allowed = []
+        allowed = set()
         for repo in self.options.target_repo.trees:
-            allowed.extend(getattr(repo.config, f"{self._attr}_allowed"))
+            allowed.update(getattr(repo.config, f"{self._attr}_allowed"))
         self.allowed = frozenset(allowed)
 
     def feed(self, pkg):
