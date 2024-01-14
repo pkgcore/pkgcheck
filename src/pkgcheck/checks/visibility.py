@@ -146,6 +146,20 @@ class UncheckableDep(results.VersionResult, results.Warning):
         return f"depset {self.attr}: could not be checked due to pkgcore limitation"
 
 
+class DependencyMoved(results.VersionResult, results.Error):
+    """Ebuild depends on a dependency which was pkgmoved."""
+
+    def __init__(self, attr: str, source: str, target: str, **kwargs):
+        super().__init__(**kwargs)
+        self.attr = attr
+        self.source = source
+        self.target = target
+
+    @property
+    def desc(self):
+        return f"depset({self.attr}) dependency moved, update {self.source!r} to {self.target!r}"
+
+
 class NonsolvableDeps(results.VersionResult, results.AliasResult, results.Error):
     """No potential solution for a depset attribute."""
 
@@ -210,19 +224,32 @@ class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
 
     required_addons = (addons.profiles.ProfileAddon,)
     known_results = frozenset(
-        [
+        {
             VisibleVcsPkg,
             NonexistentDeps,
             UncheckableDep,
             NonsolvableDepsInStable,
             NonsolvableDepsInDev,
             NonsolvableDepsInExp,
-        ]
+            DependencyMoved,
+        }
     )
+
+    @staticmethod
+    def _collect_pkgmoves(repo):
+        pkgmoves: dict[str, str] = {}
+        for master in repo.masters:
+            pkgmoves.update(VisibilityCheck._collect_pkgmoves(master))
+        for (action, *params), *_ in repo.config.updates.values():
+            if action == "move":
+                source, target = params
+                pkgmoves[source.key] = target.key
+        return pkgmoves
 
     def __init__(self, *args, profile_addon):
         super().__init__(*args, profile_addon=profile_addon)
         self.profiles = profile_addon
+        self.pkgmoves = self._collect_pkgmoves(self.options.target_repo)
         self.report_cls_map = {
             "stable": NonsolvableDepsInStable,
             "dev": NonsolvableDepsInDev,
@@ -271,8 +298,14 @@ class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
                 yield UncheckableDep(attr, pkg=pkg)
                 suppressed_depsets.append(attr)
             if nonexistent:
-                nonexistent = map(str, sorted(nonexistent))
-                yield NonexistentDeps(attr.upper(), nonexistent, pkg=pkg)
+                for dep in set(nonexistent):
+                    if target := self.pkgmoves.get(dep.key):
+                        new_dep = str(dep).replace(dep.key, target)
+                        yield DependencyMoved(attr, str(dep), new_dep, pkg=pkg)
+
+                nonexistent = {dep for dep in nonexistent if dep.key not in self.pkgmoves}
+                if nonexistent := sorted(map(str, sorted(nonexistent))):
+                    yield NonexistentDeps(attr.upper(), nonexistent, pkg=pkg)
 
         for attr in (x.lower() for x in pkg.eapi.dep_keys):
             if attr in suppressed_depsets:
@@ -281,8 +314,9 @@ class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
             profile_failures = defaultdict(lambda: defaultdict(set))
             for edepset, profiles in self.collapse_evaluate_depset(pkg, attr, depset):
                 for profile, failures in self.process_depset(pkg, attr, depset, edepset, profiles):
-                    failures = tuple(map(str, sorted(stable_unique(failures))))
-                    profile_failures[failures][profile.status].add(profile)
+                    failures = {failure for failure in failures if failure.key not in self.pkgmoves}
+                    if failures := tuple(map(str, sorted(failures))):
+                        profile_failures[failures][profile.status].add(profile)
 
             if profile_failures:
                 if self.options.verbosity > 0:

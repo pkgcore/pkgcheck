@@ -1,0 +1,3 @@
+{"__class__": "DependencyMoved", "category": "DependencyMoved", "package": "DependencyMoved", "version": "0", "attr": "bdepend", "source": ">=stub/old-name-2.71-r6:2.71", "target": ">=stub/stable-2.71-r6:2.71"}
+{"__class__": "DependencyMoved", "category": "DependencyMoved", "package": "DependencyMoved", "version": "0", "attr": "rdepend", "source": "stub/old-name:2", "target": "stub/stable:2"}
+{"__class__": "DependencyMoved", "category": "DependencyMoved", "package": "DependencyMoved", "version": "0", "attr": "rdepend", "source": "~stub/old-name-2", "target": "~stub/stable-2"}
