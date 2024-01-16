@@ -1,1 +1,2 @@
 move stub/old-name stub/stable
+move VisibilityCheck/OldPackageName stub/random-pkgname

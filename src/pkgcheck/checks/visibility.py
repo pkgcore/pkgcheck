@@ -214,6 +214,23 @@ class NonsolvableDepsInExp(NonsolvableDeps):
     _profile = "exp"
 
 
+class OldPackageName(results.PackageResult, results.Error):
+    """Package uses old name which is source of pkgmove.
+
+    Package is using ``${CATEGORY}/${PN}`` which is the source of a
+    pkgmove. It should be updated to the destination (new name) from
+    this repository or one of its master repositories.
+    """
+
+    def __init__(self, new_name: str, **kwargs):
+        super().__init__(**kwargs)
+        self.new_name = new_name
+
+    @property
+    def desc(self):
+        return f"package uses old name which is source of pkgmove, rename into {self.new_name!r}"
+
+
 class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
     """Visibility dependency scans.
 
@@ -232,6 +249,7 @@ class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
             NonsolvableDepsInDev,
             NonsolvableDepsInExp,
             DependencyMoved,
+            OldPackageName,
         }
     )
 
@@ -268,6 +286,9 @@ class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
         if pkg.live:
             # vcs ebuild that better not be visible
             yield from self.check_visibility_vcs(pkg)
+
+        if pkg.key in self.pkgmoves:
+            yield OldPackageName(self.pkgmoves[pkg.key], pkg=pkg)
 
         suppressed_depsets = []
         for attr in (x.lower() for x in pkg.eapi.dep_keys):
