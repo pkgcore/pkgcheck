@@ -71,6 +71,61 @@ the following::
 
     tox -e py311
 
+Adding new checks
+=================
+
+Adding a new check consists of 2 main parts: writing the logic and
+documentation, and adding tests for the check.
+
+Writing the logic
+-----------------
+
+1. Select the best file for the check under ``src/pkgcheck/checks/``.
+
+2. Create new classes for the results:
+
+   - You would need to select the correct result level (style, info, warning,
+     error) - you might want to consult QA team.
+
+   - You would need to select the correct context: category, package, version,
+     profile, etc.
+
+   - Add long user friendly documentation for the result.
+
+   - Implement the ``desc`` property which is printed to the user.
+
+3. Create a new class for the check:
+
+   - Add long user friendly documentation for the result.
+
+   - Put the source of input for the check. This is hard, so best case is to
+     find similar check and copy the code.
+
+   - Define the results it can return.
+
+   - Implement the ``feed`` function.
+
+Adding tests
+------------
+
+1. Select one of the repos under ``testdata/repos``. In most cases you would
+   want ``standalone``.
+
+2. Add the ebuild/category/test case you want to catch.
+
+3. ``cd`` into this directory, and run ``pkgcheck scan --cache-dir /tmp -R JsonStream``.
+   This should yield the results you want to catch (filter out what you expect).
+
+4. Add the results to the test case under:
+   ``testdata/data/repos/${REPO}/${CHECK CLASS}/${RESULT CLASS}/expected.json``
+
+5. If you want to check the fix for the test case, ``git add`` the files under
+   ``testdata/repos/${REPO}``, modify to fix the results, and using
+   ``git diff testdata/repos/${REPO}`` collect the diff.
+
+6. Copy similar patch, add the diff to the patch file, and fix file names, under:
+   ``testdata/data/repos/${REPO}/${CHECK CLASS}/${RESULT CLASS}/fix.patch``
+
 
 .. _pkgcore: https://github.com/pkgcore/pkgcore
 .. _snakeoil: https://github.com/pkgcore/snakeoil
