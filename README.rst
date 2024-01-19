@@ -59,9 +59,9 @@ functionality for purposes such as CI or VCS commit support.
 Tests
 =====
 
-A standalone test runner is integrated in setup.py; to run, just execute::
+Normal pytest is used, just execute::
 
-    python setup.py test
+    pytest
 
 In addition, a tox config is provided so the testsuite can be run in a
 virtualenv setup against all supported python versions. To run tests for all
@@ -69,7 +69,7 @@ environments just execute **tox** in the root directory of a repo or unpacked
 tarball. Otherwise, for a specific python version execute something similar to
 the following::
 
-    tox -e py39
+    tox -e py311
 
 
 .. _pkgcore: https://github.com/pkgcore/pkgcore
