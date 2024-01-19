@@ -1,4 +1,5 @@
 import os
+import pathlib
 
 from snakeoil.osutils import pjoin
 
@@ -89,3 +90,28 @@ class EmptyDirsCheck(GentooRepoCheck, RepoCheck):
             for pkg in sorted(pkgs):
                 if not self.repo.versions[(cat, pkg)]:
                     yield EmptyPackageDir(pkg=RawCPV(cat, pkg, None))
+
+
+class CategoryIsNotDirectory(results.CategoryResult, results.Error):
+    """A category was found that exists but isn't a directory."""
+
+    scope = base.repo_scope
+
+    @property
+    def desc(self):
+        return f"category on disk exists and is not a directory: {self.category}"
+
+
+class RepositoryCategories(RepoCheck):
+    """Scan for fundamental category issues in the repository layout"""
+
+    _source = (sources.EmptySource, (base.repo_scope,))
+    known_results = frozenset({CategoryIsNotDirectory})
+
+    def finish(self):
+        repo = self.options.target_repo
+        repo_p = pathlib.Path(repo.location)
+        for category in repo.categories:
+            p = repo_p / category
+            if p.exists() and not p.is_dir():
+                yield CategoryIsNotDirectory(pkg=RawCPV(category, None, None))
