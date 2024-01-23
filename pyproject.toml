@@ -21,6 +21,7 @@ license = {file = "LICENSE"}
 requires-python = "~=3.9"
 authors = [
 	{name = "Tim Harder", email = "radhermit@gmail.com"},
+	{name = "Brian Harring", email = "ferringb@gmail.com"},
 	{name = "Arthur Zamarin", email = "arthurzam@gentoo.org"},
 ]
 maintainers = [
