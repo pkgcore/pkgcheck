@@ -1,4 +1,32 @@
-# Reformat the repository with black-22.12.0
-ae7dd4184f63185880738c5133f326fe47c6606a
 # Reformat the repository with black-23
 5f8ac7494f1e61a4958c4be513912a96fef7da61
+# Reformat the repository with black-22.12.0
+ae7dd4184f63185880738c5133f326fe47c6606a
+# tests moved to tests/ , code reorg related to it, and many many renames.  Naming is hard.
+4d41e00ee8a1feebf0de16afbb7a6117927f03c9
+150ba74f3ecbceb2f79b502fe5fec6d815a25f2c
+dc1df8ffec796e47ca58d488e60af58efcc163dd
+0ab5285cf4d875e86127aa52ba1fc008f7ac9ee0
+d2cc674cdf75b04507f82dca23215dd7add33a53
+3623e613b1e2993beeb5bfd97421a4cc76917455
+33f690bf150c84056e7601c6adab0584362cd9cf
+508ea2c40b9a8b4b62cabf6bd2f244d9986f9b15
+f4280552a7402b46589bfd2a325623bec42521ec
+074e70526563cdc342f2289138a690a023cfa2e3
+ee760f9d5bc2cad53a821ce6f58fdd914d0c9bac
+97b38a768c5d2d7c3e4d0e0a809f569c5d9aa2b9
+7af610d3ecb2fbe7888be6c7bb3f7a7e5f04aefe
+a075b1dea1cb4d6d566128ad4415ca3227de9ef9
+e05818d56171dbc71158a61b4511df90269c9051
+# note, this also guts some <py36 code.
+82bbd9b8e5307f778d305c7790f1b9fb03d67060 
+# random renames post src/* move
+ac5c3e87a9ed3f593c036ddc9458033fc89e3055
+# code reorganization to src/
+e030f70dd4db479ac8de4dcee21fd4838a7b43b7
+# rename of pkgcore_checks to pkgcheck
+281e5c2f1a4584a876fff91d98c01bbe7d0ef5ca
+55f45f19bd2afd67b956894b4abad93e2ac05a93
+# intra repo moves
+47a5bc32a2fc5c8ab1e447e01a1ca8ac0f29d932
+a7b3d8f0e680e04df99fb0d7a9a72c57a655de1b
