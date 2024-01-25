@@ -62,7 +62,7 @@ jobs:
         platforms: ${{matrix.arch}}
 
     - name: Build wheels
-      uses: joerick/cibuildwheel@v2.11.2
+      uses: joerick/cibuildwheel@v2.16.2
       with:
         output-dir: dist
       env:

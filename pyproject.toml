@@ -115,9 +115,9 @@ select = "*-manylinux*"
 before-all = [
 	# "apt-get update",
 	# "apt-get install -y git libxml2-dev libxslt-dev",
-	"yum update -y",
-	"yum install -y git libxslt-devel libxml2-devel",
+	"yum update -y --nogpgcheck",
+	"yum install -y --nogpgcheck git libxslt-devel libxml2-devel",
 
-	"curl -L \"https://github.com/robxu9/bash-static/releases/download/5.1.016-1.2.3/bash-linux-$(uname -m)\" -o /usr/local/bin/bash",
+	"curl -L \"https://github.com/robxu9/bash-static/releases/download/5.2.015-1.2.3-2/bash-linux-$(uname -m)\" -o /usr/local/bin/bash",
 	"chmod +x /usr/local/bin/bash",
 ]
