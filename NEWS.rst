@@ -3,6 +3,53 @@ Release Notes
 =============
 
 -----------------------------
+pkgcheck 0.10.27 (2024-01-25)
+-----------------------------
+
+- Dockerfile: introduce ``pkgcheck`` docker, created on release, which should
+  provide stable and tested environment to run, for example in CI (Arthur
+  Zamarin)
+
+- Test pkgcheck with Python 3.12 and 3.13 (Sam James, #567)
+
+**New checks:**
+
+- UnstatedIuse: check for unstated IUSE in "?" dependencies (Arthur Zamarin)
+
+- SandboxCallCheck: check for invalid sandbox funciton calls (Arthur Zamarin,
+  #644)
+
+- OldPackageName: check for package named after old package name (Arthur
+  Zamarin, #650)
+
+- RepositoryCategories: check for fundamental category issues in the repository
+  layout (Brian Harring, #656)
+
+**Fixed bugs:**
+
+- pyproject.toml: add runtime dependency on setuptools for Python 3.12 (Arthur
+  Zamarin)
+
+- MissingInherits: add some special variables to exclude list (Arthur Zamarin)
+
+- UnusedInherits: add whitelist for weak usage by another eclass, for example
+  conditional automagic inherit (Arthur Zamarin)
+
+- GitCommitsCheck: fix tarfile Python 3.12 compatibility (Alfred Wingate, #638)
+
+- MissingRemoteId: improve gitlab matching rules (Alfred Wingate, #636, #637)
+
+- OutdatedProfilePackage: don't warn when version was removed not long ago
+  (Arthur Zamarin)
+
+- DeprecatedDep: fix mishandling of slotted deprecates (Arthur Zamarin, #642)
+
+- DependencyMoved: show better error for dependency on pkgmove (Arthur Zamarin,
+  #649)
+
+- compatibilty: remove reliance on ``repo.category_dirs`` (Brian Harring, #656)
+
+-----------------------------
 pkgcheck 0.10.26 (2023-10-08)
 -----------------------------
 
