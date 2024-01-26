@@ -7,9 +7,9 @@ requires = [
 	"lazy-object-proxy",
 	"lxml",
 	"pathspec",
-	"tree-sitter>=0.19.0",
-	"snakeoil~=0.10.4",
-	"pkgcore~=0.12.21",
+	"tree-sitter>=0.20.4",
+	"snakeoil~=0.10.7",
+	"pkgcore~=0.12.25",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -25,7 +25,7 @@ authors = [
 	{name = "Tim Harder", email = "radhermit@gmail.com"},
 	{name = "Brian Harring", email = "ferringb@gmail.com"},
 	{name = "Arthur Zamarin", email = "arthurzam@gentoo.org"},
-	#{name = "Marien Zwart"},
+	{name = "Marien Zwart"},
 ]
 maintainers = [
 	{name = "Arthur Zamarin", email = "arthurzam@gentoo.org"},
@@ -43,9 +43,9 @@ dependencies = [
 	"lazy-object-proxy",
 	"lxml",
 	"pathspec",
-	"tree-sitter>=0.19.0",
-	"snakeoil~=0.10.4",
-	"pkgcore~=0.12.21",
+	"tree-sitter>=0.20.4",
+	"snakeoil~=0.10.7",
+	"pkgcore~=0.12.25",
 	"setuptools; python_version >= '3.12'",
 ]
 
