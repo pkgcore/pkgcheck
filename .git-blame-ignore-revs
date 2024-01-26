@@ -1,3 +1,5 @@
+# Reformat the repository with black-24
+fb4dc9bbf2b51732aa4a254d8ba18c0235f8d70c
 # Reformat the repository with black-23
 5f8ac7494f1e61a4958c4be513912a96fef7da61
 # Reformat the repository with black-22.12.0
@@ -19,7 +21,7 @@ ee760f9d5bc2cad53a821ce6f58fdd914d0c9bac
 a075b1dea1cb4d6d566128ad4415ca3227de9ef9
 e05818d56171dbc71158a61b4511df90269c9051
 # note, this also guts some <py36 code.
-82bbd9b8e5307f778d305c7790f1b9fb03d67060 
+82bbd9b8e5307f778d305c7790f1b9fb03d67060
 # random renames post src/* move
 ac5c3e87a9ed3f593c036ddc9458033fc89e3055
 # code reorganization to src/
