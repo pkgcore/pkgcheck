@@ -43,8 +43,9 @@ class TestPkgcheckCache:
 
         # fail to remove it
         for arg in ("-R", "--remove"):
-            with patch("pkgcheck.addons.caches.os.unlink") as unlink, patch(
-                "sys.argv", self.args + [arg] + ["-t", "profiles"]
+            with (
+                patch("pkgcheck.addons.caches.os.unlink") as unlink,
+                patch("sys.argv", self.args + [arg] + ["-t", "profiles"]),
             ):
                 unlink.side_effect = IOError("bad perms")
                 with pytest.raises(SystemExit) as excinfo:
@@ -76,8 +77,9 @@ class TestPkgcheckCache:
                 self.script()
 
         # fail to forcibly remove all
-        with patch("pkgcheck.addons.caches.shutil.rmtree") as rmtree, patch(
-            "sys.argv", self.args + ["-Rf"]
+        with (
+            patch("pkgcheck.addons.caches.shutil.rmtree") as rmtree,
+            patch("sys.argv", self.args + ["-Rf"]),
         ):
             rmtree.side_effect = IOError("bad perms")
             with pytest.raises(SystemExit) as excinfo:

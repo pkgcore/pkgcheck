@@ -76,9 +76,12 @@ class TestPkgcheckReplay:
                 reporter.report(ProfileWarning("profile warning: foo"))
             file.seek(0)
 
-            with open(file.name) as stdin, patch("sys.stdin", stdin), patch(
-                "sys.argv", [*self.args, "-R", "StrReporter", "-"]
-            ), pytest.raises(SystemExit) as excinfo:
+            with (
+                open(file.name) as stdin,
+                patch("sys.stdin", stdin),
+                patch("sys.argv", [*self.args, "-R", "StrReporter", "-"]),
+                pytest.raises(SystemExit) as excinfo,
+            ):
                 self.script()
             out, err = capsys.readouterr()
             assert not err

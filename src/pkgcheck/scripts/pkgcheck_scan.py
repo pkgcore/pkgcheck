@@ -371,9 +371,10 @@ def _setup_scan(parser, namespace, args):
     # have to be parsed twice, will probably require a custom snakeoil
     # arghparse method.
     # parse command line args to override config defaults
-    with patch(
-        "pkgcheck.scripts.argparse_actions.ChecksetArgs.__call__", lambda *a, **k: None
-    ), patch("pkgcheck.scripts.argparse_actions.ExitArgs.__call__", lambda *a, **k: None):
+    with (
+        patch("pkgcheck.scripts.argparse_actions.ChecksetArgs.__call__", lambda *a, **k: None),
+        patch("pkgcheck.scripts.argparse_actions.ExitArgs.__call__", lambda *a, **k: None),
+    ):
         namespace, _ = parser._parse_known_args(args, namespace)
 
     # Get the current working directory for repo detection and restriction
