@@ -18,7 +18,7 @@ name = "pkgcheck"
 description = "pkgcore-based QA utility for ebuild repos"
 readme = "README.rst"
 license = {file = "LICENSE"}
-requires-python = "~=3.9"
+requires-python = "~=3.10"
 # alphabetical by surname.
 authors = [
 	{name = "Michał Górny", email = "mgorny@gentoo.org"},
