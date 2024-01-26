@@ -11,10 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Python 3.11
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: "3.11"
 
@@ -39,7 +39,7 @@ jobs:
         tar -ztf dist/*.tar.gz | sort
 
     - name: Upload sdist artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: dist
         path: dist/*.tar.gz
@@ -54,22 +54,22 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up QEMU
-      uses: docker/setup-qemu-action@v2
+      uses: docker/setup-qemu-action@v3
       with:
         platforms: ${{matrix.arch}}
 
     - name: Build wheels
-      uses: joerick/cibuildwheel@v2.16.2
+      uses: joerick/cibuildwheel@v2.16.3
       with:
         output-dir: dist
       env:
         CIBW_ARCHS_LINUX: ${{matrix.arch}}
 
     - name: Upload wheel artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: dist
         path: dist/*.whl
@@ -91,6 +91,7 @@ jobs:
       with:
         name: dist
         path: dist
+        merge-multiple: true
 
     - name: Publish a Python distribution to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1

@@ -42,7 +42,7 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     # experimental targets generally lack lxml wheels
     - name: Install libxml2 and libxslt development packages
@@ -86,7 +86,7 @@ jobs:
         popd
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
@@ -100,8 +100,7 @@ jobs:
     - name: Test with pytest
       env:
         PY_COLORS: 1 # forcibly enable pytest colors
-      run: |
-        pytest --cov --cov-report=term --cov-report=xml -v
+      run: pytest --cov --cov-report=term --cov-report=xml -v
 
     - name: Check whether bundled tree-sitter-bash was built
       if: ${{ matrix.os == 'ubuntu-latest' && matrix.tree-sitter-bash }}
@@ -123,10 +122,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up Python 3
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.x'
 
@@ -136,12 +135,11 @@ jobs:
         pip install . pylint
 
     - name: Run linting tools
-      run: |
-        pylint --exit-zero src/pkgcheck
+      run: pylint --exit-zero src/pkgcheck
 
   format:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - uses: psf/black@stable
