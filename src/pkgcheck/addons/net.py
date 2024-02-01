@@ -2,12 +2,14 @@
 
 import logging
 import os
-
-import requests
+import warnings
 
 from ..checks.network import RequestError, SSLError
 
-# suppress all urllib3 log messages
+# suppress all urllib3 log messages and import warnings
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    import requests
 logging.getLogger("urllib3").propagate = False
 
 
