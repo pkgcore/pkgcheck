@@ -19,11 +19,6 @@ jobs:
         tree-sitter-bash: [bundled]
         include:
           - os: ubuntu-latest
-            python-version: '3.13-dev'
-            deps: newest-deps
-            experimental: true
-            tree-sitter-bash: bundled
-          - os: ubuntu-latest
             python-version: '3.11'
             deps: minimal-deps
             experimental: false
