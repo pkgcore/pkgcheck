@@ -41,7 +41,7 @@ jobs:
     - name: Upload sdist artifact
       uses: actions/upload-artifact@v4
       with:
-        name: dist
+        name: dist-sdist
         path: dist/*.tar.gz
 
 
@@ -62,7 +62,7 @@ jobs:
         platforms: ${{matrix.arch}}
 
     - name: Build wheels
-      uses: joerick/cibuildwheel@v2.16.3
+      uses: joerick/cibuildwheel@v2.16.5
       with:
         output-dir: dist
       env:
@@ -71,7 +71,7 @@ jobs:
     - name: Upload wheel artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: dist
+        name: dist-wheel-${{matrix.arch}}
         path: dist/*.whl
 
 
@@ -89,7 +89,7 @@ jobs:
     steps:
     - uses: actions/download-artifact@v3
       with:
-        name: dist
+        pattern: dist-*
         path: dist
         merge-multiple: true
 
