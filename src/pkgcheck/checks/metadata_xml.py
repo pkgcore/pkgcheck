@@ -28,7 +28,7 @@ class _MissingXml(results.Error):
         return f"{self._attr} is missing {self.filename}"
 
 
-class _BadlyFormedXml(results.Warning):
+class _BadlyFormedXml(results.Error):
     """XML isn't well formed."""
 
     def __init__(self, filename, error, **kwargs):
