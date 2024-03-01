@@ -3,6 +3,22 @@ Release Notes
 =============
 
 -----------------------------
+pkgcheck 0.10.28 (2024-03-01)
+-----------------------------
+
+- docs: Add intersphinx linkages (Brian Harring, #658)
+
+**New checks:**
+
+- VariableOrderWrong: Enforce skel.ebuild variable order (Anthony Ryan, #645)
+
+**Fixed bugs:**
+
+- git: fix issues with no-copies (Arthur Zamarin, Sam James, #663, #664)
+
+- addons.net: suppress urllib3 import warnings (Anna "CyberTailor", #661)
+
+-----------------------------
 pkgcheck 0.10.27 (2024-01-25)
 -----------------------------
 
