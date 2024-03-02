@@ -236,6 +236,23 @@ class OldPythonCompat(results.VersionResult, results.Warning):
         return f"old PYTHON_COMPAT target{s} listed: [ {targets} ]"
 
 
+class NewerEAPIAvailable(results.VersionResult, results.Warning):
+    """Package is eligible for a newer EAPI.
+
+    A new package version was added, using an older EAPI, than all supported by
+    inherited eclasses. You should consider bumping the EAPI to the suggested
+    value.
+    """
+
+    def __init__(self, eapi: int, **kwargs):
+        super().__init__(**kwargs)
+        self.eapi = eapi
+
+    @property
+    def desc(self):
+        return f"ebuild eligible for newer EAPI={self.eapi}"
+
+
 class _RemovalRepo(UnconfiguredTree):
     """Repository of removed packages stored in a temporary directory."""
 
@@ -295,7 +312,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
     """Check unpushed git package commits for various issues."""
 
     _source = (sources.PackageRepoSource, (), (("source", GitCommitsRepoSource),))
-    required_addons = (git.GitAddon,)
+    required_addons = (git.GitAddon, sources.EclassAddon)
     known_results = frozenset(
         {
             DirectStableKeywords,
@@ -311,6 +328,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
             PythonPEP517WithoutRevbump,
             EAPIChangeWithoutRevbump,
             OldPythonCompat,
+            NewerEAPIAvailable,
         }
     )
 
@@ -321,12 +339,13 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
     # package categories that are committed with stable keywords
     allowed_direct_stable = frozenset(["acct-user", "acct-group"])
 
-    def __init__(self, *args, git_addon: git.GitAddon):
+    def __init__(self, *args, git_addon: git.GitAddon, eclass_addon: sources.EclassAddon):
         super().__init__(*args)
         self.today = datetime.today()
         self.repo = self.options.target_repo
         self.valid_arches: frozenset[str] = self.options.target_repo.known_arches
         self._git_addon = git_addon
+        self.eclass_cache = eclass_addon.eclasses
         self._cleanup = []
         self.valid_python_targets = {
             use.removeprefix("python_targets_")
@@ -353,6 +372,25 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
     def added_repo(self):
         """Create/load cached repo of packages added to git."""
         return self._git_addon.cached_repo(git.GitAddedRepo)
+
+    def addition_checks(self, pkgs):
+        """Check for issues due to package additions."""
+        pkg = pkgs[0]
+        try:
+            new_pkg = self.repo.match(pkg.versioned_atom)[0]
+        except IndexError:
+            # ignore missing ebuild
+            return
+
+        if new_pkg.inherit:
+            eclass_eapis = (
+                frozenset(map(int, self.eclass_cache[eclass].supported_eapis))
+                for eclass in new_pkg.inherit
+            )
+            current_eapi = int(str(new_pkg.eapi))
+            common_max_eapi = max(frozenset.intersection(*eclass_eapis))
+            if common_max_eapi > current_eapi:
+                yield NewerEAPIAvailable(common_max_eapi, pkg=new_pkg)
 
     def removal_checks(self, pkgs):
         """Check for issues due to package removals."""
@@ -526,6 +564,9 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
                 pkg_map["A"].add(pkg)
                 pkg_map["D"].add(pkg.old_pkg())
 
+        # run added package checks
+        if pkg_map["A"]:
+            yield from self.addition_checks(list(pkg_map["A"]))
         # run removed package checks
         if pkg_map["D"]:
             yield from self.removal_checks(list(pkg_map["D"]))

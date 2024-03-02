@@ -38,7 +38,7 @@ class TestGitCommitMessageCheck(ReportTestCase):
     check = git_mod.GitCommitMessageCheck(options)
 
     def test_sign_offs(self):
-        # assert that it checks for both author and comitter
+        # assert that it checks for both author and committer
         r = self.assertReport(
             self.check, FakeCommit(author="user1", committer="user2", message=["blah"])
         )
