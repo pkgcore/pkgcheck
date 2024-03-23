@@ -16,23 +16,15 @@ jobs:
         python-version: ['3.10', '3.11', '3.12']
         deps: [newest-deps]
         experimental: [false]
-        tree-sitter-bash: [bundled]
         include:
           - os: ubuntu-latest
             python-version: '3.11'
             deps: minimal-deps
             experimental: false
-            tree-sitter-bash: bundled
-          - os: ubuntu-latest
-            python-version: '3.11'
-            deps: newest-deps
-            experimental: false
-            tree-sitter-bash: system
           - os: macos-latest
             python-version: '3.11'
             deps: newest-deps
             experimental: false
-            tree-sitter-bash: bundled
       fail-fast: false
 
     steps:
@@ -63,23 +55,6 @@ jobs:
       if: ${{ matrix.deps == 'minimal-deps' }}
       run: sed -e '/^requires-python/!s/~=/==/' -i pyproject.toml
 
-    # To use libtree-sitter-bash.so installed on the system, we need to compile
-    # it manually, because ubuntu doesn't yet package (but Gentoo does)
-    - name: Install tree-sitter-bash
-      if: ${{ matrix.os == 'ubuntu-latest' && matrix.tree-sitter-bash == 'system' }}
-      run: |
-        sudo apt install build-essential
-        TS_VER=fd4e40dab883d6456da4d847de8321aee9c80805
-        curl -L "https://github.com/tree-sitter/tree-sitter-bash/archive/${TS_VER}.tar.gz" | tar -xvz
-        pushd "tree-sitter-bash-${TS_VER}/src"
-        objects=( parser.o scanner.o )
-        make CFLAGS="-I${PWD}" CXXFLAGS="-I${PWD}" "${objects[@]}"
-        g++ -Wl,-O1 -Wl,--as-needed -shared "${objects[@]}" -Wl,--soname=libtree-sitter-bash.so.14 -o libtree-sitter-bash.so.14
-        ln -s libtree-sitter-bash.so.14 libtree-sitter-bash.so
-        echo "LD_LIBRARY_PATH=${PWD}" >> $GITHUB_ENV
-        echo "USE_SYSTEM_TREE_SITTER_BASH=1" >> $GITHUB_ENV
-        popd
-
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
@@ -96,16 +71,6 @@ jobs:
       env:
         PY_COLORS: 1 # forcibly enable pytest colors
       run: pytest --cov --cov-report=term --cov-report=xml -v
-
-    - name: Check whether bundled tree-sitter-bash was built
-      if: ${{ matrix.os == 'ubuntu-latest' && matrix.tree-sitter-bash }}
-      run: |
-        if [[ -v USE_SYSTEM_TREE_SITTER_BASH ]]; then EXPECTED=0; else EXPECTED=1; fi
-        if [[ "$(find -name 'lang.so' | wc -l)" -eq 0 ]]; then ACTUAL=0; else ACTUAL=1; fi
-        if [[ $ACTUAL -ne $EXPECTED ]]; then
-          echo "::error Expected ${{ matrix.tree-sitter-bash }} tree-sitter-bash, found the other"
-          false
-        fi
 
     - name: Submit code coverage to codecov
       if: ${{ matrix.os == 'ubuntu-latest' }}

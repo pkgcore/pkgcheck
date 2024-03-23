@@ -1,19 +1,13 @@
 import logging
-import os
 import sys
 from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
 from textwrap import dedent
 
-from setuptools import setup, Command
-from setuptools.command.build import SubCommand, build as orig_build
+from setuptools import setup
 from setuptools.command.install import install as orig_install
 from setuptools.command.sdist import sdist as orig_sdist
-from wheel.bdist_wheel import bdist_wheel as orig_bdist_wheel
-
-
-use_system_tree_sitter_bash = bool(os.environ.get("USE_SYSTEM_TREE_SITTER_BASH", False))
 
 
 @contextmanager
@@ -24,39 +18,6 @@ def sys_path():
         yield
     finally:
         sys.path = orig_path
-
-
-class build_treesitter(Command, SubCommand):
-    description = "build tree-sitter-bash library"
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def get_source_files(self):
-        src = "tree-sitter-bash/src/"
-        return [
-            src + "GNUmakefile",
-            src + "tree_sitter/parser.h",
-            src + "parser.c",
-            src + "scanner.c",
-        ]
-
-    library_path = Path(__file__).parent / "src/pkgcheck/bash/lang.so"
-
-    def run(self):
-        if not use_system_tree_sitter_bash:
-            if not self.library_path.exists():
-                logging.info("building tree-sitter-bash library")
-                with sys_path():
-                    from pkgcheck.bash import build_library
-                build_library(self.library_path, ["tree-sitter-bash"])
-
-
-class build(orig_build):
-    sub_commands = orig_build.sub_commands + [("build_treesitter", None)]
 
 
 class install(orig_install):
@@ -71,17 +32,6 @@ class install(orig_install):
         self.generate_files()
 
         self.copy_tree("data", self.install_data)
-
-        install_dir = Path(self.install_lib)
-        if not use_system_tree_sitter_bash:
-            self.reinitialize_command("build").ensure_finalized()
-            (dst := install_dir / "pkgcheck/bash").mkdir(parents=True, exist_ok=True)
-            self.copy_file(
-                build_treesitter.library_path,
-                dst / "lang.so",
-                preserve_mode=True,
-                preserve_times=False,
-            )
 
     def write_obj_lists(self):
         """Generate config file of keyword, check, and other object lists."""
@@ -168,17 +118,6 @@ class install(orig_install):
             (dst / obj.lower()).write_text("\n".join(getattr(objects, obj)) + "\n")
 
 
-class bdist_wheel(orig_bdist_wheel):
-    def finalize_options(self):
-        super().finalize_options()
-        self.root_is_pure = False  # Mark us as not a pure python package
-
-    def get_tag(self):
-        _, _, plat = super().get_tag()
-        # We don't contain any python source, nor any python extensions
-        return "py3", "none", plat
-
-
 class sdist(orig_sdist):
     def make_release_tree(self, base_dir, files):
         super().make_release_tree(base_dir, files)
@@ -200,9 +139,6 @@ class sdist(orig_sdist):
 
 setup(
     cmdclass={
-        "bdist_wheel": bdist_wheel,
-        "build": build,
-        "build_treesitter": build_treesitter,
         "install": install,
         "sdist": sdist,
     }
