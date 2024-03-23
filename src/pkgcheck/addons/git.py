@@ -536,9 +536,14 @@ class GitAddon(caches.CachedAddon):
     def _gitignore(self):
         """Load a repo's .gitignore and .git/info/exclude files for path matching."""
         patterns = []
-        for path in (".gitignore", ".git/info/exclude"):
+        paths = (
+            pjoin(self.options.target_repo.location, ".gitignore"),
+            pjoin(self.options.target_repo.location, ".git/info/exclude"),
+            pjoin(os.environ.get("XDG_CONFIG_HOME", os.path.expanduser("~/.config")), "git/ignore"),
+        )
+        for path in paths:
             try:
-                with open(pjoin(self.options.target_repo.location, path)) as f:
+                with open(path) as f:
                     patterns.extend(f)
             except (FileNotFoundError, IOError):
                 pass

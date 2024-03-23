@@ -12,6 +12,7 @@ from pkgcore.ebuild.atom import MalformedAtom
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.restrictions import packages
 from snakeoil.cli.exceptions import UserException
+from snakeoil.contexts import os_environ
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
 from snakeoil.process import CommandNotFound, find_binary
@@ -465,6 +466,9 @@ class TestGitAddon:
         options, _ = tool.parse_args(args)
         self.addon = git.GitAddon(options)
         self.cache_file = self.addon.cache_file(self.repo)
+
+        with os_environ(XDG_CONFIG_HOME=self.cache_dir):
+            yield
 
     def test_git_unavailable(self, tool):
         args = ["scan", "--cache-dir", self.cache_dir, "--repo", self.repo.location]
