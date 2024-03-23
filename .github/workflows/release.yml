@@ -7,8 +7,15 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-sdist:
+  build-and-deploy:
     runs-on: ubuntu-latest
+    environment: release
+
+    permissions:
+      id-token: write # Used to authenticate to PyPI via OIDC
+
+      contents: write # Used to authenticate github release publish
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -34,70 +41,26 @@ jobs:
         make man
         make sdist
 
+    - name: Build wheel
+      run: make wheel
+
     - name: Output dist file info
       run: |
+        sha512sum dist/*
         tar -ztf dist/*.tar.gz | sort
 
-    - name: Upload sdist artifact
-      uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v4
       with:
-        name: dist-sdist
-        path: dist/*.tar.gz
+        name: results
+        path: dist/*
 
-
-  build-wheel:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        arch: [x86_64, aarch64]
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v3
-      with:
-        platforms: ${{matrix.arch}}
-
-    - name: Build wheels
-      uses: joerick/cibuildwheel@v2.16.5
-      with:
-        output-dir: dist
-      env:
-        CIBW_ARCHS_LINUX: ${{matrix.arch}}
-
-    - name: Upload wheel artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: dist-wheel-${{matrix.arch}}
-        path: dist/*.whl
-
-
-  deploy:
-    if: startsWith(github.ref, 'refs/tags/')
-    needs: ["build-sdist", "build-wheel"]
-    runs-on: ubuntu-latest
-    environment: release
-
-    permissions:
-      id-token: write # Used to authenticate to PyPI via OIDC
-
-      contents: write # Used to authenticate github release publish
-
-    steps:
-    - uses: actions/download-artifact@v4
-      with:
-        pattern: dist-*
-        path: dist
-        merge-multiple: true
-
-    - name: Publish a Python distribution to PyPI
+    - name: publish
       uses: pypa/gh-action-pypi-publish@release/v1
+      if: startsWith(github.ref, 'refs/tags/')
 
     - name: Create GitHub release
       uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
       with:
         files: dist/*.tar.gz
         fail_on_unmatched_files: true
@@ -105,7 +68,7 @@ jobs:
 
   build-and-push-docker-image:
     if: startsWith(github.ref, 'refs/tags/')
-    needs: ["deploy"]
+    needs: ["build-and-deploy"]
     runs-on: ubuntu-latest
     environment: release
 

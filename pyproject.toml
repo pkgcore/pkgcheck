@@ -1,7 +1,6 @@
 [build-system]
 requires = [
-	"setuptools >= 61.0.0",
-	"wheel",
+	"flit_core >=3.8,<4",
 	# repeat all normal runtime dependencies here
 	"chardet",
 	"lazy-object-proxy",
@@ -12,7 +11,8 @@ requires = [
 	"snakeoil~=0.10.7",
 	"pkgcore~=0.12.25",
 ]
-build-backend = "setuptools.build_meta"
+build-backend = "py_build"
+backend-path = ["."]
 
 [project]
 name = "pkgcheck"
@@ -48,7 +48,6 @@ dependencies = [
 	"tree-sitter-bash>=0.21.0",
 	"snakeoil~=0.10.7",
 	"pkgcore~=0.12.25",
-	"setuptools; python_version >= '3.12'",
 ]
 
 [project.optional-dependencies]
@@ -74,11 +73,19 @@ Source = "https://github.com/pkgcore/pkgcheck"
 [project.scripts]
 pkgcheck = "pkgcheck.scripts.__init__:main"
 
-[tool.setuptools]
-zip-safe = false
+[tool.flit.external-data]
+directory = "data"
 
-[tool.setuptools.dynamic]
-version = {attr = "pkgcheck.__version__"}
+[tool.flit.sdist]
+include = [
+	"Makefile", "py_build.py", "tox.ini",
+	"NEWS.rst", "doc", "tests", "testdata", "contrib",
+	"build/sphinx/man/pkgcheck.1",
+]
+exclude = [
+	".github/", ".gitignore",
+	"doc/api/", "doc/generated/", "doc/_build/",
+]
 
 [tool.black]
 line-length = 100
@@ -87,39 +94,3 @@ line-length = 100
 minversion = "6.0"
 addopts = "-vv -ra -l"
 testpaths = ["tests"]
-
-[tool.cibuildwheel]
-build = "cp310-*"
-build-frontend = "build"
-
-before-build = [
-	"rm -f {project}/src/pkgcheck/bash/lang.so"
-]
-test-requires = ["pytest", "requests"]
-test-command = "pytest {project}/tests"
-
-# glibc 2.24
-manylinux-x86_64-image = "manylinux_2_28"
-manylinux-i686-image = "manylinux_2_28"
-manylinux-aarch64-image = "manylinux_2_28"
-manylinux-ppc64le-image = "manylinux_2_28"
-manylinux-s390x-image = "manylinux_2_28"
-test-skip = "*-*linux_{aarch64,ppc64le,s390x}"
-
-[[tool.cibuildwheel.overrides]]
-select = "*-musllinux*"
-before-all = [
-	"apk add --no-cache git bash libxml2-dev libxslt-dev",
-]
-
-[[tool.cibuildwheel.overrides]]
-select = "*-manylinux*"
-before-all = [
-	# "apt-get update",
-	# "apt-get install -y git libxml2-dev libxslt-dev",
-	"yum update -y --nogpgcheck",
-	"yum install -y --nogpgcheck git libxslt-devel libxml2-devel",
-
-	"curl -L \"https://github.com/robxu9/bash-static/releases/download/5.2.015-1.2.3-2/bash-linux-$(uname -m)\" -o /usr/local/bin/bash",
-	"chmod +x /usr/local/bin/bash",
-]
