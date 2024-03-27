@@ -3,6 +3,23 @@ Release Notes
 =============
 
 -----------------------------
+pkgcheck 0.10.29 (2024-03-28)
+-----------------------------
+
+- drop bundling of tree-sitter-bash (Arthur Zamarin)
+
+- use flit as build backend for pkgcheck (Arthur Zamarin)
+
+- PkgBadlyFormedXml: change level to error instead of a warning (Arthur Zamarin,
+  #668)
+
+- git addon: support user global gitignore (Arthur Zamarin, #671, #672)
+
+**New checks:**
+
+- NewerEAPIAvailable: committing new ebuilds with old EAPI (Arthur Zamarin, #666)
+
+-----------------------------
 pkgcheck 0.10.28 (2024-03-01)
 -----------------------------
 
