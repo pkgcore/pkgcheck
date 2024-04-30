@@ -387,10 +387,12 @@ class TestNetAddon:
         addon = addons.NetAddon(options)
         assert isinstance(addon.session, requests.Session)
         assert addon.session.timeout == 10
+        assert addon.timeout == 10
         # a timeout of zero disables timeouts entirely
         options, _ = tool.parse_args(["scan", "--timeout", "0"])
         addon = addons.NetAddon(options)
         assert addon.session.timeout is None
+        assert addon.timeout is None
 
     def test_args(self, tool):
         options, _ = tool.parse_args(
