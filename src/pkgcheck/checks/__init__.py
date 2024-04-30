@@ -127,7 +127,7 @@ class NetworkCheck(AsyncCheck, OptionalCheck):
         super().__init__(*args, **kwargs)
         if not self.options.net:
             raise SkipCheck(self, "network checks not enabled")
-        self.timeout = self.options.timeout
+        self.timeout = net_addon.timeout
         self.session = net_addon.session
 
 
