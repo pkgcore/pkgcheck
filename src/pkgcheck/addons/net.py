@@ -18,12 +18,7 @@ class Session(requests.Session):
 
     def __init__(self, concurrent=None, timeout=None, user_agent=None):
         super().__init__()
-        if timeout == 0:
-            # set timeout to 0 to never timeout
-            self.timeout = None
-        else:
-            # default to timing out connections after 5 seconds
-            self.timeout = timeout if timeout is not None else 5
+        self.timeout = timeout
 
         # block when urllib3 connection pool is full
         concurrent = concurrent if concurrent is not None else os.cpu_count() * 5

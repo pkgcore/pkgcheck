@@ -274,6 +274,16 @@ class UseAddon(base.Addon):
 class NetAddon(base.Addon):
     """Addon supporting network functionality."""
 
+    def __init__(self, *args):
+        super().__init__(*args)
+
+        if self.options.timeout == 0:
+            # set timeout to 0 to never timeout
+            self.timeout = None
+        else:
+            # default to timing out connections after 5 seconds
+            self.timeout = self.options.timeout if self.options.timeout is not None else 5
+
     @classmethod
     def mangle_argparser(cls, parser):
         group = parser.add_argument_group("network")
@@ -291,7 +301,7 @@ class NetAddon(base.Addon):
 
             return Session(
                 concurrent=self.options.tasks,
-                timeout=self.options.timeout,
+                timeout=self.timeout,
                 user_agent=self.options.user_agent,
             )
         except ImportError as e:
