@@ -388,7 +388,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
                 for eclass in new_pkg.inherit
             )
             current_eapi = int(str(new_pkg.eapi))
-            common_max_eapi = max(frozenset.intersection(*eclass_eapis))
+            common_max_eapi = max(frozenset.intersection(*eclass_eapis), 0)
             if common_max_eapi > current_eapi:
                 yield NewerEAPIAvailable(common_max_eapi, pkg=new_pkg)
 
