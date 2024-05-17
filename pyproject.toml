@@ -44,7 +44,7 @@ dependencies = [
 	"lazy-object-proxy",
 	"lxml",
 	"pathspec",
-	"tree-sitter>=0.21.0",
+	"tree-sitter>=0.22.2",
 	"tree-sitter-bash>=0.21.0",
 	"snakeoil~=0.10.8",
 	"pkgcore~=0.12.25",

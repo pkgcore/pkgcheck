@@ -1252,7 +1252,7 @@ class _UnquotedVariablesCheck(Check):
 
     def _var_needs_quotes(self, pkg, node):
         pnode = node.parent
-        while pnode != node:
+        while pnode is not None:
             if pnode.type in self.node_types_ok:
                 return False
             elif pnode.type == "command":

@@ -3,10 +3,9 @@
 import tree_sitter_bash
 from tree_sitter import Language, Parser, Query
 
-lang = Language(tree_sitter_bash.language(), "bash")
+lang = Language(tree_sitter_bash.language())
 query = lang.query
-parser = Parser()
-parser.set_language(lang)
+parser = Parser(language=lang)
 
 # various parse tree queries
 cmd_query = query("(command) @call")
