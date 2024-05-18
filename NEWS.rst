@@ -3,6 +3,18 @@ Release Notes
 =============
 
 -----------------------------
+pkgcheck 0.10.30 (2024-05-18)
+-----------------------------
+
+- pyproject: fix python compat with snakeoil (Lucio Sauer, #678)
+
+- NetAddon: fix ftp call with ``--timeout 0`` (Lucio Sauer, #678)
+
+- NewerEAPIAvailable: handle better when no eclasses EAPI  (Arthur Zamarin, #679)
+
+- fix compatibility with newest version of tree-sitter (Arthur Zamarin)
+
+-----------------------------
 pkgcheck 0.10.29 (2024-03-28)
 -----------------------------
 
