@@ -24,7 +24,7 @@ jobs:
           - os: macos-latest
             python-version: '3.11'
             deps: newest-deps
-            experimental: false
+            experimental: true
       fail-fast: false
 
     steps:
