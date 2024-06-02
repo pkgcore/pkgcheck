@@ -17,7 +17,7 @@ allowed_filename_chars = set()
 allowed_filename_chars.update(chr(x) for x in range(ord("a"), ord("z") + 1))
 allowed_filename_chars.update(chr(x) for x in range(ord("A"), ord("Z") + 1))
 allowed_filename_chars.update(chr(x) for x in range(ord("0"), ord("9") + 1))
-allowed_filename_chars.update([".", "-", "_", "+", ":"])
+allowed_filename_chars.update([".", "-", "_", "+", ":", "@"])
 
 
 class MismatchedPN(results.PackageResult, results.Error):
