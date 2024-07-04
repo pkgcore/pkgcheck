@@ -376,7 +376,8 @@ class PythonCheck(Check):
         bdepends = frozenset(map(attrgetter("key"), iflatten_instance(pkg.bdepend, atom)))
 
         if pep517_value is None:
-            yield DistutilsNonPEP517Build(pkg=pkg)
+            if "dev-python/gpep517" not in bdepends:
+                yield DistutilsNonPEP517Build(pkg=pkg)
         elif has_distutils_optional and not has_distutils_deps and pep517_value != "no":
             # We always need BDEPEND for these if != no.
             # We are looking for USE-conditional on appropriate target
