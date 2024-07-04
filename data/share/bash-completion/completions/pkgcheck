@@ -43,18 +43,15 @@ _pkgcheck() {
     COMPREPLY=($(compgen -W "${base_options[*]}" -- "${cur}"))
 
     # find the subcommand
-    for ((i = 1; i < ${COMP_CWORD}; i++)); do
-        case "${COMP_WORDS[i]}" in
-            -*) ;;
-            *)
-                cmd=${COMP_WORDS[i]}
-                break
-                ;;
-        esac
+    for (( i=1; i < COMP_CWORD; i++ )); do
+        if [[ ${COMP_WORDS[i]} != -* ]]; then
+            cmd=${COMP_WORDS[i]}
+            break
+        fi
     done
 
-    if [[ ${i} == ${COMP_CWORD} ]]; then
-        COMPREPLY+=($(compgen -W "${subcommands[*]}" -- "${cur}"))
+    if (( i == COMP_CWORD )); then
+        COMPREPLY+=($(compgen -W "${subcommands}" -- "${cur}"))
         return
     fi
 
@@ -73,7 +70,7 @@ _pkgcheck() {
 
             case ${prev} in
                 --cache-dir)
-			        COMPREPLY=($(compgen -d -- "${cur}"))
+			        _filedir -d
                     ;;
                 -t | --type)
                     COMPREPLY=($(compgen -W "$(</usr/share/pkgcheck/caches)" -- "${cur}"))
@@ -90,7 +87,7 @@ _pkgcheck() {
 
             case ${prev} in
                 --failures)
-                    COMPREPLY=($(compgen -f -- "${cur}"))
+                    _filedir
                     ;;
                 *)
                     COMPREPLY+=($(compgen -W "${subcmd_options[*]}" -- "${cur}"))
@@ -111,8 +108,11 @@ _pkgcheck() {
                     COMPREPLY=()
                     ;;
                 *)
-                    COMPREPLY+=($(compgen -W "${subcmd_options[*]}" -- "${cur}"))
-                    COMPREPLY+=($(compgen -f -- "${cur}"))
+                    if [[ ${cur} == -* ]]; then
+                        COMPREPLY+=($(compgen -W "${subcmd_options[*]}" -- "${cur}"))
+                    else
+                        _filedir
+                    fi
                     ;;
             esac
             ;;
@@ -146,7 +146,7 @@ _pkgcheck() {
                     COMPREPLY=()
                     ;;
                 --cache-dir)
-			        COMPREPLY=($(compgen -d -- "${cur}"))
+			        _filedir -d
                     ;;
                 -r | --repo)
                     COMPREPLY=($(compgen -W "$(_parsereposconf -l)" -- "${cur}"))
