@@ -579,6 +579,18 @@ class PythonCompatCheck(Check):
 
     known_results = frozenset([PythonCompatUpdate])
 
+    whitelist_backports = frozenset(
+        {
+            "dev-python/backports-tarfile",
+            "dev-python/exceptiongroup",
+            "dev-python/importlib-metadata",
+            "dev-python/taskgroup",
+            "dev-python/typing-extensions",
+            "dev-python/unittest-or-fail",
+            "dev-python/zipp",
+        }
+    )
+
     def __init__(self, *args):
         super().__init__(*args)
         repo = self.options.target_repo
@@ -621,7 +633,7 @@ class PythonCompatCheck(Check):
             p
             for attr in (x.lower() for x in attrs)
             for p in iflatten_instance(getattr(pkg, attr), atom)
-            if not p.blocks
+            if not p.blocks and p.key not in self.whitelist_backports
         }
 
     def feed(self, pkg):
