@@ -1,0 +1,4 @@
+{"__class__": "OldPackageNameDep", "category": "DependencyMoved", "package": "DependencyMoved", "version": "0", "attr": "bdepend", "dep": ">=stub/old-name-2.71-r6:2.71", "new_name": "stub/stable"}
+{"__class__": "OldPackageNameDep", "category": "DependencyMoved", "package": "DependencyMoved", "version": "0", "attr": "rdepend", "dep": "stub/old-name:2", "new_name": "stub/stable"}
+{"__class__": "OldPackageNameDep", "category": "DependencyMoved", "package": "DependencyMoved", "version": "0", "attr": "rdepend", "dep": "~stub/old-name-2", "new_name": "stub/stable"}
+{"__class__": "OldPackageNameDep", "category": "VisibilityCheck", "package": "OldPackageNameDep", "version": "0", "attr": "rdepend", "dep": "!VisibilityCheck/OldPackageName", "new_name": "stub/random-pkgname"}

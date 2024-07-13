@@ -231,6 +231,25 @@ class OldPackageName(results.PackageResult, results.Error):
         return f"package uses old name which is source of pkgmove, rename into {self.new_name!r}"
 
 
+class OldPackageNameDep(results.VersionResult, results.Error):
+    """Package depends on old name which is source of pkgmove.
+
+    Package depends on ``${CATEGORY}/${PN}`` which is the source of a
+    pkgmove. It should be updated to the destination (new name) from
+    this repository or one of its master repositories.
+    """
+
+    def __init__(self, attr: str, dep: str, new_name: str, **kwargs):
+        super().__init__(**kwargs)
+        self.attr = attr
+        self.dep = dep
+        self.new_name = new_name
+
+    @property
+    def desc(self):
+        return f"{self.attr}: {self.dep!r} uses old package name which is the source of a pkgmove, rename into {self.new_name!r}"
+
+
 class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
     """Visibility dependency scans.
 
@@ -250,6 +269,7 @@ class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
             NonsolvableDepsInExp,
             DependencyMoved,
             OldPackageName,
+            OldPackageNameDep,
         }
     )
 
@@ -295,6 +315,11 @@ class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
             nonexistent = set()
             try:
                 for orig_node in visit_atoms(pkg, getattr(pkg, attr)):
+                    if orig_node.key in self.pkgmoves:
+                        yield OldPackageNameDep(
+                            attr, str(orig_node), self.pkgmoves[orig_node.key], pkg=pkg
+                        )
+
                     node = orig_node.no_usedeps
                     if node not in self.query_cache:
                         if node in self.profiles.global_insoluble:
