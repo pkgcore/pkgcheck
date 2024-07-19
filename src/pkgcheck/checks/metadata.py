@@ -942,10 +942,15 @@ class DependencyCheck(Check):
                         if all(map(self.deprecated, pkgs)):
                             deprecated[attr].add(atom)
 
-                    if in_or_restriction and atom.slot_operator == "=":
-                        yield BadDependency(
-                            attr, atom, "= slot operator used inside || block", pkg=pkg
-                        )
+                    if atom.slot_operator == "=":
+                        if in_or_restriction:
+                            yield BadDependency(
+                                attr, atom, "= slot operator used inside || block", pkg=pkg
+                            )
+                        elif attr == "pdepend" and not atom.blocks:
+                            # prohibited by PMS at the "Slot dependencies" section
+                            msg = "':=' operator is invalid in"
+                            yield BadDependency(attr, atom, msg, pkg=pkg)
 
                     if pkg.eapi.options.has_use_dep_defaults and atom.use is not None:
                         missing_use_deps = self._check_use_deps(attr, atom)

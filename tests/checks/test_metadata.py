@@ -928,6 +928,13 @@ class TestDependencyCheck(use_based(), misc.ReportTestCase):
         assert "= slot operator used in blocker" in str(r)
         assert f'{attr.upper()}="!dev-libs/foo:="' in str(r)
 
+        if attr == "PDEPEND":
+            # check for := in PDEPEND
+            r = self.assertReport(chk, mk_pkg(eapi="5", depset="dev-libs/foo:="))
+            assert isinstance(r, metadata.BadDependency)
+            assert "':=' operator" in str(r)
+            assert f'{attr.upper()}="dev-libs/foo:="' in str(r)
+
         # check for missing package revisions
         self.assertNoReport(chk, mk_pkg("=dev-libs/foo-1-r0"))
         r = self.assertReport(chk, mk_pkg(eapi="6", depset="=dev-libs/foo-1"))
