@@ -33,7 +33,7 @@ jobs:
 
     # experimental targets generally lack lxml wheels
     - name: Install libxml2 and libxslt development packages
-      if: ${{ matrix.experimental }}
+      if: ${{ matrix.experimental && matrix.os != 'macos-latest' }}
       run: sudo apt install libxml2-dev libxslt-dev python3-dev
 
     # macos needs newer bash
