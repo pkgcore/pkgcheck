@@ -18,6 +18,10 @@ jobs:
         experimental: [false]
         include:
           - os: ubuntu-latest
+            python-version: '3.13-dev'
+            deps: newest-deps
+            experimental: true
+          - os: ubuntu-latest
             python-version: '3.11'
             deps: minimal-deps
             experimental: false
