@@ -1,3 +1,2 @@
 {"__class__": "EmptyGlobalAssignment", "category": "DescriptionCheck", "package": "BadDescription", "version": "1", "line": "DESCRIPTION=\"\"", "lineno": 1}
-{"__class__": "EmptyGlobalAssignment", "category": "MetadataVarCheck", "package": "MultipleKeywordsLines", "version": "0", "line": "KEYWORDS=\"\"", "lineno": 8}
 {"__class__": "EmptyGlobalAssignment", "category": "MetadataVarCheck", "package": "ReferenceInMetadataVar", "version": "3", "line": "LICENSE=\"\"", "lineno": 4}

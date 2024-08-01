@@ -634,6 +634,8 @@ class MetadataVarCheck(Check):
     # mapping between registered variables and verification methods
     known_variables = {}
 
+    empty_vars_whitelist = frozenset({"KEYWORDS"})
+
     @verify_vars("HOMEPAGE", "KEYWORDS")
     def _raw_text(self, var, node, value, pkg):
         matches = []
@@ -710,8 +712,11 @@ class MetadataVarCheck(Check):
             value_str = self.canonicalize_assign(pkg.node_str(value_node)) if value_node else ""
             if name in pkg.eapi.eclass_keys:
                 if not value_str:
-                    lineno, _ = node.start_point
-                    yield EmptyGlobalAssignment(line=pkg.node_str(node), lineno=lineno + 1, pkg=pkg)
+                    if name not in self.empty_vars_whitelist:
+                        lineno, _ = node.start_point
+                        yield EmptyGlobalAssignment(
+                            line=pkg.node_str(node), lineno=lineno + 1, pkg=pkg
+                        )
                 elif pkg.node_str(value_node.prev_sibling) == "=":
                     for var_node, _ in bash.var_query.captures(value_node):
                         if (
