@@ -42,14 +42,14 @@ class _ReservedNameCheck(Check):
             "function",
             {
                 item.node_str(node.child_by_field_name("name")): node.start_point
-                for node, _ in bash.func_query.captures(item.tree.root_node)
+                for node in bash.func_query.captures(item.tree.root_node).get("func", ())
             },
         )
         used_variables = {
             item.node_str(node.child_by_field_name("name")): node.start_point
-            for node, _ in bash.var_assign_query.captures(item.tree.root_node)
+            for node in bash.var_assign_query.captures(item.tree.root_node).get("assign", ())
         }
-        for node, _ in bash.var_query.captures(item.tree.root_node):
+        for node in bash.var_query.captures(item.tree.root_node).get("var", ()):
             if (name := item.node_str(node)) not in self.variables_usage_whitelist:
                 used_variables.setdefault(name, node.start_point)
         yield from self._check("variable", used_variables)
@@ -144,7 +144,7 @@ class EbuildReservedCheck(_ReservedNameCheck):
         for used_name, *args, lineno in self._feed(pkg):
             yield EbuildReservedName(*args, lineno=lineno, line=used_name, pkg=pkg)
 
-        for node, _ in bash.func_query.captures(pkg.tree.root_node):
+        for node in bash.func_query.captures(pkg.tree.root_node).get("func", ()):
             used_name = pkg.node_str(node.child_by_field_name("name"))
             if used_name in self.phases_hooks[str(pkg.eapi)]:
                 lineno, _ = node.start_point

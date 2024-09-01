@@ -89,8 +89,8 @@ class BadCommandsCheck(Check):
     )
 
     def feed(self, pkg):
-        for func_node, _ in bash.func_query.captures(pkg.tree.root_node):
-            for node, _ in bash.cmd_query.captures(func_node):
+        for func_node in bash.func_query.captures(pkg.tree.root_node).get("func", ()):
+            for node in bash.cmd_query.captures(func_node).get("call", ()):
                 call = pkg.node_str(node)
                 name = pkg.node_str(node.child_by_field_name("name"))
                 lineno, _colno = node.start_point
@@ -134,8 +134,8 @@ class EendMissingArgCheck(Check):
     known_results = frozenset([EendMissingArg])
 
     def feed(self, pkg):
-        for func_node, _ in bash.func_query.captures(pkg.tree.root_node):
-            for node, _ in bash.cmd_query.captures(func_node):
+        for func_node in bash.func_query.captures(pkg.tree.root_node).get("func", ()):
+            for node in bash.cmd_query.captures(func_node).get("call", ()):
                 line = pkg.node_str(node)
                 if line == "eend":
                     lineno, _ = node.start_point
@@ -639,7 +639,7 @@ class MetadataVarCheck(Check):
     @verify_vars("HOMEPAGE", "KEYWORDS")
     def _raw_text(self, var, node, value, pkg):
         matches = []
-        for var_node, _ in bash.var_query.captures(node):
+        for var_node in bash.var_query.captures(node).get("var", ()):
             matches.append(pkg.node_str(var_node.parent))
         if matches:
             yield ReferenceInMetadataVar(var, stable_unique(matches), pkg=pkg)
@@ -647,7 +647,7 @@ class MetadataVarCheck(Check):
     @verify_vars("LICENSE")
     def _raw_text_license(self, var, node, value, pkg):
         matches = []
-        for var_node, _ in bash.var_query.captures(node):
+        for var_node in bash.var_query.captures(node).get("var", ()):
             var_str = pkg.node_str(var_node.parent).strip()
             if var_str in ["$LICENSE", "${LICENSE}"]:
                 continue  # LICENSE in LICENSE is ok
@@ -718,7 +718,7 @@ class MetadataVarCheck(Check):
                             line=pkg.node_str(node), lineno=lineno + 1, pkg=pkg
                         )
                 elif pkg.node_str(value_node.prev_sibling) == "=":
-                    for var_node, _ in bash.var_query.captures(value_node):
+                    for var_node in bash.var_query.captures(value_node).get("var", ()):
                         if (
                             pkg.node_str(var_node) == name
                             and self.canonicalize_assign(pkg.node_str(var_node.parent)) == value_str
@@ -878,12 +878,12 @@ class InheritsCheck(Check):
         # collect globally defined functions in ebuild
         defined_funcs = {
             pkg.node_str(func_node.child_by_field_name("name"))
-            for func_node, _ in bash.func_query.captures(pkg.tree.root_node)
+            for func_node in bash.func_query.captures(pkg.tree.root_node).get("func", ())
         }
 
         # register variables assigned in ebuilds
         assigned_vars = dict()
-        for node, _ in bash.var_assign_query.captures(pkg.tree.root_node):
+        for node in bash.var_assign_query.captures(pkg.tree.root_node).get("assign", ()):
             name = pkg.node_str(node.child_by_field_name("name"))
             if eclass := self.get_eclass(name, pkg):
                 assigned_vars[name] = eclass
@@ -892,7 +892,7 @@ class InheritsCheck(Check):
         weak_used_eclasses = set()
         # match captured commands with eclasses
         used = defaultdict(list)
-        for node, _ in bash.cmd_query.captures(pkg.tree.root_node):
+        for node in bash.cmd_query.captures(pkg.tree.root_node).get("call", ()):
             call = pkg.node_str(node)
             name = pkg.node_str(node.child_by_field_name("name"))
             if name == "inherit":
@@ -914,7 +914,7 @@ class InheritsCheck(Check):
                     weak_used_eclasses.add(eclass)
 
         # match captured variables with eclasses
-        for node, _ in bash.var_query.captures(pkg.tree.root_node):
+        for node in bash.var_query.captures(pkg.tree.root_node).get("var", ()):
             name = pkg.node_str(node)
             if node.parent.type == "unset_command":
                 continue
@@ -1114,12 +1114,12 @@ class VariableScopeCheck(Check):
                     scoped_vars.setdefault(eapi, {}).setdefault(phase, set()).add(variable)
     scoped_vars = ImmutableDict(scoped_vars)
 
-    def feed(self, pkg):
-        for func_node, _ in bash.func_query.captures(pkg.tree.root_node):
+    def feed(self, pkg: bash.ParseTree):
+        for func_node in bash.func_query.captures(pkg.tree.root_node).get("func", ()):
             func_name = pkg.node_str(func_node.child_by_field_name("name"))
             if variables := self.scoped_vars[pkg.eapi].get(func_name):
                 usage = defaultdict(set)
-                for var_node, _ in bash.var_query.captures(func_node):
+                for var_node in bash.var_query.captures(func_node).get("var", ()):
                     var_name = pkg.node_str(var_node)
                     if var_name in variables:
                         lineno, _colno = var_node.start_point
@@ -1130,7 +1130,7 @@ class VariableScopeCheck(Check):
         global_usage = defaultdict(set)
         for global_node in pkg.tree.root_node.children:
             if global_node.type not in ("function_definition", "ERROR"):
-                for var_node, _ in bash.var_query.captures(global_node):
+                for var_node in bash.var_query.captures(global_node).get("var", ()):
                     var_name = pkg.node_str(var_node)
                     if var_name in self.not_global_scope:
                         lineno, _colno = var_node.start_point
@@ -1271,14 +1271,14 @@ class _UnquotedVariablesCheck(Check):
         # Default: The variable should be quoted
         return True
 
-    def _feed(self, item):
+    def _feed(self, item: bash.ParseTree):
         if item.tree.root_node.has_error:
             # Do not run this check if the parse tree contains errors, as it
             # might result in false positives. This check appears to be quite
             # expensive though...
             return
         hits = defaultdict(set)
-        for var_node, _ in bash.var_query.captures(item.tree.root_node):
+        for var_node in bash.var_query.captures(item.tree.root_node).get("var", ()):
             var_name = item.node_str(var_node)
             if var_name in self.var_names:
                 if self._var_needs_quotes(item, var_node):
@@ -1390,7 +1390,7 @@ class DoCompressedFilesCheck(Check):
     )
 
     def feed(self, pkg):
-        for node, _ in bash.cmd_query.captures(pkg.tree.root_node):
+        for node in bash.cmd_query.captures(pkg.tree.root_node).get("call", ()):
             call_name = pkg.node_str(node.child_by_field_name("name"))
             if call_name not in self.functions:
                 continue
@@ -1446,7 +1446,7 @@ class NonPosixCheck(Check):
             prev_arg = arg
 
     def feed(self, pkg):
-        for call_node, _ in bash.cmd_query.captures(pkg.tree.root_node):
+        for call_node in bash.cmd_query.captures(pkg.tree.root_node).get("call", ()):
             call_name = pkg.node_str(call_node.child_by_field_name("name"))
             if call_name in ("head", "tail"):
                 yield from self.check_head_tail(pkg, call_node, call_name)
@@ -1476,14 +1476,13 @@ class GlobCheck(Check):
         self.glob_query = bash.query('(concatenation (word) @word (.match? @word "[*?]")) @usage')
 
     def feed(self, pkg):
-        for node, capture in self.glob_query.captures(pkg.tree.root_node):
-            if capture == "usage":
-                for var_node, _ in bash.var_query.captures(node):
-                    var_name = pkg.node_str(var_node)
-                    if var_name == "DISTDIR":
-                        lineno, _colno = node.start_point
-                        yield GlobDistdir(line=pkg.node_str(node), lineno=lineno + 1, pkg=pkg)
-                        break
+        for node in self.glob_query.captures(pkg.tree.root_node).get("usage", ()):
+            for var_node in bash.var_query.captures(node).get("var", ()):
+                var_name = pkg.node_str(var_node)
+                if var_name == "DISTDIR":
+                    lineno, _colno = node.start_point
+                    yield GlobDistdir(line=pkg.node_str(node), lineno=lineno + 1, pkg=pkg)
+                    break
 
 
 class VariableShadowed(results.LinesResult, results.Warning):
@@ -1528,7 +1527,7 @@ class DeclarationShadowedCheck(Check):
                 if value_node := node.child_by_field_name("value"):
                     if any(
                         pkg.node_str(node) == used_name
-                        for node, _ in bash.var_query.captures(value_node)
+                        for node in bash.var_query.captures(value_node).get("var", ())
                     ):
                         continue
                 var_assigns[used_name].append(node)
@@ -1570,7 +1569,7 @@ class SandboxCallCheck(Check):
     functions = frozenset({"addread", "addwrite", "adddeny", "addpredict"})
 
     def feed(self, pkg: bash.ParseTree):
-        for node, _ in bash.cmd_query.captures(pkg.tree.root_node):
+        for node in bash.cmd_query.captures(pkg.tree.root_node).get("call", ()):
             name = pkg.node_str(node.child_by_field_name("name"))
             if name in self.functions:
                 args = node.children_by_field_name("argument")

@@ -1,5 +1,7 @@
 """bash parsing support"""
 
+from itertools import chain
+
 import tree_sitter_bash
 from tree_sitter import Language, Parser, Query
 
@@ -31,13 +33,11 @@ class ParseTree:
         for x in self.tree.root_node.children:
             # skip nodes in function scope
             if x.type != "function_definition":
-                for node, _ in query.captures(x):
-                    yield node
+                yield from chain.from_iterable(query.captures(x).values())
 
     def func_query(self, query: Query):
         """Run a given parse tree query returning only those nodes in function scope."""
         for x in self.tree.root_node.children:
             # only return nodes in function scope
             if x.type == "function_definition":
-                for node, _ in query.captures(x):
-                    yield node
+                yield from chain.from_iterable(query.captures(x).values())

@@ -60,7 +60,7 @@ class RustCheck(Check):
                             return
 
     def _verify_cargo_crate_uris(self, pkg: bash.ParseTree):
-        for node, _ in bash.cmd_query.captures(pkg.tree.root_node):
+        for node in bash.cmd_query.captures(pkg.tree.root_node).get("call", ()):
             call_name = pkg.node_str(node.child_by_field_name("name"))
             if call_name == "cargo_crate_uris":
                 row, _ = node.start_point
@@ -69,7 +69,7 @@ class RustCheck(Check):
                     node.child_count == 2
                     and any(
                         pkg.node_str(var_node) == "CRATES"
-                        for var_node, _ in bash.var_query.captures(node.children[1])
+                        for var_node in bash.var_query.captures(node.children[1]).get("var", ())
                     )
                 ):
                     yield SuboptimalCratesURICall(

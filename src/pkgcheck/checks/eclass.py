@@ -164,7 +164,7 @@ class EclassUsageCheck(Check):
 
         # scan for any misplaced @PRE_INHERIT variables
         if pre_inherits:
-            for node, _ in bash.var_assign_query.captures(pkg.tree.root_node):
+            for node in bash.var_assign_query.captures(pkg.tree.root_node).get("assign", ()):
                 var_name = pkg.node_str(node.child_by_field_name("name"))
                 lineno, _colno = node.start_point
                 if var_name in pre_inherits and lineno > pre_inherits[var_name]:
@@ -184,7 +184,7 @@ class EclassUsageCheck(Check):
 
         # scan for usage of @USER_VARIABLE variables
         if user_variables:
-            for node, _ in bash.var_assign_query.captures(pkg.tree.root_node):
+            for node in bash.var_assign_query.captures(pkg.tree.root_node).get("assign", ()):
                 var_name = pkg.node_str(node.child_by_field_name("name"))
                 if var_name in user_variables:
                     lineno, _colno = node.start_point
@@ -205,7 +205,7 @@ class EclassUsageCheck(Check):
 
         # scan for usage of @DEPRECATED variables
         if deprecated:
-            for node, _ in bash.var_query.captures(pkg.tree.root_node):
+            for node in bash.var_query.captures(pkg.tree.root_node).get("var", ()):
                 var_name = pkg.node_str(node)
                 if var_name in deprecated:
                     lineno, _colno = node.start_point
@@ -230,7 +230,7 @@ class EclassUsageCheck(Check):
 
         # scan for usage of @DEPRECATED functions
         if deprecated:
-            for node, _ in bash.cmd_query.captures(pkg.tree.root_node):
+            for node in bash.cmd_query.captures(pkg.tree.root_node).get("call", ()):
                 func_name = pkg.node_str(node.child_by_field_name("name"))
                 if func_name in deprecated:
                     lineno, _colno = node.start_point
@@ -258,7 +258,7 @@ class EclassUsageCheck(Check):
         if pkg.inherit:
             inherited: set[str] = set()
             inherits: list[tuple[list[str], int]] = []
-            for node, _ in bash.cmd_query.captures(pkg.tree.root_node):
+            for node in bash.cmd_query.captures(pkg.tree.root_node).get("call", ()):
                 name = pkg.node_str(node.child_by_field_name("name"))
                 if name == "inherit":
                     call = pkg.node_str(node)
@@ -342,14 +342,14 @@ class EclassParseCheck(Check):
 
     def feed(self, eclass):
         func_prefix = f"{eclass.name}_"
-        for func_node, _ in bash.func_query.captures(eclass.tree.root_node):
+        for func_node in bash.func_query.captures(eclass.tree.root_node).get("func", ()):
             func_name = eclass.node_str(func_node.child_by_field_name("name"))
             if not func_name.startswith(func_prefix):
                 continue
             phase = func_name[len(func_prefix) :]
             if variables := self.eclass_phase_vars(eclass, phase):
                 usage = defaultdict(set)
-                for var_node, _ in bash.var_query.captures(func_node):
+                for var_node in bash.var_query.captures(func_node).get("var", ()):
                     var_name = eclass.node_str(var_node)
                     if var_name in variables:
                         lineno, _colno = var_node.start_point

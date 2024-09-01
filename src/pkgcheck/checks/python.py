@@ -1,7 +1,7 @@
-import itertools
 import re
 import typing
 from collections import defaultdict
+from itertools import takewhile
 from operator import attrgetter
 
 from pkgcore import fetch
@@ -358,7 +358,7 @@ class PythonCheck(Check):
         uses_setuptools_scm = False
         pep517_value = None
 
-        for var_node, _ in bash.var_assign_query.captures(pkg.tree.root_node):
+        for var_node in bash.var_assign_query.captures(pkg.tree.root_node).get("assign", ()):
             var_name = pkg.node_str(var_node.child_by_field_name("name"))
 
             if var_name == "DISTUTILS_OPTIONAL":
@@ -407,7 +407,7 @@ class PythonCheck(Check):
         for var_node in pkg.global_query(bash.var_assign_query):
             name = pkg.node_str(var_node.child_by_field_name("name"))
             if name in {"DEPEND", "BDEPEND"}:
-                for call_node, _ in bash.cmd_query.captures(var_node):
+                for call_node in bash.cmd_query.captures(var_node).get("call", ()):
                     call_name = pkg.node_str(call_node.child_by_field_name("name"))
                     if call_name == any_dep_func and len(call_node.children) > 1:
                         check_deps[name].update(
@@ -457,7 +457,7 @@ class PythonCheck(Check):
     def check_python_check_deps(self, pkg, func_node, python_check_deps, any_dep_func):
         has_version_checked_deps = defaultdict(set)
         has_version_lines = set()
-        for node, _ in bash.cmd_query.captures(func_node):
+        for node in bash.cmd_query.captures(func_node).get("call", ()):
             call_name = pkg.node_str(node.child_by_field_name("name"))
             if call_name == "has_version":
                 lineno, _ = node.start_point
@@ -548,7 +548,7 @@ class PythonCheck(Check):
 
         any_dep_func = self.eclass_any_dep_func[eclass]
         python_check_deps = self.build_python_gen_any_dep_calls(pkg, any_dep_func)
-        for func_node, _ in bash.func_query.captures(pkg.tree.root_node):
+        for func_node in bash.func_query.captures(pkg.tree.root_node).get("func", ()):
             func_name = pkg.node_str(func_node.child_by_field_name("name"))
             if func_name == "python_check_deps":
                 yield from self.check_python_check_deps(
@@ -664,9 +664,7 @@ class PythonCompatCheck(Check):
             return
 
         # determine python impls to target
-        targets = set(
-            itertools.takewhile(lambda x: x != latest_target, reversed(available_targets))
-        )
+        targets = set(takewhile(lambda x: x != latest_target, reversed(available_targets)))
 
         if targets:
             try:
