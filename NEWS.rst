@@ -3,6 +3,30 @@ Release Notes
 =============
 
 -----------------------------
+pkgcheck 0.10.31 (2024-09-06)
+-----------------------------
+
+- fix compatibility with tree-sitter 0.23 (Arthur Zamarin)
+
+- bash completion: improve path handling (Arthur Zamarin)
+
+**New Checks:**
+
+- OldPackageNameDep: check for dependency using previously moved package's name
+  (Arthur Zamarin, #659, #694)
+
+- BadDependency: catch ``:=`` slot operator in PDEPEND (Arthur Zamarin, #660)
+
+**Checks Updates:**
+
+- DistutilsNonPEP517Build: handle false positives when defined by eclass
+  (Arthur Zamarin)
+
+- PythonCompatCheck: add whitelist for backports (Arthur Zamarin)
+
+- EmptyGlobalAssignment: ignore empty KEYWORDS (Arthur Zamarin, #695)
+
+-----------------------------
 pkgcheck 0.10.30 (2024-05-18)
 -----------------------------
 
