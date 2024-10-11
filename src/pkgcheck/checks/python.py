@@ -651,7 +651,8 @@ class PythonCompatCheck(Check):
                 (
                     f"python{x.slot.replace('.', '_')}"
                     for x in deps
-                    if x.key == "dev-lang/python" and x.slot is not None
+                    if x.key in ("dev-lang/python", "dev-lang/python-freethreading")
+                    and x.slot is not None
                 ),
                 key=self.sorter,
             )[-1]
