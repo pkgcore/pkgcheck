@@ -52,7 +52,7 @@ def is_python_interpreter(pkg):
         # ignore python:2.7 deps since they are being phased out from eclass
         # support
         return pkg.slot is None or not pkg.slot.startswith("2")
-    return pkg.key in ("dev-python/pypy3",)
+    return pkg.key in ("dev-python/pypy3", "dev-lang/python-freethreading")
 
 
 class MissingPythonEclass(results.VersionResult, results.Warning):
