@@ -12,16 +12,14 @@
 
 _python_set_impls() {
 	local i slot
-	local -a use
+	PYTHON_DEPS="|| ("
 	for i in "${PYTHON_COMPAT[@]}"; do
 		slot=${i#python}
 		slot=${slot/_/.}
-		use+=( "python_targets_${i}" )
-		PYTHON_DEPS+=" python_targets_${i}? ( dev-lang/python:${slot} )"
+		PYTHON_DEPS+=" dev-lang/python:${slot}"
 	done
-	IUSE+=" ${use[@]}"
-	PYTHON_REQUIRED_USE="|| ( ${use[@]} )"
-	PYTHON_USEDEP=$(IFS=","; echo "${use[*]}")
+	PYTHON_DEPS+=" )"
+	PYTHON_REQUIRED_USE='I-DO-NOT-EXIST-IN-PYTHON-ANY-R1'
 }
 _python_set_impls
 
