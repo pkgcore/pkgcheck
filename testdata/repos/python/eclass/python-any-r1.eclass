@@ -14,9 +14,16 @@ _python_set_impls() {
 	local i slot
 	PYTHON_DEPS="|| ("
 	for i in "${PYTHON_COMPAT[@]}"; do
-		slot=${i#python}
-		slot=${slot/_/.}
-		PYTHON_DEPS+=" dev-lang/python:${slot}"
+		case ${i} in
+			python*)
+				slot=${i#python}
+				slot=${slot/_/.}
+				PYTHON_DEPS+=" dev-lang/python:${slot}"
+				;;
+			pypy3)
+				PYTHON_DEPS+=" dev-python/pypy3:="
+				;;
+		esac
 	done
 	PYTHON_DEPS+=" )"
 	PYTHON_REQUIRED_USE='I-DO-NOT-EXIST-IN-PYTHON-ANY-R1'

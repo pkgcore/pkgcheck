@@ -14,10 +14,17 @@ _python_set_impls() {
 	local i slot
 	local -a use use_deps
 	for i in "${PYTHON_COMPAT[@]}"; do
-		slot=${i#python}
-		slot=${slot/_/.}
 		use+=( "python_single_target_${i}" )
-		PYTHON_DEPS+=" python_single_target_${i}? ( dev-lang/python:${slot} )"
+		case ${i} in
+			python*)
+				slot=${i#python}
+				slot=${slot/_/.}
+				PYTHON_DEPS+=" python_single_target_${i}? ( dev-lang/python:${slot} )"
+				;;
+			pypy3)
+				PYTHON_DEPS+=" python_single_target_${i}? ( dev-python/pypy3:= )"
+				;;
+		esac
 	done
 	IUSE+=" ${use[@]}"
 	PYTHON_REQUIRED_USE="^^ ( ${use[@]} )"
