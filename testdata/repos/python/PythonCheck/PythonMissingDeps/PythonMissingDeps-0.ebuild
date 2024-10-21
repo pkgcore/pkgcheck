@@ -1,5 +1,5 @@
 EAPI=7
-PYTHON_COMPAT=( python3_9 )
+PYTHON_COMPAT=( pypy3 python3_9 )
 
 inherit python-r1
 
