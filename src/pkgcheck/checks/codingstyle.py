@@ -1426,11 +1426,26 @@ class NonPosixHeadTailUsage(results.LineResult, results.Warning):
         return f"line {self.lineno}: non-posix usage of {self.command!r}: {self.line!r}"
 
 
+class NonConsistentTarUsage(results.LineResult, results.Warning):
+    """Using of non-consistent compliant ``tar``.
+
+    The ``tar`` command defaults to reading from stdin, unless this default is
+    changed at compile time or the ``TAPE`` environment variable is set.
+
+    To ensure consistent behavior, the ``-f`` or ``--file`` option should
+    always be given to ensure the input device is chosen explicitly.
+    """
+
+    @property
+    def desc(self):
+        return f"line {self.lineno}: non-consistent usage of tar without '-f' or '--file': {self.line!r}"
+
+
 class NonPosixCheck(Check):
     """Scan ebuild for non-posix usage, code which might be not portable."""
 
     _source = sources.EbuildParseRepoSource
-    known_results = frozenset([NonPosixHeadTailUsage])
+    known_results = frozenset({NonPosixHeadTailUsage, NonConsistentTarUsage})
 
     def __init__(self, options, **kwargs):
         super().__init__(options, **kwargs)
@@ -1449,11 +1464,23 @@ class NonPosixCheck(Check):
                 break
             prev_arg = arg
 
+    def check_tar(self, pkg, call_node):
+        for idx, arg in enumerate(map(pkg.node_str, call_node.children[1:])):
+            if idx == 0 or (arg[:1] == "-" and arg[1:2] != "-"):
+                if "f" in arg:
+                    return
+            elif arg == "--file" or arg.startswith("--file="):
+                return
+        lineno, _ = call_node.start_point
+        yield NonConsistentTarUsage(lineno=lineno + 1, line=pkg.node_str(call_node), pkg=pkg)
+
     def feed(self, pkg):
         for call_node in bash.cmd_query.captures(pkg.tree.root_node).get("call", ()):
             call_name = pkg.node_str(call_node.child_by_field_name("name"))
             if call_name in ("head", "tail"):
                 yield from self.check_head_tail(pkg, call_node, call_name)
+            elif call_name == "tar":
+                yield from self.check_tar(pkg, call_node)
 
 
 class GlobDistdir(results.LineResult, results.Warning):

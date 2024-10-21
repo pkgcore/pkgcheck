@@ -1,0 +1,13 @@
+--- standalone/NonPosixCheck/NonConsistentTarUsage/NonConsistentTarUsage-0.ebuild
++++ fixed/NonPosixCheck/NonConsistentTarUsage/NonConsistentTarUsage-0.ebuild
+@@ -4,8 +4,8 @@ LICENSE="BSD"
+ SLOT="0"
+
+ src_prepare() {
+-	tar -zx "${A}"
+-	tar c \
++	tar -zx -f - "${A}"
++	tar cf - \
+ 		--owner=0 \
+ 		--group=0 \
+ 		--numeric-owner \
