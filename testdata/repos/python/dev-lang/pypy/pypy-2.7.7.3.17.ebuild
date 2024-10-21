@@ -1,6 +1,6 @@
 EAPI=8
 
-DESCRIPTION="Stub ebuild for pypy3 interpreter"
+DESCRIPTION="Stub ebuild for pypy interpreter"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 LICENSE="BSD"
-SLOT="0/pypy310"
+SLOT="2.7/1234"
