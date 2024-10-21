@@ -48,7 +48,7 @@ def get_python_eclass(pkg):
 
 
 def is_python_interpreter(pkg):
-    if pkg.key == "dev-lang/python":
+    if pkg.key in ("dev-lang/pypy", "dev-lang/python"):
         # ignore python:2.7 deps since they are being phased out from eclass
         # support
         return pkg.slot is None or not pkg.slot.startswith("2")

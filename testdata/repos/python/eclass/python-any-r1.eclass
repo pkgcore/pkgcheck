@@ -21,7 +21,7 @@ _python_set_impls() {
 				PYTHON_DEPS+=" dev-lang/python:${slot}"
 				;;
 			pypy3)
-				PYTHON_DEPS+=" dev-python/pypy3:="
+				PYTHON_DEPS+=" >=dev-lang/pypy-3.10:="
 				;;
 		esac
 	done

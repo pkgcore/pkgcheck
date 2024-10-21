@@ -22,7 +22,7 @@ _python_set_impls() {
 				PYTHON_DEPS+=" python_targets_${i}? ( dev-lang/python:${slot} )"
 				;;
 			pypy3)
-				PYTHON_DEPS+=" python_targets_${i}? ( dev-python/pypy3:= )"
+				PYTHON_DEPS+=" python_targets_${i}? ( >=dev-lang/pypy-3.10:= )"
 				;;
 		esac
 	done
