@@ -1,0 +1,2 @@
+{"__class__": "NonConsistentTarUsage", "category": "NonPosixCheck", "package": "NonConsistentTarUsage", "version": "0", "line": "tar -zx \"${A}\"", "lineno": 7}
+{"__class__": "NonConsistentTarUsage", "category": "NonPosixCheck", "package": "NonConsistentTarUsage", "version": "0", "line": "tar c \\\n\t\t--owner=0 \\\n\t\t--group=0 \\\n\t\t--numeric-owner \\\n\t\t-C \"${S}\" .", "lineno": 8}
