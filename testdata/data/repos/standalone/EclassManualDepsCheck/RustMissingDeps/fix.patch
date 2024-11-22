@@ -7,3 +7,21 @@ diff -Naur standalone/EclassManualDepsCheck/RustMissingDeps/RustMissingDeps-1.eb
  SLOT="0"
 +
 +BDEPEND="${RUST_DEPEND}"
+diff -Naur standalone/EclassManualDepsCheck/RustMissingDeps/RustMissingDeps-3.ebuild fixed/EclassManualDepsCheck/RustMissingDeps/RustMissingDeps-3.ebuild
+--- standalone/EclassManualDepsCheck/RustMissingDeps/RustMissingDeps-3.ebuild
++++ fixed/EclassManualDepsCheck/RustMissingDeps/RustMissingDeps-3.ebuild
+@@ -8,3 +8,5 @@ DESCRIPTION="Optional inherit without deps"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ LICENSE="BSD"
+ SLOT="0"
++
++BDEPEND="${RUST_DEPEND}"
+diff -Naur standalone/EclassManualDepsCheck/RustMissingDeps/RustMissingDeps-4.ebuild fixed/EclassManualDepsCheck/RustMissingDeps/RustMissingDeps-4.ebuild
+--- standalone/EclassManualDepsCheck/RustMissingDeps/RustMissingDeps-4.ebuild
++++ fixed/EclassManualDepsCheck/RustMissingDeps/RustMissingDeps-4.ebuild
+@@ -8,3 +8,5 @@ DESCRIPTION="Optional inherit without deps"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ LICENSE="BSD"
+ SLOT="0"
++
++BDEPEND="${RUST_DEPEND}"
