@@ -946,5 +946,5 @@ class PythonPackageNameCheck(Check):
             return PROJECT_SYMBOL_NORMALIZE_RE.sub("-", project).lower()
 
         pypi_name = pypi_remotes[0].name
-        if normalize(pkg.package) != normalize(pypi_name):
-            yield PythonMismatchedPackageName(pypi_name.replace(".", "-"), pkg=pkg)
+        if pkg.package != normalize(pypi_name):
+            yield PythonMismatchedPackageName(normalize(pypi_name), pkg=pkg)
