@@ -516,9 +516,9 @@ class RubyMissingDeps(results.VersionResult, results.Warning):
 
 
 class RustMissingDeps(results.VersionResult, results.Warning):
-    """Package sets ``CARGO_OPTIONAL`` but does not depend on ``virtual/rust``."""
+    """Package sets ``CARGO_OPTIONAL`` but does not use ``${RUST_DEPEND}``."""
 
-    desc = "sets CARGO_OPTIONAL but does not depend on virtual/rust"
+    desc = "sets CARGO_OPTIONAL but does not use ${RUST_DEPEND}"
 
 
 class TmpfilesMissingDeps(results.VersionResult, results.Warning):
@@ -542,7 +542,7 @@ class EclassManualDepsCheck(Check):
 
     dependencies = (
         # eclass, variable, one of deps, class
-        ("cargo", "CARGO_OPTIONAL", {"virtual/rust"}, RustMissingDeps),
+        ("cargo", "CARGO_OPTIONAL", {"dev-lang/rust", "dev-lang/rust-bin"}, RustMissingDeps),
         ("go-module", "GO_OPTIONAL", {"dev-lang/go"}, GoMissingDeps),
         (
             "ruby-ng",

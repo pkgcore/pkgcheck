@@ -6,4 +6,4 @@ diff -Naur standalone/EclassManualDepsCheck/RustMissingDeps/RustMissingDeps-1.eb
  LICENSE="BSD"
  SLOT="0"
 +
-+BDEPEND="virtual/rust"
++BDEPEND="${RUST_DEPEND}"
