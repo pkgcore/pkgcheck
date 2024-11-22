@@ -1,17 +1,17 @@
 certificate version 0.1
-pusher 38514F35D453DDE719F74C6AFC1FFCB5DC7D67A3 1729532482 +0300
-pushee git+ssh://git.gentoo.org/proj/pkgcore/pkgcheck.git
-nonce 1729532482-b21ec676748d47c9215e4e20b1fbcb28f5ba80b0
+pusher DF84256885283521 1732300180 +0100
+pushee git.gentoo.org:proj/pkgcore/pkgcheck.git
+nonce 1732300180-1e1d3ca0fd0963c97f6d2290f0f196fa0cc5bbb4
 
-28199c7aa0b1daeeab2eaf17685e07e62be49edf c32c3d482fde2bc6df8726b7111edf00670b6b0e refs/heads/master
+c32c3d482fde2bc6df8726b7111edf00670b6b0e 1f35e6091d81283b0e5d15f4e5a18540f82cf42e refs/heads/master
 -----BEGIN PGP SIGNATURE-----
 
-iQEzBAABCgAdFiEE/axFlFuH2ptjtO5EAqCvUD0SBQQFAmcWkkIACgkQAqCvUD0S
-BQQcnwgAxN+ntXs/B17p9uwYaajMSFzUrkFppTieaCFtTiAGTrtAAZSyWEAF1bqs
-cAezwhVKhUm0mawV3vAy1vsiFsVLi9gwy4ffewxKgSPMtJnIANC5OSOqxLxWlI0D
-t8fDP2bNrqM8cq2d55DfxF4Vm0296LRrJY6jRBGm7z0J4VFsatrfGf2FSvaMB2nu
-V2zLU5deLnG5Uag7Ol7EAoUUyTakBiQapYDX6f9gHx7pDVeD7nVSIXBbbN3m5Uhc
-A07dKI1p0T8QzIRJmQ/DDTFmjh12j2k0zeraIznKQjZgtEgW3YgSRUFnXFnDIZAc
-auPsMjQC0+Rw4jItULOY+V6q4QExMw==
-=ndrc
+iQEzBAABCAAdFiEEx2qEUJQJjSjMiybFY5ra4jKeJA4FAmdAzZQACgkQY5ra4jKe
+JA7dFQf/ZLWjiT2nioyANmnb79yc/ir08sDz1dvUprUrsE7Zf6sNW1bbDGAR3pfK
+1hDv1p3p59kjgshBbo9Gi91ODF304blceCb6r+1ltKS1+FxUh6cywqwkU+ZsJvmw
+X+CR0YPiufiMMoQ2ZETYouvMZLHApznCv22vVD9oEfPItONzrqFB1k/qpqoGOp12
+MoOzcr2NhJJHhdPAimB0IfJdknH6LQRP0COEH9R18tI95kAMjffsWyQrsQzB/Dzq
+LHWxKq9z4gSNtibo46WDL0DFhynDoV5tZU9BbhhJjV7hILxGsNOLRxpvdIgo8nrk
+CYgBLq0NqlTE92fpv15bttc2mUdUHA==
+=Vc/p
 -----END PGP SIGNATURE-----
