@@ -6,7 +6,7 @@ from .results import Result
 
 __all__ = ("keywords", "scan", "PkgcheckException", "Result")
 __title__ = "pkgcheck"
-__version__ = "0.10.32"
+__version__ = "0.10.33"
 
 
 def __getattr__(name):
