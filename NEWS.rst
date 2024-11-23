@@ -3,6 +3,23 @@ Release Notes
 =============
 
 -----------------------------
+pkgcheck 0.10.32 (2024-11-23)
+-----------------------------
+
+**Checks Updates:**
+
+- various Python checks: recognize ``dev-lang/pypy`` as a Python
+  interpreter package (Michał Górny, #708)
+
+- EclassManualDepsCheck: update for the new ``rust`` eclass:
+  direct dependencies on ``dev-lang/rust`` and ``dev-lang/rust-bin``;
+  ``RUST_OPTIONAL`` variable (Michał Górny, #718)
+
+- PythonPackageNameCheck: enforce the stricter PyPI package naming
+  policy that requires using lowercase names with hyphens (Michał Górny,
+  #717)
+
+-----------------------------
 pkgcheck 0.10.31 (2024-09-06)
 -----------------------------
 
