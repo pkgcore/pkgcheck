@@ -690,7 +690,17 @@ class MissingRemoteIdCheck(Check):
                 chain.from_iterable(f.uri for f in fetchables if isinstance(f, fetchable))
             )
             urls = {url for url in all_urls if not url.endswith((".patch", ".diff"))}
-            urls = sorted(urls.union(pkg.homepage), key=len)
+            urls = urls.union(pkg.homepage)
+
+            if "git-r3" in pkg.inherited and hasattr(pkg, "environment"):
+                egit_repo_uri = re.compile(r"EGIT_REPO_URI=\"(.*)\"")
+                for env_line in pkg.environment.data.splitlines():
+                    result = re.search(egit_repo_uri, env_line)
+                    if result:
+                        urls.add(result.group(1).removesuffix(".git"))
+                        break
+
+            urls = sorted(urls, key=len)
 
             for remote_type, regex in self.remotes_map:
                 if remote_type in remotes:
