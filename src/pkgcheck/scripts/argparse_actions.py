@@ -216,7 +216,13 @@ class ChecksetArgs(arghparse.CommaSeparatedNegations):
             args.append(f"--checks={checks}")
         keywords = ",".join(enabled_keywords | {f"-{x}" for x in disabled_keywords})
         args.append(f"--keywords={keywords}")
-        parser._parse_known_args(args, namespace)
+        # Python 3.12.8 introduced obligatory intermixed arg.  The same
+        # commit adds _parse_known_args2 function, so use that to determine
+        # if we need to pass that.
+        if hasattr(parser, "_parse_known_args2"):
+            parser._parse_known_args(args, namespace, intermixed=False)
+        else:
+            parser._parse_known_args(args, namespace)
 
 
 class ScopeArgs(arghparse.CommaSeparatedNegations):

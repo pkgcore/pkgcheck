@@ -375,7 +375,13 @@ def _setup_scan(parser, namespace, args):
         patch("pkgcheck.scripts.argparse_actions.ChecksetArgs.__call__", lambda *a, **k: None),
         patch("pkgcheck.scripts.argparse_actions.ExitArgs.__call__", lambda *a, **k: None),
     ):
-        namespace, _ = parser._parse_known_args(args, namespace)
+        # Python 3.12.8 introduced obligatory intermixed arg.  The same
+        # commit adds _parse_known_args2 function, so use that to determine
+        # if we need to pass that.
+        if hasattr(parser, "_parse_known_args2"):
+            namespace, _ = parser._parse_known_args(args, namespace, intermixed=False)
+        else:
+            namespace, _ = parser._parse_known_args(args, namespace)
 
     # Get the current working directory for repo detection and restriction
     # creation, fallback to the root dir if it's be removed out from under us.
