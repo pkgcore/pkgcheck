@@ -1,6 +1,6 @@
 --- eapis-testing/MissingRemoteIdCheck/MissingRemoteId/metadata.xml
 +++ fixed/MissingRemoteIdCheck/MissingRemoteId/metadata.xml
-@@ -3,6 +3,10 @@
+@@ -3,6 +3,11 @@
  <pkgmetadata>
  	<upstream>
  		<remote-id type="bitbucket">pkgcore/pkgcheck</remote-id>
@@ -8,6 +8,7 @@
 +		<remote-id type="heptapod">pkgcore/pkgcheck</remote-id>
 +		<remote-id type="pypi">MissingRemoteId</remote-id>
 +		<remote-id type="sourceforge">pkgcheck</remote-id>
++		<remote-id type="gitlab">pkgcore/pkgcheck</remote-id>
  	</upstream>
  	<use>
  		<flag name="test">enable tests</flag>
