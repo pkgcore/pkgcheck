@@ -1098,8 +1098,8 @@ class TestOutdatedBlockersCheck(misc.ReportTestCase):
             self.init_check(future=days)
             self.assertNoReport(self.check, self.source)
 
-        # blocker was removed at least 2 years ago
-        for days, years in ((730, 2), (1825, 5)):
+        # blocker was removed at least 4 years ago
+        for days, years in ((1460, 4), (1825, 5)):
             self.init_check(future=days)
             r = self.assertReport(self.check, self.source)
             expected = metadata.OutdatedBlocker(

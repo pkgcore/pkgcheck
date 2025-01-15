@@ -995,7 +995,7 @@ class DependencyCheck(Check):
 
 
 class OutdatedBlocker(results.VersionResult, results.Info):
-    """Blocker dependency removed at least two years ago from the tree.
+    """Blocker dependency removed at least four years ago from the tree.
 
     Note that this ignores slot/subslot deps and USE deps in blocker atoms.
     """
@@ -1061,7 +1061,7 @@ class OutdatedBlockersCheck(Check):
                         removal = max(x.time for x in matches)
                         removal = datetime.fromtimestamp(removal)
                         years = (self.today - removal).days / 365
-                        if years >= 2:
+                        if years >= 4:
                             outdated_blockers[attr].add((atom, round(years, 2)))
                     else:
                         nonexistent_blockers[attr].add(atom)
