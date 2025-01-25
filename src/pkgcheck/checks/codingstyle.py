@@ -368,7 +368,11 @@ class InsintoCheck(Check):
             "/etc/env.d": "doenvd or newenvd",
             "/etc/init.d": "doinitd or newinitd",
             "/etc/pam.d": "dopamd or newpamd from pam.eclass",
+            "/usr/lib/systemd/system": "systemd_dounit or systemd_newunit from systemd.eclass",
+            "/usr/lib/systemd/user": "systemd_douserunit or systemd_newuserunit from systemd.eclass",
             "/usr/share/applications": "domenu or newmenu from desktop.eclass",
+            "/usr/share/fish/vendor_completions.d": "dofishcomp or newfishcomp from shell-completion.eclass",
+            "/usr/share/zsh/site-functions": "dozshcomp or newzshcomp from shell-completion.eclass",
         }
     )
 
