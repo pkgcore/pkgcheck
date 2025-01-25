@@ -337,7 +337,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
     env_array_elem_regex = re.compile(r'\[\d+\]="(?P<val>.+?)"')
 
     # package categories that are committed with stable keywords
-    allowed_direct_stable = frozenset(["acct-user", "acct-group"])
+    allowed_direct_stable = frozenset(["acct-user", "acct-group", "sec-keys", "virtual"])
 
     def __init__(self, *args, git_addon: git.GitAddon, eclass_addon: sources.EclassAddon):
         super().__init__(*args)
