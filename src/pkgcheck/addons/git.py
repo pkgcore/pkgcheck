@@ -126,7 +126,10 @@ class GitLog:
         if not self._running:
             if self.proc.poll() or not line:
                 error = self.proc.stderr.read().decode().strip()
-                raise GitError(f"failed running git log: {error}")
+                if 'Invalid revision range' in error:
+                    raise GitError(f"failed running git log: {error}\nTry clearing the cache: pkgcheck cache -R")
+                else:
+                    raise GitError(f"failed running git log: {error}")
             self._running = True
             self.git_config.close()
 
