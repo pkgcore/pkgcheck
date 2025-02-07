@@ -29,7 +29,7 @@ diff -Naur standalone/BadCommandsCheck/BannedEapiCommand/BannedEapiCommand-2.ebu
 +++ fixed/BadCommandsCheck/BannedEapiCommand/BannedEapiCommand-2.ebuild
 @@ -4,11 +4,3 @@ DESCRIPTION="Ebuild using banned commands"
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
- SLOT="0"
+ LICENSE="BSD"
  SLOT="0"
 -
 -pkg_preinst() {

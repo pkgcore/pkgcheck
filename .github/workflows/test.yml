@@ -44,9 +44,11 @@ jobs:
     - name: Install macos deps
       if: ${{ matrix.os == 'macos-latest' }}
       run: |
-        brew install bash gnu-sed
+        brew install bash gnu-sed gpatch
         # enable gnu-sed usage as "sed"
-        echo "/usr/local/opt/gnu-sed/libexec/gnubin" >> $GITHUB_PATH
+        echo "/opt/homebrew/opt/gnu-sed/libexec/gnubin" >> $GITHUB_PATH
+        # enable gpatch usage as "sed"
+        echo "/opt/homebrew/opt/gpatch/libexec/gnubin" >> $GITHUB_PATH
 
     - name: Install non-python deps
       if: ${{ matrix.os == 'ubuntu-latest' }}
