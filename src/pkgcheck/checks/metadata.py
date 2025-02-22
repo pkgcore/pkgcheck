@@ -436,21 +436,21 @@ class RequiredUseCheck(Check):
                     src = FakeConfigurable(pkg, profile)
                     for node in pkg.required_use.evaluate_depset(src.use):
                         if not node.match(src.use):
-                            failures[node].append((src.use, profile.key, profile.name))
+                            use_flag = str(node)
+                            if not use_flag.startswith("cpu_flags_"):
+                                failures[use_flag].append((src.use, profile.key, profile.name))
 
         if self.options.verbosity > 0:
             # report all failures with profile info in verbose mode
             for node, profile_info in failures.items():
                 for use, keyword, profile in profile_info:
-                    yield RequiredUseDefaults(str(node), sorted(use), keyword, profile, pkg=pkg)
+                    yield RequiredUseDefaults(node, sorted(use), keyword, profile, pkg=pkg)
         else:
             # only report one failure per REQUIRED_USE node in regular mode
             for node, profile_info in failures.items():
                 num_profiles = len(profile_info)
                 _use, _keyword, profile = profile_info[0]
-                yield RequiredUseDefaults(
-                    str(node), profile=profile, num_profiles=num_profiles, pkg=pkg
-                )
+                yield RequiredUseDefaults(node, profile=profile, num_profiles=num_profiles, pkg=pkg)
 
 
 class UnusedLocalUse(results.PackageResult, results.Warning):
