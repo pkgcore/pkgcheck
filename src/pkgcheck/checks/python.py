@@ -577,7 +577,7 @@ class PythonCompatCheck(Check):
     ``python-any-r1``.
     """
 
-    known_results = frozenset([PythonCompatUpdate])
+    known_results = frozenset({PythonCompatUpdate})
 
     whitelist_backports = frozenset(
         {
@@ -600,15 +600,19 @@ class PythonCompatCheck(Check):
         # determine available PYTHON_TARGET use flags
         targets = []
         for target, _desc in repo.use_expand_desc.get(IUSE_PREFIX[:-1], ()):
-            if target[len(IUSE_PREFIX) :].startswith("python"):
-                targets.append(target[len(IUSE_PREFIX) :])
+            target = target.removeprefix(IUSE_PREFIX)
+            if target.startswith("python"):
+                targets.append(target)
+        targets = (x for x in targets if not x.endswith("t"))
         multi_targets = tuple(sorted(targets, key=self.sorter))
 
         # determine available PYTHON_SINGLE_TARGET use flags
         targets = []
         for target, _desc in repo.use_expand_desc.get(IUSE_PREFIX_S[:-1], ()):
-            if target[len(IUSE_PREFIX_S) :].startswith("python"):
-                targets.append(target[len(IUSE_PREFIX_S) :])
+            target = target.removeprefix(IUSE_PREFIX_S)
+            if target.startswith("python"):
+                targets.append(target)
+        targets = (x for x in targets if not x.endswith("t"))
         single_targets = tuple(sorted(targets, key=self.sorter))
 
         self.params = {
