@@ -1,10 +1,11 @@
 EAPI=7
-PYTHON_COMPAT=( pypy3.11 python3_9 )
+PYTHON_COMPAT=( python3_{7,8} pypy3 )
 
-inherit python-r1
+inherit python-any-r1
 
 DESCRIPTION="Ebuild with potential PYTHON_COMPAT updates"
 HOMEPAGE="https://github.com/pkgcore/pkgcheck"
 LICENSE="BSD"
 SLOT="0"
-REQUIRED_USE="${PYTHON_REQUIRED_USE}"
+
+DEPEND="${PYTHON_DEPS}"

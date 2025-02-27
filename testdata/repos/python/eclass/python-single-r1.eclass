@@ -22,7 +22,12 @@ _python_set_impls() {
 				PYTHON_DEPS+=" python_single_target_${i}? ( dev-lang/python:${slot} )"
 				;;
 			pypy3)
-				PYTHON_DEPS+=" python_single_target_${i}? ( >=dev-lang/pypy-3.10:= )"
+				PYTHON_DEPS+=" python_single_target_${i}? ( dev-lang/pypy:3.10= )"
+				;;
+			pypy3*)
+				slot=${i#pypy}
+				slot=${slot/_/.}
+				PYTHON_DEPS+=" python_single_target_${i}? ( dev-lang/pypy:${slot}= )"
 				;;
 		esac
 	done

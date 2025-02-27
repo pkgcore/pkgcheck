@@ -599,12 +599,16 @@ class PythonCompatCheck(Check):
 
         # determine available PYTHON_TARGET use flags
         targets = []
+        pypy_targets = []
         for target, _desc in repo.use_expand_desc.get(IUSE_PREFIX[:-1], ()):
             target = target.removeprefix(IUSE_PREFIX)
             if target.startswith("python"):
                 targets.append(target)
+            elif target.startswith("pypy"):
+                pypy_targets.append(target)
         targets = (x for x in targets if not x.endswith("t"))
         multi_targets = tuple(sorted(targets, key=self.sorter))
+        self.pypy_targets = tuple(sorted(pypy_targets, key=self.sorter))
 
         # determine available PYTHON_SINGLE_TARGET use flags
         targets = []
@@ -651,15 +655,13 @@ class PythonCompatCheck(Check):
 
         try:
             # determine the latest supported python version
-            latest_target = sorted(
-                (
-                    f"python{x.slot.replace('.', '_')}"
-                    for x in deps
-                    if x.key == "dev-lang/python" and x.slot is not None
-                ),
-                key=self.sorter,
-            )[-1]
-        except IndexError:
+            all_targets = (
+                f"python{x.slot.replace('.', '_')}"
+                for x in deps
+                if x.key == "dev-lang/python" and x.slot is not None
+            )
+            latest_target = max(all_targets, key=self.sorter)
+        except ValueError:
             # should be flagged by PythonMissingDeps
             return
 
@@ -670,6 +672,18 @@ class PythonCompatCheck(Check):
         # determine python impls to target
         targets = set(takewhile(lambda x: x != latest_target, reversed(available_targets)))
 
+        try:
+            # determine the latest supported pypy version
+            all_targets = (
+                "pypy3" if x.slot == "3.10" else f"pypy{x.slot.replace('.', '_')}"
+                for x in deps
+                if x.key == "dev-lang/pypy" and x.slot is not None
+            )
+            latest_pypy = max(all_targets, key=self.sorter)
+            targets.update(takewhile(lambda x: x != latest_pypy, reversed(self.pypy_targets)))
+        except ValueError:
+            ...
+
         if targets:
             try:
                 # determine if deps support missing python targets
@@ -677,7 +691,11 @@ class PythonCompatCheck(Check):
                     # TODO: use query caching for repo matching?
                     latest = sorted(self.options.search_repo.match(dep))[-1]
                     targets.intersection_update(
-                        f"python{x.rsplit('python', 1)[-1]}"
+                        (
+                            f"pypy{x.rsplit('pypy', 1)[-1]}"
+                            if "pypy" in x
+                            else f"python{x.rsplit('python', 1)[-1]}"
+                        )
                         for x in latest.iuse_stripped
                         if x.startswith(prefix)
                     )
