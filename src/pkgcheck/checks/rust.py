@@ -31,6 +31,24 @@ class SuboptimalCratesURICall(results.LineResult, results.Warning):
         return f"line: {self.lineno}: calling {self.line!r} is suboptimal, use '${{CARGO_CRATE_URIS}}' for global CRATES instead"
 
 
+class TooManyCrates(results.VersionResult, results.Warning):
+    """Too many crates in ``CRATES`` variable.
+
+    The ``CRATES`` variable is a space-separated list of crates. When it has
+    more than 300 crates, it can cause performance issues for metadata
+    generation and package manager handling. It is recommended to use a crates
+    tarball instead.
+    """
+
+    def __init__(self, count: int, **kwargs):
+        super().__init__(**kwargs)
+        self.count = count
+
+    @property
+    def desc(self):
+        return f"CRATES variable has {self.count} crates, consider using crates tarball instead"
+
+
 class RustCheck(Check):
     """Checks for rust related issues."""
 
@@ -39,6 +57,7 @@ class RustCheck(Check):
         {
             SuboptimalCratesSeparator,
             SuboptimalCratesURICall,
+            TooManyCrates,
         }
     )
 
@@ -49,7 +68,10 @@ class RustCheck(Check):
                 val_node = node.children[-1]
                 row, _ = val_node.start_point
                 val_str = pkg.node_str(val_node).strip("'\"")
-                for lineno, line in enumerate(val_str.splitlines(), start=row + 1):
+                crates = val_str.split()
+                if len(crates) > 300:
+                    yield TooManyCrates(count=len(crates), pkg=pkg)
+                for lineno, line in enumerate(crates, start=row + 1):
                     for token in line.split():
                         if "@" not in token:
                             yield SuboptimalCratesSeparator(
