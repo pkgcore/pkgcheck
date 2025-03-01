@@ -170,6 +170,8 @@ class _UrlCheck(NetworkCheck):
             result = DeadUrl(attr, url, str(e.reason), pkg=pkg)
         except socket.timeout as e:
             result = DeadUrl(attr, url, str(e), pkg=pkg)
+        except UnicodeDecodeError:
+            ...  # ignore ftp:// URLs that return binary data
         return result
 
     def task_done(self, pkg, attr, future):
