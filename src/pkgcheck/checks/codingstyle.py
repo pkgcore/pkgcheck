@@ -190,7 +190,7 @@ class PathVariablesCheck(Check):
     """Scan ebuild for path variables with various issues."""
 
     _source = sources.EbuildFileRepoSource
-    known_results = frozenset([MissingSlash, UnnecessarySlashStrip, DoublePrefixInPath])
+    known_results = frozenset({MissingSlash, UnnecessarySlashStrip, DoublePrefixInPath})
     prefixed_dir_functions = (
         "insinto",
         "exeinto",
@@ -225,13 +225,19 @@ class PathVariablesCheck(Check):
         # qmake-utils.eclass
         "qt4_get_bindir",
         "qt5_get_bindir",
+        "qt6_get_bindir",
         # s6.eclass
         "s6_get_servicedir",
+        # shell-completion.eclass
+        "get_fishcompdir",
+        "get_zshcompdir",
         # systemd.eclass
         "systemd_get_systemunitdir",
         "systemd_get_userunitdir",
         "systemd_get_utildir",
         "systemd_get_systemgeneratordir",
+        "systemd_get_systempresetdir",
+        "systemd_get_sleepdir",
     )
     prefixed_rhs_variables = (
         # catch silly ${ED}${EPREFIX} mistake ;-)
