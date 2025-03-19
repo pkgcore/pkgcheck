@@ -658,7 +658,7 @@ class PythonCompatCheck(Check):
             all_targets = (
                 f"python{x.slot.replace('.', '_')}"
                 for x in deps
-                if x.key == "dev-lang/python" and x.slot is not None
+                if x.key == "dev-lang/python" and x.slot is not None and not x.slot.endswith("t")
             )
             latest_target = max(all_targets, key=self.sorter)
         except ValueError:
