@@ -292,12 +292,20 @@ class UnmaskedRepoSource(RepoSource):
 class _SourcePkg(WrappedPkg):
     """Package object with file contents injected as an attribute."""
 
-    __slots__ = ("lines",)
+    __slots__ = ("lines", "skipped_results")
 
     def __init__(self, pkg):
         super().__init__(pkg)
         with pkg.ebuild.text_fileobj() as fileobj:
             self.lines = tuple(fileobj)
+
+            skipped_results: set[str] = set()
+            for line in map(str.rstrip, self.lines):
+                if line and not line.startswith("#"):
+                    break  # stop after first non-comment non-empty line
+                elif line.startswith("# pkgcheck skip:"):
+                    skipped_results.add(line[16:].strip())
+            self.skipped_results = frozenset(skipped_results)
 
 
 class EbuildFileRepoSource(RepoSource):
@@ -310,6 +318,17 @@ class EbuildFileRepoSource(RepoSource):
 
 class _ParsedPkg(ParseTree, WrappedPkg):
     """Parsed package object."""
+
+    def __init__(self, data: bytes, **kwargs):
+        super().__init__(data, **kwargs)
+
+        skipped_results: set[str] = set()
+        for line in data.splitlines():
+            if line and not line.startswith(b"#"):
+                break  # stop after first non-comment non-empty line
+            elif line.startswith(b"# pkgcheck skip:"):
+                skipped_results.add(line[16:].strip().decode("utf8"))
+        self.skipped_results = frozenset(skipped_results)
 
 
 class EbuildParseRepoSource(RepoSource):
