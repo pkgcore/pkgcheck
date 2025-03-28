@@ -675,6 +675,16 @@ class MissingRemoteIdCheck(Check):
             (remote_type, re.compile(regex)) for remote_type, regex in self.remotes_map
         )
 
+    @staticmethod
+    def __filter_url(url: str) -> bool:
+        if url.endswith((".patch", ".diff")):
+            return False
+        if "-crates.tar" in url:
+            return False
+        if "-deps.tar" in url:
+            return False
+        return True
+
     def feed(self, pkgset):
         remotes = {u.type: (None, None) for u in pkgset[0].upstreams}
         for pkg in sorted(pkgset, reverse=True):
@@ -686,10 +696,10 @@ class MissingRemoteIdCheck(Check):
                 ),
                 (fetchable, Conditional),
             )
-            all_urls = set(
+            all_urls: set[str] = set(
                 chain.from_iterable(f.uri for f in fetchables if isinstance(f, fetchable))
             )
-            urls = {url for url in all_urls if not url.endswith((".patch", ".diff"))}
+            urls = set(filter(self.__filter_url, all_urls))
             urls = sorted(urls.union(pkg.homepage), key=len)
 
             for remote_type, regex in self.remotes_map:
