@@ -3,6 +3,46 @@ Release Notes
 =============
 
 -----------------------------
+pkgcheck 0.10.34 (2025-04-04)
+-----------------------------
+
+**New Checks:**
+
+- NonConsistentTarUsage: detect ``tar`` invocations missing the ``-f`` argument
+  (Arthur Zamarin, #709)
+
+- TooManyCrates: flag packages with more than 300 CRATES (Arthur Zamarin)
+
+**Check Updates:**
+
+- OutdatedBlocker: extend the threshold for outdated blockers from 2 years to 4
+  years (Sam James)
+
+- DeprecatedInsinto: add support for paths related to shell completion and
+  systemd (Arthur Zamarin)
+
+- DirectStableKeywords: exclude ``sec-keys/*`` and ``virtual/*`` categories
+  from this check (Arthur Zamarin, #719)
+
+- RequiredUseDefaults: skip all USE flags prefixed with ``cpu_flags_`` (Arthur
+  Zamarin)
+
+- git: suggest clearing the pkgcheck cache when encountering a ``git log``
+  error (Martin Mokry, #729)
+
+- PythonCompatUpdate: ignore ``*t`` (freethreading) Python targets
+  (Arthur Zamarin, Michał Górny, #711, #732)
+
+- DeadUrl: prevent crashes when servers return invalid UTF-8 data (Arthur
+  Zamarin)
+
+- PathVariablesCheck: expand the list of names checked for path variable issues
+  (Arthur Zamarin)
+
+- MissingRemoteId: exclude URIs used for fetching ``-crates`` or ``-deps``
+  tarballs from this check (Arthur Zamarin)
+
+-----------------------------
 pkgcheck 0.10.33 (2024-12-04)
 -----------------------------
 
