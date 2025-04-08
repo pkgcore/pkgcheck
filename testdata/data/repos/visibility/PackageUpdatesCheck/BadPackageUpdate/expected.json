@@ -1,0 +1,1 @@
+{"__class__": "BadPackageUpdate", "msg": "file '1Q-2024': 'move <=stub/old-name-1.2.3.4 stub/stable' on line 3: atom <=stub/old-name-1.2.3.4 must be versionless"}

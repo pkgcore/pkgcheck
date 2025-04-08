@@ -1,2 +1,3 @@
 move stub/old-name stub/stable
 move VisibilityCheck/OldPackageName stub/random-pkgname
+move <=stub/old-name-1.2.3.4 stub/stable
