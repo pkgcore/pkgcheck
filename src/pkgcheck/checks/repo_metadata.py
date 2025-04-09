@@ -105,7 +105,8 @@ class PackageUpdatesCheck(RepoCheck):
             base.LogMap("pkgcore.log.logger.error", BadPackageUpdate),
         )
 
-        del self.repo.config.__dict__["_updates"]  # clear cache for immutable dict
+        if hasattr(self.repo.config, "_updates"):
+            del self.repo.config.__dict__["_updates"]  # clear cache for immutable dict
         # convert log warnings/errors into reports
         with base.LogReports(*logmap) as log_reports:
             repo_updates = self.repo.config.updates
