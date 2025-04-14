@@ -225,6 +225,12 @@ class VersionResult(PackageResult):
         self.version = pkg.fullver
         self._attr = "version"
 
+        if (
+            self.__class__.__name__ in getattr(pkg, "skipped_results", ())
+            and getattr(self, "level", "") != "error"
+        ):
+            self._filtered = True
+
     @klass.jit_attr
     def ver_rev(self):
         version, _, revision = self.version.partition("-r")
