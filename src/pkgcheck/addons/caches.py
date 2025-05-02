@@ -5,6 +5,7 @@ import os
 import pathlib
 import pickle
 import shutil
+import subprocess
 from collections import UserDict
 from dataclasses import dataclass
 from hashlib import blake2b
@@ -79,11 +80,21 @@ class CachedAddon(Addon):
         dirname = f"{repo.repo_id.lstrip(os.sep)}-{token}"
         return pjoin(self.options.cache_dir, "repos", dirname, self.cache.file)
 
-    def load_cache(self, path, fallback=None):
+    def load_cache(self, path: str, fallback=None):
         cache = fallback
         try:
-            with open(path, "rb") as f:
-                cache = pickle.load(f)
+            if path.endswith(".zst"):
+                if not os.path.exists(path):
+                    raise FileNotFoundError(path)
+                with subprocess.Popen(("zstd", "-qdcf", path), stdout=subprocess.PIPE) as proc:
+                    if proc.poll():
+                        raise PkgcheckUserException(
+                            f"failed decompressing {self.cache.type} cache: {path!r}"
+                        )
+                    cache = pickle.load(proc.stdout)
+            else:
+                with open(path, "rb") as f:
+                    cache = pickle.load(f)
             if cache.version != self.cache.version:
                 logger.debug("forcing %s cache regen due to outdated version", self.cache.type)
                 os.remove(path)
@@ -98,11 +109,18 @@ class CachedAddon(Addon):
             cache = fallback
         return cache
 
-    def save_cache(self, data, path):
+    def save_cache(self, data, path: str):
         try:
             os.makedirs(os.path.dirname(path), exist_ok=True)
-            with AtomicWriteFile(path, binary=True) as f:
-                pickle.dump(data, f, protocol=-1)
+            if path.endswith(".zst"):
+                with subprocess.Popen(("zstd", "-T0", "-fqo", path), stdin=subprocess.PIPE) as proc:
+                    pickle.dump(data, proc.stdin, protocol=-1)
+                if os.path.exists(path[:-4]):
+                    logger.warning("removing old %s cache file", self.cache.type)
+                    os.remove(path[:-4])
+            else:
+                with AtomicWriteFile(path, binary=True) as f:
+                    pickle.dump(data, f, protocol=-1)
         except IOError as e:
             msg = f"failed dumping {self.cache.type} cache: {path!r}: {e.strerror}"
             raise PkgcheckUserException(msg)

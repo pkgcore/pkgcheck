@@ -119,7 +119,7 @@ class ProfileAddon(caches.CachedAddon):
     non_profile_dirs = frozenset(["desc", "updates"])
 
     # cache registry
-    cache = caches.CacheData(type="profiles", file="profiles.pickle", version=2)
+    cache = caches.CacheData(type="profiles", file="profiles.pickle.zst", version=3)
 
     @classmethod
     def mangle_argparser(cls, parser):
