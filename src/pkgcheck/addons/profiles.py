@@ -359,7 +359,7 @@ class ProfileAddon(caches.CachedAddon):
                         # stable cache is usable for unstable, but not vice versa.
                         # unstable insoluble is usable for stable, but not vice versa
                         vfilter = domain.generate_filter(
-                            self.target_repo.pkg_masks | masks, unmasks
+                            self.target_repo.pkg_masks | repo.pkg_masks | masks, unmasks
                         )
                         self.profile_filters.setdefault(stable_key, []).append(
                             ProfileData(

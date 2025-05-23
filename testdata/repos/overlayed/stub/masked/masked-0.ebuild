@@ -1,0 +1,5 @@
+DESCRIPTION="Stub ebuild that is package.mask-ed"
+HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+LICENSE="BSD"
+SLOT="0"
+KEYWORDS="amd64 x86"
