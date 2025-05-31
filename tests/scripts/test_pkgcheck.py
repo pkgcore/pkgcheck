@@ -9,7 +9,7 @@ from pkgcheck.scripts import run
 
 def test_script_run(capsys):
     """Test regular code path for running scripts."""
-    script = partial(run, project)
+    script = staticmethod(partial(run, project))
 
     with patch(f"{project}.scripts.import_module") as import_module:
         import_module.side_effect = ImportError("baz module doesn't exist")
@@ -40,7 +40,7 @@ def test_script_run(capsys):
 
 
 class TestPkgcheck:
-    script = partial(run, project)
+    script = staticmethod(partial(run, project))
 
     def test_version(self, capsys):
         with patch("sys.argv", [project, "--version"]):
