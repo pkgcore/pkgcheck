@@ -625,9 +625,9 @@ class TestPkgcheckScan:
                     f"{repo}/{check}/{keyword}/expected-verbose.json"
                 )
                 if expected_verbose_results:
-                    assert self._render_results(
-                        expected_verbose_results
-                    ), "failed rendering verbose results"
+                    assert self._render_results(expected_verbose_results), (
+                        "failed rendering verbose results"
+                    )
                     verbose_results.update(expected_verbose_results)
                 else:
                     verbose_results.update(expected_results)

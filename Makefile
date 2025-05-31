@@ -15,4 +15,4 @@ clean:
 
 .PHONY: format
 format:
-	$(PYTHON) -m black .
+	$(PYTHON) -m ruff format

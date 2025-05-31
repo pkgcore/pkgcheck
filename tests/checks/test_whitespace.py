@@ -115,9 +115,9 @@ class TestBadWhitespaceCharacter(WhitespaceCheckTest):
         """Check if the hardcoded bad whitespace character list is outdated."""
         updated_whitespace_data = generate_whitespace_data()
         if updated_whitespace_data.unicode_version != whitespace.whitespace_data.unicode_version:
-            assert (
-                updated_whitespace_data.chars == whitespace.whitespace_data.chars
-            ), f"outdated character list for Unicode version {unicodedata.unidata_version}"
+            assert updated_whitespace_data.chars == whitespace.whitespace_data.chars, (
+                f"outdated character list for Unicode version {unicodedata.unidata_version}"
+            )
 
     def test_bad_whitespace_chars(self):
         for char in whitespace.whitespace_data.chars:

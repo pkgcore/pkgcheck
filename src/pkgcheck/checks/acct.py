@@ -55,7 +55,7 @@ class OutsideRangeAccountIdentifier(results.VersionResult, results.Error):
 
     @property
     def desc(self):
-        return f"{self.kind} id {self.identifier} outside permitted " f"static allocation range"
+        return f"{self.kind} id {self.identifier} outside permitted static allocation range"
 
 
 class AcctCheck(GentooRepoCheck, RepoCheck):

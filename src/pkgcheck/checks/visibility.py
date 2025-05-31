@@ -12,7 +12,7 @@ from . import Check
 
 
 class FakeConfigurable:
-    "Package wrapper binding profile data." ""
+    "Package wrapper binding profile data."
 
     configurable = True
     __slots__ = ("use", "iuse", "_forced_use", "_masked_use", "_pkg_use", "_raw_pkg", "_profile")
@@ -114,8 +114,7 @@ class VisibleVcsPkg(results.VersionResult, results.Warning):
             num_profiles = ""
 
         return (
-            f'VCS version visible for KEYWORDS="{self.arch}", '
-            f"profile {self.profile}{num_profiles}"
+            f'VCS version visible for KEYWORDS="{self.arch}", profile {self.profile}{num_profiles}'
         )
 
 

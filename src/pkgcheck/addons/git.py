@@ -646,7 +646,7 @@ class GitAddon(caches.CachedAddon):
                 # skip cache usage when not running on the default branch
                 if branch != default_branch:
                     logger.debug(
-                        "skipping %s git repo cache update on " "non-default branch %r",
+                        "skipping %s git repo cache update on non-default branch %r",
                         repo,
                         branch,
                     )

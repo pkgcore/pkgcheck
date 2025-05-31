@@ -77,9 +77,7 @@ class MissingLicenseRestricts(results.VersionResult, results.Warning):
     @property
     def desc(self):
         restrictions = " ".join(self.restrictions)
-        return (
-            f"{self.license_group} license {self.license!r} " f'requires RESTRICT="{restrictions}"'
-        )
+        return f'{self.license_group} license {self.license!r} requires RESTRICT="{restrictions}"'
 
 
 class UnnecessaryLicense(results.VersionResult, results.Warning):
@@ -374,8 +372,7 @@ class RequiredUseDefaults(results.VersionResult, results.Warning):
                 num_profiles = ""
             # collapsed version
             return (
-                f"profile: {self.profile!r}{num_profiles} "
-                f"failed REQUIRED_USE: {self.required_use}"
+                f"profile: {self.profile!r}{num_profiles} failed REQUIRED_USE: {self.required_use}"
             )
         return (
             f"keyword: {self.keyword}, profile: {self.profile!r}, "
@@ -707,7 +704,7 @@ class MissingSlotDep(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        return f"{self.dep!r} matches more than one slot: " f"[ {', '.join(self.dep_slots)} ]"
+        return f"{self.dep!r} matches more than one slot: [ {', '.join(self.dep_slots)} ]"
 
 
 class MissingSlotDepCheck(Check):
@@ -782,8 +779,7 @@ class MissingUseDepDefault(results.VersionResult, results.Warning):
         s = pluralism(self.pkgs)
         pkgs = ", ".join(self.pkgs)
         return (
-            f'{self.attr}="{self.atom}": USE flag {self.flag!r} missing from '
-            f"package{s}: [ {pkgs} ]"
+            f'{self.attr}="{self.atom}": USE flag {self.flag!r} missing from package{s}: [ {pkgs} ]'
         )
 
 
@@ -1009,8 +1005,7 @@ class OutdatedBlocker(results.VersionResult, results.Info):
     @property
     def desc(self):
         return (
-            f'outdated blocker {self.attr}="{self.atom}": '
-            f"last match removed {self.age} years ago"
+            f'outdated blocker {self.attr}="{self.atom}": last match removed {self.age} years ago'
         )
 
 
@@ -1030,7 +1025,7 @@ class NonexistentBlocker(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        return f'nonexistent blocker {self.attr}="{self.atom}": ' "no matches in repo history"
+        return f'nonexistent blocker {self.attr}="{self.atom}": no matches in repo history'
 
 
 class OutdatedBlockersCheck(Check):
@@ -1564,8 +1559,7 @@ class HomepageCheck(Check):
                             yield BadHomepage(f"HOMEPAGE={homepage!r} lacks protocol", pkg=pkg)
                         elif homepage[:i] not in SrcUriCheck.valid_protos:
                             yield BadHomepage(
-                                f"HOMEPAGE={homepage!r} uses unsupported "
-                                f"protocol {homepage[:i]!r}",
+                                f"HOMEPAGE={homepage!r} uses unsupported protocol {homepage[:i]!r}",
                                 pkg=pkg,
                             )
 

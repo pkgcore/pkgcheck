@@ -56,7 +56,7 @@ def _setup_reporter(parser, namespace):
             namespace.reporter = objects.REPORTERS[namespace.reporter]
         except KeyError:
             available = ", ".join(objects.REPORTERS)
-            parser.error(f"no reporter matches {namespace.reporter!r} " f"(available: {available})")
+            parser.error(f"no reporter matches {namespace.reporter!r} (available: {available})")
 
     if namespace.reporter is reporters.FormatReporter:
         if not namespace.format_str:

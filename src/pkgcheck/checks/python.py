@@ -727,9 +727,7 @@ class PythonGHDistfileSuffix(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        return (
-            f"GitHub archive {self.filename!r} ({self.uri!r}) is not " "using '.gh.tar.gz' suffix"
-        )
+        return f"GitHub archive {self.filename!r} ({self.uri!r}) is not using '.gh.tar.gz' suffix"
 
 
 class PythonInlinePyPIURI(results.VersionResult, results.Warning):

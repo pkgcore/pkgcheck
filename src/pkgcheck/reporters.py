@@ -319,12 +319,12 @@ class FlycheckReporter(Reporter):
     def _process_report(self):
         while True:
             result = yield
-            file = f'{getattr(result, "package", "")}-{getattr(result, "version", "")}.ebuild'
-            message = f'{getattr(result, "name")}: {getattr(result, "desc")}'
+            file = f"{getattr(result, 'package', '')}-{getattr(result, 'version', '')}.ebuild"
+            message = f"{getattr(result, 'name')}: {getattr(result, 'desc')}"
             if isinstance(result, BaseLinesResult):
                 message = message.replace(result.lines_str, "").strip()
                 for lineno in result.lines:
-                    self.out.write(f'{file}:{lineno}:{getattr(result, "level")}:{message}')
+                    self.out.write(f"{file}:{lineno}:{getattr(result, 'level')}:{message}")
             else:
                 lineno = getattr(result, "lineno", 0)
-                self.out.write(f'{file}:{lineno}:{getattr(result, "level")}:{message}')
+                self.out.write(f"{file}:{lineno}:{getattr(result, 'level')}:{message}")

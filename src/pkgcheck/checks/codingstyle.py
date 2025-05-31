@@ -356,10 +356,7 @@ class DeprecatedInsinto(results.LineResult, results.Warning):
 
     @property
     def desc(self):
-        return (
-            f"deprecated insinto usage (use {self.cmd} instead), "
-            f"line {self.lineno}: {self.line}"
-        )
+        return f"deprecated insinto usage (use {self.cmd} instead), line {self.lineno}: {self.line}"
 
 
 class InsintoCheck(Check):

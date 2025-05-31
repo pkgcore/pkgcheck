@@ -46,7 +46,7 @@ class QueryCache(Feed):
             dest="query_caching_freq",
             choices=("version", "package", "category"),
             default="package",
-            help="control how often the cache is cleared " "(version, package or category)",
+            help="control how often the cache is cleared (version, package or category)",
         )
 
     @staticmethod

@@ -284,8 +284,7 @@ class ProfilesCheck(Check):
                 addons.profiles.ProfileNode(pjoin(self.profiles_dir, replacement))
             except profiles_mod.ProfileError:
                 yield ProfileError(
-                    f"nonexistent replacement {replacement!r} "
-                    f"for deprecated profile: {node.name!r}"
+                    f"nonexistent replacement {replacement!r} for deprecated profile: {node.name!r}"
                 )
 
     # non-spec files

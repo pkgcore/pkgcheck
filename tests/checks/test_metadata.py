@@ -115,8 +115,8 @@ class IUSE_Options(misc.Tmpdir):
                 textwrap.dedent(
                     f"""\
                         masters =
-                        properties-allowed = {' '.join(properties)}
-                        restrict-allowed = {' '.join(restrict)}
+                        properties-allowed = {" ".join(properties)}
+                        restrict-allowed = {" ".join(restrict)}
                     """
                 )
             )

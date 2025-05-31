@@ -438,7 +438,7 @@ class TestExcessiveLineLength(misc.ReportTestCase):
     def test_long_line(self):
         r = self.assertReport(
             self.check,
-            self._prepare_pkg(f'echo {"a " * codingstyle.ExcessiveLineLength.line_length}'),
+            self._prepare_pkg(f"echo {'a ' * codingstyle.ExcessiveLineLength.line_length}"),
         )
         assert r.lines == (1,)
 
@@ -446,9 +446,9 @@ class TestExcessiveLineLength(misc.ReportTestCase):
         r = self.assertReport(
             self.check,
             self._prepare_pkg(
-                f'echo {"a " * codingstyle.ExcessiveLineLength.line_length}',
+                f"echo {'a ' * codingstyle.ExcessiveLineLength.line_length}",
                 'echo "short line"',
-                f'echo {"Hello " * codingstyle.ExcessiveLineLength.line_length}',
+                f"echo {'Hello ' * codingstyle.ExcessiveLineLength.line_length}",
             ),
         )
         assert r.lines == (1, 3)
@@ -470,7 +470,7 @@ class TestExcessiveLineLength(misc.ReportTestCase):
         r = self.assertReport(
             self.check,
             self._prepare_pkg(
-                f'echo {"a" * codingstyle.ExcessiveLineLength.line_length}',
+                f"echo {'a' * codingstyle.ExcessiveLineLength.line_length}",
                 f"echo {medium_word} {long_word}",
                 f"echo {medium_word} {long_word[:-5]}",
             ),

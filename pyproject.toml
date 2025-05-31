@@ -89,6 +89,10 @@ exclude = [
 	"doc/api/", "doc/generated/", "doc/_build/",
 ]
 
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
 [tool.black]
 line-length = 100
 

@@ -133,12 +133,10 @@ class TestPythonCheck(misc.ReportTestCase):
             self.check,
             self.mk_pkg(
                 _eclasses_=["python-r1"],
-                IUSE="python_targets_python3_5 " "python_targets_python3_6",
-                RDEPEND="python_targets_python3_5? ( "
-                "  dev-lang/python:3.5 ) "
-                "python_targets_python3_6? ( "
-                "  dev-lang/python:3.6 )",
-                REQUIRED_USE="|| ( python_targets_python3_5 " "     python_targets_python3_6 )",
+                IUSE="python_targets_python3_5 python_targets_python3_6",
+                RDEPEND="python_targets_python3_5? ( dev-lang/python:3.5 ) "
+                "python_targets_python3_6? ( dev-lang/python:3.6 )",
+                REQUIRED_USE="|| ( python_targets_python3_5 python_targets_python3_6 )",
             ),
         )
 
@@ -148,7 +146,7 @@ class TestPythonCheck(misc.ReportTestCase):
             self.mk_pkg(
                 _eclasses_=["python-single-r1"],
                 IUSE="python_targets_python3_5",
-                RDEPEND="python_targets_python3_5? ( " "  dev-lang/python:3.5 )",
+                RDEPEND="python_targets_python3_5? ( dev-lang/python:3.5 )",
                 REQUIRED_USE="python_targets_python3_5",
             ),
         )
@@ -177,7 +175,7 @@ class TestPythonCheck(misc.ReportTestCase):
             self.check,
             self.mk_pkg(
                 _eclasses_=["python-any-r1"],
-                DEPEND="|| ( " "  dev-lang/python:3.5 " "  dev-lang/python:3.6 )",
+                DEPEND="|| ( dev-lang/python:3.5 dev-lang/python:3.6 )",
             ),
         )
         self.assertNoReport(
@@ -187,7 +185,7 @@ class TestPythonCheck(misc.ReportTestCase):
             self.check,
             self.mk_pkg(
                 _eclasses_=["python-any-r1"],
-                BDEPEND="|| ( " "  dev-lang/python:3.5 " "  dev-lang/python:3.6 )",
+                BDEPEND="|| ( dev-lang/python:3.5 dev-lang/python:3.6 )",
             ),
         )
 
@@ -196,11 +194,9 @@ class TestPythonCheck(misc.ReportTestCase):
             self.check,
             self.mk_pkg(
                 _eclasses_=["python-r1"],
-                IUSE="python_targets_python3_5 " "python_targets_python3_6",
-                RDEPEND="python_targets_python3_5? ( "
-                "  dev-lang/python:3.5 ) "
-                "python_targets_python3_6? ( "
-                "  dev-lang/python:3.6 )",
+                IUSE="python_targets_python3_5 python_targets_python3_6",
+                RDEPEND="python_targets_python3_5? (  dev-lang/python:3.5 ) "
+                "python_targets_python3_6? ( dev-lang/python:3.6 )",
             ),
         )
         assert isinstance(r, python.PythonMissingRequiredUse)
@@ -212,11 +208,9 @@ class TestPythonCheck(misc.ReportTestCase):
                 self.check,
                 self.mk_pkg(
                     _eclasses_=["python-r1"],
-                    IUSE="python_targets_python3_5 " "python_targets_python3_6",
-                    RDEPEND="python_targets_python3_5? ( "
-                    "  dev-lang/python:3.5 ) "
-                    "python_targets_python3_6? ( "
-                    "  dev-lang/python:3.6 )",
+                    IUSE="python_targets_python3_5 python_targets_python3_6",
+                    RDEPEND="python_targets_python3_5? ( dev-lang/python:3.5 ) "
+                    "python_targets_python3_6? ( dev-lang/python:3.6 )",
                     REQUIRED_USE="|| ( python_targets_python3_5 )",
                 ),
             ),
@@ -228,16 +222,11 @@ class TestPythonCheck(misc.ReportTestCase):
                 self.check,
                 self.mk_pkg(
                     _eclasses_=["python-r1"],
-                    IUSE="python_targets_python3_5 "
-                    "python_targets_python3_6 "
-                    "python_targets_python3_7",
-                    RDEPEND="python_targets_python3_5? ( "
-                    "  dev-lang/python:3.5 ) "
-                    "python_targets_python3_6? ( "
-                    "  dev-lang/python:3.6 ) "
-                    "python_targets_python3_7? ( "
-                    "  dev-lang/python:3.7 )",
-                    REQUIRED_USE="|| ( python_targets_python3_6 " "  python_targets_python3_7 )",
+                    IUSE="python_targets_python3_5 python_targets_python3_6 python_targets_python3_7",
+                    RDEPEND="python_targets_python3_5? ( dev-lang/python:3.5 ) "
+                    "python_targets_python3_6? ( dev-lang/python:3.6 ) "
+                    "python_targets_python3_7? ( dev-lang/python:3.7 )",
+                    REQUIRED_USE="|| ( python_targets_python3_6 python_targets_python3_7 )",
                 ),
             ),
             python.PythonMissingRequiredUse,
@@ -248,14 +237,10 @@ class TestPythonCheck(misc.ReportTestCase):
                 self.check,
                 self.mk_pkg(
                     _eclasses_=["python-single-r1"],
-                    IUSE="python_targets_python3_5 "
-                    "python_targets_python3_6 "
-                    "python_single_target_python3_5 "
-                    "python_single_target_python3_6",
-                    RDEPEND="python_single_target_python3_5? ( "
-                    "  dev-lang/python:3.5 ) "
-                    "python_single_target_python3_6? ( "
-                    "  dev-lang/python:3.6 )",
+                    IUSE="python_targets_python3_5 python_targets_python3_6 "
+                    "python_single_target_python3_5 python_single_target_python3_6",
+                    RDEPEND="python_single_target_python3_5? ( dev-lang/python:3.5 ) "
+                    "python_single_target_python3_6? ( dev-lang/python:3.6 )",
                 ),
             ),
             python.PythonMissingRequiredUse,
@@ -267,14 +252,10 @@ class TestPythonCheck(misc.ReportTestCase):
                 self.check,
                 self.mk_pkg(
                     _eclasses_=["python-single-r1"],
-                    IUSE="python_targets_python3_5 "
-                    "python_targets_python3_6 "
-                    "python_single_target_python3_5 "
-                    "python_single_target_python3_6",
-                    RDEPEND="python_single_target_python3_5? ( "
-                    "  dev-lang/python:3.5 ) "
-                    "python_single_target_python3_6? ( "
-                    "  dev-lang/python:3.6 )",
+                    IUSE="python_targets_python3_5 python_targets_python3_6 "
+                    "python_single_target_python3_5 python_single_target_python3_6",
+                    RDEPEND="python_single_target_python3_5? ( dev-lang/python:3.5 ) "
+                    "python_single_target_python3_6? ( dev-lang/python:3.6 )",
                     REQUIRED_USE="^^ ( python_single_target_python3_5 )",
                 ),
             ),
@@ -287,15 +268,11 @@ class TestPythonCheck(misc.ReportTestCase):
                 self.check,
                 self.mk_pkg(
                     _eclasses_=["python-single-r1"],
-                    IUSE="python_targets_python3_5 "
-                    "python_targets_python3_6 "
-                    "python_single_target_python3_5 "
-                    "python_single_target_python3_6",
-                    RDEPEND="python_single_target_python3_5? ( "
-                    "  dev-lang/python:3.5 ) "
-                    "python_single_target_python3_6? ( "
-                    "  dev-lang/python:3.6 )",
-                    REQUIRED_USE="|| ( python_targets_python3_5 " "  python_targets_python3_6 )",
+                    IUSE="python_targets_python3_5 python_targets_python3_6 "
+                    "python_single_target_python3_5 python_single_target_python3_6",
+                    RDEPEND="python_single_target_python3_5? ( dev-lang/python:3.5 ) "
+                    "python_single_target_python3_6? ( dev-lang/python:3.6 )",
+                    REQUIRED_USE="|| ( python_targets_python3_5 python_targets_python3_6 )",
                 ),
             ),
             python.PythonMissingRequiredUse,
@@ -306,8 +283,8 @@ class TestPythonCheck(misc.ReportTestCase):
             self.check,
             self.mk_pkg(
                 _eclasses_=["python-r1"],
-                IUSE="python_targets_python3_5 " "python_targets_python3_6",
-                REQUIRED_USE="|| ( python_targets_python3_5 " "     python_targets_python3_6 )",
+                IUSE="python_targets_python3_5 python_targets_python3_6",
+                REQUIRED_USE="|| ( python_targets_python3_5 python_targets_python3_6 )",
             ),
         )
         assert isinstance(r, python.PythonMissingDeps)
@@ -318,9 +295,9 @@ class TestPythonCheck(misc.ReportTestCase):
             self.check,
             self.mk_pkg(
                 _eclasses_=["python-r1"],
-                IUSE="python_targets_python3_5 " "python_targets_python3_6",
-                RDEPEND="python_targets_python3_5? ( " "  dev-lang/python:3.5 )",
-                REQUIRED_USE="|| ( python_targets_python3_5 " "     python_targets_python3_6 )",
+                IUSE="python_targets_python3_5 python_targets_python3_6",
+                RDEPEND="python_targets_python3_5? ( dev-lang/python:3.5 )",
+                REQUIRED_USE="|| ( python_targets_python3_5 python_targets_python3_6 )",
             ),
         )
         assert isinstance(r, python.PythonMissingDeps)
@@ -333,12 +310,10 @@ class TestPythonCheck(misc.ReportTestCase):
                 self.check,
                 self.mk_pkg(
                     _eclasses_=["python-r1"],
-                    IUSE="python_targets_python3_5 " "python_targets_python3_6",
-                    RDEPEND="python_targets_python3_5? ( "
-                    "  dev-foo/bar ) "
-                    "python_targets_python3_6? ( "
-                    "  dev-lang/python:3.6 )",
-                    REQUIRED_USE="|| ( python_targets_python3_5 " "     python_targets_python3_6 )",
+                    IUSE="python_targets_python3_5 python_targets_python3_6",
+                    RDEPEND="python_targets_python3_5? ( dev-foo/bar ) "
+                    "python_targets_python3_6? ( dev-lang/python:3.6 )",
+                    REQUIRED_USE="|| ( python_targets_python3_5 python_targets_python3_6 )",
                 ),
             ),
             python.PythonMissingDeps,
@@ -350,12 +325,10 @@ class TestPythonCheck(misc.ReportTestCase):
                 self.check,
                 self.mk_pkg(
                     _eclasses_=["python-r1"],
-                    IUSE="python_targets_python3_5 " "python_targets_python3_6",
-                    DEPEND="python_targets_python3_5? ( "
-                    "  dev-lang/python:3.5 ) "
-                    "python_targets_python3_6? ( "
-                    "  dev-lang/python:3.6 )",
-                    REQUIRED_USE="|| ( python_targets_python3_5 " "     python_targets_python3_6 )",
+                    IUSE="python_targets_python3_5 python_targets_python3_6",
+                    DEPEND="python_targets_python3_5? ( dev-lang/python:3.5 ) "
+                    "python_targets_python3_6? ( dev-lang/python:3.6 )",
+                    REQUIRED_USE="|| ( python_targets_python3_5 python_targets_python3_6 )",
                 ),
             ),
             python.PythonMissingDeps,
@@ -366,16 +339,11 @@ class TestPythonCheck(misc.ReportTestCase):
                 self.check,
                 self.mk_pkg(
                     _eclasses_=["python-single-r1"],
-                    IUSE="python_targets_python3_5 "
-                    "python_targets_python3_6 "
-                    "python_single_target_python3_5 "
-                    "python_single_target_python3_6",
-                    REQUIRED_USE="^^ ( python_single_target_python3_5 "
-                    "     python_single_target_python3_6 ) "
-                    "python_single_target_python3_5? ( "
-                    "  python_targets_python3_5 ) "
-                    "python_single_target_python3_6? ( "
-                    "  python_targets_python3_6 )",
+                    IUSE="python_targets_python3_5 python_targets_python3_6 "
+                    "python_single_target_python3_5 python_single_target_python3_6",
+                    REQUIRED_USE="^^ ( python_single_target_python3_5 python_single_target_python3_6 ) "
+                    "python_single_target_python3_5? ( python_targets_python3_5 ) "
+                    "python_single_target_python3_6? ( python_targets_python3_6 )",
                 ),
             ),
             python.PythonMissingDeps,
@@ -387,17 +355,12 @@ class TestPythonCheck(misc.ReportTestCase):
                 self.check,
                 self.mk_pkg(
                     _eclasses_=["python-single-r1"],
-                    IUSE="python_targets_python3_5 "
-                    "python_targets_python3_6 "
-                    "python_single_target_python3_5 "
-                    "python_single_target_python3_6",
-                    RDEPEND="python_single_target_python3_5? ( " "  dev-lang/python:3.5 )",
-                    REQUIRED_USE="^^ ( python_single_target_python3_5 "
-                    "     python_single_target_python3_6 ) "
-                    "python_single_target_python3_5? ( "
-                    "  python_targets_python3_5 ) "
-                    "python_single_target_python3_6? ( "
-                    "  python_targets_python3_6 )",
+                    IUSE="python_targets_python3_5 python_targets_python3_6 "
+                    "python_single_target_python3_5 python_single_target_python3_6",
+                    RDEPEND="python_single_target_python3_5? ( dev-lang/python:3.5 )",
+                    REQUIRED_USE="^^ ( python_single_target_python3_5 python_single_target_python3_6 ) "
+                    "python_single_target_python3_5? ( python_targets_python3_5 ) "
+                    "python_single_target_python3_6? ( python_targets_python3_6 )",
                 ),
             ),
             python.PythonMissingDeps,
@@ -410,20 +373,13 @@ class TestPythonCheck(misc.ReportTestCase):
                 self.check,
                 self.mk_pkg(
                     _eclasses_=["python-single-r1"],
-                    IUSE="python_targets_python3_5 "
-                    "python_targets_python3_6 "
-                    "python_single_target_python3_5 "
-                    "python_single_target_python3_6",
-                    RDEPEND="python_single_target_python3_5? ( "
-                    "  dev-foo/bar ) "
-                    "python_single_target_python3_6? ( "
-                    "  dev-lang/python:3.6 )",
-                    REQUIRED_USE="^^ ( python_single_target_python3_5 "
-                    "     python_single_target_python3_6 ) "
-                    "python_single_target_python3_5? ( "
-                    "  python_targets_python3_5 ) "
-                    "python_single_target_python3_6? ( "
-                    "  python_targets_python3_6 )",
+                    IUSE="python_targets_python3_5 python_targets_python3_6 "
+                    "python_single_target_python3_5 python_single_target_python3_6",
+                    RDEPEND="python_single_target_python3_5? ( dev-foo/bar ) "
+                    "python_single_target_python3_6? ( dev-lang/python:3.6 )",
+                    REQUIRED_USE="^^ ( python_single_target_python3_5 python_single_target_python3_6 ) "
+                    "python_single_target_python3_5? ( python_targets_python3_5 ) "
+                    "python_single_target_python3_6? ( python_targets_python3_6 )",
                 ),
             ),
             python.PythonMissingDeps,
@@ -435,20 +391,13 @@ class TestPythonCheck(misc.ReportTestCase):
                 self.check,
                 self.mk_pkg(
                     _eclasses_=["python-single-r1"],
-                    IUSE="python_targets_python3_5 "
-                    "python_targets_python3_6 "
-                    "python_single_target_python3_5 "
-                    "python_single_target_python3_6",
-                    DEPEND="python_single_target_python3_5? ( "
-                    "  dev-lang/python:3.5 ) "
-                    "python_single_target_python3_6? ( "
-                    "  dev-lang/python:3.6 )",
-                    REQUIRED_USE="^^ ( python_single_target_python3_5 "
-                    "     python_single_target_python3_6 ) "
-                    "python_single_target_python3_5? ( "
-                    "  python_targets_python3_5 ) "
-                    "python_single_target_python3_6? ( "
-                    "  python_targets_python3_6 )",
+                    IUSE="python_targets_python3_5 python_targets_python3_6 "
+                    "python_single_target_python3_5 python_single_target_python3_6",
+                    DEPEND="python_single_target_python3_5? ( dev-lang/python:3.5 ) "
+                    "python_single_target_python3_6? ( dev-lang/python:3.6 )",
+                    REQUIRED_USE="^^ ( python_single_target_python3_5 python_single_target_python3_6 ) "
+                    "python_single_target_python3_5? ( python_targets_python3_5 ) "
+                    "python_single_target_python3_6? ( python_targets_python3_6 )",
                 ),
             ),
             python.PythonMissingDeps,
@@ -461,20 +410,13 @@ class TestPythonCheck(misc.ReportTestCase):
                 self.check,
                 self.mk_pkg(
                     _eclasses_=["python-single-r1"],
-                    IUSE="python_targets_python3_5 "
-                    "python_targets_python3_6 "
-                    "python_single_target_python3_5 "
-                    "python_single_target_python3_6",
-                    RDEPEND="python_targets_python3_5? ( "
-                    "  dev-lang/python:3.5 ) "
-                    "python_targets_python3_6? ( "
-                    "  dev-lang/python:3.6 )",
-                    REQUIRED_USE="^^ ( python_single_target_python3_5 "
-                    "     python_single_target_python3_6 ) "
-                    "python_single_target_python3_5? ( "
-                    "  python_targets_python3_5 ) "
-                    "python_single_target_python3_6? ( "
-                    "  python_targets_python3_6 )",
+                    IUSE="python_targets_python3_5 python_targets_python3_6 "
+                    "python_single_target_python3_5 python_single_target_python3_6",
+                    RDEPEND="python_targets_python3_5? ( dev-lang/python:3.5 ) "
+                    "python_targets_python3_6? ( dev-lang/python:3.6 )",
+                    REQUIRED_USE="^^ ( python_single_target_python3_5 python_single_target_python3_6 ) "
+                    "python_single_target_python3_5? ( python_targets_python3_5 ) "
+                    "python_single_target_python3_6? ( python_targets_python3_6 )",
                 ),
             ),
             python.PythonMissingDeps,
@@ -490,8 +432,8 @@ class TestPythonCheck(misc.ReportTestCase):
             self.check,
             self.mk_pkg(
                 _eclasses_=["python-any-r1"],
-                DEPEND="|| ( " "  dev-lang/python:3.5 " "  dev-lang/python:3.6 )",
-                RDEPEND="|| ( " "  dev-lang/python:3.5 " "  dev-lang/python:3.6 )",
+                DEPEND="|| ( dev-lang/python:3.5 dev-lang/python:3.6 )",
+                RDEPEND="|| ( dev-lang/python:3.5 dev-lang/python:3.6 )",
             ),
         )
         assert isinstance(r, python.PythonRuntimeDepInAnyR1)
