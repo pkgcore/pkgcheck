@@ -8,7 +8,7 @@ from pkgcheck.scripts import run
 
 
 class TestPkgcheckCache:
-    script = partial(run, project)
+    script = staticmethod(partial(run, project))
 
     @pytest.fixture(autouse=True)
     def _setup(self, testconfig, tmp_path):
