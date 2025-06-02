@@ -8,8 +8,8 @@ requires = [
 	"pathspec",
 	"tree-sitter>=0.23.0",
 	"tree-sitter-bash>=0.21.0",
-	"snakeoil~=0.10.8",
-	"pkgcore~=0.12.25",
+	"snakeoil~=0.10.11",
+	"pkgcore~=0.12.30",
 ]
 build-backend = "py_build"
 backend-path = ["."]
@@ -19,7 +19,7 @@ name = "pkgcheck"
 description = "pkgcore-based QA utility for ebuild repos"
 readme = "README.rst"
 license = {file = "LICENSE"}
-requires-python = "~=3.10"
+requires-python = "~=3.11"
 # alphabetical by surname.
 authors = [
 	{name = "Michał Górny", email = "mgorny@gentoo.org"},
@@ -33,7 +33,6 @@ maintainers = [
 ]
 classifiers = [
 	"License :: OSI Approved :: BSD License",
-	"Programming Language :: Python :: 3.10",
 	"Programming Language :: Python :: 3.11",
 	"Programming Language :: Python :: 3.12",
 	"Programming Language :: Python :: 3.13",
@@ -48,8 +47,8 @@ dependencies = [
 	"pathspec",
 	"tree-sitter>=0.23.0",
 	"tree-sitter-bash>=0.21.0",
-	"snakeoil~=0.10.8",
-	"pkgcore~=0.12.25",
+	"snakeoil~=0.10.11",
+	"pkgcore~=0.12.30",
 ]
 
 [project.optional-dependencies]
@@ -60,8 +59,7 @@ test = [
 ]
 doc = [
 	"sphinx",
-	"tomli; python_version < '3.11'",
-	"snakeoil~=0.10.4",
+	"snakeoil~=0.10.11",
 ]
 network = [
 	"requests",
