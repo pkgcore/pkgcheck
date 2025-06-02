@@ -39,3 +39,17 @@ diff -Naur standalone/BadCommandsCheck/BannedEapiCommand/BannedEapiCommand-2.ebu
 -pkg_postrm() {
 -	usermod -s /bin/false uucp || die
 -}
+diff -Naur standalone/BadCommandsCheck/BannedEapiCommand/BannedEapiCommand-3.ebuild fixed/BadCommandsCheck/BannedEapiCommand/BannedEapiCommand-3.ebuild
+--- standalone/BadCommandsCheck/BannedEapiCommand/BannedEapiCommand-3.ebuild
++++ fixed/BadCommandsCheck/BannedEapiCommand/BannedEapiCommand-3.ebuild
+@@ -7,9 +7,5 @@ SLOT="0"
+
+ src_unpack() {
+ 	tar -xzf foo.tar.gz 3 | hexdump -C
+-	assert "failed"
+-}
+-
+-src_install() {
+-	domo foo.po
++	pipestatus || die "failed"
+ }

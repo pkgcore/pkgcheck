@@ -3,3 +3,5 @@
 {"__class__": "BannedEapiCommand", "category": "BadCommandsCheck", "package": "BannedEapiCommand", "version": "1", "line": "best_version --host-root stub/stub1:2", "lineno": 12, "command": "best_version --host-root", "eapi": "7"}
 {"__class__": "BannedEapiCommand", "category": "BadCommandsCheck", "package": "BannedEapiCommand", "version": "2", "line": "usermod -s /bin/bash uucp", "lineno": 9, "command": "usermod", "eapi": "6"}
 {"__class__": "BannedEapiCommand", "category": "BadCommandsCheck", "package": "BannedEapiCommand", "version": "2", "line": "usermod -s /bin/false uucp", "lineno": 13, "command": "usermod", "eapi": "6"}
+{"__class__": "BannedEapiCommand", "category": "BadCommandsCheck", "package": "BannedEapiCommand", "version": "3", "line": "assert \"failed\"", "lineno": 10, "command": "assert", "eapi": "9"}
+{"__class__": "BannedEapiCommand", "category": "BadCommandsCheck", "package": "BannedEapiCommand", "version": "3", "line": "domo foo.po", "lineno": 14, "command": "domo", "eapi": "9"}
