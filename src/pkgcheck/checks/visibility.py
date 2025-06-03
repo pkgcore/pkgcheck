@@ -1,4 +1,5 @@
 from collections import defaultdict
+from itertools import groupby
 from operator import attrgetter
 
 from pkgcore.ebuild.atom import atom, transitive_use_atom
@@ -487,52 +488,64 @@ class RdependCycleCheck(RepoCheck, OptionalCheck):
         self.repo = self.options.target_repo
         self.no_cycle = set()
 
-    def _verify_dfs(self, key: str, path: list[str], visited: set[str]):
-        if key in path:
-            path.append(key)
-            return path
-        assert key in self.visited_packages
+    def find_cycle(self, start_key: str):
+        path: list[str] = []
+        visited: set[str] = set()
 
-        visited.add(key)
-        path.append(key)
-        for dep in self.visited_packages[key] - self.no_cycle:
-            if cycle := self._verify_dfs(dep, path, visited):
-                return cycle
-        path.pop()
-        self.no_cycle.add(key)
-        return []
+        def dfs(node):
+            visited.add(node)
+            path.append(node)
 
-    def _collect_deps_graph(self, pkgset):
-        key = pkgset[0].key
+            for neighbor in sorted(self.visited_packages[node] - self.no_cycle):
+                if neighbor not in visited:
+                    if result := dfs(neighbor):
+                        return result
+                elif neighbor in path and neighbor == start_key:
+                    # Found a cycle that ends at the start node
+                    idx = path.index(start_key)
+                    return path[idx:] + [start_key]
 
-        if key in self.visited_packages:
-            return
+            path.pop()
+            self.no_cycle.add(node)
+            return None
 
+        return dfs(start_key)
+
+    def _collect_deps_graph(self, key: str, pkgset):
         pkg_deps = {
-            pkg: {dep.key for dep in pkg.rdepend if isinstance(dep, atom) and not dep.blocks}
+            pkg: {
+                f"{dep.key}:{dep.slot}" if dep.slot is not None else dep.key
+                for dep in pkg.rdepend
+                if isinstance(dep, atom) and not dep.blocks
+            }
             for pkg in pkgset
         }
+
+        if key in self.visited_packages:
+            return pkg_deps
+
         self.visited_packages[key] = all_deps = frozenset().union(*pkg_deps.values())
         if missing := all_deps - self.visited_packages.keys():
             for missing_key in missing:
                 try:
-                    self._collect_deps_graph(self.repo.match(atom(missing_key)))
-                except IndexError:
+                    self._collect_deps_graph(missing_key, self.repo.match(atom(missing_key)))
+                except IndexError:  # NonexistentDeps, invalid dep
                     self.visited_packages[missing_key] = frozenset()
         return pkg_deps
 
+    def _collect_graph_variants(self, pkgset):
+        self._collect_deps_graph(key := pkgset[0].key, pkgset)
+        yield key, pkgset
+
+        def key_func(x):
+            return f"{x.key}:{x.slot}"
+
+        for key, pkgs in groupby(sorted(pkgset, key=key_func), key_func):
+            self._collect_deps_graph(key, pkgs)
+            yield key, pkgs
+
     def feed(self, pkgset):
-        key = pkgset[0].key
-
-        if key in self.visited_packages:
-            pkg_deps = {
-                pkg: {dep.key for dep in pkg.rdepend if isinstance(dep, atom) and not dep.blocks}
-                for pkg in pkgset
-            }
-        else:
-            pkg_deps = self._collect_deps_graph(pkgset)
-
-        for pkg in pkgset:
-            for dep in pkg_deps[pkg]:
-                if (cycle := self._verify_dfs(dep, [key], set())) and cycle[-1] == key:
+        for key, pkg_deps in self._collect_graph_variants(pkgset):
+            if (cycle := self.find_cycle(key)) and cycle[-1] == key:
+                for pkg in pkg_deps:
                     yield RdependCycle(cycle, pkg=pkg)
