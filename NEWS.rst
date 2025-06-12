@@ -3,6 +3,23 @@ Release Notes
 =============
 
 -----------------------------
+pkgcheck 0.10.35 (2025-06-12)
+-----------------------------
+
+- caches: support compression of the profiles cache file, reducing its size
+  from 192MB to 4MB (Arthur Zamarin)
+
+- Fix compatibility with Python 3.14 (Michał Górny, #738)
+
+**Check Updates:**
+
+- BadPackageUpdate: fix issues when not running under the ``profiles/``
+  directory (Arthur Zamarin)
+
+- VisibilityCheck: check for masked dependencies in master repos (Anna
+  CyberTailor, #736)
+
+-----------------------------
 pkgcheck 0.10.34 (2025-04-04)
 -----------------------------
 
