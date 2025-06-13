@@ -7,7 +7,7 @@ requires = [
 	"lxml",
 	"pathspec",
 	"tree-sitter~=0.24.0",
-	"tree-sitter-bash~=0.23.0",
+	"tree-sitter-bash~=0.23.1",
 	"snakeoil~=0.10.11",
 	"pkgcore~=0.12.30",
 ]
@@ -46,7 +46,7 @@ dependencies = [
 	"lxml",
 	"pathspec",
 	"tree-sitter~=0.24.0",
-	"tree-sitter-bash~=0.23.0",
+	"tree-sitter-bash~=0.23.1",
 	"snakeoil~=0.10.11",
 	"pkgcore~=0.12.30",
 ]
