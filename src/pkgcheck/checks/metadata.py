@@ -745,23 +745,26 @@ class MissingSlotDepCheck(Check):
 class MissingPackageRevision(results.VersionResult, results.Warning):
     """Missing package revision in =cat/pkg dependencies.
 
-    The dependency string uses the ``=`` operator without specifying a revision.
-    This means that only ``-r0`` of the dependency will be matched, and newer
-    revisions of the same ebuild will not be accepted.
+    The dependency string uses the ``=``, ``<=`` or ``>`` operator without
+    specifying a revision.  These operators are frequently misused,
+    with assumptions they apply to all revisions of the given version,
+    while they do only apply to ``-r0``.
 
-    If any revision of the package is acceptable, the ``~`` operator should be
-    used instead of ``=``. If only the initial revision of the dependency is
-    allowed, ``-r0`` should be appended in order to make the intent explicit.
+    If applying the operator to ``-r0`` only is intentional, then ``-r0``
+    should be appended to make it explicit.  Otheriwse, ``~`` can be used
+    instead of ``=``, and ``-r9999`` or next version can be used for other
+    operators.
     """
 
-    def __init__(self, dep, atom, **kwargs):
+    def __init__(self, dep, op, atom, **kwargs):
         super().__init__(**kwargs)
         self.dep = dep.upper()
+        self.op = op
         self.atom = atom
 
     @property
     def desc(self):
-        return f'"=" operator used without package revision: {self.dep}="{self.atom}"'
+        return f'"{self.op}" operator used without package revision: {self.dep}="{self.atom}"'
 
 
 class MissingUseDepDefault(results.VersionResult, results.Warning):
@@ -954,8 +957,10 @@ class DependencyCheck(Check):
                             pkgs = (x.cpvstr for x in sorted(atoms))
                             yield MissingUseDepDefault(attr, str(atom), use, pkgs, pkg=pkg)
 
-                    if atom.op == "=" and not atom.revision:
-                        yield MissingPackageRevision(attr, str(atom), pkg=pkg)
+                    # these operators are most likely to mean "the whole version" rather than r0
+                    # blockers also matched intentionally
+                    if atom.op in ("=", "<=", ">") and not atom.revision:
+                        yield MissingPackageRevision(attr, atom.op, str(atom), pkg=pkg)
 
                     if isinstance(atom, transitive_use_atom) and atom.use is not None:
                         for useflag in atom.use:

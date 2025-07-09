@@ -1,1 +1,6 @@
-{"__class__": "MissingPackageRevision", "category": "DependencyCheck", "package": "MissingPackageRevision", "version": "0", "dep": "RDEPEND", "atom": "=stub/stub1-0"}
+{"__class__": "MissingPackageRevision", "category": "DependencyCheck", "package": "MissingPackageRevision", "version": "0", "dep": "RDEPEND", "op": "=", "atom": "=stub/stub5-1"}
+{"__class__": "MissingPackageRevision", "category": "DependencyCheck", "package": "MissingPackageRevision", "version": "1", "dep": "DEPEND", "op": "<=", "atom": "<=stub/stub5-1"}
+{"__class__": "MissingPackageRevision", "category": "DependencyCheck", "package": "MissingPackageRevision", "version": "2", "dep": "BDEPEND", "op": ">", "atom": ">stub/stub5-0"}
+{"__class__": "MissingPackageRevision", "category": "DependencyCheck", "package": "MissingPackageRevision", "version": "0-r1", "dep": "RDEPEND", "op": "=", "atom": "!=stub/stub5-0"}
+{"__class__": "MissingPackageRevision", "category": "DependencyCheck", "package": "MissingPackageRevision", "version": "1-r1", "dep": "RDEPEND", "op": "<=", "atom": "!<=stub/stub5-0"}
+{"__class__": "MissingPackageRevision", "category": "DependencyCheck", "package": "MissingPackageRevision", "version": "2-r1", "dep": "RDEPEND", "op": ">", "atom": "!>stub/stub5-2"}
