@@ -1,9 +1,54 @@
-diff -Naur standalone/DependencyCheck/MissingPackageRevision/MissingPackageRevision-0.ebuild fixed/DependencyCheck/MissingPackageRevision/MissingPackageRevision-0.ebuild
---- standalone/DependencyCheck/MissingPackageRevision/MissingPackageRevision-0.ebuild	2019-09-17 11:01:07.112319931 -0600
-+++ fixed/DependencyCheck/MissingPackageRevision/MissingPackageRevision-0.ebuild	2019-09-17 11:01:44.129474002 -0600
-@@ -2,4 +2,4 @@
+diff '--color=auto' -Naur standalone/DependencyCheck/MissingPackageRevision/MissingPackageRevision-0.ebuild fixed/DependencyCheck/MissingPackageRevision/MissingPackageRevision-0.ebuild
+--- standalone/DependencyCheck/MissingPackageRevision/MissingPackageRevision-0.ebuild	2025-07-11 20:33:18.115300871 +0200
++++ fixed/DependencyCheck/MissingPackageRevision/MissingPackageRevision-0.ebuild	2025-07-11 20:36:42.713486151 +0200
+@@ -3,4 +3,4 @@
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
  LICENSE="BSD"
  SLOT="0"
--RDEPEND="=stub/stub1-0"
-+RDEPEND="=stub/stub1-0-r0"
+-RDEPEND="=stub/stub5-1"
++RDEPEND="=stub/stub5-1*"
+diff '--color=auto' -Naur standalone/DependencyCheck/MissingPackageRevision/MissingPackageRevision-0-r1.ebuild fixed/DependencyCheck/MissingPackageRevision/MissingPackageRevision-0-r1.ebuild
+--- standalone/DependencyCheck/MissingPackageRevision/MissingPackageRevision-0-r1.ebuild	2025-07-11 20:33:18.118506850 +0200
++++ fixed/DependencyCheck/MissingPackageRevision/MissingPackageRevision-0-r1.ebuild	2025-07-11 20:36:47.024571459 +0200
+@@ -3,4 +3,4 @@
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ LICENSE="BSD"
+ SLOT="0"
+-RDEPEND="!=stub/stub5-0"
++RDEPEND="!=stub/stub5-0-r0"
+diff '--color=auto' -Naur standalone/DependencyCheck/MissingPackageRevision/MissingPackageRevision-1.ebuild fixed/DependencyCheck/MissingPackageRevision/MissingPackageRevision-1.ebuild
+--- standalone/DependencyCheck/MissingPackageRevision/MissingPackageRevision-1.ebuild	2025-07-11 20:33:18.118620876 +0200
++++ fixed/DependencyCheck/MissingPackageRevision/MissingPackageRevision-1.ebuild	2025-07-11 20:36:47.028861737 +0200
+@@ -3,4 +3,4 @@
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ LICENSE="BSD"
+ SLOT="0"
+-DEPEND="<=stub/stub5-1"
++DEPEND="<=stub/stub5-1-r0"
+diff '--color=auto' -Naur standalone/DependencyCheck/MissingPackageRevision/MissingPackageRevision-1-r1.ebuild fixed/DependencyCheck/MissingPackageRevision/MissingPackageRevision-1-r1.ebuild
+--- standalone/DependencyCheck/MissingPackageRevision/MissingPackageRevision-1-r1.ebuild	2025-07-11 20:33:18.118761613 +0200
++++ fixed/DependencyCheck/MissingPackageRevision/MissingPackageRevision-1-r1.ebuild	2025-07-11 20:36:47.032675190 +0200
+@@ -3,4 +3,4 @@
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ LICENSE="BSD"
+ SLOT="0"
+-RDEPEND="!<=stub/stub5-0"
++RDEPEND="!<=stub/stub5-0-r0"
+diff '--color=auto' -Naur standalone/DependencyCheck/MissingPackageRevision/MissingPackageRevision-2.ebuild fixed/DependencyCheck/MissingPackageRevision/MissingPackageRevision-2.ebuild
+--- standalone/DependencyCheck/MissingPackageRevision/MissingPackageRevision-2.ebuild	2025-07-11 20:33:18.118865451 +0200
++++ fixed/DependencyCheck/MissingPackageRevision/MissingPackageRevision-2.ebuild	2025-07-11 20:36:47.036494443 +0200
+@@ -3,4 +3,4 @@
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ LICENSE="BSD"
+ SLOT="0"
+-BDEPEND=">stub/stub5-0"
++BDEPEND=">stub/stub5-0-r0"
+diff '--color=auto' -Naur standalone/DependencyCheck/MissingPackageRevision/MissingPackageRevision-2-r1.ebuild fixed/DependencyCheck/MissingPackageRevision/MissingPackageRevision-2-r1.ebuild
+--- standalone/DependencyCheck/MissingPackageRevision/MissingPackageRevision-2-r1.ebuild	2025-07-11 20:33:18.118974788 +0200
++++ fixed/DependencyCheck/MissingPackageRevision/MissingPackageRevision-2-r1.ebuild	2025-07-11 20:34:29.433665350 +0200
+@@ -3,4 +3,4 @@
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ LICENSE="BSD"
+ SLOT="0"
+-RDEPEND="!>stub/stub5-2"
++RDEPEND="!>stub/stub5-2-r0"
