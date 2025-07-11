@@ -1747,7 +1747,7 @@ class MissingUnpackerDepCheck(Check):
     non_system_unpackers = ImmutableDict(
         {
             ".zip": frozenset(["app-arch/unzip"]),
-            ".7z": frozenset(["app-arch/p7zip"]),
+            ".7z": frozenset(["app-arch/7zip"]),
             ".rar": frozenset(["app-arch/rar", "app-arch/unrar"]),
             ".lha": frozenset(["app-arch/lha"]),
             ".lzh": frozenset(["app-arch/lha"]),

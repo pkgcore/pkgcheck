@@ -1378,4 +1378,4 @@ class TestMissingUnpackerDepCheck(use_based(), misc.ReportTestCase):
         )
         assert isinstance(r, metadata.MissingUnpackerDep)
         assert r.filenames == (f"diffball-2.7.1.7z",)
-        assert r.unpackers == ("app-arch/p7zip",)
+        assert r.unpackers == ("app-arch/7zip",)
