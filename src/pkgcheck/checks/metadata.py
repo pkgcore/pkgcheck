@@ -756,15 +756,19 @@ class MissingPackageRevision(results.VersionResult, results.Warning):
     operators.
     """
 
-    def __init__(self, dep, op, atom, **kwargs):
+    def __init__(self, dep: str, op: str, atom: str, suggestions: list[str], **kwargs):
         super().__init__(**kwargs)
         self.dep = dep.upper()
         self.op = op
         self.atom = atom
+        self.suggestions = suggestions
 
     @property
     def desc(self):
-        return f'"{self.op}" operator used without package revision: {self.dep}="{self.atom}"'
+        return (
+            f'"{self.op}" operator used without package revision: {self.dep}="{self.atom}"; '
+            f'did you mean either of: {self.suggestions}?'
+        )
 
 
 class MissingUseDepDefault(results.VersionResult, results.Warning):
@@ -910,6 +914,13 @@ class DependencyCheck(Check):
             return missing_use_deps
         return {}
 
+    def _make_replacement_atom(self, orig: atom_cls, op: str, rev: str) -> str:
+        """Make a replacement atom string from orig, with op & rev replaced"""
+        s = f"{op}{orig.key}-{orig.version}{rev}"
+        if orig.blocks:
+            s = ("!!" if orig.blocks_strongly else "!") + s
+        return s
+
     def feed(self, pkg):
         deprecated = defaultdict(set)
 
@@ -960,7 +971,13 @@ class DependencyCheck(Check):
                     # these operators are most likely to mean "the whole version" rather than r0
                     # blockers also matched intentionally
                     if atom.op in ("=", "<=", ">") and not atom.revision:
-                        yield MissingPackageRevision(attr, atom.op, str(atom), pkg=pkg)
+                        repl0 = self._make_replacement_atom(atom, atom.op, "-r0")
+                        if atom.op == "=":
+                            repl1 = self._make_replacement_atom(atom, "~", "")
+                        else:
+                            repl1 = self._make_replacement_atom(atom, atom.op, "-r9999")
+
+                        yield MissingPackageRevision(attr, atom.op, str(atom), [repl0, repl1], pkg=pkg)
 
                     if isinstance(atom, transitive_use_atom) and atom.use is not None:
                         for useflag in atom.use:
