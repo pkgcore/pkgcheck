@@ -767,7 +767,7 @@ class MissingPackageRevision(results.VersionResult, results.Warning):
     def desc(self):
         return (
             f'"{self.op}" operator used without package revision: {self.dep}="{self.atom}"; '
-            f'did you mean either of: {self.suggestions}?'
+            f"did you mean either of: {self.suggestions}?"
         )
 
 
@@ -977,7 +977,9 @@ class DependencyCheck(Check):
                         else:
                             repl1 = self._make_replacement_atom(atom, atom.op, "-r9999")
 
-                        yield MissingPackageRevision(attr, atom.op, str(atom), [repl0, repl1], pkg=pkg)
+                        yield MissingPackageRevision(
+                            attr, atom.op, str(atom), [repl0, repl1], pkg=pkg
+                        )
 
                     if isinstance(atom, transitive_use_atom) and atom.use is not None:
                         for useflag in atom.use:
