@@ -1,6 +1,6 @@
-{"__class__": "MissingPackageRevision", "category": "DependencyCheck", "package": "MissingPackageRevision", "version": "0", "dep": "RDEPEND", "op": "=", "atom": "=stub/stub5-1"}
-{"__class__": "MissingPackageRevision", "category": "DependencyCheck", "package": "MissingPackageRevision", "version": "1", "dep": "DEPEND", "op": "<=", "atom": "<=stub/stub5-1"}
-{"__class__": "MissingPackageRevision", "category": "DependencyCheck", "package": "MissingPackageRevision", "version": "2", "dep": "BDEPEND", "op": ">", "atom": ">stub/stub5-0"}
-{"__class__": "MissingPackageRevision", "category": "DependencyCheck", "package": "MissingPackageRevision", "version": "0-r1", "dep": "RDEPEND", "op": "=", "atom": "!=stub/stub5-0"}
-{"__class__": "MissingPackageRevision", "category": "DependencyCheck", "package": "MissingPackageRevision", "version": "1-r1", "dep": "RDEPEND", "op": "<=", "atom": "!<=stub/stub5-0"}
-{"__class__": "MissingPackageRevision", "category": "DependencyCheck", "package": "MissingPackageRevision", "version": "2-r1", "dep": "RDEPEND", "op": ">", "atom": "!>stub/stub5-2"}
+{"__class__": "MissingPackageRevision", "category": "DependencyCheck", "package": "MissingPackageRevision", "version": "0", "dep": "RDEPEND", "op": "=", "atom": "=stub/stub5-1", "suggestions": ["=stub/stub5-1-r0", "~stub/stub5-1"]}
+{"__class__": "MissingPackageRevision", "category": "DependencyCheck", "package": "MissingPackageRevision", "version": "0-r1", "dep": "RDEPEND", "op": "=", "atom": "!=stub/stub5-0", "suggestions": ["!=stub/stub5-0-r0", "!~stub/stub5-0"]}
+{"__class__": "MissingPackageRevision", "category": "DependencyCheck", "package": "MissingPackageRevision", "version": "1", "dep": "DEPEND", "op": "<=", "atom": "<=stub/stub5-1", "suggestions": ["<=stub/stub5-1-r0", "<=stub/stub5-1-r9999"]}
+{"__class__": "MissingPackageRevision", "category": "DependencyCheck", "package": "MissingPackageRevision", "version": "1-r1", "dep": "RDEPEND", "op": "<=", "atom": "!<=stub/stub5-0", "suggestions": ["!<=stub/stub5-0-r0", "!<=stub/stub5-0-r9999"]}
+{"__class__": "MissingPackageRevision", "category": "DependencyCheck", "package": "MissingPackageRevision", "version": "2", "dep": "BDEPEND", "op": ">", "atom": ">stub/stub5-0", "suggestions": [">stub/stub5-0-r0", ">stub/stub5-0-r9999"]}
+{"__class__": "MissingPackageRevision", "category": "DependencyCheck", "package": "MissingPackageRevision", "version": "2-r1", "dep": "RDEPEND", "op": ">", "atom": "!>stub/stub5-2", "suggestions": ["!>stub/stub5-2-r0", "!>stub/stub5-2-r9999"]}
