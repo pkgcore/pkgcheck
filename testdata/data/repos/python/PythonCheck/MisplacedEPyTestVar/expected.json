@@ -1,0 +1,4 @@
+{"__class__": "MisplacedEPyTestVar", "category": "PythonCheck", "package": "MisplacedEPyTestVar", "version": "0", "line": "EPYTEST_PLUGIN_AUTOLOAD=1", "lineno": 15, "variable": "EPYTEST_PLUGIN_AUTOLOAD"}
+{"__class__": "MisplacedEPyTestVar", "category": "PythonCheck", "package": "MisplacedEPyTestVar", "version": "0", "line": "EPYTEST_PLUGINS=( foo bar baz )", "lineno": 16, "variable": "EPYTEST_PLUGINS"}
+{"__class__": "MisplacedEPyTestVar", "category": "PythonCheck", "package": "MisplacedEPyTestVar", "version": "0", "line": "EPYTEST_XDIST=1", "lineno": 17, "variable": "EPYTEST_XDIST"}
+{"__class__": "MisplacedEPyTestVar", "category": "PythonCheck", "package": "MisplacedEPyTestVar", "version": "0", "line": "${EPYTEST_TIMEOUT:=180}", "lineno": 18, "variable": "EPYTEST_TIMEOUT"}

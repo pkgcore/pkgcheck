@@ -13,6 +13,7 @@ parser = Parser(language=lang)
 cmd_query = query("(command) @call")
 func_query = query("(function_definition) @func")
 var_assign_query = query("(variable_assignment) @assign")
+var_expansion_query = query("(expansion) @exp")
 var_query = query("(variable_name) @var")
 
 
