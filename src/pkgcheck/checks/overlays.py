@@ -155,11 +155,10 @@ class MasterPackageClobberedCheck(OverlayRepoCheck, OptionalCheck):
     """Detect clobbering packages from master."""
 
     _source = sources.PackageRepoSource
-    known_results = frozenset([MasterPackageClobbered])
+    known_results = frozenset({MasterPackageClobbered})
 
     def feed(self, pkgset):
-        for pkg in pkgset:
-            for repo in self.options.target_repo.masters:
-                if repo.has_match(pkg.unversioned_atom):
-                    yield MasterPackageClobbered(str(repo), pkg=pkg)
-            break
+        pkg = pkgset[0]
+        for repo in self.options.target_repo.masters:
+            if repo.has_match(pkg.unversioned_atom):
+                yield MasterPackageClobbered(str(repo), pkg=pkg)
