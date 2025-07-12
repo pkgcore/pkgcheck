@@ -2,7 +2,7 @@ from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
 from .. import results, sources
-from . import MirrorsCheck, OptionalCheck, OverlayRepoCheck, RepoCheck
+from . import Check, MirrorsCheck, OptionalCheck, OverlayRepoCheck, RepoCheck
 
 
 class UnusedInMastersLicenses(results.VersionResult, results.Warning):
@@ -132,3 +132,37 @@ class UnusedInMastersCheck(MirrorsCheck, OverlayRepoCheck, RepoCheck, OptionalCh
             non_local_use = pkg.iuse_stripped.difference(pkg.local_use.keys())
             if flags := self.unused_master_flags.intersection(non_local_use):
                 yield UnusedInMastersGlobalUse(sorted(flags), pkg=pkg)
+
+
+class MasterPackageClobbered(results.PackageResult, results.Error):
+    """Package in master is clobbered by package in overlay.
+
+    A repository (such as ``::guru``) that is supposed to only provide
+    additional packages to its masters (``::gentoo``), provides a package
+    that is found in its master, therefore potentially clobbering it.
+    """
+
+    def __init__(self, repository: str, **kwarg):
+        super().__init__(**kwarg)
+        self.repository = repository
+
+    @property
+    def desc(self):
+        return f"package from repository ::{self.repository} clobbered"
+
+
+class MasterPackageClobberedCheck(OverlayRepoCheck, OptionalCheck):
+    """Detect clobbering packages from master."""
+
+    _source = sources.PackageRepoSource
+    known_results = frozenset({MasterPackageClobbered})
+
+    def feed(self, pkgset):
+        pkg = pkgset[0]
+        for repo in self.options.target_repo.masters:
+            # Trigger only if at least one non-p.masked package matches,
+            # to cover for packages being moved to subordinate repo.
+            for master_pkg in repo.itermatch(pkg.unversioned_atom):
+                if not repo.masked.match(master_pkg):
+                    yield MasterPackageClobbered(str(repo), pkg=pkg)
+                    break
