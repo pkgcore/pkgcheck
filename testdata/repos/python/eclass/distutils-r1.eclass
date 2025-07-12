@@ -58,3 +58,5 @@ _distutils_set_globals() {
 }
 _distutils_set_globals
 unset -f _distutils_set_globals
+
+distutils_enable_tests() { :; }
