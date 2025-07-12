@@ -266,6 +266,21 @@ class MisplacedEPyTestVar(results.LineResult, results.Error):
         )
 
 
+class ShadowedEPyTestTimeout(results.LineResult, results.Warning):
+    """``EPYTEST_TIMEOUT`` shadows user-specified value
+
+    ``EPYTEST_TIMEOUT`` should be set via ``${EPYTEST_TIMEOUT:=...}`` to permit
+    using an environment variable to override it.
+    """
+
+    @property
+    def desc(self):
+        return (
+            f"line {self.lineno}: EPYTEST_TIMEOUT shadows user value, use "
+            f"${{EPYTEST_TIMEOUT:=...}} instead: {self.line!r}"
+        )
+
+
 class PythonCheck(Check):
     """Python eclass checks.
 
@@ -288,6 +303,7 @@ class PythonCheck(Check):
             PythonAnyMismatchedDepHasVersionCheck,
             PythonMissingSCMDependency,
             MisplacedEPyTestVar,
+            ShadowedEPyTestTimeout,
         }
     )
 
@@ -455,6 +471,13 @@ class PythonCheck(Check):
                 if lineno > det_lineno:
                     line = pkg.node_str(var_node)
                     yield MisplacedEPyTestVar(var_name, line=line, lineno=lineno + 1, pkg=pkg)
+
+        for var_node in bash.var_assign_query.captures(pkg.tree.root_node).get("assign", ()):
+            var_name = pkg.node_str(var_node.child_by_field_name("name"))
+            if var_name == "EPYTEST_TIMEOUT":
+                lineno, _ = var_node.start_point
+                line = pkg.node_str(var_node)
+                yield ShadowedEPyTestTimeout(line=line, lineno=lineno + 1, pkg=pkg)
 
     @staticmethod
     def _prepare_deps(deps: str):
