@@ -1,0 +1,10 @@
+diff '--color=auto' -Naur python/PythonCheck/ShadowedEPyTestTimeout/ShadowedEPyTestTimeout-0.ebuild fixed/PythonCheck/ShadowedEPyTestTimeout/ShadowedEPyTestTimeout-0.ebuild
+--- python/PythonCheck/ShadowedEPyTestTimeout/ShadowedEPyTestTimeout-0.ebuild	2025-07-12 17:27:01.027875233 +0200
++++ fixed/PythonCheck/ShadowedEPyTestTimeout/ShadowedEPyTestTimeout-0.ebuild	2025-07-12 17:28:01.711247010 +0200
+@@ -10,5 +10,5 @@
+ LICENSE="BSD"
+ SLOT="0"
+ 
+-EPYTEST_TIMEOUT=1200
++: ${EPYTEST_TIMEOUT:=1200}
+ distutils_enable_tests pytest
