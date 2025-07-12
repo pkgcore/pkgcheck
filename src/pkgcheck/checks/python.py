@@ -247,6 +247,25 @@ class PythonMissingSCMDependency(results.VersionResult, results.Warning):
     )
 
 
+class MisplacedEPyTestVar(results.LineResult, results.Error):
+    """Invalid placement of ``EPYTEST_*`` variable
+
+    ``EPYTEST_*`` variables need to be set prior to ``distutils_enable_tests``
+    to enable its functionality.  The exception to that rule are local overrides
+    in ``python_test()`` -- we presume the author knows what they're doing.
+    """
+
+    def __init__(self, variable, **kwargs):
+        super().__init__(**kwargs)
+        self.variable = variable
+
+    @property
+    def desc(self):
+        return (
+            f"line {self.lineno}: variable set after calling distutils_enable_tests: {self.line!r}"
+        )
+
+
 class PythonCheck(Check):
     """Python eclass checks.
 
@@ -256,7 +275,7 @@ class PythonCheck(Check):
 
     _source = sources.EbuildParseRepoSource
     known_results = frozenset(
-        [
+        {
             MissingPythonEclass,
             PythonMissingRequiredUse,
             PythonMissingDeps,
@@ -268,7 +287,8 @@ class PythonCheck(Check):
             PythonAnyMismatchedUseHasVersionCheck,
             PythonAnyMismatchedDepHasVersionCheck,
             PythonMissingSCMDependency,
-        ]
+            MisplacedEPyTestVar,
+        }
     )
 
     has_version_known_flags = {
@@ -388,6 +408,53 @@ class PythonCheck(Check):
         if uses_setuptools_scm:
             if not self.setuptools_scm.intersection(bdepends):
                 yield PythonMissingSCMDependency(pkg=pkg)
+
+    def _get_all_global_assignments(self, pkg):
+        """Iterate over global plain and expansion assignments"""
+        for node in pkg.global_query(bash.var_assign_query):
+            name = pkg.node_str(node.child_by_field_name("name"))
+            yield (name, node)
+
+        # ${var:=value} expansions.
+        for node in pkg.global_query(bash.var_expansion_query):
+            if node.children[0].text != b"${":
+                continue
+            name = node.children[1].text
+            if node.children[2].text not in (b"=", b":="):
+                continue
+            yield (name.decode(), node)
+
+    def check_epytest_vars(self, pkg):
+        """Check for incorrect use of EPYTEST_* variables"""
+        # TODO: do we want to check for multiple det calls? Quite unlikely.
+        for node in pkg.global_query(bash.cmd_query):
+            name = pkg.node_str(node.child_by_field_name("name"))
+            if name != "distutils_enable_tests":
+                continue
+            for argument_node in node.children_by_field_name("argument"):
+                argument = pkg.node_str(argument_node)
+                # Check if the first argument is "pytest", but we need
+                # to skip line continuations explicitly.
+                if argument == "pytest":
+                    det_lineno, _ = node.start_point
+                    break
+                elif argument != "\\":
+                    return
+            else:
+                return
+
+        for var_name, var_node in self._get_all_global_assignments(pkg):
+            # While not all variables affect distutils_enable_tests, make it
+            # future proof.  Also, it makes sense to keep them together.
+            # Just opt out from the long lists.
+            if var_name.startswith("EPYTEST_") and var_name not in (
+                "EPYTEST_DESELECT",
+                "EPYTEST_IGNORE",
+            ):
+                lineno, _ = var_node.start_point
+                if lineno > det_lineno:
+                    line = pkg.node_str(var_node)
+                    yield MisplacedEPyTestVar(var_name, line=line, lineno=lineno + 1, pkg=pkg)
 
     @staticmethod
     def _prepare_deps(deps: str):
@@ -545,6 +612,7 @@ class PythonCheck(Check):
 
         if "distutils-r1" in pkg.inherited:
             yield from self.check_pep517(pkg)
+            yield from self.check_epytest_vars(pkg)
 
         any_dep_func = self.eclass_any_dep_func[eclass]
         python_check_deps = self.build_python_gen_any_dep_calls(pkg, any_dep_func)

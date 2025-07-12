@@ -1,0 +1,19 @@
+diff '--color=auto' -Naur python/PythonCheck/MisplacedEPyTestVar/MisplacedEPyTestVar-0.ebuild fixed/PythonCheck/MisplacedEPyTestVar/MisplacedEPyTestVar-0.ebuild
+--- python/PythonCheck/MisplacedEPyTestVar/MisplacedEPyTestVar-0.ebuild	2025-07-12 17:10:51.665298954 +0200
++++ fixed/PythonCheck/MisplacedEPyTestVar/MisplacedEPyTestVar-0.ebuild	2025-07-12 17:15:30.258231253 +0200
+@@ -10,13 +10,13 @@
+ LICENSE="BSD"
+ SLOT="0"
+ 
+-distutils_enable_tests pytest
+-
+ EPYTEST_PLUGIN_AUTOLOAD=1
+ EPYTEST_PLUGINS=( foo bar baz )
+ EPYTEST_XDIST=1
+ : ${EPYTEST_TIMEOUT:=180}
+ 
++distutils_enable_tests pytest
++
+ EPYTEST_DESELECT=(
+ 	tests/test_foo.py::test_foo
+ )
