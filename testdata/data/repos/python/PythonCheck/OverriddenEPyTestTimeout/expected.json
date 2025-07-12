@@ -1,0 +1,1 @@
+{"__class__": "OverriddenEPyTestTimeout", "category": "PythonCheck", "package": "OverriddenEPyTestTimeout", "version": "0", "line": "EPYTEST_TIMEOUT=1200", "lineno": 13}
