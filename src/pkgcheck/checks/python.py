@@ -33,7 +33,7 @@ PYPI_WHEEL_URI_RE = re.compile(
     re.escape(PYPI_URI_PREFIX) + r"(?P<pytag>[^/]+)/[^/]/(?P<package>[^/]+)/"
     r"(?P<fn_package>[^/-]+)-(?P<version>[^/-]+)-(?P=pytag)-(?P<abitag>[^/]+)\.whl$"
 )
-USE_FLAGS_PYTHON_USEDEP = re.compile(r"\[(.+,)?\$\{PYTHON_USEDEP\}(,.+)?\]$")
+USE_FLAGS_PYTHON_USEDEP = re.compile(r"\[(.+,)?\$\{PYTHON_(SINGLE_)?USEDEP\}(,.+)?\]$")
 
 PROJECT_SYMBOL_NORMALIZE_RE = re.compile(r"[-_.]+")
 
@@ -168,20 +168,18 @@ class PythonHasVersionUsage(results.LinesResult, results.Style):
 
 class PythonHasVersionMissingPythonUseDep(results.LineResult, results.Error):
     """Package calls ``python_has_version`` or ``has_version`` without
-    ``[${PYTHON_USEDEP}]`` suffix.
+    ``[${PYTHON_USEDEP}]`` or ``[${PYTHON_SINGLE_USEDEP}]`` suffix.
 
     All calls  to ``python_has_version`` or ``has_version`` inside
-    ``python_check_deps`` should contain ``[${PYTHON_USEDEP}]`` suffix for the
-    dependency argument [#]_.
+    ``python_check_deps`` should contain ``[${PYTHON_USEDEP}]`` or ``[${PYTHON_SINGLE_USEDEP}]``
+    suffix for the dependency argument [#]_.
 
     .. [#] https://projects.gentoo.org/python/guide/any.html#dependencies
     """
 
     @property
     def desc(self):
-        return (
-            f"line: {self.lineno}: missing [${{PYTHON_USEDEP}}] suffix for argument {self.line!r}"
-        )
+        return f"line: {self.lineno}: missing [${{PYTHON_USEDEP}}] or [${{PYTHON_SINGLE_USEDEP}}] suffix for argument {self.line!r}"
 
 
 class PythonAnyMismatchedUseHasVersionCheck(results.VersionResult, results.Warning):
