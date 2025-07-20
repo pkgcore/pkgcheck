@@ -64,40 +64,54 @@ class StableRequestCheck(GentooRepoCheck):
 
     def feed(self, pkgset):
         pkg_slotted = defaultdict(list)
-        pkg_keywords = set()
+        stable_pkg_keywords = set()
+        stable_slots = set()
+        oldest_stable = None
         # ebuilds without keywords are ignored
-        for pkg in (x for x in pkgset if x.keywords):
-            pkg_slotted[pkg.slot].append(pkg)
-            pkg_keywords.update(pkg.keywords)
+        for pkg in pkgset:
+            if pkg.keywords:
+                pkg_slotted[pkg.slot].append(pkg)
+                stable_keywords = {x for x in pkg.keywords if x[0] not in {"-", "~"}}
+                if stable_keywords:
+                    stable_slots.add(pkg.slot)
+                    if oldest_stable is None:
+                        oldest_stable = pkg
+                stable_pkg_keywords.update(stable_keywords)
 
-        if stable_pkg_keywords := {x for x in pkg_keywords if x[0] not in {"-", "~"}}:
-            keyworded_pkg_keywords = {"~" + x for x in stable_pkg_keywords}
-            for slot, pkgs in sorted(pkg_slotted.items()):
-                slot_keywords = set().union(*(pkg.keywords for pkg in pkgs))
-                stable_slot_keywords = slot_keywords.intersection(stable_pkg_keywords)
-                for pkg in reversed(pkgs):
-                    # stop if stable keywords are found
-                    if stable_pkg_keywords.intersection(pkg.keywords):
-                        break
+        if not stable_pkg_keywords:
+            return
 
-                    # stop if not keyworded for stable
-                    if not keyworded_pkg_keywords.intersection(pkg.keywords):
-                        break
+        keyworded_pkg_keywords = {"~" + x for x in stable_pkg_keywords}
+        for slot, pkgs in sorted(pkg_slotted.items()):
+            if slot not in stable_slots and max(pkgs) < oldest_stable:
+                # skip slots that are not stable and all their pkgs are older than the oldest stable
+                continue
+            slot_keywords = set().union(*(pkg.keywords for pkg in pkgs))
+            stable_slot_keywords = slot_keywords.intersection(stable_pkg_keywords)
 
-                    try:
-                        match = next(self.modified_repo.itermatch(pkg.versioned_atom))
-                    except StopIteration:
-                        # probably an uncommitted, local ebuild... skipping
-                        continue
+            for pkg in reversed(pkgs):
+                # stop if stable keywords are found
+                if stable_pkg_keywords.intersection(pkg.keywords):
+                    break
 
-                    added = datetime.fromtimestamp(match.time)
-                    days_old = (self.today - added).days
-                    if days_old >= self.options.stable_time:
-                        pkg_stable_keywords = {x.lstrip("~") for x in pkg.keywords}
-                        if stable_slot_keywords:
-                            keywords = stable_slot_keywords.intersection(pkg_stable_keywords)
-                        else:
-                            keywords = stable_pkg_keywords.intersection(pkg_stable_keywords)
-                        keywords = sorted("~" + x for x in keywords)
-                        yield StableRequest(slot, keywords, days_old, pkg=pkg)
-                        break
+                # stop if not keyworded for stable
+                if not keyworded_pkg_keywords.intersection(pkg.keywords):
+                    break
+
+                try:
+                    match = next(self.modified_repo.itermatch(pkg.versioned_atom))
+                except StopIteration:
+                    # probably an uncommitted, local ebuild... skipping
+                    continue
+
+                added = datetime.fromtimestamp(match.time)
+                days_old = (self.today - added).days
+                if days_old >= self.options.stable_time:
+                    pkg_stable_keywords = {x.lstrip("~") for x in pkg.keywords}
+                    if stable_slot_keywords:
+                        keywords = stable_slot_keywords.intersection(pkg_stable_keywords)
+                    else:
+                        keywords = stable_pkg_keywords.intersection(pkg_stable_keywords)
+                    keywords = sorted("~" + x for x in keywords)
+                    yield StableRequest(slot, keywords, days_old, pkg=pkg)
+                    break
