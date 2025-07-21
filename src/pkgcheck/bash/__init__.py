@@ -6,7 +6,17 @@ import tree_sitter_bash
 from tree_sitter import Language, Parser, Query
 
 lang = Language(tree_sitter_bash.language())
-query = lang.query
+
+try:
+    from tree_sitter import QueryCursor
+
+    def query(query_str: str) -> "QueryCursor":
+        return QueryCursor(Query(lang, query_str))
+except ImportError:  # tree-sitter < 0.25
+    QueryCursor = Query
+    query = lang.query
+
+
 parser = Parser(language=lang)
 
 # various parse tree queries
@@ -29,14 +39,14 @@ class ParseTree:
         """Return the ebuild string associated with a given parse tree node."""
         return self.data[node.start_byte : node.end_byte].decode("utf8")
 
-    def global_query(self, query: Query):
+    def global_query(self, query: QueryCursor):
         """Run a given parse tree query returning only those nodes in global scope."""
         for x in self.tree.root_node.children:
             # skip nodes in function scope
             if x.type != "function_definition":
                 yield from chain.from_iterable(query.captures(x).values())
 
-    def func_query(self, query: Query):
+    def func_query(self, query: QueryCursor):
         """Run a given parse tree query returning only those nodes in function scope."""
         for x in self.tree.root_node.children:
             # only return nodes in function scope
