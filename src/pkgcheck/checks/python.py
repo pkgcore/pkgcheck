@@ -441,6 +441,7 @@ class PythonCheck(Check):
     def check_epytest_vars(self, pkg):
         """Check for incorrect use of EPYTEST_* variables"""
         # TODO: do we want to check for multiple det calls? Quite unlikely.
+        det_lineno = None
         for node in pkg.global_query(bash.cmd_query):
             name = pkg.node_str(node.child_by_field_name("name"))
             if name != "distutils_enable_tests":
@@ -454,8 +455,9 @@ class PythonCheck(Check):
                     break
                 elif argument != "\\":
                     return
-            else:
-                return
+
+        if det_lineno is None:
+            return
 
         for var_name, var_node in self._get_all_global_assignments(pkg):
             # While not all variables affect distutils_enable_tests, make it
