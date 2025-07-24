@@ -3,6 +3,42 @@ Release Notes
 =============
 
 -----------------------------
+pkgcheck 0.10.37 (2025-07-24)
+-----------------------------
+
+- Dockerfile: install ``Gentoo::PerlMod::Version`` for PerlCheck (Arthur Zamarin)
+
+- Replace ``p7zip`` with ``7zip`` as the required decompressor for ``.7z`` files
+  (Ophelia de Sica, #744)
+
+- bash: update support for tree-sitter 0.25 (Arthur Zamarin)
+
+**New Checks:**
+
+- MisplacedEPyTestVar: check for misplaced ``EPYTEST_*`` variables (Michał
+  Górny, #739, #747)
+
+- ShadowedEPyTestTimeout: detect ``EPYTEST_TIMEOUT`` overriding user values
+  (Michał Górny, #740, #747)
+
+- MasterPackageClobbered: check for master packages clobbered by packages with
+  the same name in overlays (Michał Górny, #745, #746)
+
+**Check Updates:**
+
+- DependencyCheck: extend missing revision checks to ``<=`` and ``>`` operators
+  (Michał Górny, #743)
+
+- DependencyCheck: provide replacement suggestions (Michał Górny, #743)
+
+- python: allow use of ``PYTHON_SINGLE_USEDEP`` in ``python_has_version``
+  (Alfred Wingate, #749)
+
+- StableRequestCheck: ignore "old" non-stable slots (Arthur Zamarin, #750)
+
+- TooManyCrates: warn only for the ::gentoo repository (Arthur Zamarin, #752)
+
+-----------------------------
 pkgcheck 0.10.36 (2025-06-13)
 -----------------------------
 
