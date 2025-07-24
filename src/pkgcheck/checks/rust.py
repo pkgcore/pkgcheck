@@ -69,7 +69,7 @@ class RustCheck(Check):
                 row, _ = val_node.start_point
                 val_str = pkg.node_str(val_node).strip("'\"")
                 crates = val_str.split()
-                if len(crates) > 300:
+                if len(crates) > 300 and self.options.gentoo_repo:
                     yield TooManyCrates(count=len(crates), pkg=pkg)
                 for lineno, line in enumerate(crates, start=row + 1):
                     for token in line.split():
