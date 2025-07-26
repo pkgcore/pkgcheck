@@ -294,6 +294,18 @@ class RedundantPyTestDisablePluginAutoload(results.LineResult, results.Warning):
         )
 
 
+class EPyTestPluginsSuggestion(results.VersionResult, results.Info):
+    """``EPYTEST_PLUGINS`` can be used to control plugins
+
+    The package could benefit from using ``EPYTEST_PLUGINS`` to specify
+    pytest plugins to be loaded.
+    """
+
+    @property
+    def desc(self):
+        return "EPYTEST_PLUGINS can be used to control pytest plugins loaded"
+
+
 class PythonCheck(Check):
     """Python eclass checks.
 
@@ -318,6 +330,7 @@ class PythonCheck(Check):
             MisplacedEPyTestVar,
             ShadowedEPyTestTimeout,
             RedundantPyTestDisablePluginAutoload,
+            EPyTestPluginsSuggestion,
         }
     )
 
@@ -510,12 +523,15 @@ class PythonCheck(Check):
                 line = pkg.node_str(var_node)
                 found_pytest_disable_plugin_autoload.append((line, lineno))
 
-        # EAPI 9+ defaults to disabled autoloading, in earlier EAPIs EPYTEST_PLUGINS does that.
-        if (
-            str(pkg.eapi) not in ("7", "8") or have_epytest_plugins
-        ) and not have_epytest_plugin_autoload:
-            for line, lineno in found_pytest_disable_plugin_autoload:
-                yield RedundantPyTestDisablePluginAutoload(line=line, lineno=lineno + 1, pkg=pkg)
+        if not have_epytest_plugin_autoload:
+            # EAPI 9+ defaults to disabled autoloading, in earlier EAPIs EPYTEST_PLUGINS does that.
+            if str(pkg.eapi) not in ("7", "8") or have_epytest_plugins:
+                for line, lineno in found_pytest_disable_plugin_autoload:
+                    yield RedundantPyTestDisablePluginAutoload(
+                        line=line, lineno=lineno + 1, pkg=pkg
+                    )
+            else:
+                yield EPyTestPluginsSuggestion(pkg=pkg)
 
     @staticmethod
     def _prepare_deps(deps: str):
