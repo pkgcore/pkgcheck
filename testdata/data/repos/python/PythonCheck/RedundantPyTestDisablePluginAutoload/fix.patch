@@ -1,0 +1,12 @@
+diff '--color=auto' -Naur python/PythonCheck/RedundantPyTestDisablePluginAutoload/RedundantPyTestDisablePluginAutoload-0.ebuild fixed/PythonCheck/RedundantPyTestDisablePluginAutoload/RedundantPyTestDisablePluginAutoload-0.ebuild
+--- python/PythonCheck/RedundantPyTestDisablePluginAutoload/RedundantPyTestDisablePluginAutoload-0.ebuild	2025-07-26 07:27:39.236976885 +0200
++++ fixed/PythonCheck/RedundantPyTestDisablePluginAutoload/RedundantPyTestDisablePluginAutoload-0.ebuild	2025-07-26 07:32:32.758757644 +0200
+@@ -13,8 +13,3 @@
+ EPYTEST_PLUGINS=()
+ 
+ distutils_enable_tests pytest
+-
+-python_test() {
+-	local -x PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
+-	epytest
+-}

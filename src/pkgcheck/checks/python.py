@@ -279,6 +279,21 @@ class ShadowedEPyTestTimeout(results.LineResult, results.Warning):
         )
 
 
+class RedundantPyTestDisablePluginAutoload(results.LineResult, results.Warning):
+    """Redundant ``PYTEST_DISABLE_PLUGIN_AUTOLOAD``
+
+    The package uses ``EPYTEST_PLUGINS`` to disable plugin autoloading already,
+    so ``PYTEST_DISABLE_PLUGIN_AUTOLOAD`` is redundant.
+    """
+
+    @property
+    def desc(self):
+        return (
+            f"line {self.lineno}: PYTEST_DISABLE_PLUGIN_AUTOLOAD is redundant, "
+            "autoloading disabled via EPYTEST_PLUGINS already"
+        )
+
+
 class PythonCheck(Check):
     """Python eclass checks.
 
@@ -302,6 +317,7 @@ class PythonCheck(Check):
             PythonMissingSCMDependency,
             MisplacedEPyTestVar,
             ShadowedEPyTestTimeout,
+            RedundantPyTestDisablePluginAutoload,
         }
     )
 
@@ -472,12 +488,34 @@ class PythonCheck(Check):
                     line = pkg.node_str(var_node)
                     yield MisplacedEPyTestVar(var_name, line=line, lineno=lineno + 1, pkg=pkg)
 
+        have_epytest_plugins = False
+        have_epytest_plugin_autoload = False
+        found_pytest_disable_plugin_autoload = []
+
         for var_node in bash.var_assign_query.captures(pkg.tree.root_node).get("assign", ()):
             var_name = pkg.node_str(var_node.child_by_field_name("name"))
             if var_name == "EPYTEST_TIMEOUT":
                 lineno, _ = var_node.start_point
                 line = pkg.node_str(var_node)
                 yield ShadowedEPyTestTimeout(line=line, lineno=lineno + 1, pkg=pkg)
+            elif var_name == "EPYTEST_PLUGINS":
+                have_epytest_plugins = True
+            elif var_name == "EPYTEST_PLUGIN_AUTOLOAD":
+                if value_node := var_node.child_by_field_name("value"):
+                    value = pkg.node_str(value_node)
+                    if value not in ('""', "''"):
+                        have_epytest_plugin_autoload = True
+            elif var_name == "PYTEST_DISABLE_PLUGIN_AUTOLOAD":
+                lineno, _ = var_node.start_point
+                line = pkg.node_str(var_node)
+                found_pytest_disable_plugin_autoload.append((line, lineno))
+
+        # EAPI 9+ defaults to disabled autoloading, in earlier EAPIs EPYTEST_PLUGINS does that.
+        if (
+            str(pkg.eapi) not in ("7", "8") or have_epytest_plugins
+        ) and not have_epytest_plugin_autoload:
+            for line, lineno in found_pytest_disable_plugin_autoload:
+                yield RedundantPyTestDisablePluginAutoload(line=line, lineno=lineno + 1, pkg=pkg)
 
     @staticmethod
     def _prepare_deps(deps: str):
