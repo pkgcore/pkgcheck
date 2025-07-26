@@ -1,0 +1,1 @@
+{"__class__": "RedundantPyTestDisablePluginAutoload", "category": "PythonCheck", "package": "RedundantPyTestDisablePluginAutoload", "version": "0", "line": "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1", "lineno": 18}
