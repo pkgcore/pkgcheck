@@ -1,0 +1,23 @@
+diff '--color=auto' -Naur python/PythonCheck/EPyTestPluginsSuggestion/EPyTestPluginsSuggestion-0.ebuild fixed/PythonCheck/EPyTestPluginsSuggestion/EPyTestPluginsSuggestion-0.ebuild
+--- python/PythonCheck/EPyTestPluginsSuggestion/EPyTestPluginsSuggestion-0.ebuild	2025-07-26 08:47:01.430511740 +0200
++++ fixed/PythonCheck/EPyTestPluginsSuggestion/EPyTestPluginsSuggestion-0.ebuild	2025-07-26 08:53:08.525943176 +0200
+@@ -10,4 +10,5 @@
+ LICENSE="BSD"
+ SLOT="0"
+ 
++EPYTEST_PLUGINS=()
+ distutils_enable_tests pytest
+diff '--color=auto' -Naur python/PythonCheck/EPyTestPluginsSuggestion/EPyTestPluginsSuggestion-1.ebuild fixed/PythonCheck/EPyTestPluginsSuggestion/EPyTestPluginsSuggestion-1.ebuild
+--- python/PythonCheck/EPyTestPluginsSuggestion/EPyTestPluginsSuggestion-1.ebuild	2025-07-26 08:46:54.907116335 +0200
++++ fixed/PythonCheck/EPyTestPluginsSuggestion/EPyTestPluginsSuggestion-1.ebuild	2025-07-26 08:53:21.533505780 +0200
+@@ -10,9 +10,5 @@
+ LICENSE="BSD"
+ SLOT="0"
+ 
++EPYTEST_PLUGINS=()
+ distutils_enable_tests pytest
+-
+-python_test() {
+-	local -x PYTEST_DISABLE_PLUGIN_AUTOLOAD=1
+-	epytest
+-}
