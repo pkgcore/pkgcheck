@@ -552,6 +552,20 @@ class ArchesOutOfSync(results.ProfilesResult, results.Error):
         return f"'profiles/arches.desc' is out of sync with 'arch.list', arch{es}: {arches}"
 
 
+class SystemSetMissingKeywords(results.PackageResult, results.Error):
+    """System set is missing keywords for some arches."""
+
+    def __init__(self, missing_arches, **kwargs):
+        super().__init__(**kwargs)
+        self.missing_arches = tuple(missing_arches)
+
+    @property
+    def desc(self):
+        arches = ", ".join(self.missing_arches)
+        s = pluralism(self.missing_arches, plural="es")
+        return f"part of @system set, but is missing keywords for arch{s}: {arches}"
+
+
 def dir_parents(path):
     """Yield all directory path parents excluding the root directory.
 
@@ -588,6 +602,7 @@ class RepoProfilesCheck(RepoCheck):
             BannedProfileEapi,
             DeprecatedProfileEapi,
             ArchesOutOfSync,
+            SystemSetMissingKeywords,
         }
     )
 
@@ -602,6 +617,25 @@ class RepoProfilesCheck(RepoCheck):
         self.repo = self.options.target_repo
         self.profiles_dir = self.repo.config.profiles_base
         self.non_profile_dirs = profile_addon.non_profile_dirs
+        self.arch_profiles = profile_addon.arch_profiles
+
+    def _check_system_set(self):
+        system_packages: dict[atom_cls, set[str]] = defaultdict(set)
+        stable_arches = self.options.target_repo.config.arches_desc["stable"]
+        for arch, profiles in self.arch_profiles.items():
+            is_stable = arch in stable_arches
+            if not is_stable:
+                arch = "~" + arch
+            for profile, _ in profiles:
+                for pkg in profile.system:
+                    system_packages[pkg].add(arch)
+                for pkg in profile.profile_set:
+                    system_packages[pkg].add(arch)
+        for atom, required_arches in system_packages.items():
+            if pkgs := self.repo.match(atom):
+                keywords = frozenset().union(*(pkg.keywords for pkg in pkgs))
+                if missing_arches := required_arches - keywords:
+                    yield SystemSetMissingKeywords(sorted(missing_arches), pkg=atom)
 
     def finish(self):
         if unknown_category_dirs := set(self.repo.category_dirs).difference(
@@ -674,3 +708,5 @@ class RepoProfilesCheck(RepoCheck):
         if arches_desc := frozenset().union(*self.repo.config.arches_desc.values()):
             if arches_mis_sync := self.repo.known_arches ^ arches_desc:
                 yield ArchesOutOfSync(sorted(arches_mis_sync))
+
+        yield from self._check_system_set()

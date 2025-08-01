@@ -1,0 +1,8 @@
+diff -Naur profiledir/cat/pkg1/pkg1-0.ebuild fixed/cat/pkg1/pkg1-0.ebuild
+--- profiledir/cat/pkg1/pkg1-0.ebuild
++++ fixed/cat/pkg1/pkg1-0.ebuild
+@@ -3,3 +3,4 @@ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ LICENSE="BSD"
+ SLOT="0"
+ IUSE="used"
++KEYWORDS="amd64"
