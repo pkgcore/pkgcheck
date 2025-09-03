@@ -1,0 +1,1 @@
+../../python/eclass/pypi.eclass
