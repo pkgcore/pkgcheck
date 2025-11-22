@@ -1,6 +1,9 @@
 """Custom package sources used for feeding checks."""
 
+import abc
+import itertools
 import os
+import typing
 from collections import defaultdict, deque
 from collections.abc import Set
 from dataclasses import dataclass
@@ -14,9 +17,9 @@ from snakeoil import klass
 from snakeoil.osutils import listdir_files, pjoin
 
 from . import addons, base
-from .bash import ParseTree
 from .addons.eclass import Eclass, EclassAddon
 from .addons.profiles import ProfileAddon, ProfileNode
+from .bash import ParseTree
 from .packages import FilteredPkg, RawCPV, WrappedPkg
 
 
@@ -31,10 +34,10 @@ class Source:
         self.source = source
 
     def __iter__(self):
-        yield from self.source
+        return iter(self.source)
 
     def itermatch(self, restrict, **kwargs):
-        yield from self.source
+        return iter(self.source)
 
 
 class EmptySource(Source):
@@ -150,7 +153,7 @@ class FilteredRepoSource(RepoSource):
         self._pkg_filter = pkg_filter
 
     def itermatch(self, restrict, **kwargs):
-        yield from self._pkg_filter(super().itermatch(restrict, **kwargs))
+        return self._pkg_filter(super().itermatch(restrict, **kwargs))
 
 
 class FilteredPackageRepoSource(FilteredRepoSource):
@@ -255,7 +258,7 @@ class RawRepoSource(RepoSource):
         super().__init__(options, source)
 
     def itermatch(self, restrict, **kwargs):
-        yield from super().itermatch(restrict, raw_pkg_cls=RawCPV, **kwargs)
+        return super().itermatch(restrict, raw_pkg_cls=RawCPV, **kwargs)
 
 
 class RestrictionRepoSource(RepoSource):
@@ -267,7 +270,7 @@ class RestrictionRepoSource(RepoSource):
 
     def itermatch(self, restrict, **kwargs):
         restrict = packages.AndRestriction(*(restrict, self.restriction))
-        yield from super().itermatch(restrict, **kwargs)
+        return super().itermatch(restrict, **kwargs)
 
 
 class UnmaskedRepoSource(RepoSource):
@@ -286,7 +289,7 @@ class UnmaskedRepoSource(RepoSource):
         )
 
     def itermatch(self, restrict, **kwargs):
-        yield from self._filtered_repo.itermatch(restrict, **kwargs)
+        return self._filtered_repo.itermatch(restrict, **kwargs)
 
 
 class _SourcePkg(WrappedPkg):
@@ -343,27 +346,16 @@ class EclassParseRepoSource(EclassRepoSource):
             yield _ParsedEclass(data, eclass=eclass)
 
 
-class _CombinedSource(RepoSource):
+class _CombinedSource(abc.ABC, RepoSource):
     """Generic source combining packages into similar chunks."""
 
-    def keyfunc(self, pkg):
+    @abc.abstractmethod
+    def keyfunc(self, pkg) -> typing.Hashable:
         """Function targeting attribute used to group packages."""
-        raise NotImplementedError(self.keyfunc)
 
     def itermatch(self, restrict, **kwargs):
-        key = None
-        chunk = None
-        for pkg in super().itermatch(restrict, **kwargs):
-            new = self.keyfunc(pkg)
-            if new == key:
-                chunk.append(pkg)
-            else:
-                if chunk is not None:
-                    yield chunk
-                chunk = [pkg]
-                key = new
-        if chunk is not None:
-            yield chunk
+        for _key, pkgs in itertools.groupby(super().itermatch(restrict, **kwargs), self.keyfunc):
+            yield list(pkgs)
 
 
 class PackageRepoSource(_CombinedSource):
@@ -386,11 +378,12 @@ class RepositoryRepoSource(RepoSource):
     scope = base.repo_scope
 
 
-class _FilteredSource(RawRepoSource):
+class _FilteredSource(abc.ABC, RawRepoSource):
     """Generic source yielding selected attribute from matching packages."""
 
-    def keyfunc(self, pkg):
-        raise NotImplementedError(self.keyfunc)
+    @abc.abstractmethod
+    def keyfunc(self, pkg) -> typing.Hashable:
+        pass
 
     def itermatch(self, restrict, **kwargs):
         key = None

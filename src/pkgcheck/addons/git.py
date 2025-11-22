@@ -1,16 +1,18 @@
 """Git specific support and addon."""
 
+import abc
 import argparse
 import os
 import re
 import shlex
 import subprocess
+import tempfile
+import typing
 from collections import defaultdict, deque
 from dataclasses import dataclass
 from datetime import datetime
 from functools import partial
 from itertools import takewhile
-import tempfile
 
 from pathspec import PathSpec
 from pkgcore.ebuild import cpv
@@ -142,7 +144,10 @@ class GitLog:
         return line.rstrip()
 
 
-class _ParseGitRepo:
+T = typing.TypeVar("T")
+
+
+class _ParseGitRepo(typing.Generic[T], abc.ABC):
     """Generic iterator for custom git log output parsing support."""
 
     # git command to run on the targeted repo
@@ -169,8 +174,9 @@ class _ParseGitRepo:
     def __iter__(self):
         return self
 
-    def __next__(self):
-        raise NotImplementedError(self.__next__)
+    @abc.abstractmethod
+    def __next__(self) -> T:
+        pass
 
     @property
     def changes(self):
@@ -201,7 +207,7 @@ class _ParseGitRepo:
                         continue
 
 
-class GitRepoCommits(_ParseGitRepo):
+class GitRepoCommits(_ParseGitRepo["GitCommit"]):
     """Parse git log output into an iterator of commit objects."""
 
     _format = (
@@ -229,7 +235,7 @@ class GitRepoCommits(_ParseGitRepo):
         return GitCommit(commit_hash, commit_time, author, committer, message, ImmutableDict(pkgs))
 
 
-class GitRepoPkgs(_ParseGitRepo):
+class GitRepoPkgs(_ParseGitRepo["GitPkgChange"]):
     """Parse git log output into an iterator of package change objects."""
 
     _format = (

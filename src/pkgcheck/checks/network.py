@@ -1,8 +1,10 @@
 """Various checks that require network support."""
 
+import abc
 import re
 import socket
 import traceback
+import typing
 import urllib.request
 from functools import partial
 
@@ -96,7 +98,7 @@ class RequestError(_RequestException):
     """Wrapper for generic requests exception."""
 
 
-class _UrlCheck(NetworkCheck):
+class _UrlCheck(abc.ABC, NetworkCheck):
     """Generic URL verification check requiring network support."""
 
     _source = sources.LatestVersionRepoSource
@@ -194,9 +196,12 @@ class _UrlCheck(NetworkCheck):
                 result = result._create(**attrs, pkg=pkg)
             self.results_q.put([result])
 
-    def _get_urls(self, pkg):
-        """Get URLs to verify for a given package."""
-        raise NotImplementedError
+    @abc.abstractmethod
+    def _get_urls(self, pkg) -> typing.Iterable[tuple[str, str]]:
+        """Get URLs to verify for a given package.
+
+        yields pairs of (key, url)
+        """
 
     def _schedule_check(self, func, attr, url, executor, futures, **kwargs):
         """Schedule verification method to run in a separate thread against a given URL.
