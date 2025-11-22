@@ -1,5 +1,6 @@
 """Base classes for check results."""
 
+import abc
 from functools import total_ordering
 
 from pkgcore.ebuild import cpv
@@ -15,7 +16,7 @@ class InvalidResult(Exception):
 
 
 @total_ordering
-class Result:
+class Result(abc.ABC):
     """Generic report result returned from a check."""
 
     # all results are shown by default
@@ -37,7 +38,8 @@ class Result:
         return f"{self.name}: {self.desc}"
 
     @property
-    def desc(self):
+    @abc.abstractmethod
+    def desc(self) -> str:
         """Result description."""
 
     @property
