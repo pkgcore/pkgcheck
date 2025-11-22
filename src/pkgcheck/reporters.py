@@ -1,49 +1,70 @@
 """Basic result reporters."""
 
+import abc
 import csv
 import json
+import typing
 from collections import defaultdict
 from string import Formatter
 from xml.sax.saxutils import escape as xml_escape
 
-from snakeoil.decorators import coroutine
+from snakeoil.formatters import Formatter as snakeoil_Formatter
+from snakeoil.klass import immutable
 
 from . import base
 from .results import BaseLinesResult, InvalidResult, Result
 
+T_process_report: typing.TypeAlias = typing.Generator[None, Result, typing.NoReturn]
+T_report_func: typing.TypeAlias = typing.Callable[[Result], None]
 
-class Reporter:
+
+class Reporter(abc.ABC, immutable.Simple):
     """Generic result reporter."""
 
-    def __init__(self, out):
+    __slots__ = ("report", "_current_generator", "out")
+
+    priority: int  # used by the config system
+    _current_generator: T_process_report | None
+
+    def __init__(self, out: snakeoil_Formatter):
         """Initialize
 
         :type out: L{snakeoil.formatters.Formatter}
         """
         self.out = out
+        self._current_generator = None
 
-        # initialize result processing coroutines
-        self.report = self._process_report().send
+    @immutable.Simple.__allow_mutation_wrapper__
+    def __enter__(self) -> T_report_func:
+        self.out.flush()
+        self._current_generator = self._consume_reports_generator()
+        # start the generator
+        next(self._current_generator)
 
-    def __enter__(self):
-        self._start()
-        return self
+        # make a class so there's no intermediate frame relaying for __call__.  Optimization.
+        class reporter:
+            __slots__ = ()
+            report: T_report_func = staticmethod(self._current_generator.send)
+            __call__: T_report_func = staticmethod(self._current_generator.send)
 
-    def __exit__(self, *excinfo):
-        self._finish()
-        # flush output buffer
-        self.out.stream.flush()
+        return reporter()
 
-    @coroutine
-    def _process_report(self):
-        """Render and output a report result.."""
-        raise NotImplementedError(self._process_report)
+    @immutable.Simple.__allow_mutation_wrapper__
+    def __exit__(self, *exc_info):
+        # shut down the generator so it can do any finalization
+        self._current_generator.close()  # pyright: ignore[reportOptionalMemberAccess]
+        self._current_generator = None
+        self.out.flush()
 
-    def _start(self):
-        """Initialize reporter output."""
+    @abc.abstractmethod
+    def _consume_reports_generator(self) -> T_process_report:
+        """
+        This must be a generator consuming from yield to then do something with Results
 
-    def _finish(self):
-        """Finalize reporter output."""
+        Whilst the pattern may seem odd, this is a generator since Reporters have to typically
+        keep state between Results- a generator simplifies this.  Simpler code, and faster
+        since it's just resuming a generator frame.
+        """
 
 
 class StrReporter(Reporter):
@@ -56,10 +77,11 @@ class StrReporter(Reporter):
         sys-apps/portage-2.1-r2: no change in 75 days, keywords [ ~x86-fbsd ]
     """
 
+    __slots__ = ()
+
     priority = 0
 
-    @coroutine
-    def _process_report(self):
+    def _consume_reports_generator(self) -> T_process_report:
         # scope to result prefix mapping
         scope_prefix_map = {
             base.version_scope: "{category}/{package}-{version}: ",
@@ -85,10 +107,10 @@ class FancyReporter(Reporter):
           StableRequest: sys-apps/portage-2.1-r2: no change in 75 days, keywords [ ~x86 ]
     """
 
+    __slots__ = ()
     priority = 1
 
-    @coroutine
-    def _process_report(self):
+    def _consume_reports_generator(self) -> T_process_report:
         prev_key = None
 
         while True:
@@ -130,10 +152,10 @@ class JsonReporter(Reporter):
         jq -c -s 'reduce.[]as$x({};.*$x)' orig.json > new.json
     """
 
+    __slots__ = ()
     priority = -1000
 
-    @coroutine
-    def _process_report(self):
+    def _consume_reports_generator(self) -> T_process_report:
         # arbitrarily nested defaultdicts
         json_dict = lambda: defaultdict(json_dict)
         # scope to data conversion mapping
@@ -156,16 +178,20 @@ class JsonReporter(Reporter):
 class XmlReporter(Reporter):
     """Feed of newline-delimited XML reports."""
 
+    __slots__ = ()
     priority = -1000
 
-    def _start(self):
+    def __enter__(self):
         self.out.write("<checks>")
+        return super().__enter__()
 
-    def _finish(self):
+    def __exit__(self, *exc_info):
+        # finalize/close the generator, *then* close the xml.
+        ret = super().__exit__(*exc_info)
         self.out.write("</checks>")
+        return ret
 
-    @coroutine
-    def _process_report(self):
+    def _consume_reports_generator(self) -> T_process_report:
         result_template = "<result><class>%(class)s</class><msg>%(msg)s</msg></result>"
         cat_template = (
             "<result><category>%(category)s</category>"
@@ -187,7 +213,6 @@ class XmlReporter(Reporter):
             base.package_scope: pkg_template,
             base.version_scope: ver_template,
         }
-
         while True:
             result = yield
             d = {k: getattr(result, k, "") for k in ("category", "package", "version")}
@@ -207,10 +232,10 @@ class CsvReporter(Reporter):
         sys-apps,portage,2.1-r2,"no change in 75 days, keywords [ ~x86-fbsd ]"
     """
 
+    __slots__ = ()
     priority = -1001
 
-    @coroutine
-    def _process_report(self):
+    def _consume_reports_generator(self) -> T_process_report:
         writer = csv.writer(self.out, doublequote=False, escapechar="\\", lineterminator="")
 
         while True:
@@ -244,14 +269,14 @@ class FormatReporter(Reporter):
     This formatter uses custom format string passed using the ``--format``
     command line argument."""
 
+    __slots__ = ("format_str",)
     priority = -1001
 
     def __init__(self, format_str, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.format_str = format_str
 
-    @coroutine
-    def _process_report(self):
+    def _consume_reports_generator(self) -> T_process_report:
         formatter = _ResultFormatter()
         # provide expansions for result desc, level, and output name properties
         properties = ("desc", "level", "name")
@@ -274,6 +299,7 @@ class DeserializationError(Exception):
 class JsonStream(Reporter):
     """Generate a stream of result objects serialized in JSON."""
 
+    __slots__ = ()
     priority = -1001
 
     @staticmethod
@@ -300,8 +326,7 @@ class JsonStream(Reporter):
         except (KeyError, InvalidResult):
             raise DeserializationError("unknown result")
 
-    @coroutine
-    def _process_report(self):
+    def _consume_reports_generator(self) -> T_process_report:
         while True:
             result = yield
             self.out.write(json.dumps(result, default=self.to_json))
@@ -313,10 +338,10 @@ class FlycheckReporter(Reporter):
     .. [#] https://github.com/flycheck/flycheck
     """
 
+    __slots__ = ()
     priority = -1001
 
-    @coroutine
-    def _process_report(self):
+    def _consume_reports_generator(self) -> T_process_report:
         while True:
             result = yield
             file = f"{getattr(result, 'package', '')}-{getattr(result, 'version', '')}.ebuild"
