@@ -1,3 +1,4 @@
+import snakeoil.formatters
 from snakeoil.cli import arghparse
 
 from .. import reporters
@@ -25,7 +26,7 @@ replay.add_argument(
 
 
 @replay.bind_main_func
-def _replay(options, out, err):
+def _replay(options, out: snakeoil.formatters.PlainTextFormatter, _err):
     processed = 0
 
     with options.reporter(out) as reporter:

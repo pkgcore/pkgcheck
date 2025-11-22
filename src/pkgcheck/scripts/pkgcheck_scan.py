@@ -4,6 +4,7 @@ import shlex
 from contextlib import ExitStack
 from unittest.mock import patch
 
+import snakeoil.formatters
 from pkgcore import const as pkgcore_const
 from pkgcore.repository import errors as repo_errors
 from pkgcore.repository import multiplex
@@ -516,7 +517,7 @@ def _determine_restrictions(namespace, attr):
 
 
 @scan.bind_main_func
-def _scan(options, out, err):
+def _scan(options, out: snakeoil.formatters.PlainTextFormatter, _err):
     with ExitStack() as stack:
         report = stack.enter_context(options.reporter(out))
         for c in options.pop("contexts"):

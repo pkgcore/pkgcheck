@@ -1,5 +1,6 @@
 import os
 
+import snakeoil.formatters
 from snakeoil.cli import arghparse
 from snakeoil.osutils import pjoin
 
@@ -68,7 +69,7 @@ def _validate_cache_args(parser, namespace):
 
 
 @cache.bind_main_func
-def _cache(options, out, err):
+def _cache(options, out: snakeoil.formatters.PlainTextFormatter, _err):
     if options.remove_cache:
         cache_obj = CachedAddon(options)
         cache_obj.remove_caches()

@@ -3,7 +3,7 @@ from collections import defaultdict
 from operator import attrgetter
 
 from snakeoil.cli import arghparse
-from snakeoil.formatters import decorate_forced_wrapping
+from snakeoil.formatters import PlainTextFormatter, decorate_forced_wrapping
 
 from .. import base, objects
 from ..addons.caches import CachedAddon
@@ -176,7 +176,7 @@ def display_reporters(out, options):
 
 
 @show.bind_main_func
-def _show(options, out, err):
+def _show(options, out: PlainTextFormatter, _err):
     if options.checks:
         display_checks(out, options)
     elif options.scopes:
