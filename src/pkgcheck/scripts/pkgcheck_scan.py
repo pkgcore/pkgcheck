@@ -518,8 +518,8 @@ def _determine_restrictions(namespace, attr):
 @scan.bind_main_func
 def _scan(options, out, err):
     with ExitStack() as stack:
-        reporter = options.reporter(out)
-        for c in options.pop("contexts") + [reporter]:
+        reporter = stack.enter_context(options.reporter(out))
+        for c in options.pop("contexts"):
             stack.enter_context(c)
         pipe = Pipeline(options)
         for result in pipe:
