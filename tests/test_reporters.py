@@ -1,13 +1,15 @@
 import json
 import sys
+import typing
 from functools import partial
 from textwrap import dedent
 
 import pytest
-from pkgcheck import base, reporters
-from pkgcheck.checks import codingstyle, git, metadata, metadata_xml, pkgdir, profiles
 from pkgcore.test.misc import FakePkg
 from snakeoil.formatters import PlainTextFormatter
+
+from pkgcheck import base, reporters
+from pkgcheck.checks import codingstyle, git, metadata, metadata_xml, pkgdir, profiles
 
 
 class BaseReporter:
@@ -25,7 +27,7 @@ class BaseReporter:
         self.line_result = codingstyle.ReadonlyVariable("P", line="P=6", lineno=7, pkg=pkg)
         self.lines_result = codingstyle.EbuildUnquotedVariable("D", lines=(5, 7), pkg=pkg)
 
-    def mk_reporter(self, **kwargs):
+    def mk_reporter(self, **kwargs) -> reporters.Reporter:
         out = PlainTextFormatter(sys.stdout)
         return self.reporter_cls(out, **kwargs)
 
@@ -175,22 +177,21 @@ class TestJsonStream(BaseReporter):
                 reporter.report(result)
                 out, err = capsys.readouterr()
                 assert not err
-                deserialized_result = next(reporter.from_iter([out]))
-                assert str(deserialized_result) == str(result)
+        deserialized_result = next(self.reporter_cls.from_iter([out]))
+        assert str(deserialized_result) == str(result)
 
     def test_deserialize_error(self):
-        with self.mk_reporter() as reporter:
-            # deserializing non-result objects raises exception
-            obj = reporter.to_json(["result"])
-            with pytest.raises(reporters.DeserializationError, match="failed loading"):
-                next(reporter.from_iter([obj]))
+        # deserializing non-result objects raises exception
+        obj = self.reporter_cls.to_json(["result"])
+        with pytest.raises(reporters.DeserializationError, match="failed loading"):
+            next(self.reporter_cls.from_iter([obj]))
 
-            # deserializing mangled JSON result objects raises exception
-            obj = reporter.to_json(self.versioned_result)
-            del obj["__class__"]
-            json_obj = json.dumps(obj)
-            with pytest.raises(reporters.DeserializationError, match="unknown result"):
-                next(reporter.from_iter([json_obj]))
+        # deserializing mangled JSON result objects raises exception
+        obj = self.reporter_cls.to_json(self.versioned_result)
+        del obj["__class__"]
+        json_obj = json.dumps(obj)
+        with pytest.raises(reporters.DeserializationError, match="unknown result"):
+            next(self.reporter_cls.from_iter([json_obj]))
 
 
 class TestFlycheckReporter(BaseReporter):
