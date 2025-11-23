@@ -32,6 +32,9 @@ jobs:
       fail-fast: false
 
     steps:
+    - name: Bash version
+      run: bash --version
+
     - name: Checkout code
       uses: actions/checkout@v4
 
