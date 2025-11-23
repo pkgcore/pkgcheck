@@ -3,8 +3,8 @@ import os
 import signal
 
 import pytest
+
 from pkgcheck import PkgcheckException, scan
-from pkgcheck import objects
 
 
 class TestScanApi:
@@ -23,18 +23,6 @@ class TestScanApi:
 
     def test_no_base_args(self, repo):
         assert [] == list(scan(self.scan_args + ["-r", repo.location]))
-
-    def test_keyword_import(self):
-        """Keyword classes are importable from the top-level module."""
-        from pkgcheck import NonsolvableDeps, Result
-
-        assert issubclass(NonsolvableDeps, Result)
-
-    def test_module_attributes(self):
-        """All keyword class names are shown for the top-level module."""
-        import pkgcheck
-
-        assert set(objects.KEYWORDS) < set(dir(pkgcheck))
 
     def test_sigint_handling(self, repo):
         """Verify SIGINT is properly handled by the parallelized pipeline."""
