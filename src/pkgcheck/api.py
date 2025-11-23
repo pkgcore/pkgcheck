@@ -1,12 +1,10 @@
 """Implements pkgcheck API to be exported."""
 
-from functools import partial
+__all__ = ("scan",)
 
-import lazy_object_proxy
+
 from snakeoil.contexts import patch
-from snakeoil.mappings import AttrAccessible
 
-from . import objects
 from .base import PkgcheckException
 
 
@@ -42,19 +40,3 @@ def scan(args=None, /, *, base_args=None):
     with patch("argparse.ArgumentParser.exit", parser_exit):
         options = pkgcheck.argparser.parse_args(base_args + ["scan"] + args)
     return Pipeline(options)
-
-
-def _keywords():
-    """Proxy to delay module imports until keywords are requested."""
-
-    class Keywords(AttrAccessible):
-        """Mapping of keyword names to related result classes.
-
-        Result classes are also accessible via accessing their keyword
-        name as a attribute.
-        """
-
-    return Keywords(objects.KEYWORDS)
-
-
-keywords = lazy_object_proxy.Proxy(partial(_keywords))
