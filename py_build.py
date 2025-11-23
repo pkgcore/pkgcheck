@@ -1,6 +1,5 @@
 import sys
 from collections import defaultdict
-from functools import partial
 from contextlib import contextmanager
 from pathlib import Path
 from textwrap import dedent
@@ -109,16 +108,13 @@ def write_files(cleanup_files):
         path.write_text("\n".join(getattr(objects, obj)) + "\n")
 
 
-def prepare_pkgcheck(callback, only_version: bool):
+def prepare_pkgcheck():
     cleanup_files = []
     try:
         write_verinfo(cleanup_files)
-        if not only_version:
-            write_const(cleanup_files)
-            write_objects(cleanup_files)
-            write_files(cleanup_files)
-
-        return callback()
+        write_const(cleanup_files)
+        write_objects(cleanup_files)
+        write_files(cleanup_files)
     finally:
         for path in cleanup_files:
             try:
@@ -129,19 +125,14 @@ def prepare_pkgcheck(callback, only_version: bool):
 
 def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
     """Builds a wheel, places it in wheel_directory"""
-    callback = partial(buildapi.build_wheel, wheel_directory, config_settings, metadata_directory)
-    return prepare_pkgcheck(callback, only_version=False)
+    prepare_pkgcheck()
+    return buildapi.build_wheel(wheel_directory, config_settings, metadata_directory)
 
 
-def build_editable(wheel_directory, config_settings=None, metadata_directory=None):
-    """Builds an "editable" wheel, places it in wheel_directory"""
-    callback = partial(
-        buildapi.build_editable, wheel_directory, config_settings, metadata_directory
-    )
-    return prepare_pkgcheck(callback, only_version=True)
+build_editable = buildapi.build_editable
 
 
 def build_sdist(sdist_directory, config_settings=True):
     """Builds an sdist, places it in sdist_directory"""
-    callback = partial(buildapi.build_sdist, sdist_directory, config_settings)
-    return prepare_pkgcheck(callback, only_version=True)
+    prepare_pkgcheck()
+    return buildapi.build_sdist(sdist_directory, config_settings)
