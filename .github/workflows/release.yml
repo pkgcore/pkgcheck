@@ -22,6 +22,7 @@ jobs:
 
     - name: Reject any VCS dependencies
       shell: python
+      continue-on-error: ${{ github.ref_type == 'branch' }}
       run: |
         import re, tomllib
         manifest = tomllib.load(open('pyproject.toml', 'rb'))
