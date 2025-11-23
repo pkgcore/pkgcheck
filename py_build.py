@@ -108,13 +108,15 @@ def write_files(cleanup_files):
         path.write_text("\n".join(getattr(objects, obj)) + "\n")
 
 
-def prepare_pkgcheck():
+@contextmanager
+def create_generated_files():
     cleanup_files = []
     try:
         write_verinfo(cleanup_files)
         write_const(cleanup_files)
         write_objects(cleanup_files)
         write_files(cleanup_files)
+        yield
     finally:
         for path in cleanup_files:
             try:
@@ -125,8 +127,8 @@ def prepare_pkgcheck():
 
 def build_wheel(wheel_directory, config_settings=None, metadata_directory=None):
     """Builds a wheel, places it in wheel_directory"""
-    prepare_pkgcheck()
-    return buildapi.build_wheel(wheel_directory, config_settings, metadata_directory)
+    with create_generated_files():
+        return buildapi.build_wheel(wheel_directory, config_settings, metadata_directory)
 
 
 build_editable = buildapi.build_editable
@@ -134,5 +136,5 @@ build_editable = buildapi.build_editable
 
 def build_sdist(sdist_directory, config_settings=True):
     """Builds an sdist, places it in sdist_directory"""
-    prepare_pkgcheck()
-    return buildapi.build_sdist(sdist_directory, config_settings)
+    with create_generated_files():
+        return buildapi.build_sdist(sdist_directory, config_settings)
