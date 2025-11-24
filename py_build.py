@@ -1,5 +1,5 @@
+import os
 import sys
-from collections import defaultdict
 from contextlib import contextmanager
 from pathlib import Path
 from textwrap import dedent
@@ -30,7 +30,7 @@ def write_const(cleanup_files):
     cleanup_files.append(path := Path.cwd() / "src/pkgcheck/_const.py")
     print(f"writing path constants to {path}")
     with path.open("w") as f:
-        path.chmod(0o644)
+        os.fchmod(f.fileno(), 0o644)
         f.write(
             dedent(
                 """\
@@ -49,41 +49,27 @@ def write_objects(cleanup_files):
     cleanup_files.append(path := Path.cwd() / "src/pkgcheck/_objects.py")
     print(f"writing objects to {path}")
 
-    class _kls:
-        def __init__(self, module):
-            self.module = module
-
-        def __repr__(self):
-            return self.module
-
     with sys_path():
         from pkgcheck import objects
 
-    modules = defaultdict(set)
-    objs = defaultdict(list)
-    for obj in ("KEYWORDS", "CHECKS", "REPORTERS"):
-        for name, cls in getattr(objects, obj).items():
-            parent, module = cls.__module__.rsplit(".", 1)
-            modules[parent].add(module)
-            objs[obj].append((name, _kls(f"{module}.{name}")))
-
-    keywords = tuple(objs["KEYWORDS"])
-    checks = tuple(objs["CHECKS"])
-    reporters = tuple(objs["REPORTERS"])
-
+    targets = ["CHECKS", "KEYWORDS", "REPORTERS"]
     with path.open("w") as f:
-        path.chmod(0o644)
-        for k, v in sorted(modules.items()):
-            f.write(f"from {k} import {', '.join(sorted(v))}\n")
-        f.write(
-            dedent(
-                f"""\
-                    KEYWORDS = {keywords}
-                    CHECKS = {checks}
-                    REPORTERS = {reporters}
-                """
-            )
-        )
+        os.fchmod(f.fileno(), 0o644)
+        modules = set()
+        for cls_type in targets:
+            modules.update(cls.__module__ for cls in getattr(objects, cls_type).values())
+        for module in sorted(modules):
+            f.write(f"import {module}\n")
+
+        for cls_type in targets:
+            f.write("\n")
+
+            registry = getattr(objects, cls_type)
+
+            f.write(f"{cls_type} = (\n")
+            for name, cls in sorted(registry.items(), key=lambda x: x[0]):
+                f.write(f"  ({name!r}, {cls.__module__}.{cls.__name__}),\n")
+            f.write(")\n")
 
 
 def write_files(cleanup_files):
@@ -105,7 +91,7 @@ def write_files(cleanup_files):
     for obj in ("KEYWORDS", "CHECKS", "REPORTERS"):
         print(f"Generating {obj.lower()} list")
         cleanup_files.append(path := dst / obj.lower())
-        path.write_text("\n".join(getattr(objects, obj)) + "\n")
+        path.write_text("\n".join(sorted(getattr(objects, obj))) + "\n")
 
 
 @contextmanager

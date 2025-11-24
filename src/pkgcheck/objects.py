@@ -99,13 +99,13 @@ class _LazyDict(Mapping):
         return self._dict[key]
 
     def keys(self):
-        return iter(self._dict.keys())
+        return self._dict.keys()
 
     def values(self):
-        return iter(self._dict.values())
+        return self._dict.values()
 
     def items(self):
-        return iter(self._dict.items())
+        return self._dict.items()
 
     def select(self, cls):
         """Return mapping of object classes inheriting a given class."""
