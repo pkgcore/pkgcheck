@@ -621,7 +621,7 @@ class TestPkgcheckScan:
 
                 if not callable(custom_handler):
                     pytest.fail(f"{custom_handler_path} handler isn't invokable")
-                custom_handler.__source_path__ = custom_handler_path  # pyright: ignore[reportFunctionMemberAccess]
+                custom_handler.__source_file__ = custom_handler_path  # pyright: ignore[reportFunctionMemberAccess]
         except FileNotFoundError:
             pass
 
@@ -721,7 +721,7 @@ class TestPkgcheckScan:
 
             except Exception as e:
                 pytest.fail(
-                    f"handler {data.custom_filter.__source_path__!r} threw an exception: {e!r}"  # type: ignore
+                    f"handler {data.custom_filter.__source_file__!r} threw an exception: {e!r}"  # type: ignore
                 )
 
         def assert_same(sources, results, verbose=False):
