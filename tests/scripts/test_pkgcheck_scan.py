@@ -1,4 +1,5 @@
-import contextlib
+import importlib
+import importlib.machinery
 import io
 import os
 import pathlib
@@ -594,13 +595,37 @@ class TestPkgcheckScan:
 
     @dataclass
     class _expected_data_result:
-        expected: typing.Iterable[Result]
-        expected_verbose: typing.Iterable[Result]
+        expected: dict[Result, pathlib.Path]
+        expected_verbose: dict[Result, pathlib.Path]
+        custom_filter: typing.Callable[[Result], bool] | None
 
-    def _load_expected_data(self, path: str) -> _expected_data_result:
+    def _load_expected_data(self, base: pathlib.Path) -> _expected_data_result:
         """Return the set of result objects from a given json stream file."""
 
-        def boilerplate(path, allow_missing: bool) -> list[Result]:
+        custom_handler = None
+        try:
+            with (custom_handler_path := base / "handler.py").open() as f:
+                # We can't import since it's not a valid python directory layout, nor do
+                # want to pollute the namespace.
+                module = importlib.machinery.SourceFileLoader(
+                    "handler", str(custom_handler_path)
+                ).load_module()
+                if (
+                    custom_handler := typing.cast(
+                        typing.Callable[[Result], bool], getattr(module, "handler")
+                    )
+                ) is None:
+                    pytest.fail(
+                        f"custom python handler {custom_handler_path!r} lacks the necessary handle function or list of handlers"
+                    )
+
+                if not callable(custom_handler):
+                    pytest.fail(f"{custom_handler_path} handler isn't invokable")
+                custom_handler.__source_path__ = custom_handler_path  # pyright: ignore[reportFunctionMemberAccess]
+        except FileNotFoundError:
+            pass
+
+        def boilerplate(path, allow_missing: bool):
             try:
                 with path.open() as f:
                     data = list(reporters.JsonStream.from_iter(f))
@@ -614,22 +639,25 @@ class TestPkgcheckScan:
                     # Remove this after cleaning the scan/fix logic up to not force duplicate
                     # renders, and instead just work with a result stream directly.
                     assert self._render_results(data), f"failed rendering results {data!r}"
-                    return data
+                    return typing.cast(dict[Result, pathlib.Path], {}.fromkeys(data, path))
 
             except FileNotFoundError:
                 if not allow_missing:
                     raise
-                return []
+                return {}
 
-        expected_path = self.repos_data / path / "expected.json"
+        expected_path = base / "expected.json"
+        # if a custom handler exists, then the json definitions aren't required.
+        expected = boilerplate(expected_path, custom_handler is not None)
+        if custom_handler is None:
+            assert expected, (
+                f"regular results must always exist if the file exists: {expected_path}"
+            )
 
-        expected = boilerplate(expected_path, False)
-        assert expected, f"regular results must always exist if the file exists: {expected_path}"
-
-        expected_verbose_path = self.repos_data / path / "expected-verbose.json"
+        expected_verbose_path = base / "expected-verbose.json"
         expected_verbose = boilerplate(expected_verbose_path, True)
 
-        return self._expected_data_result(expected, expected_verbose=expected_verbose)
+        return self._expected_data_result(expected, expected_verbose, custom_handler)
 
     def _render_results(self, results, **kwargs) -> str:
         """Render a given set of result objects into their related string form."""
@@ -642,41 +670,88 @@ class TestPkgcheckScan:
     @pytest.mark.parametrize("repo", repos)
     def test_scan_repo(self, repo, tmp_path_factory):
         """Run pkgcheck against test pkgs in bundled repo, verifying result output."""
-        expected_results = set()
+
+        # _sources is so people debugging failures know where the testdata came from.  It matters in regards to devex.
+        expected_results_sources = {}
         scan_results = self._scan_results(repo, tmp_path_factory.mktemp("scan"), verbosity=0)
 
-        expected_verbose_results = set()
+        expected_verbose_results_sources = {}
         scan_verbose_results = self._scan_results(repo, tmp_path_factory.mktemp("ver"), verbosity=1)
+
+        custom_handlers: list[typing.Callable[[Result], bool]] = []
 
         for check, keywords in self._checks[repo].items():
             for keyword in keywords:
-                data = self._load_expected_data(f"{repo}/{check}/{keyword}")
-                expected_results.update(data.expected)
+                path = self.repos_data / repo / check / keyword
+                data = self._load_expected_data(path)
+                if conflict := {
+                    k: [v, expected_results_sources[k]]
+                    for k, v in data.expected.items()
+                    if k in expected_results_sources
+                }:
+                    pytest.fail(
+                        f"conflicting results found in testdata for the following fixtures: {conflict!r}"
+                    )
+
+                expected_results_sources.update(data.expected)
 
                 if data.expected_verbose:
-                    expected_verbose_results.update(data.expected_verbose)
+                    expected_verbose_results_sources.update(data.expected_verbose)
                 else:
-                    expected_verbose_results.update(data.expected)
+                    expected_verbose_results_sources.update(data.expected)
 
-        if expected_results != scan_results:
-            missing = self._render_results(expected_results - scan_results)
-            unknown = self._render_results(scan_results - expected_results)
-            error = ["unmatched repo scan results:\n\n"]
-            if missing:
-                error.append(f"{repo} repo missing expected results:\n{missing}")
-            if unknown:
-                error.append(f"{repo} repo unknown results:\n{unknown}")
-            pytest.fail("\n".join(error), pytrace=False)
+                if data.custom_filter is not None:
+                    custom_handlers.append(data.custom_filter)
 
-        if expected_verbose_results != scan_verbose_results:
-            missing = self._render_results(expected_verbose_results - scan_verbose_results)
-            unknown = self._render_results(scan_verbose_results - expected_verbose_results)
-            error = ["unmatched verbose repo scan results:\n\n"]
-            if missing:
-                error.append(f"{repo} repo missing expected results:\n{missing}")
-            if unknown:
-                error.append(f"{repo} repo unknown results:\n{unknown}")
-            pytest.fail("\n".join(error), pytrace=False)
+        for handler in custom_handlers:
+            try:
+                # sanity checks; both that they don't intersect expected results from other testdata,
+                # and also do the filtering.
+                for verbose_text, expected, actual in (
+                    ("", expected_results_sources, scan_results),
+                    ("verbose ", expected_verbose_results_sources, scan_verbose_results),
+                ):
+                    if intersection := list(filter(handler, expected)):
+                        pytest.fail(
+                            f"handler from {handler.__source_file__!r} incorrectly suppresses {verbose_text}test data: {intersection}"  # pyright: ignore[reportFunctionMemberAccess]
+                        )
+
+                    for k in list(filter(handler, actual)):
+                        actual.remove(k)
+
+            except Exception as e:
+                pytest.fail(
+                    f"handler {data.custom_filter.__source_path__!r} threw an exception: {e!r}"  # type: ignore
+                )
+
+        def assert_same(sources, results, verbose=False):
+            expected = set(sources)
+            errors = []
+            if missing := expected.difference(results):
+                lines = [
+                    f"from source: {sources[x]}, expected:\n{self._render_results([x])}"
+                    for x in missing
+                ]
+                errors.append("\n".join(lines))
+                for handler in custom_handlers:
+                    for result in missing:
+                        if handler(result):
+                            errors.append(
+                                f"possible cause: handler {handler.__source_file__} matches"  # pyright: ignore[reportFunctionMemberAccess]
+                            )
+
+            if unknown := results.difference(sources):
+                text = self._render_results(unknown)
+                errors.append(f"unknown results:\n{text}")
+
+            if errors:
+                verbose = "verbose " if verbose else ""
+                pytest.fail(
+                    f"repo {repo} {verbose}scan failures:\n" + "\n\n".join(errors), pytrace=False
+                )
+
+        assert_same(expected_results_sources, scan_results)
+        assert_same(expected_verbose_results_sources, scan_verbose_results, True)
 
     @staticmethod
     def _patch(fix, repo_path):
