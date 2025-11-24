@@ -42,6 +42,7 @@ def _find_classes(module, matching_cls, skip=()):  # pragma: no cover
             and issubclass(cls, matching_cls)
             and cls.__name__[0] != "_"
             and cls not in skip
+            and not inspect.isabstract(cls)
         ):
             yield cls
 
@@ -197,4 +198,4 @@ class _ChecksLazyDict(_LazyDict):
 
 KEYWORDS = _KeywordsLazyDict("KEYWORDS", ("checks", "results.Result"))
 CHECKS = _ChecksLazyDict("CHECKS", ("checks", "checks.Check"))
-REPORTERS = _LazyDict("REPORTERS", ("reporters", "reporters.Reporter"))
+REPORTERS = _LazyDict("REPORTERS", ("reporters", "reporters.StreamReporter"))

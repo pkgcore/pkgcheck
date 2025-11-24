@@ -217,3 +217,41 @@ class TestFlycheckReporter(BaseReporter):
             foo-0.ebuild:7:warning:UnquotedVariable: unquoted variable D
             """
     )
+
+
+class TestCallbackReporter:
+    results = BaseReporter.results
+
+    def test_it(self):
+        collected = [], []
+        with reporters.CallbackReporter(*[l.append for l in collected]) as report:
+            for result in self.results:
+                report(result)
+        assert list(self.results), list(self.results) == collected
+
+
+class TestMultiplexingReporter:
+    results = BaseReporter.results
+
+    def test_it(self):
+        collected = []
+        context_checks = []
+        context_check_results = []
+
+        class context_verifier:
+            def __enter__(self):
+                context_checks.append(True)
+                return reporters.ReportFuncShim(context_check_results.append)
+
+            def __exit__(self, typ, value, traceback):
+                context_checks.append(True)
+
+        with reporters.MultiplexingReporter(
+            context_verifier(), reporters.CallbackReporter(collected.append)
+        ) as report:
+            for result in self.results:
+                report(result)
+
+        assert self.results == tuple(collected)
+        assert [True, True] == context_checks
+        assert self.results == tuple(context_check_results)

@@ -1,6 +1,7 @@
 """Basic result reporters."""
 
 import abc
+import contextlib
 import csv
 import json
 import typing
@@ -18,43 +19,41 @@ T_process_report: typing.TypeAlias = typing.Generator[None, Result, typing.NoRet
 T_report_func: typing.TypeAlias = typing.Callable[[Result], None]
 
 
+class ReportFuncShim:
+    """Compatibility shim while migrating endusers away from using .report()"""
+
+    __slots__ = ("report",)
+
+    def __init__(self, report: T_report_func) -> None:
+        self.report = report
+
+    def __call__(self, result: Result) -> None:
+        self.report(result)
+
+
 class Reporter(abc.ABC, immutable.Simple):
     """Generic result reporter."""
 
-    __slots__ = ("report", "_current_generator", "out")
+    __slots__ = ("report", "_current_generator")
 
     priority: int  # used by the config system
     _current_generator: T_process_report | None
 
-    def __init__(self, out: snakeoil_Formatter):
-        """Initialize
-
-        :type out: L{snakeoil.formatters.Formatter}
-        """
-        self.out = out
+    def __init__(self) -> None:
         self._current_generator = None
 
     @immutable.Simple.__allow_mutation_wrapper__
-    def __enter__(self) -> T_report_func:
-        self.out.flush()
+    def __enter__(self) -> ReportFuncShim:
         self._current_generator = self._consume_reports_generator()
         # start the generator
         next(self._current_generator)
-
-        # make a class so there's no intermediate frame relaying for __call__.  Optimization.
-        class reporter:
-            __slots__ = ()
-            report: T_report_func = staticmethod(self._current_generator.send)
-            __call__: T_report_func = staticmethod(self._current_generator.send)
-
-        return reporter()
+        return ReportFuncShim(self._current_generator.send)
 
     @immutable.Simple.__allow_mutation_wrapper__
-    def __exit__(self, *exc_info):
+    def __exit__(self, typ, value, traceback):
         # shut down the generator so it can do any finalization
         self._current_generator.close()  # pyright: ignore[reportOptionalMemberAccess]
         self._current_generator = None
-        self.out.flush()
 
     @abc.abstractmethod
     def _consume_reports_generator(self) -> T_process_report:
@@ -67,7 +66,28 @@ class Reporter(abc.ABC, immutable.Simple):
         """
 
 
-class StrReporter(Reporter):
+class StreamReporter(Reporter):
+    __slots__ = ("out",)
+    out: snakeoil_Formatter
+
+    def __init__(self, out: snakeoil_Formatter):
+        """Initialize
+
+        :type out: L{snakeoil.formatters.Formatter}
+        """
+        super().__init__()
+        self.out = out
+
+    def __enter__(self) -> ReportFuncShim:
+        self.out.flush()
+        return super().__enter__()
+
+    def __exit__(self, typ, value, traceback) -> None:
+        super().__exit__(typ, value, traceback)
+        self.out.flush()
+
+
+class StrReporter(StreamReporter):
     """Simple string reporter, pkgcheck-0.1 behaviour.
 
     Example::
@@ -96,7 +116,7 @@ class StrReporter(Reporter):
             self.out.stream.flush()
 
 
-class FancyReporter(Reporter):
+class FancyReporter(StreamReporter):
     """Colored output grouped by result scope.
 
     Example::
@@ -140,7 +160,7 @@ class FancyReporter(Reporter):
             self.out.stream.flush()
 
 
-class JsonReporter(Reporter):
+class JsonReporter(StreamReporter):
     """Feed of newline-delimited JSON records.
 
     Note that the format is newline-delimited JSON with each line being related
@@ -175,7 +195,7 @@ class JsonReporter(Reporter):
             self.out.stream.flush()
 
 
-class XmlReporter(Reporter):
+class XmlReporter(StreamReporter):
     """Feed of newline-delimited XML reports."""
 
     __slots__ = ()
@@ -185,9 +205,9 @@ class XmlReporter(Reporter):
         self.out.write("<checks>")
         return super().__enter__()
 
-    def __exit__(self, *exc_info):
+    def __exit__(self, typ, value, traceback):
         # finalize/close the generator, *then* close the xml.
-        ret = super().__exit__(*exc_info)
+        ret = super().__exit__(typ, value, traceback)
         self.out.write("</checks>")
         return ret
 
@@ -221,7 +241,7 @@ class XmlReporter(Reporter):
             self.out.write(scope_map.get(result.scope, result_template) % d)
 
 
-class CsvReporter(Reporter):
+class CsvReporter(StreamReporter):
     """Comma-separated value reporter, convenient for shell processing.
 
     Example::
@@ -253,17 +273,17 @@ class CsvReporter(Reporter):
 class _ResultFormatter(Formatter):
     """Custom string formatter that collapses unmatched variables."""
 
-    def get_value(self, key, args, kwds):
+    def get_value(self, key, args, kwargs):
         """Retrieve a given field value, an empty string is returned for unmatched fields."""
         if isinstance(key, str):
             try:
-                return kwds[key]
+                return kwargs[key]
             except KeyError:
                 return ""
         raise base.PkgcheckUserException("FormatReporter: integer indexes are not supported")
 
 
-class FormatReporter(Reporter):
+class FormatReporter(StreamReporter):
     """Custom format string reporter.
 
     This formatter uses custom format string passed using the ``--format``
@@ -296,23 +316,25 @@ class DeserializationError(Exception):
     """Exception occurred while deserializing a data stream."""
 
 
-class JsonStream(Reporter):
+class JsonStream(StreamReporter):
     """Generate a stream of result objects serialized in JSON."""
 
     __slots__ = ()
     priority = -1001
 
     @staticmethod
-    def to_json(obj):
+    def to_json(obj) -> str | dict[str, str]:
         """Serialize results and other objects to JSON."""
         if isinstance(obj, Result):
             d = {"__class__": obj.__class__.__name__}
             d.update(obj._attrs)
             return d
+        # TODO: remove this pathway via using JSONDecoder with registered decoders.
+        # tests for to_json force a cast, so remove that also.
         return str(obj)
 
     @staticmethod
-    def from_iter(iterable):
+    def from_iter(iterable) -> typing.Generator[Result, None, None]:
         """Deserialize results from a given iterable."""
         # avoid circular import issues
         from . import objects
@@ -332,7 +354,7 @@ class JsonStream(Reporter):
             self.out.write(json.dumps(result, default=self.to_json))
 
 
-class FlycheckReporter(Reporter):
+class FlycheckReporter(StreamReporter):
     """Simple line reporter done for easier integration with flycheck [#]_ .
 
     .. [#] https://github.com/flycheck/flycheck
@@ -353,3 +375,37 @@ class FlycheckReporter(Reporter):
             else:
                 lineno = getattr(result, "lineno", 0)
                 self.out.write(f"{file}:{lineno}:{getattr(result, 'level')}:{message}")
+
+
+class CallbackReporter(Reporter):
+    """Reporter that calls back for every result"""
+
+    __slots__ = ("callbacks",)
+    callbacks: list[T_report_func]
+
+    def __init__(self, *callbacks: T_report_func) -> None:
+        self.callbacks = list(callbacks)
+
+    def _consume_reports_generator(self) -> T_process_report:
+        while True:
+            result = yield
+            for callback in self.callbacks:
+                callback(result)
+
+
+class MultiplexingReporter(Reporter):
+    """Reporter that multiplexes results to multiple Reporters"""
+
+    __slots__ = ("reporters",)
+    reporters: list[Reporter]
+
+    def __init__(self, *args: Reporter) -> None:
+        self.reporters = list(args)
+
+    def _consume_reports_generator(self) -> T_process_report:
+        with contextlib.ExitStack() as context:
+            callbacks = [context.enter_context(reporter) for reporter in self.reporters]
+            while True:
+                result = yield
+                for report_func in callbacks:
+                    report_func(result)
