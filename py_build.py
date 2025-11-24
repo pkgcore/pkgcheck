@@ -115,6 +115,11 @@ def create_generated_files():
         write_files(cleanup_files)
         yield
     finally:
+        if os.environ.get("PKGCHECK_DEBUG_SDIST"):
+            print(
+                "WARNING: not wiping cleanup files since PKGCHECK_DEBUG_SDIST is set in the environment"
+            )
+            return
         for path in cleanup_files:
             try:
                 path.unlink()
