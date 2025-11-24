@@ -1,7 +1,6 @@
 import json
 import sys
 import typing
-from functools import partial
 from textwrap import dedent
 
 import pytest
@@ -13,46 +12,46 @@ from pkgcheck.checks import codingstyle, git, metadata, metadata_xml, pkgdir, pr
 
 
 class BaseReporter:
-    reporter_cls = reporters.Reporter
+    reporter_cls: type[reporters.Reporter]
+    add_report_output: typing.ClassVar[str]
+    pkg = FakePkg("dev-libs/foo-0")
 
-    @pytest.fixture(autouse=True)
-    def _setup(self):
-        self.log_warning = profiles.ProfileWarning(Exception("profile warning"))
-        self.log_error = profiles.ProfileError(Exception("profile error"))
-        pkg = FakePkg("dev-libs/foo-0")
-        self.commit_result = git.InvalidCommitMessage("no commit message", commit="8d86269bb4c7")
-        self.category_result = metadata_xml.CatMissingMetadataXml("metadata.xml", pkg=pkg)
-        self.package_result = pkgdir.InvalidPN(("bar", "baz"), pkg=pkg)
-        self.versioned_result = metadata.BadFilename(("0.tar.gz", "foo.tar.gz"), pkg=pkg)
-        self.line_result = codingstyle.ReadonlyVariable("P", line="P=6", lineno=7, pkg=pkg)
-        self.lines_result = codingstyle.EbuildUnquotedVariable("D", lines=(5, 7), pkg=pkg)
+    results: typing.Final = (
+        profiles.ProfileWarning(Exception("profile warning")),
+        profiles.ProfileError(Exception("profile error")),
+        git.InvalidCommitMessage("no commit message", commit="8d86269bb4c7"),
+        metadata_xml.CatMissingMetadataXml("metadata.xml", pkg=pkg),
+        pkgdir.InvalidPN(("bar", "baz"), pkg=pkg),
+        metadata.BadFilename(("0.tar.gz", "foo.tar.gz"), pkg=pkg),
+        codingstyle.ReadonlyVariable("P", line="P=6", lineno=7, pkg=pkg),
+        codingstyle.EbuildUnquotedVariable("D", lines=(5, 7), pkg=pkg),
+    )
 
-    def mk_reporter(self, **kwargs) -> reporters.Reporter:
+    def mk_reporter(self, *args, **kwargs) -> reporters.Reporter:
         out = PlainTextFormatter(sys.stdout)
-        return self.reporter_cls(out, **kwargs)
+        return self.reporter_cls(out, *args, **kwargs)
 
-    add_report_output = None
-
-    def test_add_report(self, capsys):
-        with self.mk_reporter() as reporter:
-            reporter.report(self.commit_result)
-            reporter.report(self.log_warning)
-            reporter.report(self.category_result)
-            reporter.report(self.package_result)
-            reporter.report(self.versioned_result)
-            reporter.report(self.line_result)
-            reporter.report(self.lines_result)
+    def assert_add_report(self, capsys, reporter: reporters.Reporter, expected_out: str) -> None:
+        if reporter is None:
+            reporter = self.mk_reporter()
+        with reporter as report:
+            for result in self.results:
+                report(result)
         out, err = capsys.readouterr()
         assert not err
-        assert out == self.add_report_output
+        assert out == expected_out
+
+    def test_add_report(self, capsys):
+        self.assert_add_report(capsys, self.mk_reporter(), self.add_report_output)
 
 
 class TestStrReporter(BaseReporter):
     reporter_cls = reporters.StrReporter
     add_report_output = dedent(
         """\
-            commit 8d86269bb4c7: no commit message
             profile warning
+            profile error
+            commit 8d86269bb4c7: no commit message
             dev-libs: category is missing metadata.xml
             dev-libs/foo: invalid package names: [ bar, baz ]
             dev-libs/foo-0: bad filenames: [ 0.tar.gz, foo.tar.gz ]
@@ -66,11 +65,12 @@ class TestFancyReporter(BaseReporter):
     reporter_cls = reporters.FancyReporter
     add_report_output = dedent(
         """\
-            commit
-              InvalidCommitMessage: commit 8d86269bb4c7: no commit message
-
             profiles
               ProfileWarning: profile warning
+              ProfileError: profile error
+
+            commit
+              InvalidCommitMessage: commit 8d86269bb4c7: no commit message
 
             dev-libs
               CatMissingMetadataXml: category is missing metadata.xml
@@ -86,10 +86,12 @@ class TestFancyReporter(BaseReporter):
 
 class TestJsonReporter(BaseReporter):
     reporter_cls = reporters.JsonReporter
+
     add_report_output = dedent(
         """\
-            {"_style": {"InvalidCommitMessage": "commit 8d86269bb4c7: no commit message"}}
             {"_warning": {"ProfileWarning": "profile warning"}}
+            {"_error": {"ProfileError": "profile error"}}
+            {"_style": {"InvalidCommitMessage": "commit 8d86269bb4c7: no commit message"}}
             {"dev-libs": {"_error": {"CatMissingMetadataXml": "category is missing metadata.xml"}}}
             {"dev-libs": {"foo": {"_error": {"InvalidPN": "invalid package names: [ bar, baz ]"}}}}
             {"dev-libs": {"foo": {"0": {"_warning": {"BadFilename": "bad filenames: [ 0.tar.gz, foo.tar.gz ]"}}}}}
@@ -104,8 +106,9 @@ class TestXmlReporter(BaseReporter):
     add_report_output = dedent(
         """\
             <checks>
-            <result><class>InvalidCommitMessage</class><msg>commit 8d86269bb4c7: no commit message</msg></result>
             <result><class>ProfileWarning</class><msg>profile warning</msg></result>
+            <result><class>ProfileError</class><msg>profile error</msg></result>
+            <result><class>InvalidCommitMessage</class><msg>commit 8d86269bb4c7: no commit message</msg></result>
             <result><category>dev-libs</category><class>CatMissingMetadataXml</class><msg>category is missing metadata.xml</msg></result>
             <result><category>dev-libs</category><package>foo</package><class>InvalidPN</class><msg>invalid package names: [ bar, baz ]</msg></result>
             <result><category>dev-libs</category><package>foo</package><version>0</version><class>BadFilename</class><msg>bad filenames: [ 0.tar.gz, foo.tar.gz ]</msg></result>
@@ -120,8 +123,9 @@ class TestCsvReporter(BaseReporter):
     reporter_cls = reporters.CsvReporter
     add_report_output = dedent(
         """\
-            ,,,commit 8d86269bb4c7: no commit message
             ,,,profile warning
+            ,,,profile error
+            ,,,commit 8d86269bb4c7: no commit message
             dev-libs,,,category is missing metadata.xml
             dev-libs,foo,,"invalid package names: [ bar, baz ]"
             dev-libs,foo,0,"bad filenames: [ 0.tar.gz, foo.tar.gz ]"
@@ -132,53 +136,56 @@ class TestCsvReporter(BaseReporter):
 
 
 class TestFormatReporter(BaseReporter):
-    reporter_cls = partial(reporters.FormatReporter, "")
+    reporter_cls = reporters.FormatReporter
 
-    def test_add_report(self, capsys):
-        for format_str, expected in (
-            ("r", "r\n" * 7),
+    def mk_reporter(self, format_str: str, *args, **kwargs) -> reporters.FormatReporter:
+        out = PlainTextFormatter(sys.stdout)
+        return self.reporter_cls(format_str, out, *args, **kwargs)
+
+    @pytest.mark.parametrize(
+        ["format_str", "expected"],
+        [
+            ("r", "r\n" * len(BaseReporter.results)),
             ("{category}", "dev-libs\n" * 5),
-            ("{category}/{package}", "/\n/\ndev-libs/\n" + "dev-libs/foo\n" * 4),
+            ("{category}/{package}", "/\n/\n/\ndev-libs/\n" + "dev-libs/foo\n" * 4),
             (
                 "{category}/{package}-{version}",
-                "/-\n/-\ndev-libs/-\ndev-libs/foo-\n" + "dev-libs/foo-0\n" * 3,
+                "/-\n/-\n/-\ndev-libs/-\ndev-libs/foo-\n" + "dev-libs/foo-0\n" * 3,
             ),
-            (
-                "{name}",
-                "InvalidCommitMessage\nProfileWarning\nCatMissingMetadataXml\nInvalidPN\nBadFilename\nReadonlyVariable\nUnquotedVariable\n",
-            ),
+            ("{name}", "\n".join(result.name for result in BaseReporter.results) + "\n"),
             ("{foo}", ""),
-        ):
-            self.reporter_cls = partial(reporters.FormatReporter, format_str)
-            self.add_report_output = expected
-            super().test_add_report(capsys)
+        ],
+    )
+    def test_add_report(self, capsys, format_str: str, expected: str):  # pyright: ignore[reportIncompatibleMethodOverride]
+        self.assert_add_report(capsys, self.mk_reporter(format_str), expected)
 
     def test_unsupported_index(self, capsys):
-        self.reporter_cls = partial(reporters.FormatReporter, "{0}")
-        with self.mk_reporter() as reporter:
+        with self.mk_reporter("{0}") as report:
             with pytest.raises(base.PkgcheckUserException) as excinfo:
-                reporter.report(self.versioned_result)
+                report(self.results[0])
             assert "integer indexes are not supported" in str(excinfo.value)
 
 
 class TestJsonStream(BaseReporter):
-    reporter_cls = reporters.JsonStream
+    reporter_cls: type[reporters.JsonStream] = reporters.JsonStream  # pyright: ignore[reportIncompatibleVariableOverride]
 
-    def test_add_report(self, capsys):
-        with self.mk_reporter() as reporter:
-            for result in (
-                self.log_warning,
-                self.log_error,
-                self.commit_result,
-                self.category_result,
-                self.package_result,
-                self.versioned_result,
-            ):
-                reporter.report(result)
-                out, err = capsys.readouterr()
-                assert not err
-        deserialized_result = next(self.reporter_cls.from_iter([out]))
-        assert str(deserialized_result) == str(result)
+    add_report_output = dedent(
+        """\
+            {"__class__": "ProfileWarning", "msg": "profile warning"}
+            {"__class__": "ProfileError", "msg": "profile error"}
+            {"__class__": "InvalidCommitMessage", "commit": "8d86269bb4c7", "error": "no commit message"}
+            {"__class__": "CatMissingMetadataXml", "category": "dev-libs", "filename": "metadata.xml"}
+            {"__class__": "InvalidPN", "category": "dev-libs", "package": "foo", "ebuilds": ["bar", "baz"]}
+            {"__class__": "BadFilename", "category": "dev-libs", "package": "foo", "version": "0", "filenames": ["0.tar.gz", "foo.tar.gz"]}
+            {"__class__": "ReadonlyVariable", "category": "dev-libs", "package": "foo", "version": "0", "line": "P=6", "lineno": 7, "variable": "P"}
+            {"__class__": "EbuildUnquotedVariable", "category": "dev-libs", "package": "foo", "version": "0", "lines": [5, 7], "variable": "D"}
+            """
+    )
+
+    def test_from_iter(self):
+        assert self.results == tuple(
+            self.reporter_cls.from_iter(x for x in self.add_report_output.split("\n") if x.strip())
+        )
 
     def test_deserialize_error(self):
         # deserializing non-result objects raises exception
@@ -187,7 +194,8 @@ class TestJsonStream(BaseReporter):
             next(self.reporter_cls.from_iter([obj]))
 
         # deserializing mangled JSON result objects raises exception
-        obj = self.reporter_cls.to_json(self.versioned_result)
+        # TODO: remove typing.cast once to_json is refactored to use registered decoders.
+        obj = typing.cast(dict[str, str], self.reporter_cls.to_json(self.results[0]))
         del obj["__class__"]
         json_obj = json.dumps(obj)
         with pytest.raises(reporters.DeserializationError, match="unknown result"):
@@ -198,13 +206,14 @@ class TestFlycheckReporter(BaseReporter):
     reporter_cls = reporters.FlycheckReporter
     add_report_output = dedent(
         """\
-            -.ebuild:0:style:InvalidCommitMessage: commit 8d86269bb4c7: no commit message
             -.ebuild:0:warning:ProfileWarning: profile warning
+            -.ebuild:0:error:ProfileError: profile error
+            -.ebuild:0:style:InvalidCommitMessage: commit 8d86269bb4c7: no commit message
             -.ebuild:0:error:CatMissingMetadataXml: category is missing metadata.xml
             foo-.ebuild:0:error:InvalidPN: invalid package names: [ bar, baz ]
             foo-0.ebuild:0:warning:BadFilename: bad filenames: [ 0.tar.gz, foo.tar.gz ]
             foo-0.ebuild:7:warning:ReadonlyVariable: read-only variable 'P' assigned, line 7: P=6
             foo-0.ebuild:5:warning:UnquotedVariable: unquoted variable D
             foo-0.ebuild:7:warning:UnquotedVariable: unquoted variable D
-        """
+            """
     )
