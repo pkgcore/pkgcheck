@@ -283,7 +283,7 @@ class FormatReporter(Reporter):
 
         while True:
             result = yield
-            attrs = vars(result)
+            attrs = vars(result).copy()
             attrs.update((k, getattr(result, k)) for k in properties)
             s = formatter.format(self.format_str, **attrs)
             # output strings with at least one valid expansion or non-whitespace character
