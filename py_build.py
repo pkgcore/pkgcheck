@@ -45,8 +45,16 @@ def write_const(cleanup_files):
         )
 
 
+def get_objects_path():
+    return Path.cwd() / "src/pkgcheck/_objects.py"
+
+
+def wipe_objects_on_disk():
+    get_objects_path().unlink(missing_ok=True)
+
+
 def write_objects(cleanup_files):
-    cleanup_files.append(path := Path.cwd() / "src/pkgcheck/_objects.py")
+    cleanup_files.append(path := get_objects_path())
     print(f"writing objects to {path}")
 
     with sys_path():
@@ -96,6 +104,9 @@ def write_files(cleanup_files):
 
 @contextmanager
 def create_generated_files():
+    # the objects registry isn't hot reloadable, and it's fragile for wiping
+    # it if it already loaded the _objects_file.  Thus just shoot it first thing.
+    wipe_objects_on_disk()
     cleanup_files = []
     try:
         write_verinfo(cleanup_files)
