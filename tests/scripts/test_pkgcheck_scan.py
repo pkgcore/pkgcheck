@@ -1,21 +1,20 @@
+import contextlib
+import io
 import os
+import pathlib
 import shlex
 import shutil
 import subprocess
-import tempfile
 import textwrap
+import typing
 from collections import defaultdict
+from dataclasses import dataclass
 from functools import partial
 from io import StringIO
 from operator import attrgetter
 from unittest.mock import patch
 
 import pytest
-from pkgcheck import __title__ as project
-from pkgcheck import base
-from pkgcheck import checks as checks_mod
-from pkgcheck import const, objects, reporters, scan
-from pkgcheck.scripts import run
 from pkgcore import const as pkgcore_const
 from pkgcore.ebuild import atom, restricts
 from pkgcore.restrictions import packages
@@ -23,6 +22,12 @@ from snakeoil.contexts import chdir, os_environ
 from snakeoil.fileutils import touch
 from snakeoil.formatters import PlainTextFormatter
 from snakeoil.osutils import pjoin
+
+from pkgcheck import __title__ as project
+from pkgcheck import base, const, objects, reporters, scan
+from pkgcheck import checks as checks_mod
+from pkgcheck.results import Result
+from pkgcheck.scripts import run
 
 from ..misc import Profile
 
@@ -587,63 +592,85 @@ class TestPkgcheckScan:
         assert len(results) == len(results_set)
         return results_set
 
-    def _get_results(self, path: str):
-        """Return the set of result objects from a given json stream file."""
-        try:
-            with (self.repos_data / path).open() as f:
-                return set(reporters.JsonStream.from_iter(f))
-        except FileNotFoundError:
-            return set()
+    @dataclass
+    class _expected_data_result:
+        expected: typing.Iterable[Result]
+        expected_verbose: typing.Iterable[Result]
 
-    def _render_results(self, results, **kwargs):
+    def _load_expected_data(self, path: str) -> _expected_data_result:
+        """Return the set of result objects from a given json stream file."""
+
+        def boilerplate(path, allow_missing: bool) -> list[Result]:
+            try:
+                with path.open() as f:
+                    data = list(reporters.JsonStream.from_iter(f))
+
+                    uniqued = set(data)
+                    duplicates = [
+                        x for x in data if (False, None) == (x in uniqued, uniqued.discard(x))
+                    ]
+                    assert [] == duplicates, f"duplicate results exist in {path!r}"
+
+                    # Remove this after cleaning the scan/fix logic up to not force duplicate
+                    # renders, and instead just work with a result stream directly.
+                    assert self._render_results(data), f"failed rendering results {data!r}"
+                    return data
+
+            except FileNotFoundError:
+                if not allow_missing:
+                    raise
+                return []
+
+        expected_path = self.repos_data / path / "expected.json"
+
+        expected = boilerplate(expected_path, False)
+        assert expected, f"regular results must always exist if the file exists: {expected_path}"
+
+        expected_verbose_path = self.repos_data / path / "expected-verbose.json"
+        expected_verbose = boilerplate(expected_verbose_path, True)
+
+        return self._expected_data_result(expected, expected_verbose=expected_verbose)
+
+    def _render_results(self, results, **kwargs) -> str:
         """Render a given set of result objects into their related string form."""
-        with tempfile.TemporaryFile() as f:
+        with io.BytesIO() as f:
             with reporters.FancyReporter(out=PlainTextFormatter(f), **kwargs) as reporter:
                 for result in sorted(results):
                     reporter.report(result)
-            f.seek(0)
-            output = f.read().decode()
-            return output
+            return f.getvalue().decode()
 
     @pytest.mark.parametrize("repo", repos)
     def test_scan_repo(self, repo, tmp_path_factory):
         """Run pkgcheck against test pkgs in bundled repo, verifying result output."""
-        results = set()
-        verbose_results = set()
+        expected_results = set()
         scan_results = self._scan_results(repo, tmp_path_factory.mktemp("scan"), verbosity=0)
+
+        expected_verbose_results = set()
         scan_verbose_results = self._scan_results(repo, tmp_path_factory.mktemp("ver"), verbosity=1)
+
         for check, keywords in self._checks[repo].items():
             for keyword in keywords:
-                # verify the expected results were seen during the repo scans
-                expected_results = self._get_results(f"{repo}/{check}/{keyword}/expected.json")
-                assert expected_results, "regular results must always exist"
-                assert self._render_results(expected_results), "failed rendering results"
-                results.update(expected_results)
+                data = self._load_expected_data(f"{repo}/{check}/{keyword}")
+                expected_results.update(data.expected)
 
-                # when expected verbose results exist use them, otherwise fallback to using the regular ones
-                expected_verbose_results = self._get_results(
-                    f"{repo}/{check}/{keyword}/expected-verbose.json"
-                )
-                if expected_verbose_results:
-                    assert self._render_results(expected_verbose_results), (
-                        "failed rendering verbose results"
-                    )
-                    verbose_results.update(expected_verbose_results)
+                if data.expected_verbose:
+                    expected_verbose_results.update(data.expected_verbose)
                 else:
-                    verbose_results.update(expected_results)
+                    expected_verbose_results.update(data.expected)
 
-        if results != scan_results:
-            missing = self._render_results(results - scan_results)
-            unknown = self._render_results(scan_results - results)
+        if expected_results != scan_results:
+            missing = self._render_results(expected_results - scan_results)
+            unknown = self._render_results(scan_results - expected_results)
             error = ["unmatched repo scan results:\n\n"]
             if missing:
                 error.append(f"{repo} repo missing expected results:\n{missing}")
             if unknown:
                 error.append(f"{repo} repo unknown results:\n{unknown}")
             pytest.fail("\n".join(error), pytrace=False)
-        if verbose_results != scan_verbose_results:
-            missing = self._render_results(verbose_results - scan_verbose_results)
-            unknown = self._render_results(scan_verbose_results - verbose_results)
+
+        if expected_verbose_results != scan_verbose_results:
+            missing = self._render_results(expected_verbose_results - scan_verbose_results)
+            unknown = self._render_results(scan_verbose_results - expected_verbose_results)
             error = ["unmatched verbose repo scan results:\n\n"]
             if missing:
                 error.append(f"{repo} repo missing expected results:\n{missing}")

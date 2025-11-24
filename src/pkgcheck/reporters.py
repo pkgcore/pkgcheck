@@ -345,8 +345,8 @@ class JsonStream(StreamReporter):
                 yield cls._create(**data)
         except (json.decoder.JSONDecodeError, UnicodeDecodeError, DeserializationError) as e:
             raise DeserializationError("failed loading") from e
-        except (KeyError, InvalidResult):
-            raise DeserializationError("unknown result")
+        except (KeyError, InvalidResult) as e:
+            raise DeserializationError("unknown result") from e
 
     def _consume_reports_generator(self) -> T_process_report:
         while True:
