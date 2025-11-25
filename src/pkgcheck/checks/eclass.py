@@ -129,6 +129,28 @@ class ProvidedEclassInherit(results.LineResult, results.Style):
         return f"line {self.lineno}: redundant eclass inherit {self.line!r}, provided by {self.provider!r}"
 
 
+class ShadowedEclassPhase(results.VersionResult, results.Style):
+    """Ebuild does not define a phase when inheriting multiple eclasses
+    exporting that phase.
+
+    When inheriting multiple eclasses exporting the same phase, a custom
+    phase must usually be defined in the ebuild to call the phase exported
+    from each eclass.
+
+    Exceptions exist where the functionality isn't needed, but it should
+    be a deliberate choice, not an accidental omission.
+    """
+
+    def __init__(self, phase, providers, **kwargs):
+        super().__init__(**kwargs)
+        self.phase = phase
+        self.providers = tuple(providers)
+
+    @property
+    def desc(self):
+        return f"missing custom phase for {self.phase!r}, provided by eclasses: {', '.join(self.providers)}"
+
+
 class EclassUsageCheck(Check):
     """Scan packages for various eclass-related issues."""
 
@@ -142,6 +164,7 @@ class EclassUsageCheck(Check):
             EclassUserVariableUsage,
             MisplacedEclassVar,
             ProvidedEclassInherit,
+            ShadowedEclassPhase,
         }
     )
     required_addons = (addons.eclass.EclassAddon,)
@@ -254,6 +277,59 @@ class EclassUsageCheck(Check):
         for provided, (eclass, lineno) in provided_eclasses.items():
             yield ProvidedEclassInherit(eclass, pkg=pkg, line=provided, lineno=lineno)
 
+    def check_exported_eclass_phase(
+        self, pkg: bash.ParseTree, inherits: list[tuple[list[str], int]]
+    ):
+        """Check for eclasses exporting the same phase where the ebuild does not
+        call such phases manually."""
+        latest_eapi = EAPI.known_eapis[sorted(EAPI.known_eapis)[-1]]
+        # all known build phases, e.g. src_configure
+        known_phases = list(latest_eapi.phases_rev)
+        exported_phases = {phase: [] for phase in known_phases}
+
+        # Create a dict of known phases => eclasses exporting them:
+        # we're interested in the cases where the RHS list has > 1 element.
+        for eclasses, _ in inherits:
+            for eclass in eclasses:
+                for func in self.eclass_cache[eclass].functions:
+                    phase = func.name.removeprefix(f"{eclass}_")
+                    if phase in known_phases:
+                        exported_phases[phase].append(eclass)
+
+        if not exported_phases.keys():
+            return
+
+        defined_phases = []
+        for node in bash.func_query.captures(pkg.tree.root_node).get("func", ()):
+            func_name = pkg.node_str(node.child_by_field_name("name"))
+            if func_name in known_phases:
+                defined_phases.append(func_name)
+
+        # XXX: Some eclasses vary their API based on the EAPI, usually to
+        # 'unexport' a phase. self.eclass_cache is generated once per eclass,
+        # not (eclass, EAPI), so it can't handle this. Ditto phases which are only
+        # exported if a variable is set. Blacklist such eclasses here as it
+        # doesn't happen often.
+        #
+        # We could maybe make this more finely-grained for phases we know
+        # are conditionally exported if this list is impacting coverage
+        # severely.
+        blacklisted_eclasses = ["pypi", "vala", "xdg"]
+        exported_phases = {
+            phase: set(eclass) - set(blacklisted_eclasses)
+            for phase, eclass in exported_phases.items()
+        }
+
+        # Strip out phases we already define (even if inside of those, we don't
+        # actually call exported phases from all eclasses inherited). Assume that
+        # a custom phase in the ebuild is intentionally omitting them.
+        missing_custom_phases = set(
+            phase for phase, eclass in exported_phases.items() if len(eclass) > 1
+        ) - set(defined_phases)
+
+        for missing in missing_custom_phases:
+            yield ShadowedEclassPhase(missing, sorted(exported_phases[missing]), pkg=pkg)
+
     def feed(self, pkg):
         if pkg.inherit:
             inherited: set[str] = set()
@@ -283,6 +359,7 @@ class EclassUsageCheck(Check):
             # verify @DEPRECATED variables or functions
             yield from self.check_deprecated_variables(pkg, inherits)
             yield from self.check_deprecated_functions(pkg, inherits)
+            yield from self.check_exported_eclass_phase(pkg, inherits)
 
             for eclass in pkg.inherit.intersection(self.deprecated_eclasses):
                 replacement = self.deprecated_eclasses[eclass]
