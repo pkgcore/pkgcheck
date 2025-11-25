@@ -331,41 +331,43 @@ class EclassUsageCheck(Check):
             yield ShadowedEclassPhase(missing, sorted(exported_phases[missing]), pkg=pkg)
 
     def feed(self, pkg):
-        if pkg.inherit:
-            inherited: set[str] = set()
-            inherits: list[tuple[list[str], int]] = []
-            for node in bash.cmd_query.captures(pkg.tree.root_node).get("call", ()):
-                name = pkg.node_str(node.child_by_field_name("name"))
-                if name == "inherit":
-                    call = pkg.node_str(node)
-                    # filter out line continuations and conditional inherits
-                    if eclasses := [x for x in call.split()[1:] if x in pkg.inherit]:
-                        lineno, _colno = node.start_point
-                        if not inherited and eclasses[0] == pkg.inherit[0]:
-                            inherits.append((eclasses, lineno))
+        if not pkg.inherit:
+            return
 
-                        for eclass in eclasses:
-                            if eclass not in inherited:
-                                inherited.add(eclass)
-                            else:
-                                yield DuplicateEclassInherit(
-                                    eclass, line=call, lineno=lineno + 1, pkg=pkg
-                                )
+        inherited: set[str] = set()
+        inherits: list[tuple[list[str], int]] = []
+        for node in bash.cmd_query.captures(pkg.tree.root_node).get("call", ()):
+            name = pkg.node_str(node.child_by_field_name("name"))
+            if name == "inherit":
+                call = pkg.node_str(node)
+                # filter out line continuations and conditional inherits
+                if eclasses := [x for x in call.split()[1:] if x in pkg.inherit]:
+                    lineno, _colno = node.start_point
+                    if not inherited and eclasses[0] == pkg.inherit[0]:
+                        inherits.append((eclasses, lineno))
 
-            yield from self.check_provided_eclasses(pkg, inherits)
-            yield from self.check_user_variables(pkg, inherits)
-            # verify @PRE_INHERIT variable placement
-            yield from self.check_pre_inherits(pkg, inherits)
-            # verify @DEPRECATED variables or functions
-            yield from self.check_deprecated_variables(pkg, inherits)
-            yield from self.check_deprecated_functions(pkg, inherits)
-            yield from self.check_exported_eclass_phase(pkg, inherits)
+                    for eclass in eclasses:
+                        if eclass not in inherited:
+                            inherited.add(eclass)
+                        else:
+                            yield DuplicateEclassInherit(
+                                eclass, line=call, lineno=lineno + 1, pkg=pkg
+                            )
 
-            for eclass in pkg.inherit.intersection(self.deprecated_eclasses):
-                replacement = self.deprecated_eclasses[eclass]
-                if not isinstance(replacement, str):
-                    replacement = None
-                yield DeprecatedEclass(eclass, replacement, pkg=pkg)
+        yield from self.check_provided_eclasses(pkg, inherits)
+        yield from self.check_user_variables(pkg, inherits)
+        # verify @PRE_INHERIT variable placement
+        yield from self.check_pre_inherits(pkg, inherits)
+        # verify @DEPRECATED variables or functions
+        yield from self.check_deprecated_variables(pkg, inherits)
+        yield from self.check_deprecated_functions(pkg, inherits)
+        yield from self.check_exported_eclass_phase(pkg, inherits)
+
+        for eclass in pkg.inherit.intersection(self.deprecated_eclasses):
+            replacement = self.deprecated_eclasses[eclass]
+            if not isinstance(replacement, str):
+                replacement = None
+            yield DeprecatedEclass(eclass, replacement, pkg=pkg)
 
 
 class EclassVariableScope(VariableScope, results.EclassResult):
