@@ -14,10 +14,10 @@ from . import const
 
 
 class Tool(commandline.Tool):
-    def main(self):
+    def main(self, *args, **kwargs):
         # suppress all pkgcore log messages
         logging.getLogger("pkgcore").setLevel(100)
-        return super().main()
+        return super().main(*args, **kwargs)
 
 
 class ConfigParser(configparser.ConfigParser):
