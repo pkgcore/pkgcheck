@@ -1,0 +1,1 @@
+{"__class__": "ShadowedEclassPhase", "category": "EclassUsageCheck", "package": "ShadowedEclassPhase", "version": "0", "phase": "src_prepare", "providers": ["another-src_prepare", "export-funcs-before-inherit"]}
