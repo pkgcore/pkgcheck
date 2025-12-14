@@ -50,7 +50,7 @@ scan.add_argument(
     metavar="TARGET",
     nargs="*",
     action=arghparse.ParseNonblockingStdin,
-    help="optional targets",
+    help="if not given, scan the repo.  If given, limit scans to pkgs matching extended atom syntax.  If no packaages match, no scans are ran",
 )
 
 main_options = scan.add_argument_group("main options")
