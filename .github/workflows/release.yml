@@ -24,6 +24,9 @@ jobs:
       continue-on-error: ${{ github.ref_type == 'branch' && github.ref_name != 'release-test-full' }}
       uses: pkgcore/gh-actions/reject-python-vcs-deps@main
 
+    - name: Install bash 5.3
+      uses: pkgcore/gh-actions/bash-5.3@main
+
     - name: Set up Python 3.13
       uses: actions/setup-python@v5
       with:

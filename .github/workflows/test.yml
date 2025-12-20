@@ -51,6 +51,9 @@ jobs:
       with:
         artifact-id: ${{ inputs.release-artifact-id }}
 
+    - name: Install bash 5.3
+      uses: pkgcore/gh-actions/bash-5.3@main
+
     # experimental targets generally lack lxml wheels
     - name: Install libxml2 and libxslt development packages
       if: ${{ matrix.experimental && matrix.os != 'macos-latest' }}
