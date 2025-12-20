@@ -57,7 +57,6 @@ test = [
 ]
 doc = [
 	"sphinx",
-	"snakeoil~=0.10.11",
 ]
 network = [
 	"requests",
