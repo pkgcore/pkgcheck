@@ -51,7 +51,7 @@ _pkgcheck() {
     done
 
     if (( i == COMP_CWORD )); then
-        COMPREPLY+=($(compgen -W "${subcommands}" -- "${cur}"))
+        COMPREPLY+=($(compgen -W "${subcommands[*]}" -- "${cur}"))
         return
     fi
 
