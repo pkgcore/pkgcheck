@@ -128,12 +128,17 @@ _pkgcheck() {
                 --cache-dir
                 --exit
 
+                --stable-only
+                --glsa-dir
+                --stabletime
+
                 --net
                 -C --checksets
                 -s --scopes
                 -c --checks
                 -k --keywords
                 --timeout
+                --user-agent
 
                 -a --arches
 
@@ -142,10 +147,10 @@ _pkgcheck() {
             )
 
             case ${prev} in
-                -[jt] | --jobs | --tasks)
+                -[jt] | --jobs | --tasks | --timeout | --user-agent | --stabletime)
                     COMPREPLY=()
                     ;;
-                --cache-dir)
+                --cache-dir | --glsa-dir)
 			        _filedir -d
                     ;;
                 -r | --repo)
