@@ -817,6 +817,10 @@ class InheritsCheck(Check):
     )
     required_addons = (addons.eclass.EclassAddon,)
 
+    # branding.eclass can be used purely for variables recognised by external
+    # build tools rather than the ebuild itself.
+    unused_whitelist = frozenset({"branding"})
+
     def __init__(self, *args, eclass_addon):
         super().__init__(*args)
         self.eclass_cache = eclass_addon.eclasses
@@ -961,7 +965,11 @@ class InheritsCheck(Check):
                 )
                 if exported_eclass_keys.intersection(self.unused_eclass_skiplist):
                     unused.discard(eclass)
-                elif not self.eclass_cache[eclass].exported_function_names and exported_eclass_keys:
+                elif (
+                    not self.eclass_cache[eclass].exported_function_names
+                    and exported_eclass_keys
+                    or eclass in self.unused_whitelist
+                ):
                     # ignore eclasses that export ebuild metadata (e.g.
                     # SRC_URI, S, ...) and no functions
                     unused.discard(eclass)
