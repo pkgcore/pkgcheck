@@ -7,8 +7,8 @@ requires = [
 	"pathspec",
 	"tree-sitter~=0.25.0",
 	"tree-sitter-bash~=0.23.1",
-	"snakeoil@git+https://github.com/pkgcore/snakeoil.git#master",
-	"pkgcore@git+https://github.com/pkgcore/pkgcore.git#master",
+	"snakeoil~=0.11.0",
+	"pkgcore~=0.12.31",
 ]
 build-backend = "py_build"
 backend-path = ["."]
@@ -45,8 +45,8 @@ dependencies = [
 	"pathspec",
 	"tree-sitter~=0.25.0",
 	"tree-sitter-bash~=0.23.1",
-	"snakeoil@git+https://github.com/pkgcore/snakeoil.git#master",
-	"pkgcore@git+https://github.com/pkgcore/pkgcore.git#master",
+	"snakeoil~=0.11.0",
+	"pkgcore~=0.12.31",
 ]
 
 [project.optional-dependencies]
