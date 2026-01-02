@@ -9,6 +9,7 @@ import subprocess
 import textwrap
 import typing
 from collections import defaultdict
+from contextlib import chdir
 from dataclasses import dataclass
 from functools import partial
 from io import StringIO
@@ -20,7 +21,7 @@ import pytest
 from pkgcore import const as pkgcore_const
 from pkgcore.ebuild import atom, restricts
 from pkgcore.restrictions import packages
-from snakeoil.contexts import chdir, os_environ
+from snakeoil.contexts import os_environ
 from snakeoil.fileutils import touch
 from snakeoil.formatters import PlainTextFormatter
 
