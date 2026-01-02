@@ -126,6 +126,10 @@ jobs:
     - name: Run linting tools
       run: pylint --exit-zero src/pkgcheck
 
+    - uses: astral-sh/ruff-action@v3
+      with:
+        args: "check --diff"
+
   format:
     runs-on: ubuntu-latest
     if: inputs.disable-format-check == ''

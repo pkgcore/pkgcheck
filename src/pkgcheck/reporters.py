@@ -177,7 +177,9 @@ class JsonReporter(StreamReporter):
 
     def _consume_reports_generator(self) -> T_process_report:
         # arbitrarily nested defaultdicts
-        json_dict = lambda: defaultdict(json_dict)
+        def json_dict():
+            return defaultdict(json_dict)
+
         # scope to data conversion mapping
         scope_map = {
             base.version_scope: lambda data, r: data[r.category][r.package][r.version],

@@ -388,10 +388,10 @@ class PyPIAttestationAvailableCheck(NetworkCheck):
         result = None
         try:
             self.session.head(url, allow_redirects=False)
-        except RequestError as e:
+        except RequestError:
             pass
         except SSLError as e:
-            result = SSLCertificateError(attr, url, str(e), pkg=pkg)
+            result = SSLCertificateError("SRC_URI", url, str(e), pkg=pkg)
         else:
             result = PyPIAttestationAvailable(filename, pkg=pkg)
         return result

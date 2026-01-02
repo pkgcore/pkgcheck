@@ -282,8 +282,10 @@ class KeywordArgs(arghparse.CommaSeparatedNegations):
     """Filter enabled keywords by selected keywords."""
 
     def __call__(self, parser, namespace, values, option_string=None):
+        def replace_aliases(x):
+            return objects.KEYWORDS.aliases.get(x, [x])
+
         disabled, enabled = self.parse_values(values)
-        replace_aliases = lambda x: objects.KEYWORDS.aliases.get(x, [x])
 
         # expand keyword aliases to keyword lists
         disabled = list(chain.from_iterable(map(replace_aliases, disabled)))

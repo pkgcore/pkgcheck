@@ -604,7 +604,7 @@ class TestPkgcheckScan:
 
         custom_handler = None
         try:
-            with (custom_handler_path := base / "handler.py").open() as f:
+            with (custom_handler_path := base / "handler.py").open():
                 # We can't import since it's not a valid python directory layout, nor do
                 # want to pollute the namespace.
                 module = importlib.machinery.SourceFileLoader(

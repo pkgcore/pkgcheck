@@ -408,26 +408,26 @@ class TestSourcingCheck(misc.ReportTestCase, misc.Tmpdir):
             self.assertNoReport(check, self.mk_pkg(eapi=eapi_str))
 
     def test_unknown_eapis(self):
-        for eapi in ("blah", "9999"):
+        for eapi_val in ("blah", "9999"):
             check = self.mk_check()
             pkg_path = pjoin(self.repo.location, "dev-util", "foo")
             os.makedirs(pkg_path)
             with open(pjoin(pkg_path, "foo-0.ebuild"), "w") as f:
-                f.write(f"EAPI={eapi}\n")
+                f.write(f"EAPI={eapi_val}\n")
             r = self.assertReport(check, self.repo)
             assert isinstance(r, metadata.InvalidEapi)
-            assert f"EAPI '{eapi}' is not supported" in str(r)
+            assert f"EAPI '{eapi_val}' is not supported" in str(r)
 
     def test_invalid_eapis(self):
-        for eapi in ("invalid!", "${EAPI}"):
+        for eapi_val in ("invalid!", "${EAPI}"):
             check = self.mk_check()
             pkg_path = pjoin(self.repo.location, "dev-util", "foo")
             os.makedirs(pkg_path)
             with open(pjoin(pkg_path, "foo-0.ebuild"), "w") as f:
-                f.write(f"EAPI={eapi}\n")
+                f.write(f"EAPI={eapi_val}\n")
             r = self.assertReport(check, self.repo)
             assert isinstance(r, metadata.InvalidEapi)
-            assert f"invalid EAPI '{eapi}'" in str(r)
+            assert f"invalid EAPI '{eapi_val}'" in str(r)
 
     def test_sourcing_error(self):
         check = self.mk_check()
@@ -619,7 +619,6 @@ def use_based():
         def mk_check(self, *args, options=None, **kwargs):
             options = options if options is not None else {}
             options = self.get_options(**options)
-            profiles = [misc.FakeProfile(iuse_effective=["x86"])]
             use_addon = addons.UseAddon(options)
             check = self.check_kls(options, *args, use_addon=use_addon, **kwargs)
             return check
@@ -1378,5 +1377,5 @@ class TestMissingUnpackerDepCheck(use_based(), misc.ReportTestCase):
             self.mk_check(), self.mk_pkg([".zip", ".7z"], DEPEND="app-arch/unzip")
         )
         assert isinstance(r, metadata.MissingUnpackerDep)
-        assert r.filenames == (f"diffball-2.7.1.7z",)
+        assert r.filenames == ("diffball-2.7.1.7z",)
         assert r.unpackers == ("app-arch/7zip",)
