@@ -2,10 +2,11 @@ from functools import partial
 from unittest.mock import patch
 
 import pytest
+from pkgcore.ebuild.cpv import VersionedCPV
+
 from pkgcheck.checks.metadata import InvalidSlot
 from pkgcheck.reporters import JsonStream
 from pkgcheck.scripts import run
-from pkgcore.ebuild.cpv import VersionedCPV
 
 
 class TestPkgcheckCi:

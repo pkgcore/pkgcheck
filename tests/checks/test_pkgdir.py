@@ -2,14 +2,14 @@ import os
 from datetime import datetime, timedelta
 
 import pytest
-from pkgcheck import addons
-from pkgcheck.checks import SkipCheck, pkgdir
 from pkgcore.ebuild.cpv import UnversionedCPV
 from pkgcore.test.misc import FakeRepo
-from snakeoil import fileutils
 from snakeoil.cli import arghparse
 from snakeoil.fileutils import touch
 from snakeoil.osutils import ensure_dirs, pjoin
+
+from pkgcheck import addons
+from pkgcheck.checks import SkipCheck, pkgdir
 
 from .. import misc
 

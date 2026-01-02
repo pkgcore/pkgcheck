@@ -8,11 +8,12 @@ from operator import attrgetter
 from unittest.mock import patch
 
 import pytest
+from snakeoil.formatters import PlainTextFormatter
+
 from pkgcheck import objects, reporters, scan
 from pkgcheck.checks import NetworkCheck
 from pkgcheck.checks.network import DeadUrl, FetchablesUrlCheck, HomepageUrlCheck
 from pkgcheck.packages import RawCPV
-from snakeoil.formatters import PlainTextFormatter
 
 # skip module tests if requests isn't available
 requests = pytest.importorskip("requests")

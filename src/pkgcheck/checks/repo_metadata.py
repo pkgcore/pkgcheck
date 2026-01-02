@@ -11,7 +11,6 @@ from snakeoil.strings import pluralism
 from .. import addons, base, results, sources
 from . import Check, MirrorsCheck, RepoCheck
 
-
 DEPRECATED_HASHES = frozenset({"md5", "rmd160", "sha1", "whirlpool"})
 
 

@@ -2,10 +2,11 @@ import os
 from datetime import datetime, timedelta
 
 import pytest
-from pkgcheck.checks import SkipCheck
-from pkgcheck.checks.stablereq import StableRequest, StableRequestCheck
 from pkgcore.ebuild.cpv import VersionedCPV
 from snakeoil.osutils import pjoin
+
+from pkgcheck.checks import SkipCheck
+from pkgcheck.checks.stablereq import StableRequest, StableRequestCheck
 
 from ..misc import ReportTestCase, init_check
 

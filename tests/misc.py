@@ -5,9 +5,6 @@ from dataclasses import dataclass
 from typing import List
 
 import pytest
-from pkgcheck import addons, base, sources
-from pkgcheck.addons.caches import CachedAddon, CacheDisabled
-from pkgcheck.checks import AsyncCheck, SkipCheck
 from pkgcore.ebuild import domain, repo_objs
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import VersionedCPV
@@ -21,6 +18,10 @@ from snakeoil.cli import arghparse
 from snakeoil.data_source import text_data_source
 from snakeoil.osutils import pjoin
 from snakeoil.sequences import split_negations
+
+from pkgcheck import addons, base, sources
+from pkgcheck.addons.caches import CachedAddon, CacheDisabled
+from pkgcheck.checks import AsyncCheck, SkipCheck
 
 
 @dataclass

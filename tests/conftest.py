@@ -6,16 +6,17 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from pkgcheck.addons.git import GitConfig
-from pkgcheck.cli import Tool
-from pkgcheck.reporters import StrReporter
-from pkgcheck.results import Result
-from pkgcheck.scripts import pkgcheck
 from pkgcore import const as pkgcore_const
 from snakeoil.cli.arghparse import ArgumentParser
 from snakeoil.contexts import os_environ
 from snakeoil.formatters import PlainTextFormatter
 from snakeoil.osutils import pjoin
+
+from pkgcheck.addons.git import GitConfig
+from pkgcheck.cli import Tool
+from pkgcheck.reporters import StrReporter
+from pkgcheck.results import Result
+from pkgcheck.scripts import pkgcheck
 
 pytest_plugins = ["pkgcore"]
 REPO_ROOT = Path(__file__).parent.parent

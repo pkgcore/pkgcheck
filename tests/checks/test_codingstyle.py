@@ -1,9 +1,10 @@
 from itertools import chain
 
 import pytest
+from pkgcore.ebuild.eapi import EAPI
+
 from pkgcheck.checks import codingstyle
 from pkgcheck.sources import _ParsedPkg
-from pkgcore.ebuild.eapi import EAPI
 
 from .. import misc
 

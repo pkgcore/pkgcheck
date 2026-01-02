@@ -1,10 +1,11 @@
 import os
 
-from pkgcheck.checks import repo_metadata
 from pkgcore.ebuild.repository import UnconfiguredTree
 from pkgcore.test.misc import FakePkg
 from snakeoil.cli import arghparse
 from snakeoil.osutils import pjoin
+
+from pkgcheck.checks import repo_metadata
 
 from .. import misc
 

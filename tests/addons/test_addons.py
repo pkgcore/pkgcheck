@@ -2,10 +2,11 @@ import os
 from unittest.mock import patch
 
 import pytest
-from pkgcheck import addons
-from pkgcheck.base import PkgcheckUserException
 from pkgcore.restrictions import packages
 from snakeoil.osutils import pjoin
+
+from pkgcheck import addons
+from pkgcheck.base import PkgcheckUserException
 
 from ..misc import FakePkg, FakeProfile, Profile
 

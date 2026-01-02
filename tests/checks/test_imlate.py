@@ -1,5 +1,6 @@
-from pkgcheck.checks import imlate
 from snakeoil.cli import arghparse
+
+from pkgcheck.checks import imlate
 
 from .. import misc
 

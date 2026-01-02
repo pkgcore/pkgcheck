@@ -4,10 +4,6 @@ from functools import partial
 from unittest.mock import Mock, patch
 
 import pytest
-from pkgcheck import base
-from pkgcheck.addons import git, init_addon
-from pkgcheck.base import PkgcheckUserException
-from pkgcheck.addons.caches import CacheDisabled
 from pkgcore.ebuild.atom import MalformedAtom
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.restrictions import packages
@@ -16,6 +12,11 @@ from snakeoil.contexts import os_environ
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
 from snakeoil.process import CommandNotFound, find_binary
+
+from pkgcheck import base
+from pkgcheck.addons import git, init_addon
+from pkgcheck.addons.caches import CacheDisabled
+from pkgcheck.base import PkgcheckUserException
 
 # skip testing module if git isn't installed
 try:

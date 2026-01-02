@@ -1,8 +1,9 @@
 import textwrap
 
 import pytest
-from pkgcheck import cli
 from snakeoil.cli import arghparse
+
+from pkgcheck import cli
 
 
 class TestConfigFileParser:

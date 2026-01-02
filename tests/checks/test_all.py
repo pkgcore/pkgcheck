@@ -1,4 +1,5 @@
 import pytest
+
 from pkgcheck import checks as checks_mod
 from pkgcheck import objects, results
 

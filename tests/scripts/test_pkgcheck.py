@@ -1,8 +1,8 @@
-import importlib
 from functools import partial
 from unittest.mock import patch
 
 import pytest
+
 from pkgcheck import __title__ as project
 from pkgcheck.scripts import run
 

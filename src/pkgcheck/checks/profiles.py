@@ -1,8 +1,8 @@
 """Various profile-related checks."""
 
-from datetime import datetime
 import os
 from collections import defaultdict
+from datetime import datetime
 from typing import Iterable
 
 from pkgcore.ebuild import misc

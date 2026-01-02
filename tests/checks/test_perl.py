@@ -1,8 +1,9 @@
 from unittest.mock import patch
 
 import pytest
-from pkgcheck.checks import SkipCheck, perl
 from snakeoil.cli import arghparse
+
+from pkgcheck.checks import SkipCheck, perl
 
 from .. import misc
 

@@ -8,7 +8,8 @@ from functools import partial
 from operator import attrgetter
 
 from pkgcore.ebuild import restricts
-from pkgcore.ebuild.atom import atom as atom_cls, transitive_use_atom
+from pkgcore.ebuild.atom import atom as atom_cls
+from pkgcore.ebuild.atom import transitive_use_atom
 from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.fetch import fetchable, unknown_mirror

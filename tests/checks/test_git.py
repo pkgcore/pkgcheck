@@ -5,14 +5,16 @@ from datetime import datetime, timedelta
 from unittest.mock import patch
 
 import pytest
-from pkgcheck.base import PkgcheckUserException
-from pkgcheck.checks import git as git_mod
-from pkgcheck.addons.git import GitCommit
-from pkgcore.ebuild.cpv import VersionedCPV as CPV, UnversionedCPV as CP
+from pkgcore.ebuild.cpv import UnversionedCPV as CP
+from pkgcore.ebuild.cpv import VersionedCPV as CPV
 from pkgcore.test.misc import FakeRepo
 from snakeoil.cli import arghparse
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
+
+from pkgcheck.addons.git import GitCommit
+from pkgcheck.base import PkgcheckUserException
+from pkgcheck.checks import git as git_mod
 
 from ..misc import ReportTestCase, init_check
 

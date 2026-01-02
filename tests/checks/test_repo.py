@@ -1,13 +1,14 @@
 import os
 from unittest import mock
 
-from pkgcheck import addons
-from pkgcheck.checks import repo
 from pkgcore.ebuild import atom
 from pkgcore.test.misc import FakeRepo
 from snakeoil.cli import arghparse
 from snakeoil.fileutils import touch
 from snakeoil.osutils import ensure_dirs, pjoin
+
+from pkgcheck import addons
+from pkgcheck.checks import repo
 
 from .. import misc
 

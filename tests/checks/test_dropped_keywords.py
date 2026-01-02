@@ -1,5 +1,6 @@
-from pkgcheck.checks import dropped_keywords
 from snakeoil.cli import arghparse
+
+from pkgcheck.checks import dropped_keywords
 
 from .. import misc
 

@@ -1,5 +1,6 @@
-from pkgcheck.checks import cleanup
 from snakeoil.cli import arghparse
+
+from pkgcheck.checks import cleanup
 
 from .. import misc
 

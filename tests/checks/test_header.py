@@ -1,5 +1,6 @@
-from pkgcheck.checks import header
 from snakeoil.cli import arghparse
+
+from pkgcheck.checks import header
 
 from .. import misc
 

@@ -8,8 +8,7 @@ from snakeoil.mappings import ImmutableDict
 from snakeoil.sequences import stable_unique
 from snakeoil.strings import pluralism
 
-from .. import addons, bash
-from .. import results, sources
+from .. import addons, bash, results, sources
 from . import Check
 
 PREFIX_VARIABLES = ("EROOT", "ED", "EPREFIX")

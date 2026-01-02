@@ -7,13 +7,14 @@ from itertools import combinations
 from operator import attrgetter
 
 import pytest
-from pkgcheck import addons
-from pkgcheck.checks import metadata
 from pkgcore.ebuild import eapi, repo_objs, repository
 from pkgcore.ebuild.cpv import VersionedCPV as CPV
 from pkgcore.test.misc import FakePkg, FakeRepo
 from snakeoil.cli import arghparse
 from snakeoil.osutils import pjoin
+
+from pkgcheck import addons
+from pkgcheck.checks import metadata
 
 from .. import misc
 

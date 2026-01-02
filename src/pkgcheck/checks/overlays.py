@@ -2,7 +2,7 @@ from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
 from .. import results, sources
-from . import Check, MirrorsCheck, OptionalCheck, OverlayRepoCheck, RepoCheck
+from . import MirrorsCheck, OptionalCheck, OverlayRepoCheck, RepoCheck
 
 
 class UnusedInMastersLicenses(results.VersionResult, results.Warning):

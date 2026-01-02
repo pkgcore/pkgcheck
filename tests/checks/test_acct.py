@@ -1,9 +1,10 @@
 import textwrap
 
 import pytest
-from pkgcheck.checks import acct, SkipCheck
 from pkgcore.test.misc import FakeRepo
 from snakeoil.cli import arghparse
+
+from pkgcheck.checks import SkipCheck, acct
 
 from .. import misc
 

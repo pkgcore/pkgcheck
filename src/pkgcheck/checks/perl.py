@@ -3,7 +3,6 @@ import re
 import subprocess
 
 from pkgcore.ebuild.atom import atom as atom_cls
-from pkgcore.restrictions import packages, values
 from pkgcore.package.errors import MetadataException
 from snakeoil.osutils import pjoin
 from snakeoil.sequences import iflatten_instance

@@ -4,12 +4,13 @@ from time import sleep
 from unittest.mock import patch
 
 import pytest
-from pkgcheck.addons import init_addon
-from pkgcheck.addons.eclass import Eclass, EclassAddon
-from pkgcheck.base import PkgcheckUserException
-from pkgcheck.addons.caches import CacheDisabled
 from snakeoil.fileutils import touch
 from snakeoil.osutils import pjoin
+
+from pkgcheck.addons import init_addon
+from pkgcheck.addons.caches import CacheDisabled
+from pkgcheck.addons.eclass import Eclass, EclassAddon
+from pkgcheck.base import PkgcheckUserException
 
 
 class TestEclass:

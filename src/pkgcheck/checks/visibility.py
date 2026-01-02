@@ -4,7 +4,7 @@ from operator import attrgetter
 from pkgcore.ebuild.atom import atom, transitive_use_atom
 from snakeoil import klass
 from snakeoil.iterables import caching_iter
-from snakeoil.sequences import iflatten_func, iflatten_instance, stable_unique
+from snakeoil.sequences import iflatten_func, iflatten_instance
 from snakeoil.strings import pluralism
 
 from .. import addons, feeds, results

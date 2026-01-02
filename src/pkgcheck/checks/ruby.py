@@ -7,7 +7,6 @@ from snakeoil.strings import pluralism
 from .. import results
 from . import Check
 
-
 IUSE_PREFIX = "ruby_targets_"
 
 

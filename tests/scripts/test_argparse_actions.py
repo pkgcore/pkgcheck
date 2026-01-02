@@ -4,10 +4,11 @@ import textwrap
 from unittest.mock import patch
 
 import pytest
-from pkgcheck import base, checks, objects
-from pkgcheck.scripts import argparse_actions
-from pkgcheck.addons.caches import CachedAddon
 from snakeoil.cli import arghparse
+
+from pkgcheck import base, checks, objects
+from pkgcheck.addons.caches import CachedAddon
+from pkgcheck.scripts import argparse_actions
 
 
 class TestConfigArg:
