@@ -2,6 +2,7 @@ import multiprocessing
 import random
 import string
 from dataclasses import dataclass
+from os.path import join as pjoin
 from typing import List
 
 import pytest
@@ -16,7 +17,6 @@ from pkgcore.repository import prototype
 from pkgcore.repository.util import SimpleTree
 from snakeoil.cli import arghparse
 from snakeoil.data_source import text_data_source
-from snakeoil.osutils import pjoin
 from snakeoil.sequences import split_negations
 
 from pkgcheck import addons, base, sources

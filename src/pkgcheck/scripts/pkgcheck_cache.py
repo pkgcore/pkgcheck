@@ -1,8 +1,8 @@
 import os
+from os.path import join as pjoin
 
 import snakeoil.formatters
 from snakeoil.cli import arghparse
-from snakeoil.osutils import pjoin
 
 from .. import base, const
 from ..addons import init_addon

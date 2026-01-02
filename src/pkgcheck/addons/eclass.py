@@ -2,11 +2,11 @@
 
 import os
 from functools import total_ordering
+from os.path import join as pjoin
 
 from pkgcore.ebuild.eclass import EclassDoc
 from snakeoil.klass import jit_attr_none
 from snakeoil.mappings import ImmutableDict
-from snakeoil.osutils import pjoin
 
 from .. import base
 from . import caches

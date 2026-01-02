@@ -1,10 +1,10 @@
 import os
+from os.path import join as pjoin
 
 import pytest
 from pkgcore.ebuild import repo_objs, repository
 from pkgcore.test.misc import mk_glsa
 from snakeoil.cli import arghparse
-from snakeoil.osutils import pjoin
 
 from pkgcheck.checks import SkipCheck, glsa
 

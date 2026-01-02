@@ -2,6 +2,7 @@ import argparse
 import os
 import shlex
 from contextlib import ExitStack
+from os.path import join as pjoin
 from unittest.mock import patch
 
 import snakeoil.formatters
@@ -12,7 +13,6 @@ from pkgcore.restrictions import packages
 from pkgcore.restrictions.util import collect_package_restrictions
 from pkgcore.util import parserestrict
 from snakeoil.cli import arghparse
-from snakeoil.osutils import pjoin
 
 from .. import base, const, objects
 from ..base import PkgcheckUserException

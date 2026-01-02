@@ -9,12 +9,13 @@ from collections.abc import Set
 from dataclasses import dataclass
 from itertools import groupby
 from operator import attrgetter
+from os.path import join as pjoin
 
 from pkgcore.ebuild.profiles import ProfileError
 from pkgcore.ebuild.repository import UnconfiguredTree, tree
 from pkgcore.restrictions import packages
 from snakeoil import klass
-from snakeoil.osutils import listdir_files, pjoin
+from snakeoil.osutils import listdir_files
 
 from . import addons, base
 from .addons.eclass import Eclass, EclassAddon

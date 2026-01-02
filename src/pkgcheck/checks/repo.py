@@ -1,7 +1,6 @@
 import os
 import pathlib
-
-from snakeoil.osutils import pjoin
+from os.path import join as pjoin
 
 from .. import addons, base, results, sources
 from ..packages import RawCPV

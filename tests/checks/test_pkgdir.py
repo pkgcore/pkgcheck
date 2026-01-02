@@ -1,12 +1,13 @@
 import os
 from datetime import datetime, timedelta
+from os.path import join as pjoin
 
 import pytest
 from pkgcore.ebuild.cpv import UnversionedCPV
 from pkgcore.test.misc import FakeRepo
 from snakeoil.cli import arghparse
 from snakeoil.fileutils import touch
-from snakeoil.osutils import ensure_dirs, pjoin
+from snakeoil.osutils import ensure_dirs
 
 from pkgcheck import addons
 from pkgcheck.checks import SkipCheck, pkgdir

@@ -2,6 +2,7 @@ import os
 import tempfile
 import textwrap
 from contextlib import ExitStack
+from os.path import join as pjoin
 from pathlib import Path
 from unittest.mock import patch
 
@@ -10,7 +11,6 @@ from pkgcore import const as pkgcore_const
 from snakeoil.cli.arghparse import ArgumentParser
 from snakeoil.contexts import os_environ
 from snakeoil.formatters import PlainTextFormatter
-from snakeoil.osutils import pjoin
 
 from pkgcheck.addons.git import GitConfig
 from pkgcheck.cli import Tool

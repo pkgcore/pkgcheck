@@ -2,6 +2,7 @@ import os
 import textwrap
 import time
 from datetime import datetime, timedelta
+from os.path import join as pjoin
 from unittest.mock import patch
 
 import pytest
@@ -10,7 +11,6 @@ from pkgcore.ebuild.cpv import VersionedCPV as CPV
 from pkgcore.test.misc import FakeRepo
 from snakeoil.cli import arghparse
 from snakeoil.fileutils import touch
-from snakeoil.osutils import pjoin
 
 from pkgcheck.addons.git import GitCommit
 from pkgcheck.base import PkgcheckUserException

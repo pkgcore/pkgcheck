@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from functools import partial
 from itertools import takewhile
+from os.path import join as pjoin
 
 from pathspec import PathSpec
 from pkgcore.ebuild import cpv
@@ -25,7 +26,6 @@ from snakeoil.cli import arghparse
 from snakeoil.contexts import GitStash
 from snakeoil.klass import jit_attr
 from snakeoil.mappings import ImmutableDict, OrderedSet
-from snakeoil.osutils import pjoin
 from snakeoil.process import CommandNotFound, find_binary
 from snakeoil.strings import pluralism
 

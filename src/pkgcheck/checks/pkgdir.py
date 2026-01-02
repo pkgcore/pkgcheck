@@ -2,11 +2,13 @@ import os
 import stat
 from collections import defaultdict
 from datetime import datetime
+from os import listdir
+from os.path import join as pjoin
 
 from pkgcore.ebuild.atom import MalformedAtom
 from pkgcore.ebuild.atom import atom as atom_cls
 from snakeoil.chksum import get_chksums
-from snakeoil.osutils import listdir, pjoin, sizeof_fmt
+from snakeoil.osutils import sizeof_fmt
 from snakeoil.strings import pluralism
 
 from .. import addons, results, sources

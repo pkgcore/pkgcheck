@@ -10,12 +10,12 @@ from collections import UserDict
 from dataclasses import dataclass
 from hashlib import blake2b
 from operator import attrgetter
+from os.path import join as pjoin
 
 from snakeoil import klass
 from snakeoil.compatibility import IGNORED_EXCEPTIONS
 from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.mappings import ImmutableDict
-from snakeoil.osutils import pjoin
 
 from ..base import Addon, PkgcheckException, PkgcheckUserException
 from ..log import logger

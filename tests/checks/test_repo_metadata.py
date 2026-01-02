@@ -1,9 +1,9 @@
 import os
+from os.path import join as pjoin
 
 from pkgcore.ebuild.repository import UnconfiguredTree
 from pkgcore.test.misc import FakePkg
 from snakeoil.cli import arghparse
-from snakeoil.osutils import pjoin
 
 from pkgcheck.checks import repo_metadata
 

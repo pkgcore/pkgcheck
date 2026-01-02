@@ -9,6 +9,7 @@ from collections import defaultdict
 from datetime import datetime
 from itertools import chain
 from operator import attrgetter
+from os.path import join as pjoin
 from tempfile import TemporaryDirectory
 from urllib.parse import urlparse
 
@@ -17,7 +18,6 @@ from pkgcore.ebuild.repository import UnconfiguredTree
 from pkgcore.fetch import fetchable
 from snakeoil import klass
 from snakeoil.mappings import ImmutableDict
-from snakeoil.osutils import pjoin
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 

@@ -5,10 +5,10 @@ from collections import defaultdict
 from configparser import ConfigParser
 from functools import partial
 from itertools import chain
+from os.path import join as pjoin
 
 from pkgcore.ebuild import restricts
 from pkgcore.restrictions import packages
-from snakeoil.osutils import pjoin
 
 from .. import results, sources
 from . import GentooRepoCheck, RepoCheck, SkipCheck

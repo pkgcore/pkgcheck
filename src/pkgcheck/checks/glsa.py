@@ -1,11 +1,11 @@
 import os
 from collections import defaultdict
+from os.path import join as pjoin
 
 from pkgcore.pkgsets.glsa import GlsaDirSet
 from pkgcore.restrictions import packages, values
 from pkgcore.restrictions.util import collect_package_restrictions
 from snakeoil.cli.arghparse import existent_dir
-from snakeoil.osutils import pjoin
 from snakeoil.strings import pluralism
 
 from .. import results

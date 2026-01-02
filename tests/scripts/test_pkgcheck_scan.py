@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from functools import partial
 from io import StringIO
 from operator import attrgetter
+from os.path import join as pjoin
 from unittest.mock import patch
 
 import pytest
@@ -22,7 +23,6 @@ from pkgcore.restrictions import packages
 from snakeoil.contexts import chdir, os_environ
 from snakeoil.fileutils import touch
 from snakeoil.formatters import PlainTextFormatter
-from snakeoil.osutils import pjoin
 
 from pkgcheck import __title__ as project
 from pkgcheck import base, const, objects, reporters, scan

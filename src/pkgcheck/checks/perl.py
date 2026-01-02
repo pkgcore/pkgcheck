@@ -1,10 +1,10 @@
 import multiprocessing
 import re
 import subprocess
+from os.path import join as pjoin
 
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.package.errors import MetadataException
-from snakeoil.osutils import pjoin
 from snakeoil.sequences import iflatten_instance
 
 from .. import const, results, sources

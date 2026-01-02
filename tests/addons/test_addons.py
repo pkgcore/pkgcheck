@@ -1,9 +1,9 @@
 import os
+from os.path import join as pjoin
 from unittest.mock import patch
 
 import pytest
 from pkgcore.restrictions import packages
-from snakeoil.osutils import pjoin
 
 from pkgcheck import addons
 from pkgcheck.base import PkgcheckUserException

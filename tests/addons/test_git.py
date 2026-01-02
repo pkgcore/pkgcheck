@@ -1,6 +1,7 @@
 import os
 import subprocess
 from functools import partial
+from os.path import join as pjoin
 from unittest.mock import Mock, patch
 
 import pytest
@@ -10,7 +11,6 @@ from pkgcore.restrictions import packages
 from snakeoil.cli.exceptions import UserException
 from snakeoil.contexts import os_environ
 from snakeoil.fileutils import touch
-from snakeoil.osutils import pjoin
 from snakeoil.process import CommandNotFound, find_binary
 
 from pkgcheck import base

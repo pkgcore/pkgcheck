@@ -2,13 +2,13 @@ import os
 import re
 from difflib import SequenceMatcher
 from itertools import chain
+from os.path import join as pjoin
 
 from lxml import etree
 from pkgcore import const as pkgcore_const
 from pkgcore.ebuild.atom import MalformedAtom, atom
 from pkgcore.fetch import fetchable
 from pkgcore.restrictions.packages import Conditional
-from snakeoil.osutils import pjoin
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 

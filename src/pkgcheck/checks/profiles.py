@@ -3,13 +3,13 @@
 import os
 from collections import defaultdict
 from datetime import datetime
+from os.path import join as pjoin
 from typing import Iterable
 
 from pkgcore.ebuild import misc
 from pkgcore.ebuild import profiles as profiles_mod
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.ebuild.repo_objs import Profiles
-from snakeoil.osutils import pjoin
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 

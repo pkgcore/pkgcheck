@@ -5,6 +5,7 @@ import stat
 from collections import defaultdict
 from functools import partial
 from itertools import chain
+from os.path import join as pjoin
 
 from pkgcore.ebuild import domain, misc
 from pkgcore.ebuild import profiles as profiles_mod
@@ -14,7 +15,6 @@ from snakeoil.containers import ProtectedSet
 from snakeoil.decorators import coroutine
 from snakeoil.klass import jit_attr
 from snakeoil.mappings import ImmutableDict
-from snakeoil.osutils import pjoin
 
 from .. import base
 from ..base import PkgcheckUserException

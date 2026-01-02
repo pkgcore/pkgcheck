@@ -1,5 +1,6 @@
+from os.path import join as pjoin
+
 import pytest
-from snakeoil.osutils import pjoin
 
 from pkgcheck import addons, feeds
 

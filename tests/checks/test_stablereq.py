@@ -1,9 +1,9 @@
 import os
 from datetime import datetime, timedelta
+from os.path import join as pjoin
 
 import pytest
 from pkgcore.ebuild.cpv import VersionedCPV
-from snakeoil.osutils import pjoin
 
 from pkgcheck.checks import SkipCheck
 from pkgcheck.checks.stablereq import StableRequest, StableRequestCheck

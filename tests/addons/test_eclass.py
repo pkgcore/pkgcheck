@@ -1,11 +1,11 @@
 import os
 import textwrap
+from os.path import join as pjoin
 from time import sleep
 from unittest.mock import patch
 
 import pytest
 from snakeoil.fileutils import touch
-from snakeoil.osutils import pjoin
 
 from pkgcheck.addons import init_addon
 from pkgcheck.addons.caches import CacheDisabled
