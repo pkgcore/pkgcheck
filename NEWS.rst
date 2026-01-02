@@ -3,6 +3,32 @@ Release Notes
 =============
 
 -----------------------------
+pkgcheck 0.10.38 (2026-01-02)
+-----------------------------
+
+- Massive refactoring done by Brian Harring
+
+- bash-completion: fix subcommand completion (Arthur Zamarin)
+
+**New Checks:**
+
+- PythonCheck: check for redundant ``PYTEST_DISABLE_PLUGIN_AUTOLOAD`` (Michał
+  Górny, #753)
+
+- PythonCheck: suggest opportunities for ``EPYTEST_PLUGINS`` (Michał Górny,
+  #754)
+
+- SystemSetMissingKeywords: check for missing keywords in system set packages
+  (Arthur Zamarin, #755)
+
+- PyPIAttestationAvailableCheck: add check pypi attestation available (Michał Górny,
+  #757)
+
+**Check Updates:**
+
+- UnusedInherits: Whitelist ``branding.eclass`` (James Le Cuirot, #756)
+
+-----------------------------
 pkgcheck 0.10.37 (2025-07-24)
 -----------------------------
 
