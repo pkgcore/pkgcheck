@@ -3,6 +3,13 @@ Release Notes
 =============
 
 -----------------------------
+pkgcheck 0.10.39 (2026-01-03)
+-----------------------------
+
+- Dockerfile: use alpine as base image for an image with bash-5.3 (Arthur
+  Zamarin)
+
+-----------------------------
 pkgcheck 0.10.38 (2026-01-02)
 -----------------------------
 
