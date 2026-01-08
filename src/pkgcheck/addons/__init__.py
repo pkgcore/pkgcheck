@@ -88,7 +88,7 @@ class KeywordsAddon(base.Addon):
 
     def __init__(self, *args):
         super().__init__(*args)
-        special = {"-*"}
+        special = {"-*", "**"}
         self.arches: frozenset[str] = self.options.target_repo.known_arches
         unstable = {"~" + x for x in self.arches}
         disabled = {"-" + x for x in chain(self.arches, unstable)}
