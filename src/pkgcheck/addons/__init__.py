@@ -88,6 +88,10 @@ class KeywordsAddon(base.Addon):
 
     def __init__(self, *args):
         super().__init__(*args)
+        # see https://projects.gentoo.org/pms/9/pms.html#keyword-names .
+        # usage of '-' indicates that the named arch is never to be considered as a target
+        # for stabilization. `-*` is shorthand to state that any arch not explicitly marked
+        # as stable or unstable, is not to be considered for stabilization.
         special = {"-*"}
         self.arches: frozenset[str] = self.options.target_repo.known_arches
         unstable = {"~" + x for x in self.arches}
