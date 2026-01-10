@@ -814,3 +814,50 @@ class RepoManifestHashCheck(RepoCheck):
     def finish(self):
         if deprecated_hashes := DEPRECATED_HASHES.intersection(self.repo.config.manifests.hashes):
             yield DeprecatedRepoHash(sorted(deprecated_hashes))
+
+
+class StabilizationGroupSourcingError(results.LogError):
+    """Misformed stabilization group file."""
+
+
+class UnknownStabilizationGroupPackage(results.Error):
+    """Packages listed in stabilization group that doesn't exist."""
+
+    def __init__(self, group: str, packages: list[str]):
+        super().__init__()
+        self.group = group
+        self.packages = tuple(packages)
+
+    @property
+    def desc(self):
+        s = pluralism(self.packages)
+        packages = ", ".join(self.packages)
+        return f"stabilization group {self.group!r} has unknown package{s}: [ {packages} ]"
+
+
+class StabilizationGroupsCheck(RepoCheck):
+    """Check stabilization groups"""
+
+    _source = (sources.EmptySource, (base.repo_scope,))
+    known_results = frozenset({StabilizationGroupSourcingError, UnknownStabilizationGroupPackage})
+
+    def __init__(self, *args):
+        super().__init__(*args)
+        self.repo = self.options.target_repo
+
+    def finish(self):
+        _logmap = (
+            base.LogMap("pkgcore.log.logger.warning", StabilizationGroupSourcingError),
+            base.LogMap("pkgcore.log.logger.error", StabilizationGroupSourcingError),
+        )
+        with base.LogReports(*_logmap) as log_reports:
+            groups = self.repo.stabilization_groups
+        yield from log_reports
+
+        for group, packages in groups.items():
+            unknown_packages = set()
+            for pkg in packages:
+                if not self.repo.match(pkg):
+                    unknown_packages.add(pkg.key)
+            if unknown_packages:
+                yield UnknownStabilizationGroupPackage(group, sorted(unknown_packages))
