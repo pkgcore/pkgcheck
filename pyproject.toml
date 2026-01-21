@@ -99,3 +99,6 @@ ignore = [
 minversion = "6.0"
 addopts = "-vv -ra -l"
 testpaths = ["tests"]
+
+[tool.vulture]
+paths = ["src/pkgcheck/"]
