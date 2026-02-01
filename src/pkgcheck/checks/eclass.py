@@ -435,17 +435,37 @@ class EclassDocMissingVar(results.EclassResult, results.Warning):
         return f"{self.eclass}: undocumented variable{s}: {variables}"
 
 
+class EclassDocMissingInternal(results.EclassResult, results.Warning):
+    """Eclass function missing an @INTERNAL doc tag.
+
+    Eclass functions with a leading underscore should be documented with the
+    ``@INTERNAL`` doc tag to indicate they are not part of the public API,
+    since Gentoo's convention is that leading underscores indicate internal use.
+    """
+
+    whitelist = frozenset({"_elibtoolize"})
+
+    def __init__(self, function: str, **kwargs):
+        super().__init__(**kwargs)
+        self.function = function
+
+    @property
+    def desc(self):
+        return f"{self.eclass}: {self.function!r} starts with '_' but is not labeled as internal"
+
+
 class EclassCheck(Check):
     """Scan eclasses for various issues."""
 
     _source = sources.EclassRepoSource
     known_results = frozenset(
-        [
+        {
             EclassBashSyntaxError,
             EclassDocError,
             EclassDocMissingFunc,
             EclassDocMissingVar,
-        ]
+            EclassDocMissingInternal,
+        }
     )
 
     def __init__(self, *args):
@@ -500,6 +520,12 @@ class EclassCheck(Check):
         )
         if vars_missing_docs:
             yield EclassDocMissingVar(sorted(vars_missing_docs), eclass=eclass)
+
+        missing_internal = {
+            f.name for f in eclass_obj.functions if f.name.startswith("_") and not f.internal
+        } - EclassDocMissingInternal.whitelist
+        for f in sorted(missing_internal):
+            yield EclassDocMissingInternal(f, eclass=eclass)
 
 
 class GoMissingDeps(results.VersionResult, results.Warning):
