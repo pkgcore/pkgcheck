@@ -1,0 +1,10 @@
+--- eclass/eclass/missing-internal.eclass
++++ fixed/eclass/missing-internal.eclass
+@@ -10,6 +10,7 @@
+ _elibtoolize() { :; }
+
+ # @FUNCTION: _missing_internal_func
++# @INTERNAL
+ # @DESCRIPTION:
+ # missing internal tag
+ _missing_internal_func() { :; }
