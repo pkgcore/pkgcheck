@@ -10,6 +10,18 @@ Contents:
     news
     api
     man/pkgcheck
+    man/pkgcheck/scan
+    man/pkgcheck/keywords
+    man/pkgcheck/checks
+    man/config
+    man/skip
+
+Reporting Bugs
+==============
+
+Please submit an issue via github:
+
+https://github.com/pkgcore/pkgcheck/issues
 
 Indices and tables
 ==================
