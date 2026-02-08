@@ -465,3 +465,95 @@ class PyPIAttestationAvailableCheck(NetworkCheck):
 
         for filename, url in self._get_urls(pkg):
             self._schedule_check(filename, url, executor, futures, pkg=pkg)
+
+
+class DetachedSignatureAvailable(results.VersionResult, results.Info):
+    """Detached signature available for a distfile in the package."""
+
+    def __init__(self, filename, url, **kwargs):
+        super().__init__(**kwargs)
+        self.filename = filename
+        self.url = url
+
+    @property
+    def desc(self):
+        return f"Detached signature for distfile {self.filename} is available at {self.url}."
+
+
+class DetachedSignatureAvailableCheck(_UrlCheck):
+    """Check for available detached signatures."""
+
+    required_addons = (addons.UseAddon,)
+
+    _source = sources.LatestVersionRepoSource
+
+    known_results = frozenset(
+        {
+            DetachedSignatureAvailable,
+            SSLCertificateError,
+        }
+    )
+
+    detached_signature_extensions = (
+        ".asc",
+        ".minisig",
+        ".sig",
+        ".sign",
+        ".sigstore",
+    )
+
+    def __init__(self, *args, use_addon, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fetch_filter = use_addon.get_filter("fetchables")
+
+    def _verifysig_check(self, filename, url, *, pkg):
+        """Check for typical verify sig URLS."""
+        result = None
+        try:
+            # Need redirects to deal with the variance of file servers and urls
+            response = self.session.head(url, allow_redirects=True)
+        except RequestError:
+            pass
+        except SSLError as e:
+            result = SSLCertificateError("SRC_URI", url, str(e), pkg=pkg)
+        else:
+            content_type = response.headers.get("Content-Type")
+
+            # Filtering out text/html matches is useful due to possible false matches with authentication
+            if (
+                response.ok
+                and content_type is not None
+                and not content_type.startswith("text/html")
+            ):
+                result = DetachedSignatureAvailable(filename, url, pkg=pkg)
+        return result
+
+    def _get_urls(self, pkg):
+        # ignore conditionals
+        fetchables, _ = self.fetch_filter(
+            (fetchable,),
+            pkg,
+            pkg.generate_fetchables(
+                allow_missing_checksums=True, ignore_unknown_mirrors=True, skip_default_mirrors=True
+            ),
+        )
+
+        filenames = [f.filename for f in fetchables.keys()]
+
+        for f in fetchables.keys():
+            # Don't check for detached signatures if any detached signature is already present for the filename.
+            if any(
+                (f.filename.endswith(extension) or f"{f.filename}{extension}" in filenames)
+                for extension in self.detached_signature_extensions
+            ):
+                continue
+
+            for url in f.uri:
+                for extension in self.detached_signature_extensions:
+                    yield (f.filename, url + extension)
+
+    def schedule(self, pkg, executor, futures):
+        """Schedule verification methods to run in separate threads for all flagged URLs."""
+
+        for filename, url in self._get_urls(pkg):
+            self._schedule_check(self._verifysig_check, filename, url, executor, futures, pkg=pkg)
