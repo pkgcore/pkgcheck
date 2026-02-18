@@ -179,16 +179,14 @@ class _UrlCheck(abc.ABC, NetworkCheck):
 
     def task_done(self, pkg, attr, future):
         """Determine the result of a given URL verification task."""
-        exc = future.exception()
-        if exc is not None:
+        if exc := future.exception():
             # traceback can't be pickled so serialize it
             tb = traceback.format_exc()
             # return exceptions that occurred in threads
             self.results_q.put(tb)
             return
 
-        result = future.result()
-        if result is not None:
+        if result := future.result():
             if pkg is not None:
                 # recreate result object with different pkg target and attr
                 attrs = result._attrs.copy()
@@ -210,8 +208,7 @@ class _UrlCheck(abc.ABC, NetworkCheck):
         twice using a mapping from requested URLs to future objects, adding
         result-checking callbacks to the futures of existing URLs.
         """
-        future = futures.get(url)
-        if future is None:
+        if (future := futures.get(url)) is None:
             future = executor.submit(func, attr, url, **kwargs)
             future.add_done_callback(partial(self.task_done, None, None))
             futures[url] = future
