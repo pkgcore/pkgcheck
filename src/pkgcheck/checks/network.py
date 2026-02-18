@@ -360,7 +360,7 @@ class PyPIAttestationAvailable(results.VersionResult, results.Info):
         )
 
 
-class PyPIAttestationAvailableCheck(NetworkCheck):
+class PyPIAttestationAvailableCheck(_UrlCheck):
     """Check for available PyPI attestations."""
 
     required_addons = (addons.UseAddon,)
@@ -396,40 +396,6 @@ class PyPIAttestationAvailableCheck(NetworkCheck):
             result = PyPIAttestationAvailable(filename, pkg=pkg)
         return result
 
-    def task_done(self, pkg, filename, future):
-        """Determine the result of a given URL verification task."""
-        exc = future.exception()
-        if exc is not None:
-            # traceback can't be pickled so serialize it
-            tb = traceback.format_exc()
-            # return exceptions that occurred in threads
-            self.results_q.put(tb)
-            return
-
-        result = future.result()
-        if result is not None:
-            if pkg is not None:
-                # recreate result object with different pkg target and attr
-                attrs = result._attrs.copy()
-                attrs["filename"] = filename
-                result = result._create(**attrs, pkg=pkg)
-            self.results_q.put([result])
-
-    def _schedule_check(self, filename, url, executor, futures, **kwargs):
-        """Schedule verification method to run in a separate thread against a given URL.
-
-        Note that this tries to avoid hitting the network for the same URL
-        twice using a mapping from requested URLs to future objects, adding
-        result-checking callbacks to the futures of existing URLs.
-        """
-        future = futures.get(url)
-        if future is None:
-            future = executor.submit(self._provenance_check, filename, url, **kwargs)
-            future.add_done_callback(partial(self.task_done, None, None))
-            futures[url] = future
-        else:
-            future.add_done_callback(partial(self.task_done, kwargs["pkg"], filename))
-
     def _get_urls(self, pkg):
         # ignore conditionals
         fetchables, _ = self.fetch_filter(
@@ -464,7 +430,7 @@ class PyPIAttestationAvailableCheck(NetworkCheck):
                     return
 
         for filename, url in self._get_urls(pkg):
-            self._schedule_check(filename, url, executor, futures, pkg=pkg)
+            self._schedule_check(self._provenance_check, filename, url, executor, futures, pkg=pkg)
 
 
 class DetachedSignatureAvailable(results.VersionResult, results.Info):
