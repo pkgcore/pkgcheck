@@ -8,51 +8,45 @@ from .. import addons, results, sources
 from . import OptionalCheck
 
 
-class StableKeywords(results.PackageResult, results.Error):
-    """Package uses stable keywords."""
+class DisallowedStableKeywords(results.VersionResult, results.Error):
+    """Package uses stable keywords, which are disallowed in this repository."""
 
-    def __init__(self, versions, arches, **kwargs):
+    def __init__(self, arches, **kwargs):
         super().__init__(**kwargs)
-        self.versions = tuple(versions)
-        self.arches = tuple(arches)
+        self.arches = tuple(sort_keywords(arches))
 
     @property
     def desc(self):
         s = pluralism(self.arches)
         arches = ", ".join(self.arches)
-        versions = ", ".join(self.versions)
-        return f"stable keyword{s} [ {arches} ] used on version{s}: [ {versions} ]"
+        return f"disallowed stable keyword{s}: [ {arches} ]"
 
 
-class StableKeywordsCheck(OptionalCheck):
-    """Scan for packages using stable keywords."""
+class DisallowedStableKeywordsCheck(OptionalCheck):
+    """Scan for packages using stable keywords in repositories where they are not allowed."""
 
-    _source = sources.PackageRepoSource
     required_addons = (addons.StableArchesAddon,)
-    known_results = frozenset([StableKeywords])
+    known_results = frozenset({DisallowedStableKeywords})
+
+    # acct-group and acct-user eclasses define KEYWORDS
+    # See https://bugs.gentoo.org/342185
+    ignored_categories = frozenset({"acct-group", "acct-user"})
 
     def __init__(self, *args, stable_arches_addon=None):
         super().__init__(*args)
-        self.arches = {x.strip().lstrip("~") for x in self.options.stable_arches}
+        self.arches = frozenset({x.strip().lstrip("~") for x in self.options.stable_arches})
 
         self.arch_restricts = {
             arch: packages.PackageRestriction("keywords", values.ContainmentMatch2((arch,)))
             for arch in self.arches
         }
 
-    def feed(self, pkgset):
-        pkgs_arches = defaultdict(set)
-        for arch, r in self.arch_restricts.items():
-            for pkg in pkgset:
-                if r.match(pkg):
-                    pkgs_arches[pkg].add(arch)
+    def feed(self, pkg):
+        if pkg.category in self.ignored_categories:
+            return
 
-        # invert
-        arches_pkgs = defaultdict(list)
-        for pkg, arches in pkgs_arches.items():
-            arches_pkgs[frozenset(arches)].append(pkg)
+        arches = frozenset({arch for arch, r in self.arch_restricts.items() if r.match(pkg)})
+        if not arches:
+            return
 
-        # collapse reports by sets of arches
-        for arches, pkgs in arches_pkgs.items():
-            versions = (pkg.fullver for pkg in sorted(pkgs))
-            yield StableKeywords(versions, sort_keywords(arches), pkg=pkgs[0])
+        yield DisallowedStableKeywords(arches, pkg=pkg)
