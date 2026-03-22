@@ -2,7 +2,7 @@
 requires = [
 	"flit_core >=3.8,<4",
 	# repeat all normal runtime dependencies here
-	"chardet",
+	"charset-normalizer",
 	"lxml",
 	"pathspec",
 	"tree-sitter~=0.25.0",
@@ -40,7 +40,7 @@ classifiers = [
 dynamic = ["version"]
 
 dependencies = [
-	"chardet",
+	"charset-normalizer",
 	"lxml",
 	"pathspec",
 	"tree-sitter~=0.25.0",
