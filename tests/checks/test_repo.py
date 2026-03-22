@@ -64,7 +64,7 @@ class TestRepoDirCheck(misc.Tmpdir, misc.ReportTestCase):
     def test_null_bytes(self):
         check = self.mk_check()
         with open(pjoin(self.repo.location, "foo"), "wb") as f:
-            f.write(b"foo\x00\xffbar")
+            f.write(b"foo\x00\xff\xffbar")
         r = self.assertReport(check, [])
         assert isinstance(r, repo.BinaryFile)
         assert r.path == "foo"
