@@ -327,7 +327,7 @@ epub_exclude_files = ["search.html"]
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
-    "chardet": ("https://chardet.readthedocs.io/en/latest", None),
+    "charset-normalizer": ("https://charset-normalizer.readthedocs.io/en/stable/", None),
     "lazy-object-proxy": ("https://python-lazy-object-proxy.readthedocs.io/en/latest", None),
     "setuptools": ("https://setuptools.pypa.io/en/latest", None),
 }

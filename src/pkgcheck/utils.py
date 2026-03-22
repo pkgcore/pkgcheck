@@ -38,14 +38,6 @@ _printable_high_ascii = bytes(range(127, 256))
 def is_binary(path, blocksize=1024):
     """Check if a given file is binary or not.
 
-    Uses a simplified version of the Perl detection algorithm, based roughly on
-    Eli Bendersky's translation to Python:
-    http://eli.thegreenplace.net/2011/10/19/perls-guess-if-file-is-text-or-binary-implemented-in-python/
-
-    This is biased slightly more in favour of deeming files as text files than
-    the Perl algorithm, since all ASCII compatible character sets are accepted as
-    text, not just utf-8.
-
     :param path: Path to a file to check.
     :param blocksize: Amount of bytes to read for determination.
     :returns: True if appears to be a binary, otherwise False.
@@ -60,46 +52,12 @@ def is_binary(path, blocksize=1024):
     if not byte_str:
         return False
 
-    # Now check for a high percentage of ASCII control characters
-    # Binary if control chars are > 30% of the string
-    low_chars = byte_str.translate(None, _printable_ascii)
-    nontext_ratio1 = len(low_chars) / len(byte_str)
-
-    # and check for a low percentage of high ASCII characters:
-    # Binary if high ASCII chars are < 5% of the string
-    # From: https://en.wikipedia.org/wiki/UTF-8
-    # If the bytes are random, the chances of a byte with the high bit set
-    # starting a valid UTF-8 character is only 6.64%. The chances of finding 7
-    # of these without finding an invalid sequence is actually lower than the
-    # chance of the first three bytes randomly being the UTF-8 BOM.
-    high_chars = byte_str.translate(None, _printable_high_ascii)
-    nontext_ratio2 = len(high_chars) / len(byte_str)
-
-    is_likely_binary = (nontext_ratio1 > 0.3 and nontext_ratio2 < 0.05) or (
-        nontext_ratio1 > 0.8 and nontext_ratio2 > 0.8
-    )
-
-    decodable = False
     try:
         byte_str.decode()
-        decodable = True
+        return False
     except UnicodeDecodeError:
         # Delay import to hide during wheel/sdist builds that iterate over and
         # import most modules to generate check/keyword/reporter lists.
-        import chardet
+        import charset_normalizer
 
-        # guess character encoding using chardet
-        detected_encoding = chardet.detect(byte_str)
-        if detected_encoding["confidence"] > 0.8:
-            try:
-                byte_str.decode(encoding=detected_encoding["encoding"])
-                decodable = True
-            except (UnicodeDecodeError, LookupError):
-                pass
-
-    # finally use all the checks to decide binary or text
-    if decodable:
-        return False
-    if is_likely_binary or b"\x00" in byte_str:
-        return True
-    return False
+        return charset_normalizer.is_binary(byte_str)
