@@ -1102,6 +1102,12 @@ class PythonPackageNameCheck(Check):
         if len(pypi_remotes) != 1:
             return
 
+        pypi_name = pypi_remotes[0].name
+
+        # skip empty remotes
+        if pypi_name is None:
+            return
+
         def normalize(project: str) -> str:
             """
             Normalize project name using PEP 503 rules
@@ -1110,6 +1116,5 @@ class PythonPackageNameCheck(Check):
             """
             return PROJECT_SYMBOL_NORMALIZE_RE.sub("-", project).lower()
 
-        pypi_name = pypi_remotes[0].name
         if pkg.package != normalize(pypi_name):
             yield PythonMismatchedPackageName(normalize(pypi_name), pkg=pkg)
