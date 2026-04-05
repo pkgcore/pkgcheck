@@ -9,25 +9,28 @@ pkgcheck 0.10.40 (unreleased)
 **New Checks:**
 
 - EclassDocMissingInternal: Enforce any eclass function prefixed with ``_`` is
-  marked with ``@INTERNAL``, with ``_elibtoolize`` being exempted.  (Arthur Zamarin)
+  marked with ``@INTERNAL``, with ``_elibtoolize`` being exempted  (Arthur Zamarin)
 
 - StabilizationGroupsCheck: check for invalid and non-existant stabilization
-  groups.  (Arthur Zamarin)
+  groups  (Arthur Zamarin)
 
 
 **Packaging:**
 
 - ``chardet-normalizer`` is now used instead of ``chardet`` due to upstream
-  API breakage and AI rewrite copyright concerns.  (Anna (cybertailor)
+  API breakage and AI rewrite copyright concerns (Anna (cybertailor)
   Vyalkova, #775)
 
-- ``pytest >= 9.0`` is now required for tests.
+- ``pytest >= 9.0`` is now required for tests
 
 **Fixes: **
 
 - EclassExportFuncsBeforeInherit: this is not non-flakey.  See #702; the cause
-  of that was quite subtle, our thanks to the author for running it down.
+  of that was quite subtle, our thanks to the author for running it down
   (Thomas Bracht Laumann Jespersen, #778)
+
+- PythonPackageNamespaceCheck: fix exception thrown when parsing invalid
+  ``metadata.xml`` (Florian Albrechtskirchinger, #776)
 
 -----------------------------
 pkgcheck 0.10.39 (2026-01-03)

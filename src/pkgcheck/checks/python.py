@@ -1104,7 +1104,9 @@ class PythonPackageNameCheck(Check):
 
         pypi_name = pypi_remotes[0].name
 
-        # skip empty remotes
+        # TODO: see https://github.com/pkgcore/pkgcore/issues/466 , this
+        # block is suppressing what is an invalid metadata.xml.  This should be
+        # removed once 466 is addressed.
         if pypi_name is None:
             return
 
