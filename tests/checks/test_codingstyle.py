@@ -443,6 +443,18 @@ class TestExcessiveLineLength(misc.ReportTestCase):
         )
         assert r.lines == (1,)
 
+    def test_edge_case(self):
+        # hit the limit *exactly*, and do it without exceeding the word limit.  IE, abuse spaces.
+        # additionally, throw a new line in since pkgcore/pkgcheck#774 flagged that newlines were being counted.
+        self.assertNoReport(
+            self.check,
+            self._prepare_pkg(f"{' ' * (codingstyle.ExcessiveLineLength.line_length - 1)}x"),
+        )
+        self.assertNoReport(
+            self.check,
+            self._prepare_pkg(f"{' ' * (codingstyle.ExcessiveLineLength.line_length - 1)}x\n"),
+        )
+
     def test_multiple_lines(self):
         r = self.assertReport(
             self.check,

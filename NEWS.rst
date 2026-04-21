@@ -32,6 +32,9 @@ pkgcheck 0.10.40 (unreleased)
 - PythonPackageNamespaceCheck: fix exception thrown when parsing invalid
   ``metadata.xml`` (Florian Albrechtskirchinger, #776)
 
+- LineLengthCheck: do not count ``\n`` against the limit- now 120 characters
+  are allowed, rather than 119.  #774
+
 -----------------------------
 pkgcheck 0.10.39 (2026-01-03)
 -----------------------------

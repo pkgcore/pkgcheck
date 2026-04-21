@@ -1351,6 +1351,8 @@ class LineLengthCheck(Check):
     def feed(self, pkg):
         lines = []
         for lineno, line in enumerate(pkg.lines, 1):
+            # Lines is literally the line including the newline, thus don't count it.
+            line = line.rstrip("\n")
             if len(line) <= ExcessiveLineLength.line_length:
                 continue
             if self.exception.match(line):
