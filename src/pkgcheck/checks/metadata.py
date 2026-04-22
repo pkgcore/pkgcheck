@@ -1695,7 +1695,7 @@ class RestrictTestCheck(Check):
         super().__init__(*args)
         # create "!test? ( test )" conditional to match restrictions against
         self.test_restrict = packages.Conditional(
-            "use", values.ContainmentMatch2("test", negate=True), ["test"]
+            "use", values.ContainmentMatch("test", negate=True), ["test"]
         )
 
     def feed(self, pkg):

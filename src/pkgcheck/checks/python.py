@@ -369,14 +369,14 @@ class PythonCheck(Check):
         yield deptree
 
     def check_required_use(self, requse, flags, prefix, container_cls):
-        for token in self.scan_tree_recursively(requse, values.ContainmentMatch2):
+        for token in self.scan_tree_recursively(requse, values.ContainmentMatch):
             # pkgcore collapses single flag in ||/^^, so expect top-level flags
             # when len(flags) == 1
             if len(flags) > 1 and not isinstance(token, container_cls):
                 continue
             matched = set()
             for x in token:
-                if not isinstance(x, values.ContainmentMatch2):
+                if not isinstance(x, values.ContainmentMatch):
                     continue
                 name = next(iter(x.vals))
                 if name.startswith(prefix):

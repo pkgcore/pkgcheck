@@ -39,8 +39,8 @@ class UnstableOnlyCheck(GentooRepoCheck):
         self.arch_restricts = {}
         for arch in arches:
             self.arch_restricts[arch] = [
-                packages.PackageRestriction("keywords", values.ContainmentMatch2((arch,))),
-                packages.PackageRestriction("keywords", values.ContainmentMatch2((f"~{arch}",))),
+                packages.PackageRestriction("keywords", values.ContainmentMatch((arch,))),
+                packages.PackageRestriction("keywords", values.ContainmentMatch((f"~{arch}",))),
             ]
 
     def feed(self, pkgset):

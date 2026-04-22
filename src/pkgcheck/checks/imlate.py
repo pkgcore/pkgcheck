@@ -77,7 +77,7 @@ class ImlateCheck(Check):
             source_arches = self.options.stable_arches
         self.source_arches = frozenset(arch.lstrip("~") for arch in source_arches)
         self.source_filter = packages.PackageRestriction(
-            "keywords", values.ContainmentMatch2(self.source_arches)
+            "keywords", values.ContainmentMatch(self.source_arches)
         )
 
     def feed(self, pkgset):

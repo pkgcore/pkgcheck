@@ -63,7 +63,7 @@ class GlsaCheck(GentooRepoCheck):
             if vuln.match(pkg):
                 arches = set()
                 for v in collect_package_restrictions(vuln, ["keywords"]):
-                    if isinstance(v.restriction, values.ContainmentMatch2):
+                    if isinstance(v.restriction, values.ContainmentMatch):
                         arches.update(x.lstrip("~") for x in v.restriction.vals)
                     else:
                         raise Exception(

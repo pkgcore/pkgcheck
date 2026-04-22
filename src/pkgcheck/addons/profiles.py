@@ -247,11 +247,11 @@ class ProfileAddon(caches.CachedAddon):
                 for arch in sorted(self.options.arches):
                     stable_key, unstable_key = arch, f"~{arch}"
                     stable_r = packages.PackageRestriction(
-                        "keywords", values.ContainmentMatch2((stable_key,))
+                        "keywords", values.ContainmentMatch((stable_key,))
                     )
                     unstable_r = packages.PackageRestriction(
                         "keywords",
-                        values.ContainmentMatch2(
+                        values.ContainmentMatch(
                             (
                                 stable_key,
                                 unstable_key,
