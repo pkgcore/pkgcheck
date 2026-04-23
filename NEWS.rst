@@ -17,6 +17,7 @@ pkgcheck 0.10.40 (unreleased)
 
 **Packaging:**
 
+- python 3.12 is now the minimal version supported
 - ``chardet-normalizer`` is now used instead of ``chardet`` due to upstream
   API breakage and AI rewrite copyright concerns (Anna (cybertailor)
   Vyalkova, #775)
