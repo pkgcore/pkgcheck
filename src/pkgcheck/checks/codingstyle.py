@@ -1669,3 +1669,51 @@ class VariableOrderCheck(Check):
                 if new_index < index:
                     yield VariableOrderWrong(first_var, self.variable_order[index], pkg=pkg)
                 index = new_index
+
+
+class GlobalDeclareWithoutG(results.LineResult, results.Warning):
+    """Call to ``declare -A`` without ``-g`` in global scope.
+
+    Associative arrays created with ``declare -A`` in global scope
+    are implicitly local when the ebuild is sourced inside a function
+    (as non-portage package managers may do).
+    Use ``declare -gA`` to ensure the variable is always in global scope.
+    """
+
+    @property
+    def desc(self):
+        return f"line {self.lineno}: call to 'declare -A' without '-g' in global scope: {self.line}"
+
+
+class GlobalDeclareCheck(Check):
+    """Scan ebuilds for ``declare -A`` calls without ``-g`` in global scope."""
+
+    _source = sources.EbuildParseRepoSource
+    known_results = frozenset({GlobalDeclareWithoutG})
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.decl_query = bash.query("(declaration_command) @decl")
+
+    def feed(self, pkg: bash.ParseTree):
+        for node in pkg.global_query(self.decl_query):
+            name_node = node.children[0]
+            if pkg.node_str(name_node) != "declare":
+                continue
+            has_A = False
+            has_g = False
+            for child in node.children:
+                if child.type == "word":
+                    flag = pkg.node_str(child)
+                    if flag.startswith("-"):
+                        if "A" in flag:
+                            has_A = True
+                        if "g" in flag:
+                            has_g = True
+            if has_A and not has_g:
+                lineno, _ = node.start_point
+                yield GlobalDeclareWithoutG(
+                    line=pkg.node_str(node).split("\n", maxsplit=1)[0].strip(),
+                    lineno=lineno + 1,
+                    pkg=pkg,
+                )

@@ -14,6 +14,9 @@ pkgcheck 0.10.40 (unreleased)
 - StabilizationGroupsCheck: check for invalid and non-existant stabilization
   groups  (Arthur Zamarin)
 
+- GlobalDeclareCheck: detect ``declare -A`` without ``-g`` in global scope
+  (Sv. Lockal, #628)
+
 
 **Packaging:**
 
