@@ -179,16 +179,14 @@ class _UrlCheck(abc.ABC, NetworkCheck):
 
     def task_done(self, pkg, attr, future):
         """Determine the result of a given URL verification task."""
-        exc = future.exception()
-        if exc is not None:
+        if exc := future.exception():
             # traceback can't be pickled so serialize it
             tb = traceback.format_exc()
             # return exceptions that occurred in threads
             self.results_q.put(tb)
             return
 
-        result = future.result()
-        if result is not None:
+        if result := future.result():
             if pkg is not None:
                 # recreate result object with different pkg target and attr
                 attrs = result._attrs.copy()
@@ -210,8 +208,7 @@ class _UrlCheck(abc.ABC, NetworkCheck):
         twice using a mapping from requested URLs to future objects, adding
         result-checking callbacks to the futures of existing URLs.
         """
-        future = futures.get(url)
-        if future is None:
+        if (future := futures.get(url)) is None:
             future = executor.submit(func, attr, url, **kwargs)
             future.add_done_callback(partial(self.task_done, None, None))
             futures[url] = future
@@ -360,7 +357,7 @@ class PyPIAttestationAvailable(results.VersionResult, results.Info):
         )
 
 
-class PyPIAttestationAvailableCheck(NetworkCheck):
+class PyPIAttestationAvailableCheck(_UrlCheck):
     """Check for available PyPI attestations."""
 
     required_addons = (addons.UseAddon,)
@@ -396,40 +393,6 @@ class PyPIAttestationAvailableCheck(NetworkCheck):
             result = PyPIAttestationAvailable(filename, pkg=pkg)
         return result
 
-    def task_done(self, pkg, filename, future):
-        """Determine the result of a given URL verification task."""
-        exc = future.exception()
-        if exc is not None:
-            # traceback can't be pickled so serialize it
-            tb = traceback.format_exc()
-            # return exceptions that occurred in threads
-            self.results_q.put(tb)
-            return
-
-        result = future.result()
-        if result is not None:
-            if pkg is not None:
-                # recreate result object with different pkg target and attr
-                attrs = result._attrs.copy()
-                attrs["filename"] = filename
-                result = result._create(**attrs, pkg=pkg)
-            self.results_q.put([result])
-
-    def _schedule_check(self, filename, url, executor, futures, **kwargs):
-        """Schedule verification method to run in a separate thread against a given URL.
-
-        Note that this tries to avoid hitting the network for the same URL
-        twice using a mapping from requested URLs to future objects, adding
-        result-checking callbacks to the futures of existing URLs.
-        """
-        future = futures.get(url)
-        if future is None:
-            future = executor.submit(self._provenance_check, filename, url, **kwargs)
-            future.add_done_callback(partial(self.task_done, None, None))
-            futures[url] = future
-        else:
-            future.add_done_callback(partial(self.task_done, kwargs["pkg"], filename))
-
     def _get_urls(self, pkg):
         # ignore conditionals
         fetchables, _ = self.fetch_filter(
@@ -464,4 +427,96 @@ class PyPIAttestationAvailableCheck(NetworkCheck):
                     return
 
         for filename, url in self._get_urls(pkg):
-            self._schedule_check(filename, url, executor, futures, pkg=pkg)
+            self._schedule_check(self._provenance_check, filename, url, executor, futures, pkg=pkg)
+
+
+class DetachedSignatureAvailable(results.VersionResult, results.Info):
+    """Detached signature available for a distfile in the package."""
+
+    def __init__(self, filename, url, **kwargs):
+        super().__init__(**kwargs)
+        self.filename = filename
+        self.url = url
+
+    @property
+    def desc(self):
+        return f"Detached signature for distfile {self.filename} is available at {self.url}."
+
+
+class DetachedSignatureAvailableCheck(_UrlCheck):
+    """Check for available detached signatures."""
+
+    required_addons = (addons.UseAddon,)
+
+    _source = sources.LatestVersionRepoSource
+
+    known_results = frozenset(
+        {
+            DetachedSignatureAvailable,
+            SSLCertificateError,
+        }
+    )
+
+    detached_signature_extensions = (
+        ".asc",
+        ".minisig",
+        ".sig",
+        ".sign",
+        ".sigstore",
+    )
+
+    def __init__(self, *args, use_addon, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fetch_filter = use_addon.get_filter("fetchables")
+
+    def _verifysig_check(self, filename, url, *, pkg):
+        """Check for typical verify sig URLS."""
+        result = None
+        try:
+            # Need redirects to deal with the variance of file servers and urls
+            response = self.session.head(url, allow_redirects=True)
+        except RequestError:
+            pass
+        except SSLError as e:
+            result = SSLCertificateError("SRC_URI", url, str(e), pkg=pkg)
+        else:
+            content_type = response.headers.get("Content-Type")
+
+            # Filtering out text/html matches is useful due to possible false matches with authentication
+            if (
+                response.ok
+                and content_type is not None
+                and not content_type.startswith("text/html")
+            ):
+                result = DetachedSignatureAvailable(filename, url, pkg=pkg)
+        return result
+
+    def _get_urls(self, pkg):
+        # ignore conditionals
+        fetchables, _ = self.fetch_filter(
+            (fetchable,),
+            pkg,
+            pkg.generate_fetchables(
+                allow_missing_checksums=True, ignore_unknown_mirrors=True, skip_default_mirrors=True
+            ),
+        )
+
+        filenames = [f.filename for f in fetchables.keys()]
+
+        for f in fetchables.keys():
+            # Don't check for detached signatures if any detached signature is already present for the filename.
+            if any(
+                (f.filename.endswith(extension) or f"{f.filename}{extension}" in filenames)
+                for extension in self.detached_signature_extensions
+            ):
+                continue
+
+            for url in f.uri:
+                for extension in self.detached_signature_extensions:
+                    yield (f.filename, url + extension)
+
+    def schedule(self, pkg, executor, futures):
+        """Schedule verification methods to run in separate threads for all flagged URLs."""
+
+        for filename, url in self._get_urls(pkg):
+            self._schedule_check(self._verifysig_check, filename, url, executor, futures, pkg=pkg)
