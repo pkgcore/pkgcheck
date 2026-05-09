@@ -17,6 +17,9 @@ pkgcheck 0.10.40 (unreleased)
 - DescriptionCheck: check for descriptions ending with a full-stop  (Arthur
   Zamarin,  Michał Górny, #472)
 
+- DescriptionCheck: check for descriptions repeating package name  (Michał
+  Górny, #2021)
+
 
 **Packaging:**
 
