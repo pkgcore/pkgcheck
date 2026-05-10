@@ -702,6 +702,14 @@ class MissingRemoteIdCheck(Check):
             urls = set(filter(self.__filter_url, all_urls))
             urls = sorted(urls.union(pkg.homepage), key=len)
 
+            if "git-r3" in pkg.inherited and hasattr(pkg, "environment"):
+                egit_repo_uri = re.compile(r"^declare -- EGIT_REPO_URI=\"(.*)\"$")
+                for env_line in pkg.environment.data.splitlines():
+                    result = re.search(egit_repo_uri, env_line)
+                    if result:
+                        urls.append(result.group(1).removesuffix(".git"))
+                        break
+
             for remote_type, regex in self.remotes_map:
                 if remote_type in remotes:
                     continue
