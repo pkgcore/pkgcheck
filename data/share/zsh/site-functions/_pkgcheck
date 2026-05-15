@@ -144,7 +144,8 @@ case $state in
     subcommands=(
       scan:'scan targets for QA issues'
       cache:'perform cache operations'
-      replay:'replay results streams'
+      ci:'scan repo for CI'
+      replay:'replay result streams'
       show:'show various pkgcheck info'
     )
 
@@ -162,11 +163,17 @@ case $state in
           '--config[use custom pkgcheck scan settings file]:config path:_files'
           {'(--repo)-r','(-r)--repo'}'[repo to pull packages from]:repo:_repos'
           {'(--reporter)-R','(-R)--reporter'}"[use a non-default reporter]:reporters:_reporters"
+          '--format[format string used with FormatReporter]:format string'
           {'(--filter)-f','(-f)--filter'}"[limit targeted packages for scanning]:filter:(latest repo)"
           {'(--jobs)-j','(-j)--jobs'}'[number of checks to run in parallel]:jobs'
           {'(--tasks)-t','(-t)--tasks'}'[number of asynchronous tasks to run concurrently]:tasks'
           '--cache[forcibly enable/disable caches]:caches:{_values -s , caches $(_caches -p)}'
+          '--cache-dir[directory to use for storing cache files]:cache dir:_files -/'
           '--exit[comma separated list of keywords that trigger an error exit status]:keywords:{_values -s , keywords $(_keywords -p)}'
+          '--glsa-dir[custom glsa directory]:glsa dir:_files -/'
+          '--timeout[timeout used for network checks (in seconds)]:timeout'
+          '--user-agent[custom user agent spoofing]:user agent'
+          '--source-arches[comma separated list of arches to compare against for lagging stabilization]:arches'
         )
 
         check_opts=(
@@ -175,7 +182,9 @@ case $state in
           {'(--keywords)-k','(-k)--keywords'}'[comma separated list of keywords to enable/disable]:keywords:{_values -s , keywords $(_keywords -p)}'
           {'(--scopes)-s','(-s)--scopes'}'[comma separated list of keyword scopes to enable/disable]:scopes:{_values -s . scopes $(_scopes -p)}'
           '--net[run checks that require internet access]'
-          '--timeout[timeout used for network checks (in seconds)]:timeout'
+          '--stable-only[consider redundant versions only within stable]'
+          '--stabletime[set number of days before stabilisation]:days'
+          '--reset-caching-per[control how often the cache is cleared]:reset option:(version package category)'
         )
 
         arch_opts=(
@@ -183,7 +192,9 @@ case $state in
         )
 
         git_opts=(
-          '--commits[determine scan targets from local git repo commits]'
+          '--commits[determine scan targets from local git repo commits]:tree-ish'
+          '--staged[determine scan targets from staged changes]:tree-ish'
+          '--git-remote[git remote used for all git comparison and operations]:remote'
         )
 
         profile_opts=(
@@ -207,22 +218,39 @@ case $state in
       (cache)
         _arguments -C -A '-*' \
           $common_output_args \
+          {'(--repo)-r','(-r)--repo'}'[target repo]:repo:_repos' \
+          {'(--list)-l','(-l)--list'}'[list available caches]' \
           {'(--update)-u','(-u)--update'}'[update caches]' \
           {'(--force)-f','(-f)--force'}'[forcibly update caches]' \
           {'(--remove)-R','(-R)--remove'}'[forcibly remove caches]' \
+          '(-n --dry-run)'{-n,--dry-run}'[dry run without performing any changes]' \
           {'(--type)-t','(-t)--type'}'[target cache types]:caches:{_values -s , caches $(_caches -p)}' \
+          '--cache-dir[directory to use for storing cache files]:cache dir:_files -/' \
+          {'(--arches)-a','(-a)--arches'}'[comma separated list of arches to enable/disable]:arches:{_values -s , arches $(_arches -p)}' \
+          {'(--profiles)-p','(-p)--profiles'}'[comma separated list of profiles to enable/disable]:profiles' \
+          '--commits[determine scan targets from unpushed commits]:tree-ish' \
+          '--staged[determine scan targets from staged changes]:tree-ish' \
+          '--git-remote[git remote used for all git comparison and operations]:remote' \
+          && ret=0
+        ;;
+      (ci)
+        _arguments -C -A '-*' \
+          $common_output_args \
+          '--failures[file path for storing failure results]:file:_files' \
           && ret=0
         ;;
       (replay)
         _arguments -C -A '-*' \
           $common_output_args \
+          {'(--reporter)-R','(-R)--reporter'}"[use a non-default reporter]:reporters:_reporters" \
+          '--format[format string used with FormatReporter]:format string' \
           '*:pickled results:_files' \
           && ret=0
         ;;
       (show)
         _arguments -C -A '-*' \
           $common_output_args \
-          {'(--keywords)-k','(-k)--keywords'}'[how available warning/error keywords]' \
+          {'(--keywords)-k','(-k)--keywords'}'[show available warning/error keywords]' \
           {'(--checks)-c','(-c)--checks'}'[show available checks]' \
           {'(--scopes)-s','(-s)--scopes'}'[show available keyword/check scopes]' \
           {'(--reporters)-r','(-r)--reporters'}'[show available reporters]' \
