@@ -66,14 +66,29 @@ _pkgcheck() {
                 -f --force
                 -n --dry-run
                 -t --type
+                -r --repo
+                -a --arches
+                -p --profiles
+                --commits
+                --staged
+                --git-remote
             )
 
             case ${prev} in
                 --cache-dir)
 			        _filedir -d
                     ;;
+                -r | --repo)
+                    COMPREPLY=($(compgen -W "$(_parsereposconf -l)" -- "${cur}"))
+                    ;;
                 -t | --type)
                     COMPREPLY=($(compgen -W "$(</usr/share/pkgcheck/caches)" -- "${cur}"))
+                    ;;
+                -a | --arches)
+                    COMPREPLY=($(compgen -W "$(_parsereposconf -a)" -- "${cur}"))
+                    ;;
+                --git-remote)
+                    COMPREPLY=($(compgen -W "$(git remote)" -- "${cur}"))
                     ;;
                 *)
                     COMPREPLY+=($(compgen -W "${subcmd_options[*]}" -- "${cur}"))
@@ -90,7 +105,7 @@ _pkgcheck() {
                     _filedir
                     ;;
                 *)
-                    COMPREPLY+=($(compgen -W "${subcmd_options[*]}" -- "${cur}"))
+                    COMPREPLY+=($(compgen -W "${subcmd_options[*]} ${base_options[*]}" -- "${cur}"))
                     ;;
             esac
             ;;
@@ -109,7 +124,7 @@ _pkgcheck() {
                     ;;
                 *)
                     if [[ ${cur} == -* ]]; then
-                        COMPREPLY+=($(compgen -W "${subcmd_options[*]}" -- "${cur}"))
+                        COMPREPLY+=($(compgen -W "${subcmd_options[*]} ${base_options[*]}" -- "${cur}"))
                     else
                         _filedir
                     fi
@@ -121,6 +136,7 @@ _pkgcheck() {
                 --config
                 -r --repo
                 -R --reporter
+                --format
                 -f --filter
                 -j --jobs
                 -t --tasks
@@ -131,6 +147,7 @@ _pkgcheck() {
                 --stable-only
                 --glsa-dir
                 --stabletime
+                --source-arches
 
                 --net
                 -C --checksets
@@ -143,11 +160,15 @@ _pkgcheck() {
                 -a --arches
 
                 --commits
+                --staged
+                --git-remote
                 -p --profiles
+
+                --reset-caching-per
             )
 
             case ${prev} in
-                -[jt] | --jobs | --tasks | --timeout | --user-agent | --stabletime)
+                -[jt] | --jobs | --tasks | --timeout | --stabletime)
                     COMPREPLY=()
                     ;;
                 --cache-dir | --glsa-dir)
@@ -174,6 +195,20 @@ _pkgcheck() {
                         no
                     )
                     COMPREPLY=($(compgen -W "${filter_options[*]}" -- "${cur}"))
+                    ;;
+                --reset-caching-per)
+                    local reset_options=(
+                        version
+                        package
+                        category
+                    )
+                    COMPREPLY=($(compgen -W "${reset_options[*]}" -- "${cur}"))
+                    ;;
+                --git-remote)
+                    COMPREPLY=($(compgen -W "$(git remote)" -- "${cur}"))
+                    ;;
+                --format | --user-agent | --source-arches)
+                    COMPREPLY=()
                     ;;
                 *)
                     case ${cur} in
