@@ -36,7 +36,7 @@ class SyncCheckRunner(CheckRunner):
     def __init__(self, *args):
         super().__init__(*args)
         # set of known results for all checks run by the checkrunner
-        self._known_results = set().union(*(x.known_results for x in self.checks))
+        self._known_results = frozenset().union(*(x.known_results for x in self.checks))
         # used to store MetadataError results for processing
         self._metadata_errors = deque()
 
