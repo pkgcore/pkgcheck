@@ -1,1 +1,3 @@
 {"__class__": "InvalidMetadataRestrict", "category": "PackageMetadataXmlCheck", "package": "InvalidMetadataRestrict", "restrict": "<=PackageMetadataXmlCheck2/InvalidMetadataRestrict-5", "msg": "references another package"}
+{"__class__": "InvalidMetadataRestrict", "category": "PackageMetadataXmlCheck", "package": "InvalidMetadataRestrict", "restrict": "<=OtherCategory/OtherPackage-1", "msg": "references another package"}
+{"__class__": "InvalidMetadataRestrict", "category": "PackageMetadataXmlCheck", "package": "InvalidMetadataRestrict", "restrict": "<=OtherCategory/OtherPackage-2", "msg": "references another package"}

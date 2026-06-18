@@ -8,6 +8,10 @@ pkgcheck 0.10.40 (unreleased)
 
 **New Checks:**
 
+- InvalidMetadataRestrict: now also validates the ``restrict`` attribute on
+  ``<stabilize-allarches>`` and ``<straight-to-stable>`` metadata.xml elements
+  (Arthur Zamarin)
+
 - EclassDocMissingInternal: Enforce any eclass function prefixed with ``_`` is
   marked with ``@INTERNAL``, with ``_elibtoolize`` being exempted  (Arthur Zamarin)
 

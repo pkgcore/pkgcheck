@@ -7,4 +7,6 @@
 	<use>
 		<flag name="flag1" restrict="&lt;=PackageMetadataXmlCheck/InvalidMetadataRestrict-5">Some explanation</flag>
 	</use>
+	<stabilize-allarches restrict="&lt;=OtherCategory/OtherPackage-1"/>
+	<straight-to-stable restrict="&lt;=OtherCategory/OtherPackage-2"/>
 </pkgmetadata>
