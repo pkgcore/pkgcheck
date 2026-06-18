@@ -466,6 +466,8 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
         "pecl": (_one_component_validator_re, "{project}"),
         "pypi": (_one_component_validator_re, "{project}"),
         "rubygems": (_one_component_validator_re, "{project}"),
+        "savannah": (_one_component_validator_re, "{project}"),
+        "savannah-nongnu": (_one_component_validator_re, "{project}"),
         "sourceforge": (_one_component_validator_re, "{project}"),
         # {name} with a special check for lp: prefix
         "launchpad": (re.compile(r"^(?!lp:)[^/]+$"), "{project}"),
@@ -474,12 +476,17 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
         "codeberg": (_two_components_validator_re, "{username}/{project}"),
         "github": (_two_components_validator_re, "{username}/{project}"),
         # gitlab (2+ components)
+        "freedesktop-gitlab": (_gitlab_validator_re, "{username}/[{group}/...]{repo}"),
         "gitlab": (_gitlab_validator_re, "{username}/[{group}/...]{repo}"),
+        "gnome-gitlab": (_gitlab_validator_re, "{username}/[{group}/...]{repo}"),
         "heptapod": (_gitlab_validator_re, "{username}/[{group}/...]{repo}"),
+        "kde-invent": (_gitlab_validator_re, "{username}/[{group}/...]{repo}"),
         # cpe
         "cpe": (re.compile(r"^cpe:/[aho]:[^:]+:[^:]+$"), "cpe:/[aho]:{vendor}:{product}"),
         # 1+ component + no ".git" suffix
         "gentoo": (re.compile(r"^([^/]+/)*[^/]+(?<!\.git)$"), "[{group}/...]{repo}"),
+        # ~username/project-style remotes
+        "sourcehut": (re.compile(r"^~[^/]+/[^/]+$"), "~{username}/{project}"),
         # a positive decimal number
         "vim": (re.compile(r"^[1-9]\d*$"), "{script_id}"),
     }
