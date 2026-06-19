@@ -8,6 +8,7 @@ requires = [
 	"tree-sitter~=0.25.0",
 	"tree-sitter-bash~=0.23.1",
 	"pkgcore >=0.12.34",
+	"pkgcore@git+https://github.com/pkgcore/pkgcore.git#master",
 ]
 build-backend = "py_build"
 backend-path = ["."]
@@ -44,7 +45,7 @@ dependencies = [
 	"pathspec",
 	"tree-sitter~=0.25.0",
 	"tree-sitter-bash~=0.23.1",
-	"pkgcore >=0.12.34",
+	"pkgcore@git+https://github.com/pkgcore/pkgcore.git#master",
 ]
 
 [project.optional-dependencies]
