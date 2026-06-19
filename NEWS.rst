@@ -3,6 +3,15 @@ Release Notes
 =============
 
 -----------------------------
+pkgcheck 0.10.41 (unreleased)
+-----------------------------
+
+**New Checks:**
+
+- ProfilesCheck: validate the EAPI 9 ``use.stable`` and ``package.use.stable``
+  profile files for unknown USE flags (Arthur Zamarin)
+
+-----------------------------
 pkgcheck 0.10.40 (2026-06-19)
 -----------------------------
 

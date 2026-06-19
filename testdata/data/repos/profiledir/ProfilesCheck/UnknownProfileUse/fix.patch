@@ -1,11 +1,11 @@
-diff -Naur profiledir/profiles/use.desc fixed/profiles/use.desc
---- profiledir/profiles/use.desc	2020-11-23 10:54:01.018477444 -0700
-+++ fixed/profiles/use.desc	2020-11-23 11:54:08.071178614 -0700
-@@ -1 +1,7 @@
+--- profiledir/profiles/use.desc
++++ fixed/profiles/use.desc
+@@ -1 +1,8 @@
  used - used global flag
 +use_force - use.force
 +use_mask - use.mask
 +use_stable_force - use.stable.force
 +use_stable_mask - use.stable.mask
++use_stable_defaults - use.stable
 +defaults_use - make.defaults USE
 +defaults_iuse_implicit - make.defaults IUSE_IMPLICIT

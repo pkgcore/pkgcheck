@@ -299,6 +299,7 @@ class ProfilesCheck(Check):
         ("use.stable.force", "use_stable_force"),
         ("use.mask", "use_mask"),
         ("use.stable.mask", "use_stable_mask"),
+        ("use.stable", "use_stable"),
     )
     def _use(self, filename, node, vals):
         # TODO: give ChunkedDataDict some dict view methods
@@ -341,6 +342,7 @@ class ProfilesCheck(Check):
 
     @verify_files(
         ("package.use", "pkg_use"),
+        ("package.use.stable", "pkg_use_stable"),
         ("package.use.force", "pkg_use_force"),
         ("package.use.stable.force", "pkg_use_stable_force"),
         ("package.use.mask", "pkg_use_mask"),
