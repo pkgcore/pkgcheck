@@ -4,9 +4,9 @@ import configparser
 import logging
 import os
 import re
+from unittest.mock import patch
 
 from pkgcore.util import commandline
-from snakeoil.contexts import patch
 from snakeoil.klass import jit_attr_none
 from snakeoil.mappings import OrderedSet
 

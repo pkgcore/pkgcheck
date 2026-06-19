@@ -17,9 +17,9 @@ from contextlib import AbstractContextManager, ExitStack, contextmanager
 from dataclasses import dataclass
 from functools import partial
 from itertools import chain
+from unittest.mock import patch
 
 from snakeoil.cli.exceptions import UserException
-from snakeoil.contexts import patch
 from snakeoil.mappings import ImmutableDict
 
 

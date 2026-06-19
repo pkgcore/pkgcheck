@@ -3,7 +3,7 @@
 __all__ = ("scan",)
 
 
-from snakeoil.contexts import patch
+from unittest.mock import patch
 
 from .base import PkgcheckException
 
