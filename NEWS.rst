@@ -3,7 +3,7 @@ Release Notes
 =============
 
 -----------------------------
-pkgcheck 0.10.40 (unreleased)
+pkgcheck 0.10.40 (2026-06-19)
 -----------------------------
 
 **New Checks:**
@@ -13,25 +13,27 @@ pkgcheck 0.10.40 (unreleased)
   (Arthur Zamarin)
 
 - EclassDocMissingInternal: Enforce any eclass function prefixed with ``_`` is
-  marked with ``@INTERNAL``, with ``_elibtoolize`` being exempted  (Arthur Zamarin)
+  marked with ``@INTERNAL``, with ``_elibtoolize`` being exempted (Arthur Zamarin)
 
 - StabilizationGroupsCheck: check for invalid and non-existant stabilization
-  groups  (Arthur Zamarin)
+  groups (Arthur Zamarin)
 
 - DescriptionCheck: check for descriptions ending with a full-stop  (Arthur
-  Zamarin,  Michał Górny, #472)
+  Zamarin, Michał Górny, #472)
+
+- InvalidRemoteID: add missing upstreams (Arthur Zamarin)
 
 
 **Packaging:**
 
-- python 3.12 is now the minimal version supported
+- python 3.12 is now the minimal version supported (Brian Harring)
+
 - ``chardet-normalizer`` is now used instead of ``chardet`` due to upstream
-  API breakage and AI rewrite copyright concerns (Anna (cybertailor)
-  Vyalkova, #775)
+  API breakage and AI rewrite copyright concerns (Anna Vyalkova, #775)
 
-- ``pytest >= 9.0`` is now required for tests
+- ``pytest >= 9.0`` is now required for tests (Brian Harring)
 
-**Fixes: **
+**Fixes:**
 
 - EclassExportFuncsBeforeInherit: this is not non-flakey.  See #702; the cause
   of that was quite subtle, our thanks to the author for running it down
@@ -41,7 +43,9 @@ pkgcheck 0.10.40 (unreleased)
   ``metadata.xml`` (Florian Albrechtskirchinger, #776)
 
 - LineLengthCheck: do not count ``\n`` against the limit- now 120 characters
-  are allowed, rather than 119.  #774
+  are allowed, rather than 119 (Brian Harring, #774)
+
+- small fixes to bash completion and zsh completion (Arthur Zamarin)
 
 -----------------------------
 pkgcheck 0.10.39 (2026-01-03)
