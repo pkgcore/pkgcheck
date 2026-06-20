@@ -818,7 +818,7 @@ class InheritsCheck(Check):
 
     # branding.eclass can be used purely for variables recognised by external
     # build tools rather than the ebuild itself.
-    unused_whitelist = frozenset({"branding"})
+    unused_whitelist = frozenset({"branding", "edo"})
 
     def __init__(self, *args, eclass_addon):
         super().__init__(*args)
