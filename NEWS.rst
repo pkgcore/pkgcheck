@@ -8,6 +8,9 @@ pkgcheck 0.10.41 (unreleased)
 
 **New Checks:**
 
+- ExcessiveConfigCheckPrefix: flag ``CONFIG_CHECK`` kernel options that
+  redundantly include the ``CONFIG_`` prefix (Arthur Zamarin, #768)
+
 - ProfilesCheck: validate the EAPI 9 ``use.stable`` and ``package.use.stable``
   profile files for unknown USE flags (Arthur Zamarin)
 

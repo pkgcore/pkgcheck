@@ -1,0 +1,14 @@
+--- standalone/ConfigCheckCheck/ExcessiveConfigCheckPrefix/ExcessiveConfigCheckPrefix-0.ebuild
++++ fixed/ConfigCheckCheck/ExcessiveConfigCheckPrefix/ExcessiveConfigCheckPrefix-0.ebuild
+@@ -4,9 +4,9 @@
+ SLOT="0"
+ KEYWORDS="amd64 x86"
+
+-CONFIG_CHECK="~CONFIG_GPIO_SYSFS"
++CONFIG_CHECK="~GPIO_SYSFS"
+
+ pkg_setup() {
+-	local CONFIG_CHECK="MTRR !CONFIG_SND_HDA_RECONFIG"
++	local CONFIG_CHECK="MTRR !SND_HDA_RECONFIG"
+ 	linux-info_pkg_setup
+ }

@@ -1,0 +1,1 @@
+{"__class__": "ExcessiveConfigCheckPrefix", "category": "ConfigCheckCheck", "package": "ExcessiveConfigCheckPrefix", "version": "0", "options": ["CONFIG_GPIO_SYSFS", "CONFIG_SND_HDA_RECONFIG"]}

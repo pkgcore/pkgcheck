@@ -6,6 +6,7 @@ CatMetadataXmlEmptyElement
 CatMetadataXmlIndentation
 CatMetadataXmlInvalidCatRef
 CatMetadataXmlInvalidPkgRef
+ConfigCheckCheck
 DeclarationShadowedCheck
 DependencyCheck
 DescriptionCheck

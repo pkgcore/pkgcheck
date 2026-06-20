@@ -5,7 +5,7 @@ from collections import defaultdict
 
 from pkgcore.ebuild.eapi import EAPI, common_mandatory_metadata_keys
 from snakeoil.mappings import ImmutableDict
-from snakeoil.sequences import stable_unique
+from snakeoil.sequences import unique_stable
 from snakeoil.strings import pluralism
 
 from .. import addons, bash, results, sources
@@ -648,7 +648,7 @@ class MetadataVarCheck(Check):
         for var_node in bash.var_query.captures(node).get("var", ()):
             matches.append(pkg.node_str(var_node.parent))
         if matches:
-            yield ReferenceInMetadataVar(var, stable_unique(matches), pkg=pkg)
+            yield ReferenceInMetadataVar(var, unique_stable(matches), pkg=pkg)
 
     @verify_vars("LICENSE")
     def _raw_text_license(self, var, node, value, pkg):
@@ -659,7 +659,7 @@ class MetadataVarCheck(Check):
                 continue  # LICENSE in LICENSE is ok
             matches.append(var_str)
         if matches:
-            yield ReferenceInMetadataVar(var, stable_unique(matches), pkg=pkg)
+            yield ReferenceInMetadataVar(var, unique_stable(matches), pkg=pkg)
 
     def build_src_uri_variants_regex(self, pkg):
         p, pv = pkg.P, pkg.PV
@@ -741,6 +741,48 @@ class MetadataVarCheck(Check):
 
         if len(keywords_lines) > 1:
             yield MultipleKeywordsLines(sorted(keywords_lines), pkg=pkg)
+
+
+class ExcessiveConfigCheckPrefix(results.VersionResult, results.Error):
+    """CONFIG_CHECK option includes a redundant ``CONFIG_`` prefix.
+
+    The ``CONFIG_CHECK`` variable (handled by the ``linux-info`` eclass) lists
+    bare kernel option names as they appear in the kernel ``menuconfig``,
+    without the ``CONFIG_`` prefix. The eclass prepends ``CONFIG_`` itself when
+    checking the kernel ``.config``, so including it in the option name results
+    in a check against a nonexistent ``CONFIG_CONFIG_*`` option.
+    """
+
+    def __init__(self, options, **kwargs):
+        super().__init__(**kwargs)
+        self.options = tuple(options)
+
+    @property
+    def desc(self):
+        s = pluralism(self.options)
+        options = ", ".join(self.options)
+        return f"CONFIG_CHECK has excessive CONFIG_ prefix in option{s}: {options}"
+
+
+class ConfigCheckCheck(Check):
+    """Scan CONFIG_CHECK kernel options for issues."""
+
+    _source = sources.EbuildParseRepoSource
+    known_results = frozenset({ExcessiveConfigCheckPrefix})
+
+    def feed(self, pkg):
+        excessive: list[str] = []
+        for node in bash.var_assign_query.captures(pkg.tree.root_node).get("assign", ()):
+            if pkg.node_str(node.child_by_field_name("name")) != "CONFIG_CHECK":
+                continue
+            if (value_node := node.child_by_field_name("value")) is None:
+                continue
+            for token in pkg.node_str(value_node).split():
+                option = token.strip("\"'").lstrip("~!")
+                if option.startswith("CONFIG_"):
+                    excessive.append(option)
+        if excessive:
+            yield ExcessiveConfigCheckPrefix(unique_stable(excessive), pkg=pkg)
 
 
 class MissingInherits(results.VersionResult, results.Warning):
