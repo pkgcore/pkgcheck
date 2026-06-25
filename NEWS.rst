@@ -14,6 +14,10 @@ pkgcheck 0.10.41 (unreleased)
 - ProfilesCheck: validate the EAPI 9 ``use.stable`` and ``package.use.stable``
   profile files for unknown USE flags (Arthur Zamarin)
 
+- VisibilityCheck: validate package atoms passed to ``optfeature`` calls,
+  flagging malformed atoms (``OptfeatureMalformedAtom``) and atoms with no
+  matching package (``OptfeatureNonexistentAtom``) (Arthur Zamarin, #710)
+
 -----------------------------
 pkgcheck 0.10.40 (2026-06-19)
 -----------------------------

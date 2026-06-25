@@ -1,13 +1,14 @@
 from collections import defaultdict
 from operator import attrgetter
 
-from pkgcore.ebuild.atom import atom, transitive_use_atom
+from pkgcore.ebuild.atom import MalformedAtom, atom, transitive_use_atom
+from pkgcore.restrictions import boolean
 from snakeoil import klass
 from snakeoil.iterables import caching_iter
 from snakeoil.sequences import iflatten_func, iflatten_instance
 from snakeoil.strings import pluralism
 
-from .. import addons, feeds, results
+from .. import addons, bash, feeds, results, sources
 from . import Check
 
 
@@ -249,6 +250,35 @@ class OldPackageNameDep(results.VersionResult, results.Error):
         return f"{self.attr}: {self.dep!r} uses old package name which is the source of a pkgmove, rename into {self.new_name!r}"
 
 
+class OptfeatureMalformedAtom(results.LineResult, results.Error):
+    """Malformed package atom passed to an ``optfeature`` call."""
+
+    def __init__(self, atom, **kwargs):
+        super().__init__(**kwargs)
+        self.atom = atom
+
+    @property
+    def desc(self):
+        return f"line {self.lineno}: optfeature: malformed package atom: {self.atom!r}"
+
+
+class OptfeatureNonexistentAtom(results.LineResult, results.Warning):
+    """Package atom passed to an ``optfeature`` call has no matches.
+
+    The ``optfeature`` function suggests optional packages providing some
+    functionality. An atom passed to it which matches no package in the repo
+    (or its masters) is likely a typo or refers to a removed package.
+    """
+
+    def __init__(self, atom, **kwargs):
+        super().__init__(**kwargs)
+        self.atom = atom
+
+    @property
+    def desc(self):
+        return f"line {self.lineno}: optfeature: nonexistent package: {self.atom!r}"
+
+
 class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
     """Visibility dependency scans.
 
@@ -257,6 +287,7 @@ class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
     keyword.
     """
 
+    _source = sources.EbuildParseRepoSource
     required_addons = (addons.profiles.ProfileAddon,)
     known_results = frozenset(
         {
@@ -269,6 +300,8 @@ class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
             DependencyMoved,
             OldPackageName,
             OldPackageNameDep,
+            OptfeatureMalformedAtom,
+            OptfeatureNonexistentAtom,
         }
     )
 
@@ -305,6 +338,9 @@ class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
         if pkg.live:
             # vcs ebuild that better not be visible
             yield from self.check_visibility_vcs(pkg)
+
+        if "optfeature" in pkg.inherited:
+            yield from self.check_optfeature(pkg)
 
         if pkg.key in self.pkgmoves:
             yield OldPackageName(self.pkgmoves[pkg.key], pkg=pkg)
@@ -414,6 +450,37 @@ class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
             else:
                 p = visible[0]
                 yield VisibleVcsPkg(p.key, p.name, len(visible), pkg=pkg)
+
+    def check_optfeature(self, pkg):
+        for node in bash.cmd_query.captures(pkg.tree.root_node).get("call", ()):
+            if pkg.node_str(node.child_by_field_name("name")) != "optfeature":
+                continue
+
+            lineno, _ = node.start_point
+            line = pkg.node_str(node)
+            variants: set[atom] = set()
+            for arg in node.children[2:]:
+                raw = pkg.node_str(arg)
+                # skip arguments using variable/command substitution, since we
+                # can't statically resolve them into atoms.
+                if "$" in raw or "`" in raw:
+                    continue
+                for token in raw.strip("'\"").split():
+                    try:
+                        variants.add(atom(token).no_usedeps)
+                    except MalformedAtom:
+                        yield OptfeatureMalformedAtom(token, line=line, lineno=lineno + 1, pkg=pkg)
+                        continue
+            if not variants:
+                continue
+            elif len(variants) == 1:
+                search = variants.pop()
+            else:
+                search = boolean.OrRestriction(*variants)
+            if search not in self.query_cache:
+                self.query_cache[search] = caching_iter(self.options.search_repo.itermatch(search))
+            if not self.query_cache[search]:
+                yield OptfeatureNonexistentAtom(str(search), line=line, lineno=lineno + 1, pkg=pkg)
 
     def process_depset(self, pkg, attr, depset, edepset, profiles):
         get_cached_query = self.query_cache.get
