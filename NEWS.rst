@@ -6,6 +6,10 @@ Release Notes
 pkgcheck 0.10.41 (unreleased)
 -----------------------------
 
+**Packaging:**
+
+- drop support for tree-sitter < 0.25 (Arthur Zamarin)
+
 **New Checks:**
 
 - ExcessiveConfigCheckPrefix: flag ``CONFIG_CHECK`` kernel options that

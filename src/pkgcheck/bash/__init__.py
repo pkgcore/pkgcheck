@@ -3,18 +3,13 @@
 from itertools import chain
 
 import tree_sitter_bash
-from tree_sitter import Language, Parser, Query
+from tree_sitter import Language, Parser, Query, QueryCursor
 
 lang = Language(tree_sitter_bash.language())
 
-try:
-    from tree_sitter import QueryCursor
 
-    def unstable_query(query_str: str) -> "QueryCursor":
-        return QueryCursor(Query(lang, query_str))
-except ImportError:  # tree-sitter < 0.25
-    QueryCursor = Query
-    unstable_query = lang.query
+def unstable_query(query_str: str) -> QueryCursor:
+    return QueryCursor(Query(lang, query_str))
 
 
 parser = Parser(language=lang)
