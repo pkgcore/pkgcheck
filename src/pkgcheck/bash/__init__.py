@@ -1,6 +1,7 @@
 """bash parsing support"""
 
 from itertools import chain
+from operator import attrgetter
 
 import tree_sitter_bash
 from tree_sitter import Language, Parser, Query, QueryCursor
@@ -28,10 +29,8 @@ class SortedQueryCursor:
 
     def captures(self, node):
         caps = self._query_cursor.captures(node)
-        return {
-            key: sorted(nodes, key=lambda n: (n.start_point.row, n.start_point.column))
-            for key, nodes in caps.items()
-        }
+        sorter = attrgetter("start_point.row", "start_point.column")
+        return {key: sorted(nodes, key=sorter) for key, nodes in caps.items()}
 
 
 def query(query_str: str):
