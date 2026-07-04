@@ -22,6 +22,11 @@ pkgcheck 0.10.41 (unreleased)
   flagging malformed atoms (``OptfeatureMalformedAtom``) and atoms with no
   matching package (``OptfeatureNonexistentAtom``) (Arthur Zamarin, #710)
 
+**Fixes:**
+
+- MissingRemoteId: exclude URIs used for fetching ``-vendor`` tarballs from
+  this check (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.40 (2026-06-19)
 -----------------------------

@@ -690,6 +690,8 @@ class MissingRemoteIdCheck(Check):
             return False
         if "-deps.tar" in url:
             return False
+        if "-vendor.tar" in url:
+            return False
         return True
 
     def feed(self, pkgset):
