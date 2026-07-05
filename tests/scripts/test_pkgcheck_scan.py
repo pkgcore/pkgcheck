@@ -1,5 +1,6 @@
 import importlib
 import importlib.machinery
+import importlib.util
 import io
 import os
 import pathlib
@@ -608,9 +609,10 @@ class TestPkgcheckScan:
             with (custom_handler_path := base / "handler.py").open():
                 # We can't import since it's not a valid python directory layout, nor do
                 # want to pollute the namespace.
-                module = importlib.machinery.SourceFileLoader(
-                    "handler", str(custom_handler_path)
-                ).load_module()
+                loader = importlib.machinery.SourceFileLoader("handler", str(custom_handler_path))
+                spec = importlib.util.spec_from_loader("handler", loader)
+                module = importlib.util.module_from_spec(spec)
+                loader.exec_module(module)
                 if (
                     custom_handler := typing.cast(
                         typing.Callable[[Result], bool], getattr(module, "handler")
