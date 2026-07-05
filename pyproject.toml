@@ -4,7 +4,7 @@ requires = [
 	# repeat all normal runtime dependencies here
 	"charset-normalizer",
 	"lxml",
-	"pathspec",
+	"pathspec >=1.0.0",
 	"tree-sitter~=0.25.0",
 	"tree-sitter-bash~=0.23.1",
 	"pkgcore >=0.12.34",
@@ -42,7 +42,7 @@ dynamic = ["version"]
 dependencies = [
 	"charset-normalizer",
 	"lxml",
-	"pathspec",
+	"pathspec >=1.0.0",
 	"tree-sitter~=0.25.0",
 	"tree-sitter-bash~=0.23.1",
 	"pkgcore@git+https://github.com/pkgcore/pkgcore.git#master",

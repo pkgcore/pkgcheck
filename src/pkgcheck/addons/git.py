@@ -559,7 +559,7 @@ class GitAddon(caches.CachedAddon):
             except (FileNotFoundError, IOError):
                 pass
         if patterns:
-            return PathSpec.from_lines("gitwildmatch", patterns)
+            return PathSpec.from_lines("gitignore", patterns)
         return None
 
     def gitignored(self, path):
