@@ -73,7 +73,7 @@ class UnknownProfilePackageUse(results.ProfilesResult, results.Warning):
         super().__init__()
         self.path = path
         self.atom = str(atom)
-        self.flags = tuple(flags)
+        self.flags = tuple(sorted(flags))
 
     @property
     def desc(self):
@@ -89,7 +89,7 @@ class UnknownProfileUse(results.ProfilesResult, results.Warning):
     def __init__(self, path, flags):
         super().__init__()
         self.path = path
-        self.flags = tuple(flags)
+        self.flags = tuple(sorted(flags))
 
     @property
     def desc(self):
@@ -121,7 +121,7 @@ class UnknownProfileUseExpand(results.ProfilesResult, results.Warning):
         super().__init__()
         self.path = path
         self.var = var
-        self.groups = tuple(groups)
+        self.groups = tuple(sorted(groups))
 
     @property
     def desc(self):
@@ -137,7 +137,7 @@ class UnknownProfileUseExpandValue(results.ProfilesResult, results.Warning):
         super().__init__()
         self.path = path
         self.group = group
-        self.values = tuple(values)
+        self.values = tuple(sorted(values))
 
     @property
     def desc(self):
@@ -308,9 +308,9 @@ class ProfilesCheck(Check):
             for _, disabled, enabled in entries:
                 if unknown_disabled := set(disabled) - self.available_iuse:
                     flags = ("-" + u for u in unknown_disabled)
-                    yield UnknownProfileUse(pjoin(node.name, filename), sorted(flags))
+                    yield UnknownProfileUse(pjoin(node.name, filename), flags)
                 if unknown_enabled := set(enabled) - self.available_iuse:
-                    yield UnknownProfileUse(pjoin(node.name, filename), sorted(unknown_enabled))
+                    yield UnknownProfileUse(pjoin(node.name, filename), unknown_enabled)
 
     @verify_files(
         ("packages", "packages"),
@@ -376,7 +376,7 @@ class ProfilesCheck(Check):
             for use in vals.get(use_group, "").split()
         }:
             if unknown := use_flags - self.available_iuse:
-                yield UnknownProfileUse(pjoin(node.name, filename), sorted(unknown))
+                yield UnknownProfileUse(pjoin(node.name, filename), unknown)
         implicit_use_expands = set(vals.get("USE_EXPAND_IMPLICIT", "").split())
         for use_group in (
             "USE_EXPAND",
@@ -385,9 +385,7 @@ class ProfilesCheck(Check):
         ):
             values = {use.removeprefix("-") for use in vals.get(use_group, "").split()}
             if unknown := values - self.use_expand_groups.keys() - implicit_use_expands:
-                yield UnknownProfileUseExpand(
-                    pjoin(node.name, filename), use_group, sorted(unknown)
-                )
+                yield UnknownProfileUseExpand(pjoin(node.name, filename), use_group, unknown)
         for key, val in vals.items():
             if key.startswith("USE_EXPAND_VALUES_"):
                 use_group = key[18:]
@@ -395,14 +393,12 @@ class ProfilesCheck(Check):
                     continue
                 elif allowed_values := self.use_expand_groups.get(use_group, None):
                     if unknown := set(val.split()) - allowed_values:
-                        yield UnknownProfileUseExpandValue(
-                            pjoin(node.name, filename), key, sorted(unknown)
-                        )
+                        yield UnknownProfileUseExpandValue(pjoin(node.name, filename), key, unknown)
                 else:
                     yield UnknownProfileUseExpand(pjoin(node.name, filename), key, [use_group])
         for key in vals.keys() & self.use_expand_groups.keys():
             if unknown := set(vals.get(key, "").split()) - self.use_expand_groups[key]:
-                yield UnknownProfileUseExpandValue(pjoin(node.name, filename), key, sorted(unknown))
+                yield UnknownProfileUseExpandValue(pjoin(node.name, filename), key, unknown)
         if missing_values := {
             use_group
             for use_group in implicit_use_expands
