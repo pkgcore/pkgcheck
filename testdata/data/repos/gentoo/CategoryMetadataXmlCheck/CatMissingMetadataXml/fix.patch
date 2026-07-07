@@ -3,6 +3,6 @@ diff -Naur gentoo/CatMissingMetadataXml/metadata.xml fixed/CatMissingMetadataXml
 +++ fixed/CatMissingMetadataXml/metadata.xml	2019-08-26 10:27:28.164725014 -0600
 @@ -0,0 +1,4 @@
 +<?xml version="1.0" encoding="UTF-8"?>
-+<!DOCTYPE catmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
++<!DOCTYPE catmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 +<catmetadata>
 +</catmetadata>

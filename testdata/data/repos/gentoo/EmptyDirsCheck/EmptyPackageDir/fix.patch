@@ -3,7 +3,7 @@ diff -Naur gentoo/EmptyDirsCheck/EmptyPackageDir/metadata.xml fixed/EmptyDirsChe
 +++ fixed/EmptyDirsCheck/EmptyPackageDir/metadata.xml	1969-12-31 17:00:00.000000000 -0700
 @@ -1,7 +0,0 @@
 -<?xml version="1.0" encoding="UTF-8"?>
--<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+-<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 -<pkgmetadata>
 -	<maintainer type="person">
 -		<email>random.gentoo.dev@gentoo.org</email>
@@ -14,7 +14,7 @@ diff -Naur gentoo/EmptyDirsCheck/metadata.xml fixed/EmptyDirsCheck/metadata.xml
 +++ fixed/EmptyDirsCheck/metadata.xml	1969-12-31 17:00:00.000000000 -0700
 @@ -1,4 +0,0 @@
 -<?xml version="1.0" encoding="UTF-8"?>
--<!DOCTYPE catmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+-<!DOCTYPE catmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 -<catmetadata>
 -</catmetadata>
 diff -Naur gentoo/profiles/categories fixed/profiles/categories

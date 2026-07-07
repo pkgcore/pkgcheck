@@ -3,7 +3,7 @@ diff -Naur gentoo/PackageMetadataXmlCheck/MaintainerNeeded/metadata.xml fixed/Pa
 +++ fixed/PackageMetadataXmlCheck/MaintainerNeeded/metadata.xml	2020-11-23 20:41:43.677447289 -0700
 @@ -1,4 +1,5 @@
  <?xml version="1.0" encoding="UTF-8"?>
- <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+ <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
  <pkgmetadata>
 +<!-- maintainer-needed -->
  </pkgmetadata>
@@ -12,7 +12,7 @@ diff -Naur gentoo/PackageMetadataXmlCheck/MaintainerNeeded2/metadata.xml fixed/P
 +++ fixed/PackageMetadataXmlCheck/MaintainerNeeded2/metadata.xml	2020-11-23 20:41:54.541684647 -0700
 @@ -1,7 +1,6 @@
  <?xml version="1.0" encoding="UTF-8"?>
- <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+ <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
  <pkgmetadata>
 -	<!-- maintainer-needed -->
  	<maintainer type="person">

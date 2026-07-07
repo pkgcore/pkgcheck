@@ -2,7 +2,7 @@ diff -Naur gentoo/PackageMetadataXmlCheck/NonexistentProjectMaintainer/metadata.
 --- gentoo/PackageMetadataXmlCheck/NonexistentProjectMaintainer/metadata.xml	2020-11-23 20:56:52.455276615 -0700
 +++ fixed/PackageMetadataXmlCheck/NonexistentProjectMaintainer/metadata.xml	2020-11-23 20:58:32.783465361 -0700
 @@ -2,6 +2,6 @@
- <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+ <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
  <pkgmetadata>
  	<maintainer type="project">
 -		<email>random.gentoo.dev@gentoo.org</email>

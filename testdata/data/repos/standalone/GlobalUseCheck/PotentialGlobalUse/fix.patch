@@ -3,7 +3,7 @@ diff -Naur standalone/GlobalUseCheck/PotentialGlobalUse/metadata.xml fixed/Globa
 +++ fixed/GlobalUseCheck/PotentialGlobalUse/metadata.xml	1969-12-31 17:00:00.000000000 -0700
 @@ -1,7 +0,0 @@
 -<?xml version="1.0" encoding="UTF-8"?>
--<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+-<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 -<pkgmetadata>
 -	<use>
 -		<flag name="potential-global">potential global flag</flag>
@@ -34,7 +34,7 @@ diff -Naur standalone/stub/potential-global1/metadata.xml fixed/stub/potential-g
 +++ fixed/stub/potential-global1/metadata.xml	1969-12-31 17:00:00.000000000 -0700
 @@ -1,7 +0,0 @@
 -<?xml version="1.0" encoding="UTF-8"?>
--<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+-<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 -<pkgmetadata>
 -	<use>
 -		<flag name="potential-global">potential global flag</flag>
@@ -45,7 +45,7 @@ diff -Naur standalone/stub/potential-global2/metadata.xml fixed/stub/potential-g
 +++ fixed/stub/potential-global2/metadata.xml	1969-12-31 17:00:00.000000000 -0700
 @@ -1,7 +0,0 @@
 -<?xml version="1.0" encoding="UTF-8"?>
--<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+-<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 -<pkgmetadata>
 -	<use>
 -		<flag name="potential-global">potential global flag</flag>
@@ -56,7 +56,7 @@ diff -Naur standalone/stub/potential-global3/metadata.xml fixed/stub/potential-g
 +++ fixed/stub/potential-global3/metadata.xml	1969-12-31 17:00:00.000000000 -0700
 @@ -1,7 +0,0 @@
 -<?xml version="1.0" encoding="UTF-8"?>
--<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+-<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 -<pkgmetadata>
 -	<use>
 -		<flag name="potential-global">potential global flag</flag>
@@ -67,7 +67,7 @@ diff -Naur standalone/stub/potential-global4/metadata.xml fixed/stub/potential-g
 +++ fixed/stub/potential-global4/metadata.xml	1969-12-31 17:00:00.000000000 -0700
 @@ -1,7 +0,0 @@
 -<?xml version="1.0" encoding="UTF-8"?>
--<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+-<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 -<pkgmetadata>
 -	<use>
 -		<flag name="potential-global">potential global flag</flag>

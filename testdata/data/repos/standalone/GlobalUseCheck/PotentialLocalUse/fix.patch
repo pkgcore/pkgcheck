@@ -3,7 +3,7 @@ diff -Naur standalone/GlobalUseCheck/PotentialLocalUse/metadata.xml fixed/Global
 +++ fixed/GlobalUseCheck/PotentialLocalUse/metadata.xml	2020-11-21 13:41:35.139251785 -0700
 @@ -0,0 +1,10 @@
 +<?xml version="1.0" encoding="UTF-8"?>
-+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
++<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
 +<pkgmetadata>
 +	<maintainer type="person">
 +		<email>maintainer@random.email</email>

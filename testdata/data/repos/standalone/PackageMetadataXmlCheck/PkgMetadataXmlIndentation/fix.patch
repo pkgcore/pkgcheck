@@ -2,7 +2,7 @@ diff -Naur standalone/PackageMetadataXmlCheck/PkgMetadataXmlIndentation/metadata
 --- standalone/PackageMetadataXmlCheck/PkgMetadataXmlIndentation/metadata.xml	2019-08-23 17:27:50.042953896 -0600
 +++ fixed/PackageMetadataXmlCheck/PkgMetadataXmlIndentation/metadata.xml	2019-08-23 17:30:54.799692845 -0600
 @@ -2,6 +2,6 @@
- <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+ <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
  <pkgmetadata>
 	<maintainer type="person">
 -	    <email>maintainer@random.email</email>

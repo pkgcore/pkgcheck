@@ -3,7 +3,7 @@ diff -Naur gentoo/PackageMetadataXmlCheck/ProxyWithoutProxied/metadata.xml fixed
 +++ fixed/PackageMetadataXmlCheck/ProxyWithoutProxied/metadata.xml	2019-08-24 11:14:49.806128606 -0600
 @@ -1,7 +1,5 @@
  <?xml version="1.0" encoding="UTF-8"?>
- <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+ <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
  <pkgmetadata>
 -	<maintainer type="person">
 -		<email>proxy-maint@gentoo.org</email>
@@ -15,7 +15,7 @@ diff -Naur gentoo/PackageMetadataXmlCheck/ProxyWithoutProxied2/metadata.xml fixe
 +++ fixed/PackageMetadataXmlCheck/ProxyWithoutProxied2/metadata.xml	2021-03-14 23:31:49.099021402 +0100
 @@ -1,6 +1,9 @@
  <?xml version="1.0" encoding="UTF-8"?>
- <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+ <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
  <pkgmetadata>
 +	<maintainer type="person" proxied="proxied">
 +		<email>barnor@gentoo.org</email>
