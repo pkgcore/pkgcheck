@@ -126,6 +126,19 @@ class DirectNoMaintainer(results.PackageResult, results.Error):
         return "directly committed with no package maintainer"
 
 
+class NoMaintainerCommit(results.PackageResult, results.Info):
+    """Committed version bump for a package that has no maintainer.
+
+    Unlike ``DirectNoMaintainer``, this covers version bumps of packages
+    that already existed without a maintainer, as a reminder that the
+    package could use one.
+    """
+
+    @property
+    def desc(self):
+        return "committed version bump for a package with no maintainer"
+
+
 class RdependChange(results.VersionResult, results.Warning):
     """Package RDEPEND was modified without adding a new ebuild revision."""
 
@@ -317,6 +330,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
         {
             DirectStableKeywords,
             DirectNoMaintainer,
+            NoMaintainerCommit,
             RdependChange,
             EbuildIncorrectCopyright,
             DroppedStableKeywords,
@@ -611,8 +625,11 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
                 newly_added = not self.added_repo.match(git_pkg.unversioned_atom)
 
                 # check for no maintainers
-                if not pkg.maintainers and newly_added:
-                    yield DirectNoMaintainer(pkg=pkg)
+                if not pkg.maintainers:
+                    if newly_added:
+                        yield DirectNoMaintainer(pkg=pkg)
+                    else:
+                        yield NoMaintainerCommit(pkg=pkg)
 
         yield from self.src_uri_changes(pkgset)
 

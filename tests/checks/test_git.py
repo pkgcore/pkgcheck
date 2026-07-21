@@ -422,6 +422,20 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         self.parent_git_repo.add_all("initial commit")
         # create a stub pkg and commit it
         self.parent_repo.create_ebuild("cat/pkg-0", eapi="7")
+        with open(pjoin(self.parent_git_repo.path, "cat/pkg/metadata.xml"), "w") as f:
+            f.write(
+                textwrap.dedent(
+                    """\
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+                    <pkgmetadata>
+                    \t<maintainer type="person">
+                    \t\t<email>random.gentoo.dev@gentoo.org</email>
+                    \t</maintainer>
+                    </pkgmetadata>
+                    """
+                )
+            )
         self.parent_git_repo.add_all("cat/pkg-0")
 
         # initialize child repo
@@ -472,6 +486,20 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         self.init_check()
         r = self.assertReport(self.check, self.source)
         expected = git_mod.DirectNoMaintainer(pkg=CPV("newcat/pkg-1"))
+        assert r == expected
+
+    def test_no_maintainer_commit(self):
+        # add an unmaintained pkg to the parent repo and pull it into the child
+        self.parent_repo.create_ebuild("newcat2/pkg-0")
+        self.parent_git_repo.add_all("newcat2/pkg: initial import")
+        self.child_git_repo.run(["git", "pull", "origin", "main"])
+
+        # bump it in the child repo; it's still not maintained
+        self.child_repo.create_ebuild("newcat2/pkg-1")
+        self.child_git_repo.add_all("newcat2/pkg: version bump to 1")
+        self.init_check()
+        r = self.assertReport(self.check, self.source)
+        expected = git_mod.NoMaintainerCommit(pkg=CPV("newcat2/pkg-1"))
         assert r == expected
 
     def test_ebuild_incorrect_copyright(self):

@@ -28,6 +28,9 @@ pkgcheck 0.10.41 (unreleased)
 - StabilizationGroupNoStableVersion: flag a package listed in a stabilization
   group without any stable version on any arch (Arthur Zamarin, #617)
 
+- NoMaintainerCommit: ``pkgcheck scan --commits`` flags version bump for a
+  package that has no maintainer (Arthur Zamarin, #687)
+
 **Fixes:**
 
 - MissingRemoteId: exclude URIs used for fetching ``-vendor`` tarballs from
