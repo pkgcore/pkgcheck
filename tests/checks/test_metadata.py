@@ -628,6 +628,27 @@ class TestRequiredUseCheck(IUSE_Options, misc.ReportTestCase):
         assert r.use == ("foo",)
         assert str(r.required_use) == "( bar || baz )"
 
+    def test_required_use_defaults_pkg_use_disable(self):
+        # profile-level package.use disabling a profile default USE flag
+        # should be taken into account (bug #640)
+        profiles = {
+            "x86": [
+                misc.FakeProfile(
+                    name="default/linux/x86",
+                    use=["exif", "truetype"],
+                    pkg_use={"dev-util/diffball": ["-exif", "-truetype"]},
+                )
+            ]
+        }
+        check = self.mk_check(profiles=profiles)
+        self.assertNoReport(
+            check,
+            self.mk_pkg(
+                iuse="exif truetype gd",
+                required_use="exif? ( gd ) truetype? ( gd )",
+            ),
+        )
+
 
 def use_based():
     # hidden to keep the test runner from finding it

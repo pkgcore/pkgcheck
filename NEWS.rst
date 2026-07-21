@@ -27,6 +27,9 @@ pkgcheck 0.10.41 (unreleased)
 - MissingRemoteId: exclude URIs used for fetching ``-vendor`` tarballs from
   this check (Arthur Zamarin)
 
+- RequiredUseDefaults: fix false positives when a profile's ``package.use``
+  disables a USE flag enabled by that profile's defaults (Arthur Zamarin, #640)
+
 -----------------------------
 pkgcheck 0.10.40 (2026-06-19)
 -----------------------------
