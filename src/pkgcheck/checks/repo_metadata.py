@@ -835,11 +835,35 @@ class UnknownStabilizationGroupPackage(results.Error):
         return f"stabilization group {self.group!r} has unknown package{s}: [ {packages} ]"
 
 
+class StabilizationGroupNoStableVersion(results.Error):
+    """Packages listed in stabilization group without any stable version."""
+
+    def __init__(self, group: str, packages: list[str]):
+        super().__init__()
+        self.group = group
+        self.packages = tuple(packages)
+
+    @property
+    def desc(self):
+        s = pluralism(self.packages)
+        packages = ", ".join(self.packages)
+        return (
+            f"stabilization group {self.group!r} has package{s} without any "
+            f"stable version: [ {packages} ]"
+        )
+
+
 class StabilizationGroupsCheck(RepoCheck):
     """Check stabilization groups"""
 
     _source = (sources.EmptySource, (base.repo_scope,))
-    known_results = frozenset({StabilizationGroupSourcingError, UnknownStabilizationGroupPackage})
+    known_results = frozenset(
+        {
+            StabilizationGroupSourcingError,
+            UnknownStabilizationGroupPackage,
+            StabilizationGroupNoStableVersion,
+        }
+    )
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -856,8 +880,18 @@ class StabilizationGroupsCheck(RepoCheck):
 
         for group, packages in groups.items():
             unknown_packages = set()
+            no_stable_packages = set()
             for pkg in packages:
-                if not self.repo.match(pkg):
+                matches = self.repo.match(pkg)
+                if not matches:
                     unknown_packages.add(pkg.key)
+                elif not any(
+                    not keyword.startswith(("~", "-"))
+                    for match in matches
+                    for keyword in match.keywords
+                ):
+                    no_stable_packages.add(pkg.key)
             if unknown_packages:
                 yield UnknownStabilizationGroupPackage(group, sorted(unknown_packages))
+            if no_stable_packages:
+                yield StabilizationGroupNoStableVersion(group, sorted(no_stable_packages))

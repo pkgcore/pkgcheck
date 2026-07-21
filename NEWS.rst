@@ -25,6 +25,9 @@ pkgcheck 0.10.41 (unreleased)
 - MetadataVarCheck: flag ``RedundantPypiPN``, a ``pypi`` eclass ``PYPI_PN``
   assignment that's equal to ``PN`` and can be removed (Arthur Zamarin, #662)
 
+- StabilizationGroupNoStableVersion: flag a package listed in a stabilization
+  group without any stable version on any arch (Arthur Zamarin, #617)
+
 **Fixes:**
 
 - MissingRemoteId: exclude URIs used for fetching ``-vendor`` tarballs from

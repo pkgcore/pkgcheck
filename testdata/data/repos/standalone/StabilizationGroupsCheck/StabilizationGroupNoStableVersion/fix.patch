@@ -1,0 +1,8 @@
+diff -Naur standalone/dev-lang/rust/rust-1.82.0.ebuild fixed/dev-lang/rust/rust-1.82.0.ebuild
+--- standalone/dev-lang/rust/rust-1.82.0.ebuild
++++ fixed/dev-lang/rust/rust-1.82.0.ebuild
+@@ -2,3 +2,4 @@
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ LICENSE="BSD"
+ SLOT="${PV}"
++KEYWORDS="amd64"
