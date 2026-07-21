@@ -248,6 +248,25 @@ class TestGitCommitMessageCheck(ReportTestCase):
         r = self.assertReport(self.check, commit)
         assert "non-tag in footer, line 5" in str(r)
 
+    def test_footer_mid_paragraph_colon(self):
+        # a "tag: value"-shaped line in the middle of a body paragraph
+        # shouldn't be mistaken for the start of the footer (bug #713)
+        message = textwrap.dedent(
+            """\
+                net-misc/curl: add 8.11.0
+
+                There are a number of patches attached to this release. Normally
+                I'd generate a downstream tarball, or wait for the next point release,
+                however: we have signed tarballs for curl and that's worth preserving,
+                and the next point release has been pushed back until mid-December due
+                to upstream availability.
+
+                Signed-off-by: author@domain.com
+            """
+        ).splitlines()
+        commit = FakeCommit(message=message)
+        self.assertNoReport(self.check, commit)
+
 
 class TestGitCommitMessageRepoCheck(ReportTestCase):
     check_kls = git_mod.GitCommitMessageCheck

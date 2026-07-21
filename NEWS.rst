@@ -30,6 +30,9 @@ pkgcheck 0.10.41 (unreleased)
 - RequiredUseDefaults: fix false positives when a profile's ``package.use``
   disables a USE flag enabled by that profile's defaults (Arthur Zamarin, #640)
 
+- InvalidCommitMessage: fix false positive footer detection triggered by a
+  ``word: text`` line in the middle of a body paragraph (Arthur Zamarin, #713)
+
 -----------------------------
 pkgcheck 0.10.40 (2026-06-19)
 -----------------------------

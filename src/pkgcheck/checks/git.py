@@ -5,7 +5,7 @@ import os
 import re
 import subprocess
 import tarfile
-from collections import defaultdict
+from collections import defaultdict, deque
 from datetime import datetime
 from itertools import chain
 from operator import attrgetter
@@ -840,13 +840,30 @@ class GitCommitMessageCheck(GentooRepoCheck, GitCommitsCheck):
                     yield BadCommitSummary(error, summary, commit=commit)
 
         # verify message body
-        i = iter(commit.message[1:])
-        lineno = 1
+        remaining = deque(enumerate(commit.message[1:], 1))
+
+        def pull():
+            return remaining.popleft() if remaining else None
+
         body = False
-        for lineno, line in enumerate(i, lineno):
+        while (item := pull()) is not None:
+            lineno, line = item
             if not line.strip():
                 continue
-            if self._commit_footer_regex.match(line) is None:
+
+            is_tag_line = self._commit_footer_regex.match(line) is not None
+            if is_tag_line:
+                # only treat as the footer start if it ends the message or
+                # is followed by another tag-shaped line (bug #713)
+                lookahead = []
+                while (next_item := pull()) is not None:
+                    lookahead.append(next_item)
+                    if next_item[1].strip():
+                        is_tag_line = self._commit_footer_regex.match(next_item[1]) is not None
+                        break
+                remaining.extendleft(reversed(lookahead))
+
+            if not is_tag_line:
                 if not body and commit.message[1] != "":
                     yield InvalidCommitMessage("missing empty line before body", commit=commit)
                 # still processing the body
@@ -859,14 +876,16 @@ class GitCommitMessageCheck(GentooRepoCheck, GitCommitsCheck):
                 if commit.message[lineno - 1] != "":
                     yield InvalidCommitMessage("missing empty line before tags", commit=commit)
                 # push it back on the stack
-                i = chain([line], i)
+                remaining.appendleft((lineno, line))
                 break
 
         # mapping of defined tags to any existing verification methods
         tags = dict(self._required_tags)
 
         # verify footer
-        for lineno, line in enumerate(i, lineno + 1):
+        while (item := pull()) is not None:
+            idx, line = item
+            lineno = idx + 1
             if not line.strip():
                 # single empty end line is ignored
                 if lineno != len(commit.message):
