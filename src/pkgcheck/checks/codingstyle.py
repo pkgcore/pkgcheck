@@ -605,6 +605,23 @@ class SelfAssignment(results.LineResult, results.Warning):
         return f"line {self.lineno}: self assignment: {self.line}"
 
 
+class RedundantPypiPN(results.VersionResult, results.Style):
+    """PYPI_PN is set to the same value as PN, and can be removed.
+
+    ``pypi.eclass`` already defaults ``PYPI_PN`` to ``${PN}``, so
+    explicitly assigning it the same value has no effect. This can
+    happen e.g. after a pkgmove leaves the override stale.
+    """
+
+    def __init__(self, value, **kwargs):
+        super().__init__(**kwargs)
+        self.value = value
+
+    @property
+    def desc(self):
+        return f"PYPI_PN={self.value!r} is equal to PN and can be removed"
+
+
 def verify_vars(*variables):
     """Decorator to register raw variable verification methods."""
 
@@ -634,6 +651,7 @@ class MetadataVarCheck(Check):
             MultipleKeywordsLines,
             EmptyGlobalAssignment,
             SelfAssignment,
+            RedundantPypiPN,
         }
     )
 
@@ -641,6 +659,11 @@ class MetadataVarCheck(Check):
     known_variables = {}
 
     empty_vars_whitelist = frozenset({"KEYWORDS"})
+
+    @verify_vars("PYPI_PN")
+    def _pypi_pn(self, var, node, value, pkg):
+        if "pypi" in pkg.inherited and value in (pkg.PN, "${PN}", "$PN"):
+            yield RedundantPypiPN(value, pkg=pkg)
 
     @verify_vars("HOMEPAGE", "KEYWORDS")
     def _raw_text(self, var, node, value, pkg):

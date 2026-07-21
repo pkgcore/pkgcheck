@@ -422,6 +422,40 @@ class TestStaticSrcUri(misc.ReportTestCase):
         assert r.replacement == "${P}"
 
 
+class TestRedundantPypiPN(misc.ReportTestCase):
+    check_kls = codingstyle.MetadataVarCheck
+    check = check_kls(None)
+
+    @staticmethod
+    def _prepare_pkg(value: str, inherited=("pypi",), pn="foo"):
+        fake_src = [f'PYPI_PN="{value}"\n']
+        fake_pkg = misc.FakePkg(
+            f"dev-python/{pn}-1",
+            ebuild="".join(fake_src),
+            lines=fake_src,
+            data={"_eclasses_": list(inherited)},
+        )
+        data = "".join(fake_src).encode()
+        return _ParsedPkg(data, pkg=fake_pkg)
+
+    def test_no_report_different_value(self):
+        self.assertNoReport(self.check, self._prepare_pkg("bar"))
+
+    def test_no_report_not_inherited(self):
+        self.assertNoReport(self.check, self._prepare_pkg("foo", inherited=()))
+
+    def test_report_equal_to_pn(self):
+        r = self.assertReport(self.check, self._prepare_pkg("foo"))
+        assert isinstance(r, codingstyle.RedundantPypiPN)
+        assert r.value == "foo"
+
+    @pytest.mark.parametrize("value", ("${PN}", "$PN"))
+    def test_report_self_reference(self, value):
+        r = self.assertReport(self.check, self._prepare_pkg(value))
+        assert isinstance(r, codingstyle.RedundantPypiPN)
+        assert r.value == value
+
+
 class TestExcessiveLineLength(misc.ReportTestCase):
     check_kls = codingstyle.LineLengthCheck
     check = check_kls(None)

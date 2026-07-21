@@ -22,6 +22,9 @@ pkgcheck 0.10.41 (unreleased)
   flagging malformed atoms (``OptfeatureMalformedAtom``) and atoms with no
   matching package (``OptfeatureNonexistentAtom``) (Arthur Zamarin, #710)
 
+- MetadataVarCheck: flag ``RedundantPypiPN``, a ``pypi`` eclass ``PYPI_PN``
+  assignment that's equal to ``PN`` and can be removed (Arthur Zamarin, #662)
+
 **Fixes:**
 
 - MissingRemoteId: exclude URIs used for fetching ``-vendor`` tarballs from
