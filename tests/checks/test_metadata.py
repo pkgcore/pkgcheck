@@ -900,6 +900,97 @@ class TestMissingSlotDepCheck(use_based(), misc.ReportTestCase):
         )
 
 
+class TestCrossSlotRangeDepCheck(use_based(), misc.ReportTestCase):
+    check_kls = metadata.CrossSlotRangeDepCheck
+
+    def mk_check(self, pkgs=None, **kwargs):
+        if pkgs is None:
+            pkgs = (
+                FakePkg("dev-cpp/catch-1.12.2", slot="1"),
+                FakePkg("dev-cpp/catch-2.13.10", slot="0"),
+                FakePkg("dev-cpp/catch-3.6.0", slot="0"),
+                FakePkg("dev-libs/bar-1", slot="0"),
+                FakePkg("dev-libs/bar-2", slot="0"),
+                FakePkg("dev-libs/bar-3", slot="0"),
+            )
+        self.repo = FakeRepo(pkgs=pkgs, repo_id="test")
+        options = self.get_options(**kwargs)
+        use_addon = addons.UseAddon(options)
+        check = self.check_kls(options, use_addon=use_addon)
+        return check
+
+    def mk_pkg(self, rdepend=""):
+        return FakePkg(
+            "dev-util/diffball-2.7.1",
+            data={"RDEPEND": rdepend},
+            repo=self.repo,
+        )
+
+    def test_cross_slot_range(self):
+        r = self.assertReport(
+            self.mk_check(),
+            self.mk_pkg(rdepend=">=dev-cpp/catch-2.13.9 <dev-cpp/catch-3"),
+        )
+        assert isinstance(r, metadata.CrossSlotRangeDep)
+        assert r.attr == "rdepend"
+        assert r.lower == ">=dev-cpp/catch-2.13.9"
+        assert r.upper == "<dev-cpp/catch-3"
+        assert r.slots == ("0", "1")
+
+    def test_single_slot_package(self):
+        self.assertNoReport(
+            self.mk_check(), self.mk_pkg(rdepend=">=dev-libs/bar-1 <dev-libs/bar-3")
+        )
+
+    def test_explicit_slots(self):
+        self.assertNoReport(
+            self.mk_check(),
+            self.mk_pkg(rdepend=">=dev-cpp/catch-2.13.9:0 <dev-cpp/catch-3:0"),
+        )
+
+    def test_single_bound_only(self):
+        self.assertNoReport(self.mk_check(), self.mk_pkg(rdepend="<dev-cpp/catch-3"))
+
+    def test_no_deps(self):
+        self.assertNoReport(self.mk_check(), self.mk_pkg())
+
+    def test_vacuous_range_single_slot(self):
+        pkgs = (
+            FakePkg("dev-python/sqlalchemy-2.0.50", slot="0"),
+            FakePkg("dev-python/sqlalchemy-2.0.51", slot="0"),
+        )
+        self.assertNoReport(
+            self.mk_check(pkgs=pkgs),
+            self.mk_pkg(rdepend=">=dev-python/sqlalchemy-1.3.0 <dev-python/sqlalchemy-1.5.0"),
+        )
+
+    def test_alternative_ranges_in_or_block(self):
+        pkgs = (
+            FakePkg("dev-haskell/text-1.2.3.0", slot="0"),
+            FakePkg("dev-haskell/text-2.1.1", slot="1"),
+        )
+        rdepend = """|| (
+            ( >=dev-haskell/text-1.1.1.0 <dev-haskell/text-1.3 )
+            ( >=dev-haskell/text-2.0 <dev-haskell/text-2.2 )
+        )"""
+        self.assertNoReport(self.mk_check(pkgs=pkgs), self.mk_pkg(rdepend=rdepend))
+
+    def test_different_use_conditionals(self):
+        pkgs = (
+            FakePkg("dev-cpp/catch-1.12.2", slot="1"),
+            FakePkg("dev-cpp/catch-2.13.10", slot="0"),
+        )
+        rdepend = "foo? ( >=dev-cpp/catch-2.13.9 ) !foo? ( <dev-cpp/catch-3 )"
+        self.assertNoReport(
+            self.mk_check(pkgs=pkgs),
+            FakePkg(
+                "dev-util/diffball-2.7.1",
+                data={"RDEPEND": rdepend, "IUSE": "foo"},
+                repo=self.repo,
+            ),
+        )
+
+
 class TestDependencyCheck(use_based(), misc.ReportTestCase):
     check_kls = metadata.DependencyCheck
 

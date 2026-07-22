@@ -743,6 +743,87 @@ class MissingSlotDepCheck(Check):
                 yield MissingSlotDep(str(dep), sorted(dep_slots), pkg=pkg)
 
 
+class CrossSlotRangeDep(results.VersionResult, results.Warning):
+    """Range dependency that different package slots can satisfy independently.
+
+    Two atoms for the same slotted package, one a lower bound (``>`` or
+    ``>=``), the other an upper bound (``<`` or ``<=``), look like they
+    restrict dependency resolution to a single version range. However,
+    each atom is resolved independently, so the pair can instead be
+    satisfied by two different slots installed simultaneously, with
+    neither slot actually falling within the intended range.
+
+    To avoid this, specify an explicit slot on both atoms.
+    """
+
+    def __init__(self, attr: str, lower: str, upper: str, slots: list[str], **kwargs):
+        super().__init__(**kwargs)
+        self.attr = attr
+        self.lower = lower
+        self.upper = upper
+        self.slots = tuple(slots)
+
+    @property
+    def desc(self):
+        return (
+            f"{self.attr}: {self.lower!r} and {self.upper!r} could be satisfied by "
+            f"different slots: [ {', '.join(self.slots)} ], please add explicit slots"
+        )
+
+
+class CrossSlotRangeDepCheck(Check):
+    """Check for version range dependencies satisfiable across different slots."""
+
+    required_addons = (addons.UseAddon,)
+    known_results = frozenset([CrossSlotRangeDep])
+
+    _lower_ops = frozenset({">", ">="})
+    _upper_ops = frozenset({"<", "<="})
+
+    def __init__(self, *args, use_addon):
+        super().__init__(*args)
+        self.iuse_filter = use_addon.get_filter()
+
+    def feed(self, pkg):
+        for attr in sorted(x.lower() for x in pkg.eapi.dep_keys):
+            # keep || ( ... ) blocks intact rather than flattening them, since
+            # their contents are alternatives, not simultaneous constraints
+            deps, _unstated = self.iuse_filter(
+                (atom_cls, boolean.OrRestriction), pkg, getattr(pkg, attr)
+            )
+
+            by_key = defaultdict(list)
+            for dep, dep_restricts in deps.items():
+                if not isinstance(dep, atom_cls):
+                    # drop the whole || ( ... ) block, not just skip pairing it
+                    continue
+                if not dep.blocks and dep.slot is None and dep.slot_operator is None and dep.op:
+                    # only pair atoms guarded by the same (possibly empty) set
+                    # of USE conditionals, so a foo? and !foo? bound don't mix
+                    by_key[(dep.key, dep_restricts)].append(dep)
+
+            for key_atoms in by_key.values():
+                lowers = [x for x in key_atoms if x.op in self._lower_ops]
+                uppers = [x for x in key_atoms if x.op in self._upper_ops]
+                for lower, upper in itertools.product(lowers, uppers):
+                    slots_lower = {p.slot for p in pkg.repo.itermatch(lower.no_usedeps)}
+                    slots_upper = {p.slot for p in pkg.repo.itermatch(upper.no_usedeps)}
+                    all_slots = slots_lower | slots_upper
+                    if len(all_slots) < 2:
+                        continue
+                    combined = boolean.AndRestriction(lower.no_usedeps, upper.no_usedeps)
+                    slots_range = {p.slot for p in pkg.repo.itermatch(combined)}
+                    extra_slots = all_slots - slots_range
+                    if extra_slots:
+                        yield CrossSlotRangeDep(
+                            attr,
+                            str(lower),
+                            str(upper),
+                            sorted(all_slots),
+                            pkg=pkg,
+                        )
+
+
 class MissingPackageRevision(results.VersionResult, results.Warning):
     """Missing package revision in =cat/pkg dependencies.
 

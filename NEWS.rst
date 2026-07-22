@@ -31,6 +31,10 @@ pkgcheck 0.10.41 (unreleased)
 - NoMaintainerCommit: ``pkgcheck scan --commits`` flags version bump for a
   package that has no maintainer (Arthur Zamarin, #687)
 
+- CrossSlotRangeDep: flag a dependency range (a ``<`` / ``<=`` atom paired with
+  a ``>`` / ``>=`` atom on the same package) that could be satisfied by two
+  different slots instead of a single version in range (Arthur Zamarin, #683)
+
 **Fixes:**
 
 - MissingRemoteId: exclude URIs used for fetching ``-vendor`` tarballs from
