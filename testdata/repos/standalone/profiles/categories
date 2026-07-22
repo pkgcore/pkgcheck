@@ -21,6 +21,7 @@ EclassManualDepsCheck
 EclassUsageCheck
 EendMissingArgCheck
 EqualVersionsCheck
+GlobalDeclareCheck
 GlobalUseCheck
 GlobCheck
 HomepageCheck

@@ -67,6 +67,9 @@ pkgcheck 0.10.40 (2026-06-19)
 
 - InvalidRemoteID: add missing upstreams (Arthur Zamarin)
 
+- GlobalDeclareCheck: detect ``declare -A`` without ``-g`` in global scope
+  (Sv. Lockal, #628)
+
 
 **Packaging:**
 
