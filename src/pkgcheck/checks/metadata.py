@@ -1604,10 +1604,15 @@ class DescriptionCheck(Check):
     def feed(self, pkg):
         desc: str = pkg.description
         s = desc.lower()
+        lower_pn = pkg.package.lower()
         if s.startswith("based on") and "eclass" in s:
             yield BadDescription("generic eclass defined description", pkg_desc=desc, pkg=pkg)
-        elif s in (pkg.package.lower(), pkg.key.lower()):
+        elif s in (lower_pn, pkg.key.lower()):
             yield BadDescription("generic package description", pkg_desc=desc, pkg=pkg)
+        elif s.startswith(lower_pn) and s.removeprefix(lower_pn).startswith(
+            (" is", " -", ":", ",")
+        ):
+            yield BadDescription("repeats package name", pkg_desc=desc, pkg=pkg)
         elif desc.endswith(tuple(".,:;")) and not desc.lower().endswith(
             ("etc.", "co.", "inc.", "ltd.", "...")
         ):

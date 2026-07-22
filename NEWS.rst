@@ -67,6 +67,9 @@ pkgcheck 0.10.40 (2026-06-19)
 
 - InvalidRemoteID: add missing upstreams (Arthur Zamarin)
 
+- DescriptionCheck: check for descriptions repeating package name  (Michał
+  Górny, #2021)
+
 
 **Packaging:**
 
