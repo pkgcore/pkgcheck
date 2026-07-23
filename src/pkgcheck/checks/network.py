@@ -2,7 +2,6 @@
 
 import abc
 import re
-import socket
 import traceback
 import typing
 import urllib.request
@@ -171,7 +170,7 @@ class _UrlCheck(abc.ABC, NetworkCheck):
             urllib.request.urlopen(url, timeout=self.timeout)
         except urllib.error.URLError as e:
             result = DeadUrl(attr, url, str(e.reason), pkg=pkg)
-        except socket.timeout as e:
+        except TimeoutError as e:
             result = DeadUrl(attr, url, str(e), pkg=pkg)
         except UnicodeDecodeError:
             ...  # ignore ftp:// URLs that return binary data

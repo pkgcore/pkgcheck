@@ -209,11 +209,9 @@ class ProfileAddon(caches.CachedAddon):
                         st_obj = os.lstat(p)
                         if stat.S_ISREG(st_obj.st_mode):
                             files.append(p)
-                            if st_obj.st_mtime > mtime:
-                                mtime = st_obj.st_mtime
+                            mtime = max(mtime, st_obj.st_mtime)
                     cache[node.path] = (mtime, files)
-                if mtime > profile_mtime:
-                    profile_mtime = mtime
+                profile_mtime = max(profile_mtime, mtime)
                 profile_files.extend(files)
             yield profile_mtime, frozenset(profile_files)
 

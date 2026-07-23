@@ -196,9 +196,8 @@ class TestPkgcheckScanCommitsParseArgs:
 
 class TestGitStash:
     def test_non_git_repo(self, tmp_path):
-        with pytest.raises(ValueError, match="not a git repo"):
-            with git.GitStash(str(tmp_path)):
-                pass
+        with pytest.raises(ValueError, match="not a git repo"), git.GitStash(str(tmp_path)):
+            pass
 
     def test_empty_git_repo(self, git_repo):
         with git.GitStash(git_repo.path):
@@ -487,7 +486,7 @@ class TestGitAddon:
         with open(pjoin(self.repo.location, ".gitignore"), "w") as f:
             f.write(".*.swp\n")
         with patch("pkgcheck.addons.git.open") as fake_open:
-            fake_open.side_effect = IOError("file reading failure")
+            fake_open.side_effect = OSError("file reading failure")
             assert self.addon._gitignore is None
 
     def test_gitignore(self):
@@ -636,7 +635,7 @@ class TestGitAddon:
 
         # verify IO related dump failures are raised
         with patch("pkgcheck.addons.caches.pickle.dump") as pickle_dump:
-            pickle_dump.side_effect = IOError("unpickling failed")
+            pickle_dump.side_effect = OSError("unpickling failed")
             with pytest.raises(PkgcheckUserException, match="failed dumping git cache"):
                 self.addon.update_cache()
 

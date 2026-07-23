@@ -49,7 +49,7 @@ class TestRepoDirCheck(misc.Tmpdir, misc.ReportTestCase):
         with open(pjoin(self.repo.location, "foo"), "w") as f:
             f.write("bar")
         with mock.patch("pkgcheck.open") as mocked_open:
-            mocked_open.side_effect = IOError("fake exception")
+            mocked_open.side_effect = OSError("fake exception")
             self.assertNoReport(check, [])
 
     def test_ignored_root_dirs(self):

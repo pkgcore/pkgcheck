@@ -246,7 +246,7 @@ class _RawRepo(UnconfiguredTree):
         ext_len = -len(extension)
         try:
             return tuple(x[lp:ext_len] for x in listdir_files(cppath) if x[ext_len:] == extension)
-        except EnvironmentError as e:
+        except OSError as e:
             path = pjoin(self.base, os.sep.join(catpkg))
             raise KeyError(f"failed fetching versions for package {path}: {e}") from e
 

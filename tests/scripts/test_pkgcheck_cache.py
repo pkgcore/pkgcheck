@@ -48,7 +48,7 @@ class TestPkgcheckCache:
                 patch("pkgcheck.addons.caches.os.unlink") as unlink,
                 patch("sys.argv", self.args + [arg] + ["-t", "profiles"]),
             ):
-                unlink.side_effect = IOError("bad perms")
+                unlink.side_effect = OSError("bad perms")
                 with pytest.raises(SystemExit) as excinfo:
                     self.script()
                 out, err = capsys.readouterr()
@@ -73,16 +73,15 @@ class TestPkgcheckCache:
 
     def test_cache_forced_removal(self, capsys):
         # force standalone repo profiles cache regen
-        with patch("sys.argv", self.args + ["-uf"]):
-            with pytest.raises(SystemExit):
-                self.script()
+        with patch("sys.argv", self.args + ["-uf"]), pytest.raises(SystemExit):
+            self.script()
 
         # fail to forcibly remove all
         with (
             patch("pkgcheck.addons.caches.shutil.rmtree") as rmtree,
             patch("sys.argv", self.args + ["-Rf"]),
         ):
-            rmtree.side_effect = IOError("bad perms")
+            rmtree.side_effect = OSError("bad perms")
             with pytest.raises(SystemExit) as excinfo:
                 self.script()
             out, err = capsys.readouterr()

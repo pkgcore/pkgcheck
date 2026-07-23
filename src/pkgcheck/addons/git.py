@@ -556,7 +556,7 @@ class GitAddon(caches.CachedAddon):
             try:
                 with open(path) as f:
                     patterns.extend(f)
-            except (FileNotFoundError, IOError):
+            except (OSError, FileNotFoundError):
                 pass
         if patterns:
             return PathSpec.from_lines("gitignore", patterns)

@@ -34,7 +34,7 @@ class ReportFuncShim:
 class Reporter(abc.ABC, immutable.Simple):
     """Generic result reporter."""
 
-    __slots__ = ("report", "_current_generator")
+    __slots__ = ("_current_generator", "report")
 
     priority: int  # used by the config system
     _current_generator: T_process_report | None
@@ -369,14 +369,14 @@ class FlycheckReporter(StreamReporter):
         while True:
             result = yield
             file = f"{getattr(result, 'package', '')}-{getattr(result, 'version', '')}.ebuild"
-            message = f"{getattr(result, 'name')}: {getattr(result, 'desc')}"
+            message = f"{result.name}: {result.desc}"
             if isinstance(result, BaseLinesResult):
                 message = message.replace(result.lines_str, "").strip()
                 for lineno in result.lines:
-                    self.out.write(f"{file}:{lineno}:{getattr(result, 'level')}:{message}")
+                    self.out.write(f"{file}:{lineno}:{result.level}:{message}")
             else:
                 lineno = getattr(result, "lineno", 0)
-                self.out.write(f"{file}:{lineno}:{getattr(result, 'level')}:{message}")
+                self.out.write(f"{file}:{lineno}:{result.level}:{message}")
 
 
 class CallbackReporter(Reporter):

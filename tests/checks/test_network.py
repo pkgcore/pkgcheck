@@ -1,6 +1,5 @@
 import importlib.util
 import os
-import socket
 import tempfile
 import urllib.request
 from functools import partial
@@ -118,7 +117,7 @@ class TestNetworkChecks:
 
         data = (
             (urllib.error.URLError("dead ftp"), deadurl),
-            (socket.timeout("dead ftp"), deadurl),
+            (TimeoutError("dead ftp"), deadurl),
             (None, None),  # faking a clean connection
         )
 

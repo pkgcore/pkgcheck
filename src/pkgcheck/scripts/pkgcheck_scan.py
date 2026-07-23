@@ -287,7 +287,7 @@ def _determine_target_repo(namespace):
     # determine if CWD is inside an unconfigured repo
     try:
         repo = namespace.domain.find_repo(target_dir, config=namespace.config, configure=False)
-    except (repo_errors.InitializationError, IOError) as e:
+    except (OSError, repo_errors.InitializationError) as e:
         raise argparse.ArgumentError(None, str(e))
 
     # fallback to the default repo

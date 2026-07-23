@@ -3,7 +3,6 @@ import random
 import string
 from dataclasses import dataclass
 from os.path import join as pjoin
-from typing import List
 
 import pytest
 from pkgcore.ebuild import domain, repo_objs
@@ -32,7 +31,7 @@ class Profile:
     arch: str
     status: str = "stable"
     deprecated: bool = False
-    defaults: List[str] = None
+    defaults: list[str] = None
     eapi: str = "5"
 
 

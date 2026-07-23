@@ -392,7 +392,7 @@ class _XmlBaseCheck(Check):
     def _parse_xml(self, pkg, loc):
         try:
             doc = etree.parse(loc)
-        except (IOError, OSError):
+        except OSError:
             # it's only an error when missing in the main gentoo repo
             if self.options.gentoo_repo:
                 yield self.missing_error(os.path.basename(loc), pkg=pkg)

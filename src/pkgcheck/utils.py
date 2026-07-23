@@ -45,7 +45,7 @@ def is_binary(path, blocksize=1024):
     try:
         with open(path, "rb") as f:
             byte_str = f.read(blocksize)
-    except IOError:
+    except OSError:
         return False
 
     # empty files are considered text

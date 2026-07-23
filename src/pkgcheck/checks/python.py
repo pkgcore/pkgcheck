@@ -1,5 +1,4 @@
 import re
-import typing
 from collections import defaultdict
 from itertools import takewhile
 from operator import attrgetter
@@ -881,10 +880,10 @@ class PythonInlinePyPIURI(results.VersionResult, results.Warning):
     def __init__(
         self,
         url: str,
-        replacement: typing.Optional[tuple[str, ...]] = None,
-        normalize: typing.Optional[bool] = None,
-        append: typing.Optional[bool] = None,
-        pypi_pn: typing.Optional[str] = None,
+        replacement: tuple[str, ...] | None = None,
+        normalize: bool | None = None,
+        append: bool | None = None,
+        pypi_pn: str | None = None,
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)

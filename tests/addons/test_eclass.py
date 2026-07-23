@@ -144,7 +144,7 @@ class TestEclassAddon:
         touch(pjoin(self.eclass_dir, "foo.eclass"))
         # verify IO related dump failures are raised
         with patch("pkgcheck.addons.caches.pickle.dump") as pickle_dump:
-            pickle_dump.side_effect = IOError("unpickling failed")
+            pickle_dump.side_effect = OSError("unpickling failed")
             with pytest.raises(PkgcheckUserException, match="failed dumping eclass cache"):
                 self.addon.update_cache()
 

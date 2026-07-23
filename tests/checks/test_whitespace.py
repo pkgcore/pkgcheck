@@ -130,7 +130,7 @@ class TestBadWhitespaceCharacter(WhitespaceCheckTest):
 
             r = self.assertReport(self.check, fake_pkg)
             assert isinstance(r, whitespace.BadWhitespaceCharacter)
-            assert f"bad whitespace character {repr(char)} on line 2" in str(r)
+            assert f"bad whitespace character {char!r} on line 2" in str(r)
 
 
 class TestMultipleChecks(WhitespaceCheckTest):

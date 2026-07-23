@@ -109,7 +109,7 @@ class Pipeline:
                 else:
                     runners[runner_cls.type][source.scope].append(runner)
 
-            for exec_type in pipes.keys():
+            for exec_type in pipes:
                 if runners[exec_type]:
                     pipes[exec_type].append((scope, restriction, runners[exec_type]))
 

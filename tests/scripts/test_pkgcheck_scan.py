@@ -110,7 +110,7 @@ class TestPkgcheckScanParseArgs:
         out, err = capsys.readouterr()
         assert not out
         assert err.startswith(
-            f"pkgcheck scan: error: 'standalone' repo doesn't contain: '{str(tmp_path)}'"
+            f"pkgcheck scan: error: 'standalone' repo doesn't contain: '{tmp_path!s}'"
         )
 
     def test_target_invalid_repo(self, tool, capsys, make_repo):
@@ -160,9 +160,8 @@ class TestPkgcheckScanParseArgs:
 
     def test_unknown_repo(self, tmp_path, capsys, tool):
         for opt in ("-r", "--repo"):
-            with pytest.raises(SystemExit) as excinfo:
-                with chdir(str(tmp_path)):
-                    options, _ = tool.parse_args(["scan", opt, "foo"])
+            with pytest.raises(SystemExit) as excinfo, chdir(str(tmp_path)):
+                options, _ = tool.parse_args(["scan", opt, "foo"])
             assert excinfo.value.code == 2
             out, err = capsys.readouterr()
             assert not out
@@ -173,9 +172,8 @@ class TestPkgcheckScanParseArgs:
     def test_invalid_repo(self, tmp_path, capsys, tool):
         (tmp_path / "foo").touch()
         for opt in ("-r", "--repo"):
-            with pytest.raises(SystemExit) as excinfo:
-                with chdir(str(tmp_path)):
-                    options, _ = tool.parse_args(["scan", opt, "foo"])
+            with pytest.raises(SystemExit) as excinfo, chdir(str(tmp_path)):
+                options, _ = tool.parse_args(["scan", opt, "foo"])
             assert excinfo.value.code == 2
             out, err = capsys.readouterr()
             assert not out
@@ -614,9 +612,7 @@ class TestPkgcheckScan:
                 module = importlib.util.module_from_spec(spec)
                 loader.exec_module(module)
                 if (
-                    custom_handler := typing.cast(
-                        typing.Callable[[Result], bool], getattr(module, "handler")
-                    )
+                    custom_handler := typing.cast(typing.Callable[[Result], bool], module.handler)
                 ) is None:
                     pytest.fail(
                         f"custom python handler {custom_handler_path!r} lacks the necessary handle function or list of handlers"

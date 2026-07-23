@@ -121,7 +121,7 @@ class CachedAddon(Addon):
             else:
                 with AtomicWriteFile(path, binary=True) as f:
                     pickle.dump(data, f, protocol=-1)
-        except IOError as e:
+        except OSError as e:
             msg = f"failed dumping {self.cache.type} cache: {path!r}: {e.strerror}"
             raise PkgcheckUserException(msg)
 
@@ -141,7 +141,7 @@ class CachedAddon(Addon):
                 shutil.rmtree(self.options.cache_dir)
             except FileNotFoundError:
                 pass
-            except IOError as e:
+            except OSError as e:
                 raise PkgcheckUserException(f"failed removing cache dir: {e}")
         else:
             try:
@@ -161,5 +161,5 @@ class CachedAddon(Addon):
                                     if e.errno == errno.ENOTEMPTY:
                                         continue
                                     raise
-            except IOError as e:
+            except OSError as e:
                 raise PkgcheckUserException(f"failed removing {cache_type} cache: {path!r}: {e}")

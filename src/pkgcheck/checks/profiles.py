@@ -2,9 +2,9 @@
 
 import os
 from collections import defaultdict
+from collections.abc import Iterable
 from datetime import datetime
 from os.path import join as pjoin
-from typing import Iterable
 
 from pkgcore.ebuild import misc
 from pkgcore.ebuild import profiles as profiles_mod

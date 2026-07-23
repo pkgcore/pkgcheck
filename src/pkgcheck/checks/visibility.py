@@ -16,7 +16,7 @@ class FakeConfigurable:
     "Package wrapper binding profile data."
 
     configurable = True
-    __slots__ = ("use", "iuse", "_forced_use", "_masked_use", "_pkg_use", "_raw_pkg", "_profile")
+    __slots__ = ("_forced_use", "_masked_use", "_pkg_use", "_profile", "_raw_pkg", "iuse", "use")
 
     def __init__(self, pkg, profile):
         object.__setattr__(self, "_raw_pkg", pkg)
@@ -508,9 +508,7 @@ class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
             for required in csolutions:
                 # scan all of the quickies, the caches...
                 for node in required:
-                    if node in cache:
-                        break
-                    elif provided(node):
+                    if node in cache or provided(node):
                         break
                 else:
                     for node in required:

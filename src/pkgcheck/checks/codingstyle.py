@@ -819,7 +819,7 @@ class MissingInherits(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        return f"{self.eclass}: missing inherit usage: {repr(self.usage)}, line {self.lineno}"
+        return f"{self.eclass}: missing inherit usage: {self.usage!r}, line {self.lineno}"
 
 
 class IndirectInherits(results.VersionResult, results.Warning):
@@ -837,7 +837,7 @@ class IndirectInherits(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        return f"{self.eclass}: indirect inherit usage: {repr(self.usage)}, line {self.lineno}"
+        return f"{self.eclass}: indirect inherit usage: {self.usage!r}, line {self.lineno}"
 
 
 class UnusedInherits(results.VersionResult, results.Warning):
@@ -865,7 +865,7 @@ class InternalEclassUsage(results.VersionResult, results.Warning):
 
     @property
     def desc(self):
-        return f"{self.eclass}: internal usage: {repr(self.usage)}, line {self.lineno}"
+        return f"{self.eclass}: internal usage: {self.usage!r}, line {self.lineno}"
 
 
 class InheritsCheck(Check):
