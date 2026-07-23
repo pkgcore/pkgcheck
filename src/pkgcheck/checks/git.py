@@ -351,7 +351,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
     env_array_elem_regex = re.compile(r'\[\d+\]="(?P<val>.+?)"')
 
     # package categories that are committed with stable keywords
-    allowed_direct_stable = frozenset(["acct-user", "acct-group", "sec-keys", "virtual"])
+    allowed_direct_stable = frozenset({"acct-user", "acct-group", "sec-keys", "virtual"})
 
     def __init__(self, *args, git_addon: git.GitAddon, eclass_addon: sources.EclassAddon):
         super().__init__(*args)
@@ -617,7 +617,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
             # checks for newly added ebuilds
             if git_pkg.status == "A":
                 # check for directly added stable ebuilds
-                if pkg.category not in self.allowed_direct_stable:
+                if pkg.category not in self.allowed_direct_stable and not pkg.straight_to_stable:
                     if stable_keywords := sorted(x for x in pkg.keywords if x[0] not in "~-"):
                         yield DirectStableKeywords(stable_keywords, pkg=pkg)
 

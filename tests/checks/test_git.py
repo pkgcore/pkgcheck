@@ -480,6 +480,27 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         expected = git_mod.DirectStableKeywords(["amd64"], pkg=CPV("cat/pkg-1"))
         assert r == expected
 
+    def test_direct_stable_straight_to_stable(self):
+        with open(pjoin(self.child_git_repo.path, "cat/pkg/metadata.xml"), "w") as f:
+            f.write(
+                textwrap.dedent(
+                    """\
+                        <?xml version="1.0" encoding="UTF-8"?>
+                        <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+                        <pkgmetadata>
+                        \t<maintainer type="person">
+                        \t\t<email>random.gentoo.dev@gentoo.org</email>
+                        \t</maintainer>
+                        \t<straight-to-stable/>
+                        </pkgmetadata>
+                    """
+                )
+            )
+        self.child_repo.create_ebuild("cat/pkg-1", keywords=["amd64"])
+        self.child_git_repo.add_all("cat/pkg: version bump to 1")
+        self.init_check()
+        self.assertNoReport(self.check, self.source)
+
     def test_direct_no_maintainer(self):
         self.child_repo.create_ebuild("newcat/pkg-1")
         self.child_git_repo.add_all("newcat/pkg: initial import")

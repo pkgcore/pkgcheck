@@ -46,6 +46,9 @@ pkgcheck 0.10.41 (unreleased)
 - InvalidCommitMessage: fix false positive footer detection triggered by a
   ``word: text`` line in the middle of a body paragraph (Arthur Zamarin, #713)
 
+- DirectStableKeywords: skip packages marked ``<straight-to-stable/>`` in
+  metadata.xml (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.40 (2026-06-19)
 -----------------------------
