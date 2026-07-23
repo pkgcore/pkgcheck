@@ -15,6 +15,7 @@ from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.fetch import fetchable, unknown_mirror
 from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions import boolean, packages, values
+from pkgcore.restrictions.required_use import find_constraint_satisfaction
 from snakeoil.mappings import ImmutableDict
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
@@ -449,6 +450,144 @@ class RequiredUseCheck(Check):
                 num_profiles = len(profile_info)
                 _use, _keyword, profile = profile_info[0]
                 yield RequiredUseDefaults(node, profile=profile, num_profiles=num_profiles, pkg=pkg)
+
+
+def _required_use_flags(restrict):
+    """Collect all USE flag names referenced anywhere in a REQUIRED_USE restriction tree."""
+    if isinstance(restrict, values.ContainmentMatch):
+        yield from restrict.vals
+    elif isinstance(restrict, packages.Conditional):
+        yield from restrict.restriction.vals
+        for child in restrict.payload:
+            yield from _required_use_flags(child)
+    else:
+        for child in restrict.restrictions:
+            yield from _required_use_flags(child)
+
+
+class RequiredUseUnsatisfiable(results.VersionResult, results.AliasResult, results.Error):
+    """REQUIRED_USE can't be satisfied due to masked/forced USE flags.
+
+    No combination of USE flags satisfies REQUIRED_USE for this profile,
+    because every flag that could satisfy one or more of its constraints is
+    masked and/or forced by the profile. Unlike RequiredUseDefaults, this
+    means the package is uninstallable on this profile regardless of the
+    user's USE settings, not just with the profile's defaults.
+    """
+
+    def __init__(
+        self, keyword, profile, profile_status, profile_deprecated, num_profiles=None, **kwargs
+    ):
+        super().__init__(**kwargs)
+        self.keyword = keyword
+        self.profile = profile
+        self.profile_status = profile_status
+        self.profile_deprecated = profile_deprecated
+        self.num_profiles = num_profiles
+
+    @property
+    def desc(self):
+        profile_status = "deprecated " if self.profile_deprecated else ""
+        profile_status += self.profile_status or "custom"
+        if self.num_profiles is not None and self.num_profiles > 1:
+            num_profiles = f" ({self.num_profiles} total)"
+        else:
+            num_profiles = ""
+
+        return (
+            f"REQUIRED_USE can't be satisfied due to masked/forced USE flags, "
+            f"keyword({self.keyword}) {profile_status} profile ({self.profile}){num_profiles}"
+        )
+
+
+class RequiredUseUnsatisfiableInStable(RequiredUseUnsatisfiable):
+    """REQUIRED_USE can't be satisfied due to masked/forced USE flags on a stable profile."""
+
+
+class RequiredUseUnsatisfiableInDev(RequiredUseUnsatisfiable):
+    """REQUIRED_USE can't be satisfied due to masked/forced USE flags on a dev profile."""
+
+
+class RequiredUseUnsatisfiableInExp(RequiredUseUnsatisfiable):
+    """REQUIRED_USE can't be satisfied due to masked/forced USE flags on an exp profile."""
+
+    # results require experimental profiles to be enabled
+    _profile = "exp"
+
+
+class RequiredUseUnsatisfiableCheck(Check):
+    """Check for REQUIRED_USE that can never be satisfied due to masked/forced USE flags."""
+
+    _source = RequiredUseCheck._source
+    required_addons = (addons.profiles.ProfileAddon,)
+    known_results = frozenset(
+        {
+            RequiredUseUnsatisfiableInStable,
+            RequiredUseUnsatisfiableInDev,
+            RequiredUseUnsatisfiableInExp,
+        }
+    )
+
+    def __init__(self, *args, profile_addon):
+        super().__init__(*args)
+        self.profiles = profile_addon
+        self.required_use_cls_map = {
+            "stable": RequiredUseUnsatisfiableInStable,
+            "dev": RequiredUseUnsatisfiableInDev,
+            "exp": RequiredUseUnsatisfiableInExp,
+        }
+
+    def feed(self, pkg):
+        required_use = pkg.required_use
+        if not required_use.restrictions:
+            return
+
+        used_flags = frozenset(_required_use_flags(required_use))
+        pkg_iuse = frozenset(pkg.iuse_stripped)
+
+        profile_failures = defaultdict(set)
+        satisfiable_cache = {}
+        for group in self.profiles.identify_profiles(pkg):
+            profile = group[0]
+            known_flags = used_flags & (pkg_iuse | profile.iuse_effective)
+            immutable, enabled = profile.identify_use(pkg, known_flags)
+            force_false = immutable - enabled
+
+            cache_key = (known_flags, enabled, force_false)
+            if (satisfiable := satisfiable_cache.get(cache_key)) is None:
+                solver = find_constraint_satisfaction(
+                    required_use, known_flags, force_true=enabled, force_false=force_false
+                )
+                satisfiable = next(solver, None) is not None
+                satisfiable_cache[cache_key] = satisfiable
+
+            if not satisfiable:
+                profile_failures[profile.status].update(group)
+
+        if profile_failures:
+            if self.options.verbosity > 0:
+                for profile_status, cls in self.required_use_cls_map.items():
+                    for profile in sorted(
+                        profile_failures.get(profile_status, ()), key=attrgetter("key", "name")
+                    ):
+                        yield cls(
+                            profile.key, profile.name, profile_status, profile.deprecated, pkg=pkg
+                        )
+            else:
+                for profile_status, cls in self.required_use_cls_map.items():
+                    status_profiles = sorted(
+                        profile_failures.get(profile_status, ()), key=attrgetter("key", "name")
+                    )
+                    if status_profiles:
+                        profile = status_profiles[0]
+                        yield cls(
+                            profile.key,
+                            profile.name,
+                            profile_status,
+                            profile.deprecated,
+                            len(status_profiles),
+                            pkg=pkg,
+                        )
 
 
 class UnusedLocalUse(results.PackageResult, results.Warning):

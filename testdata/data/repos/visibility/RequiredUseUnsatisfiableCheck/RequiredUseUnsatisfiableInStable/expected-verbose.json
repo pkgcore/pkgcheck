@@ -1,0 +1,2 @@
+{"__class__": "RequiredUseUnsatisfiableInStable", "category": "RequiredUseUnsatisfiable", "package": "masked", "version": "0", "keyword": "amd64", "profile": "visibility/amd64/stable", "profile_status": "stable", "profile_deprecated": false, "num_profiles": null}
+{"__class__": "RequiredUseUnsatisfiableInStable", "category": "RequiredUseUnsatisfiable", "package": "masked", "version": "0", "keyword": "~amd64", "profile": "visibility/amd64/stable", "profile_status": "stable", "profile_deprecated": false, "num_profiles": null}

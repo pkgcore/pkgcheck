@@ -1,0 +1,6 @@
+diff -Naur visibility/profiles/visibility/amd64/stable/package.use.mask fixed/profiles/visibility/amd64/stable/package.use.mask
+--- visibility/profiles/visibility/amd64/stable/package.use.mask
++++ fixed/profiles/visibility/amd64/stable/package.use.mask
+@@ -1 +1 @@
+-RequiredUseUnsatisfiable/masked flag_a flag_b flag_c
++RequiredUseUnsatisfiable/masked flag_b flag_c

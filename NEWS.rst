@@ -35,6 +35,11 @@ pkgcheck 0.10.41 (unreleased)
   a ``>`` / ``>=`` atom on the same package) that could be satisfied by two
   different slots instead of a single version in range (Arthur Zamarin, #683)
 
+- RequiredUseUnsatisfiableCheck: flag ``RequiredUseUnsatisfiable``, a package
+  whose ``REQUIRED_USE`` can't be satisfied by any USE combination on a
+  profile because every flag that could satisfy it is masked and/or forced
+  (Arthur Zamarin, #689)
+
 **Fixes:**
 
 - MissingRemoteId: exclude URIs used for fetching ``-vendor`` tarballs from

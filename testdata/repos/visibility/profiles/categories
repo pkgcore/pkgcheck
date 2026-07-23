@@ -3,6 +3,7 @@ DeprecatedDep
 NonsolvableDepsInDev
 NonsolvableDepsInExp
 NonsolvableDepsInStable
+RequiredUseUnsatisfiable
 stub
 UncheckableDep
 VisibilityCheck
