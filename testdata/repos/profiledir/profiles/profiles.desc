@@ -7,6 +7,7 @@ amd64 unknown_pkgs exp
 amd64 unknown_kwds exp
 amd64 unmatched_unmasks exp
 amd64 unknown_arch exp
+amd64 unquoted_make_defaults exp
 
 amd64 unknown_use exp
 amd64 unknown_use/unknown_stable_use exp

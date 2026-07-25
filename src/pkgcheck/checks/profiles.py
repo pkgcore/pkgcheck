@@ -1,6 +1,7 @@
 """Various profile-related checks."""
 
 import os
+import re
 from collections import defaultdict
 from collections.abc import Iterable
 from datetime import datetime
@@ -10,6 +11,7 @@ from pkgcore.ebuild import misc
 from pkgcore.ebuild import profiles as profiles_mod
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.ebuild.repo_objs import Profiles
+from snakeoil.bash import read_bash
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
@@ -174,12 +176,35 @@ class UnknownProfileArch(results.ProfilesResult, results.Warning):
         return f"{self.path!r}: unknown ARCH {self.arch!r}"
 
 
+class MakeDefaultsUnquoted(results.ProfilesResult, results.Warning):
+    """make.defaults entry has a value that isn't double quoted.
+
+    PMS specifies that make.defaults is a line-based key-value format where
+    each line is a ``VAR="value"`` entry, with the value double quoted.
+    Package managers commonly tolerate unquoted values, but this doesn't
+    conform to the spec.
+    """
+
+    def __init__(self, path: str, lineno: int, line: str):
+        super().__init__()
+        self.path = path
+        self.lineno = lineno
+        self.line = line
+
+    @property
+    def desc(self):
+        return f"{self.path!r}: unquoted value on line {self.lineno}: {self.line!r}"
+
+
 class ProfileWarning(results.ProfilesResult, results.LogWarning):
     """Badly formatted data in various profile files."""
 
 
 class ProfileError(results.ProfilesResult, results.LogError):
     """Erroneously formatted data in various profile files."""
+
+
+_make_defaults_assign_re = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]*=(?P<value>.*)$")
 
 
 # mapping of profile log levels to result classes
@@ -223,6 +248,7 @@ class ProfilesCheck(Check):
             UnknownProfileUseExpandValue,
             ProfileMissingImplicitExpandValues,
             UnknownProfileArch,
+            MakeDefaultsUnquoted,
             ProfileWarning,
             ProfileError,
         }
@@ -370,6 +396,13 @@ class ProfilesCheck(Check):
 
     @verify_files(("make.defaults", "make_defaults"))
     def _make_defaults(self, filename: str, node: sources.ProfileNode, vals: dict[str, str]):
+        path = pjoin(node.path, filename)
+        for lineno, line in read_bash(path, allow_line_cont=True, enum_line=True):
+            if (match := _make_defaults_assign_re.match(line)) is None:
+                continue
+            value = match.group("value")
+            if len(value) < 2 or value[0] != '"' or value[-1] != '"':
+                yield MakeDefaultsUnquoted(pjoin(node.name, filename), lineno, line)
         if use_flags := {
             use.removeprefix("-")
             for use_group in ("USE", "IUSE_IMPLICIT")

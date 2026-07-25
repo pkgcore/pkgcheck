@@ -3,6 +3,15 @@ Release Notes
 =============
 
 -----------------------------
+pkgcheck 0.10.42 (unreleased)
+-----------------------------
+
+**New Checks:**
+
+- MakeDefaultsUnquoted: a ``make.defaults`` entry whose value isn't
+  double quoted as required by PMS (Arthur Zamarin, #692)
+
+-----------------------------
 pkgcheck 0.10.41 (2026-07-24)
 -----------------------------
 

@@ -452,7 +452,7 @@ class TestPkgcheckScan:
     def test_filter_latest(self, make_repo):
         repo = make_repo(arches=["amd64"])
         # create stub profile to suppress ArchesWithoutProfiles result
-        repo.create_profiles([Profile("stub", "amd64")])
+        repo.create_profiles([Profile("stub", "amd64", defaults=['ARCH="amd64"'])])
         # create ebuild with unknown keywords
         repo.create_ebuild("cat/pkg-0", keywords=["unknown"], homepage="https://example.com")
         # and a good ebuild for the latest version

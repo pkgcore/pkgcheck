@@ -1,0 +1,3 @@
+# comment line, ignored
+ARCH="amd64"
+FOO=bar
