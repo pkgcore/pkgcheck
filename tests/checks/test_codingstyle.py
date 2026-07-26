@@ -456,6 +456,49 @@ class TestRedundantPypiPN(misc.ReportTestCase):
         assert r.value == value
 
 
+class TestPatchesCheck(misc.ReportTestCase):
+    check_kls = codingstyle.MetadataVarCheck
+    check = check_kls(None)
+
+    @staticmethod
+    def _prepare_pkg(value: str):
+        fake_src = [f"PATCHES={value}\n"]
+        fake_pkg = misc.FakePkg("dev-util/diffball-0.5", ebuild="".join(fake_src), lines=fake_src)
+        data = "".join(fake_src).encode()
+        return _ParsedPkg(data, pkg=fake_pkg)
+
+    def test_no_report_array(self):
+        self.assertNoReport(self.check, self._prepare_pkg('( "${FILESDIR}/foo.patch" )'))
+
+    def test_no_report_empty_array(self):
+        self.assertNoReport(self.check, self._prepare_pkg("()"))
+
+    @pytest.mark.parametrize(
+        "value",
+        (
+            '"${FILESDIR}/foo.patch"',
+            "${FILESDIR}/foo.patch",
+        ),
+    )
+    def test_non_array(self, value):
+        r = self.assertReport(self.check, self._prepare_pkg(value))
+        assert isinstance(r, codingstyle.NonArrayPatches)
+
+    def test_switch_in_array(self):
+        r = self.assertReport(self.check, self._prepare_pkg('( -p1 "${FILESDIR}/foo.patch" )'))
+        assert isinstance(r, codingstyle.SwitchInPatches)
+        assert r.value == "-p1"
+
+    def test_switch_in_string(self):
+        reports = self.assertReports(self.check, self._prepare_pkg('"-p1 ${FILESDIR}/foo.patch"'))
+        assert isinstance(reports[0], codingstyle.NonArrayPatches)
+        assert isinstance(reports[1], codingstyle.SwitchInPatches)
+        assert reports[1].value == "-p1"
+
+    def test_no_switch_for_normal_patch(self):
+        self.assertNoReport(self.check, self._prepare_pkg('( "${FILESDIR}/foo-p1.patch" )'))
+
+
 class TestExcessiveLineLength(misc.ReportTestCase):
     check_kls = codingstyle.LineLengthCheck
     check = check_kls(None)

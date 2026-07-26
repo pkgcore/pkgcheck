@@ -11,6 +11,11 @@ pkgcheck 0.10.42 (unreleased)
 - MakeDefaultsUnquoted: a ``make.defaults`` entry whose value isn't
   double quoted as required by PMS (Arthur Zamarin, #692)
 
+- MetadataVarCheck: flag NonArrayPatches, ``PATCHES`` defined as a plain
+  string instead of a bash array, and SwitchInPatches, a ``PATCHES`` entry
+  that looks like a patch/eapply switch (e.g. ``-p1``) rather than a patch
+  file (Arthur Zamarin, #174)
+
 **Fixes:**
 
 - GitAddon: force git error output to use the C locale, fixing

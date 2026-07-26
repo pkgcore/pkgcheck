@@ -622,6 +622,41 @@ class RedundantPypiPN(results.VersionResult, results.Style):
         return f"PYPI_PN={self.value!r} is equal to PN and can be removed"
 
 
+class NonArrayPatches(results.VersionResult, results.Style):
+    """PATCHES is defined as a plain string instead of a bash array.
+
+    ``default_src_prepare`` accepts ``PATCHES`` as either an array or a
+    plain string, but relies on word splitting to separate multiple
+    patches in the latter case. Defining it as an array instead avoids
+    word-splitting/globbing pitfalls [#]_.
+
+    .. [#] https://devmanual.gentoo.org/ebuild-writing/misc-files/patches/
+    """
+
+    @property
+    def desc(self):
+        return "PATCHES defined as a string instead of an array"
+
+
+class SwitchInPatches(results.VersionResult, results.Warning):
+    """PATCHES includes a value that looks like a patch/eapply switch.
+
+    ``PATCHES`` is only ever handed to ``eapply`` as a plain list of patch
+    files, so an entry starting with a dash (e.g. ``-p1``) isn't applied as
+    a per-patch option -- it's parsed by ``eapply`` itself, either as an
+    option affecting unrelated patches or as a nonexistent patch file. Call
+    ``eapply`` directly in ``src_prepare`` if per-patch options are needed.
+    """
+
+    def __init__(self, value, **kwargs):
+        super().__init__(**kwargs)
+        self.value = value
+
+    @property
+    def desc(self):
+        return f"PATCHES includes switch {self.value!r} instead of a patch file"
+
+
 def verify_vars(*variables):
     """Decorator to register raw variable verification methods."""
 
@@ -652,6 +687,8 @@ class MetadataVarCheck(Check):
             EmptyGlobalAssignment,
             SelfAssignment,
             RedundantPypiPN,
+            NonArrayPatches,
+            SwitchInPatches,
         }
     )
 
@@ -729,6 +766,22 @@ class MetadataVarCheck(Check):
 
         for static_str, replacement in static_urls.items():
             yield StaticSrcUri(static_str, replacement=replacement, pkg=pkg)
+
+    @verify_vars("PATCHES")
+    def _patches(self, var, node, value, pkg):
+        if not value:
+            return
+
+        is_array = node.type == "array"
+        if not is_array:
+            yield NonArrayPatches(pkg=pkg)
+
+        entries = [c for c in node.named_children if c.type != "comment"] if is_array else [node]
+        for entry in entries:
+            entry_str = self.canonicalize_assign(pkg.node_str(entry))
+            switch = entry_str if is_array else next(iter(entry_str.split()), "")
+            if switch.startswith("-"):
+                yield SwitchInPatches(switch, pkg=pkg)
 
     def canonicalize_assign(self, value: str):
         return value.strip("\"'").replace("\n", "").replace("\t", " ")
