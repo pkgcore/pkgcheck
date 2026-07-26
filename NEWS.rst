@@ -11,6 +11,12 @@ pkgcheck 0.10.42 (unreleased)
 - MakeDefaultsUnquoted: a ``make.defaults`` entry whose value isn't
   double quoted as required by PMS (Arthur Zamarin, #692)
 
+**Fixes:**
+
+- GitAddon: force git error output to use the C locale, fixing
+  ``--commits``/``--staged`` ref resolution error detection under a
+  translated git locale (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.41 (2026-07-24)
 -----------------------------

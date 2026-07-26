@@ -35,6 +35,13 @@ from ..checks import GitCommitsCheck
 from ..log import logger
 from . import caches
 
+_ENGLISH_GIT_ENV = ImmutableDict({"LC_ALL": "C", "LANGUAGE": "C"})
+
+
+def _english_git_env():
+    """Return a copy of the current environment with git output forced to English."""
+    return {**os.environ, **_ENGLISH_GIT_ENV}
+
 
 @dataclass(frozen=True, eq=False)
 class GitCommit:
@@ -96,6 +103,7 @@ class GitConfig:
             {
                 "GIT_CONFIG_GLOBAL": self.path,
                 "GIT_CONFIG_SYSTEM": "",
+                **_ENGLISH_GIT_ENV,
             }
         )
 
@@ -374,6 +382,7 @@ class _ScanGit(argparse.Action):
                 cwd=namespace.target_repo.location,
                 check=True,
                 encoding="utf8",
+                env=_english_git_env(),
             )
         except FileNotFoundError as exc:
             parser.error(str(exc))
@@ -394,6 +403,7 @@ class _ScanGit(argparse.Action):
                 cwd=namespace.target_repo.location,
                 check=True,
                 encoding="utf8",
+                env=_english_git_env(),
             )
         except FileNotFoundError as exc:
             parser.error(str(exc))
