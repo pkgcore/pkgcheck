@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from os.path import join as pjoin
 
 import pytest
@@ -40,7 +40,7 @@ class TestStableRequestCheck(ReportTestCase):
         for k, v in required_addons.items():
             setattr(self, k, v)
         if future:
-            self.check.today = datetime.today() + timedelta(days=+future)
+            self.check.today = datetime.now(timezone.utc) + timedelta(days=+future)
 
     def _options(self, stable_time=None, **kwargs):
         args = [

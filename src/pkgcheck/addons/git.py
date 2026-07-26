@@ -9,8 +9,8 @@ import subprocess
 import tempfile
 import typing
 from collections import defaultdict, deque
-from dataclasses import dataclass
-from datetime import datetime
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from functools import partial
 from itertools import takewhile
 from os.path import join as pjoin
@@ -52,7 +52,7 @@ class GitCommit:
     author: str
     committer: str
     message: tuple
-    pkgs: ImmutableDict = ImmutableDict()
+    pkgs: ImmutableDict = field(default_factory=ImmutableDict)
 
     def __str__(self):
         return self.hash
@@ -155,7 +155,7 @@ class GitLog:
 T = typing.TypeVar("T")
 
 
-class _ParseGitRepo(typing.Generic[T], abc.ABC):
+class _ParseGitRepo(abc.ABC, typing.Generic[T]):
     """Generic iterator for custom git log output parsing support."""
 
     # git command to run on the targeted repo
@@ -316,7 +316,7 @@ class GitChangedRepo(SimpleTree):
     """Historical git repo consisting of the latest changed packages."""
 
     # selected pkg status filter
-    _status_filter = {"A", "R", "M", "D"}
+    _status_filter: typing.ClassVar[set[str]] = {"A", "R", "M", "D"}
 
     def __init__(self, *args, **kwargs):
         kwargs.setdefault("pkg_klass", _GitCommitPkg)
@@ -341,19 +341,19 @@ class GitChangedRepo(SimpleTree):
 class GitModifiedRepo(GitChangedRepo):
     """Historical git repo consisting of the latest modified packages."""
 
-    _status_filter = {"A", "M"}
+    _status_filter: typing.ClassVar[set[str]] = {"A", "M"}
 
 
 class GitAddedRepo(GitChangedRepo):
     """Historical git repo consisting of added packages."""
 
-    _status_filter = {"A"}
+    _status_filter: typing.ClassVar[set[str]] = {"A"}
 
 
 class GitRemovedRepo(GitChangedRepo):
     """Historical git repo consisting of removed packages."""
 
-    _status_filter = {"D"}
+    _status_filter: typing.ClassVar[set[str]] = {"D"}
 
 
 class _ScanGit(argparse.Action):
@@ -377,8 +377,7 @@ class _ScanGit(argparse.Action):
         try:
             subprocess.run(
                 ["git", "rev-parse", namespace.git_remote],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                capture_output=True,
                 cwd=namespace.target_repo.location,
                 check=True,
                 encoding="utf8",
@@ -398,8 +397,7 @@ class _ScanGit(argparse.Action):
         try:
             p = subprocess.run(
                 self.diff_cmd + [ref],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+                capture_output=True,
                 cwd=namespace.target_repo.location,
                 check=True,
                 encoding="utf8",
@@ -644,7 +642,7 @@ class GitAddon(caches.CachedAddon):
                     if local:
                         commit = (atom.fullver, pkg.commit_time, pkg.commit, pkg.old)
                     else:
-                        date = datetime.fromtimestamp(pkg.commit_time).strftime("%Y-%m-%d")
+                        date = datetime.fromtimestamp(pkg.commit_time, tz=UTC).strftime("%Y-%m-%d")
                         progress(f"{repo} -- updating git cache: commit date: {date}")
                         commit = (atom.fullver, pkg.commit_time, pkg.commit)
                     data.setdefault(atom.category, {}).setdefault(atom.package, {}).setdefault(

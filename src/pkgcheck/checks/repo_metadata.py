@@ -642,9 +642,10 @@ class ManifestCheck(Check):
                     yield MissingChksum(
                         f_inst.filename, sorted(missing), sorted(f_inst.chksums), pkg=pkg
                     )
-                elif f_inst.chksums:
-                    if deprecated := frozenset(f_inst.chksums).difference(self.preferred_checksums):
-                        yield DeprecatedChksum(f_inst.filename, sorted(deprecated), pkg=pkg)
+                elif f_inst.chksums and (
+                    deprecated := frozenset(f_inst.chksums).difference(self.preferred_checksums)
+                ):
+                    yield DeprecatedChksum(f_inst.filename, sorted(deprecated), pkg=pkg)
                 seen.add(f_inst.filename)
 
         if pkg_manifest.thin:

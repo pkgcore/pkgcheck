@@ -273,7 +273,7 @@ class FetchablesUrlCheck(_UrlCheck):
                 allow_missing_checksums=True, ignore_unknown_mirrors=True, skip_default_mirrors=True
             ),
         )
-        for f in fetchables.keys():
+        for f in fetchables:
             for url in f.uri:
                 yield "SRC_URI", url
 
@@ -438,7 +438,7 @@ class PyPIAttestationAvailableCheck(NetworkCheck):
                 allow_missing_checksums=True, ignore_unknown_mirrors=True, skip_default_mirrors=True
             ),
         )
-        for f in fetchables.keys():
+        for f in fetchables:
             for url in f.uri:
                 if m := self.pypi_uri_re.match(url):
                     provenance_url = (

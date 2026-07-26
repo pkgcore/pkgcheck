@@ -2,9 +2,10 @@
 
 import os
 import re
+import typing
 from collections import defaultdict
 from collections.abc import Iterable
-from datetime import datetime
+from datetime import UTC, datetime
 from os.path import join as pjoin
 
 from pkgcore.ebuild import misc
@@ -255,7 +256,7 @@ class ProfilesCheck(Check):
     )
 
     # mapping between known files and verification methods
-    known_files = {}
+    known_files: typing.ClassVar[dict] = {}
 
     def __init__(
         self,
@@ -269,7 +270,7 @@ class ProfilesCheck(Check):
         self.keywords = keywords_addon
         self.search_repo = self.options.search_repo
         self.profiles_dir = repo.config.profiles_base
-        self.today = datetime.today()
+        self.today = datetime.now(UTC)
         self.existence_repo = git_addon.cached_repo(addons.git.GitRemovedRepo)
         self.use_expand_groups = {
             use.upper(): frozenset({val.removeprefix(f"{use}_") for val, _desc in vals})
@@ -289,7 +290,7 @@ class ProfilesCheck(Check):
             atom = atom_cls(atom)
         if matches := self.existence_repo.match(atom):
             removal = max(x.time for x in matches)
-            removal = datetime.fromtimestamp(removal)
+            removal = datetime.fromtimestamp(removal, tz=UTC)
             years = (self.today - removal).days / 365.2425
             # show years value if it's greater than 3 month, or if the package was removed
             if years > 0.25 or not self.search_repo.match(atom.unversioned_atom):
@@ -330,7 +331,7 @@ class ProfilesCheck(Check):
     def _use(self, filename, node, vals):
         # TODO: give ChunkedDataDict some dict view methods
         d = vals.render_to_dict()
-        for _, entries in d.items():
+        for entries in d.values():
             for _, disabled, enabled in entries:
                 if unknown_disabled := set(disabled) - self.available_iuse:
                     flags = ("-" + u for u in unknown_disabled)
@@ -380,7 +381,7 @@ class ProfilesCheck(Check):
         if isinstance(d, misc.ChunkedDataDict):
             d = vals.render_to_dict()
 
-        for _pkg, entries in d.items():
+        for entries in d.values():
             for a, disabled, enabled in entries:
                 if pkgs := self.search_repo.match(a):
                     available = {u for pkg in pkgs for u in pkg.iuse_stripped}
@@ -403,13 +404,14 @@ class ProfilesCheck(Check):
             value = match.group("value")
             if len(value) < 2 or value[0] != '"' or value[-1] != '"':
                 yield MakeDefaultsUnquoted(pjoin(node.name, filename), lineno, line)
-        if use_flags := {
-            use.removeprefix("-")
-            for use_group in ("USE", "IUSE_IMPLICIT")
-            for use in vals.get(use_group, "").split()
-        }:
-            if unknown := use_flags - self.available_iuse:
-                yield UnknownProfileUse(pjoin(node.name, filename), unknown)
+        if (
+            use_flags := {
+                use.removeprefix("-")
+                for use_group in ("USE", "IUSE_IMPLICIT")
+                for use in vals.get(use_group, "").split()
+            }
+        ) and (unknown := use_flags - self.available_iuse):
+            yield UnknownProfileUse(pjoin(node.name, filename), unknown)
         implicit_use_expands = set(vals.get("USE_EXPAND_IMPLICIT", "").split())
         for use_group in (
             "USE_EXPAND",
@@ -440,9 +442,8 @@ class ProfilesCheck(Check):
             yield ProfileMissingImplicitExpandValues(
                 pjoin(node.name, filename), sorted(missing_values)
             )
-        if arch := vals.get("ARCH", None):
-            if arch not in self.keywords.arches:
-                yield UnknownProfileArch(pjoin(node.name, filename), arch)
+        if (arch := vals.get("ARCH", None)) and arch not in self.keywords.arches:
+            yield UnknownProfileArch(pjoin(node.name, filename), arch)
 
     def feed(self, profile: sources.Profile):
         for f in profile.files.intersection(self.known_files):
@@ -736,8 +737,9 @@ class RepoProfilesCheck(RepoCheck):
         if unused_profile_dirs := available_profile_dirs - seen_profile_dirs:
             yield UnusedProfileDirs(sorted(unused_profile_dirs))
 
-        if arches_desc := frozenset().union(*self.repo.config.arches_desc.values()):
-            if arches_mis_sync := self.repo.known_arches ^ arches_desc:
-                yield ArchesOutOfSync(sorted(arches_mis_sync))
+        if (arches_desc := frozenset().union(*self.repo.config.arches_desc.values())) and (
+            arches_mis_sync := self.repo.known_arches ^ arches_desc
+        ):
+            yield ArchesOutOfSync(sorted(arches_mis_sync))
 
         yield from self._check_system_set()

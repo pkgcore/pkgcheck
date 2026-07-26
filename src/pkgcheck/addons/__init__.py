@@ -26,7 +26,7 @@ class ArchesArgs(arghparse.CommaSeparatedNegations):
 
         if not enabled:
             # enable all non-prefix arches
-            enabled = set(arch for arch in all_arches if "-" not in arch)
+            enabled = {arch for arch in all_arches if "-" not in arch}
 
         arches = set(enabled).difference(disabled)
         if all_arches and (unknown_arches := arches.difference(all_arches)):

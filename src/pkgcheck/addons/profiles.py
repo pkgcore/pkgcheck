@@ -257,7 +257,7 @@ class ProfileAddon(caches.CachedAddon):
                         ),
                     )
 
-                    default_masked_use = tuple(set(x for x in official_arches if x != stable_key))
+                    default_masked_use = tuple({x for x in official_arches if x != stable_key})
 
                     # padding for progress output
                     padding = max(len(x) for x in self.options.arches)
@@ -398,7 +398,7 @@ class ProfileAddon(caches.CachedAddon):
                         )
 
         # dump updated profile filters
-        for k, v in cached_profiles.items():
+        for v in cached_profiles.values():
             if v.pop("update", False):
                 repo = v.pop("repo")
                 cache_file = self.cache_file(repo)

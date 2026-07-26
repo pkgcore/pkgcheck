@@ -1,7 +1,7 @@
 import os
 import tempfile
 import textwrap
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import partial
 from itertools import combinations
 from operator import attrgetter
@@ -1186,7 +1186,7 @@ class TestOutdatedBlockersCheck(misc.ReportTestCase):
         for k, v in required_addons.items():
             setattr(self, k, v)
         if future:
-            self.check.today = datetime.today() + timedelta(days=+future)
+            self.check.today = datetime.now(timezone.utc) + timedelta(days=+future)
 
     def _options(self, **kwargs):
         args = [

@@ -91,6 +91,8 @@ target-version = "py311"
 extend-select = ["I"]
 ignore = [
 	"E741",  # ambiguous variable name
+	"BLE001",  # blind except
+	"PYI025",  # unaliased `collections.abc.Set` import
 ]
 
 [tool.pytest.ini_options]

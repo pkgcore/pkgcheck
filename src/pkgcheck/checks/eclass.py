@@ -364,12 +364,11 @@ class EclassParseCheck(Check):
             call = eclass.node_str(node)
             if call.startswith("EXPORT_FUNCTIONS"):
                 export_funcs_called = node.start_point[0] + 1
-            elif call.startswith("inherit"):
-                if export_funcs_called is not None:
-                    yield EclassExportFuncsBeforeInherit(
-                        export_funcs_called, node.start_point[0] + 1, eclass=eclass.name
-                    )
-                    break
+            elif call.startswith("inherit") and export_funcs_called is not None:
+                yield EclassExportFuncsBeforeInherit(
+                    export_funcs_called, node.start_point[0] + 1, eclass=eclass.name
+                )
+                break
 
 
 class EclassBashSyntaxError(results.EclassResult, results.Error):
@@ -470,7 +469,7 @@ class EclassCheck(Check):
 
     def __init__(self, *args):
         super().__init__(*args)
-        latest_eapi = EAPI.known_eapis[sorted(EAPI.known_eapis)[-1]]
+        latest_eapi = EAPI.known_eapis[max(EAPI.known_eapis)]
         # all known build phases, e.g. src_configure
         self.known_phases = list(latest_eapi.phases_rev)
         # metadata variables allowed to be set in eclasses, e.g. SRC_URI
@@ -484,6 +483,7 @@ class EclassCheck(Check):
             stdout=subprocess.DEVNULL,
             env={"LC_ALL": "C"},
             encoding="utf8",
+            check=False,
         )
         if p.returncode != 0 and p.stderr:
             lineno = 0

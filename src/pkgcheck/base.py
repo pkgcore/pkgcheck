@@ -63,7 +63,7 @@ class Scope:
         return hash(self.desc)
 
     def __repr__(self):
-        address = "@%#8x" % (id(self),)
+        address = f"@{id(self):#8x}"
         return f"<{self.__class__.__name__} desc={self.desc!r} {address}>"
 
     def __contains__(self, key):

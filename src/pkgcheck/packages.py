@@ -50,7 +50,7 @@ class RawCPV:
         return f"{self.category}/{self.package}"
 
     def __repr__(self):
-        address = "@%#8x" % (id(self),)
+        address = f"@{id(self):#8x}"
         return f"<{self.__class__.__name__} cpv={self.versioned_atom.cpvstr!r} {address}>"
 
 

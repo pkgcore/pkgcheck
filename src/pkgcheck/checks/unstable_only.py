@@ -58,6 +58,6 @@ class UnstableOnlyCheck(GentooRepoCheck):
                 unstable_arches[unstable].append(k)
 
         # collapse reports by available versions
-        for pkgs in unstable_arches.keys():
+        for pkgs in unstable_arches:
             versions = (x.fullver for x in sorted(pkgs))
             yield UnstableOnly(versions, sort_keywords(unstable_arches[pkgs]), pkg=pkgs[0])

@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import datetime
+from datetime import UTC, datetime
 
 from snakeoil.cli import arghparse
 from snakeoil.strings import pluralism
@@ -59,7 +59,7 @@ class StableRequestCheck(GentooRepoCheck):
 
     def __init__(self, *args, git_addon):
         super().__init__(*args)
-        self.today = datetime.today()
+        self.today = datetime.now(UTC)
         self.modified_repo = git_addon.cached_repo(addons.git.GitModifiedRepo)
 
     def feed(self, pkgset):
@@ -104,7 +104,7 @@ class StableRequestCheck(GentooRepoCheck):
                     # probably an uncommitted, local ebuild... skipping
                     continue
 
-                added = datetime.fromtimestamp(match.time)
+                added = datetime.fromtimestamp(match.time, tz=UTC)
                 days_old = (self.today - added).days
                 if days_old >= self.options.stable_time:
                     pkg_stable_keywords = {x.lstrip("~") for x in pkg.keywords}

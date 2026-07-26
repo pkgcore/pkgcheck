@@ -2,7 +2,7 @@ import itertools
 import os
 import re
 from collections import defaultdict
-from datetime import datetime
+from datetime import UTC, datetime
 from difflib import SequenceMatcher
 from functools import partial
 from operator import attrgetter
@@ -148,9 +148,8 @@ class LicenseCheck(Check):
                 missing_restricts = []
                 if "bindist" not in license_restrictions:
                     missing_restricts.append("bindist")
-                if not self.mirror_restricts.intersection(license_restrictions):
-                    if pkg.fetchables:
-                        missing_restricts.append("mirror")
+                if not self.mirror_restricts.intersection(license_restrictions) and pkg.fetchables:
+                    missing_restricts.append("mirror")
                 if missing_restricts:
                     yield MissingLicenseRestricts("EULA", license, missing_restricts, pkg=pkg)
 
@@ -311,9 +310,10 @@ class EapiCheck(Check):
                 yield StableKeywordsOnTestingEapi(pkg.eapi, stable_keywords, pkg=pkg)
 
         for eclass in pkg.inherit:
-            if eclass_obj := self.eclass_cache.get(eclass):
-                if eclass_obj.supported_eapis and eapi_str not in eclass_obj.supported_eapis:
-                    yield UnsupportedEclassEapi(eapi_str, eclass, pkg=pkg)
+            if (eclass_obj := self.eclass_cache.get(eclass)) and (
+                eclass_obj.supported_eapis and eapi_str not in eclass_obj.supported_eapis
+            ):
+                yield UnsupportedEclassEapi(eapi_str, eclass, pkg=pkg)
 
 
 class InvalidEapi(results.MetadataError, results.VersionResult):
@@ -708,8 +708,8 @@ class LocalUseCheck(Check):
         self.iuse_handler = use_addon
         self.global_use = {flag: desc for matcher, (flag, desc) in repo_config.use_desc}
 
-        self.use_expand = dict()
-        for group in repo_config.use_expand_desc.keys():
+        self.use_expand = {}
+        for group in repo_config.use_expand_desc:
             self.use_expand[group] = {flag for flag, desc in repo_config.use_expand_desc[group]}
 
     def feed(self, pkgs):
@@ -1281,7 +1281,7 @@ class OutdatedBlockersCheck(Check):
 
     def __init__(self, *args, git_addon):
         super().__init__(*args)
-        self.today = datetime.today()
+        self.today = datetime.now(UTC)
         self.existence_repo = git_addon.cached_repo(addons.git.GitRemovedRepo)
 
     def feed(self, pkg):
@@ -1299,7 +1299,7 @@ class OutdatedBlockersCheck(Check):
                 if not self.options.search_repo.match(unblocked):
                     if matches := self.existence_repo.match(unblocked):
                         removal = max(x.time for x in matches)
-                        removal = datetime.fromtimestamp(removal)
+                        removal = datetime.fromtimestamp(removal, tz=UTC)
                         years = (self.today - removal).days / 365
                         if years >= 4:
                             outdated_blockers[attr].add((atom, round(years, 2)))
@@ -1873,9 +1873,8 @@ class _RestrictPropertiesCheck(Check):
         yield from unstated
 
         # skip if target repo or its masters don't define allowed values
-        if self.allowed and values:
-            if unknown := set(values).difference(self.allowed):
-                yield self._unknown_result_cls(sorted(unknown), pkg=pkg)
+        if self.allowed and values and (unknown := set(values).difference(self.allowed)):
+            yield self._unknown_result_cls(sorted(unknown), pkg=pkg)
 
 
 class RestrictCheck(_RestrictPropertiesCheck):
@@ -2118,9 +2117,9 @@ class StaleLiveCheck(Check):
         for pkg in pkgs:
             slots_pkgs[pkg.slot].append(pkg)
 
-        for pkgs in slots_pkgs.values():
-            if non_live := [pkg for pkg in pkgs if not pkg.live]:
+        for slot_pkgs in slots_pkgs.values():
+            if non_live := [pkg for pkg in slot_pkgs if not pkg.live]:
                 max_non_live_eapi = max(int(str(pkg.eapi)) for pkg in non_live)
-                for pkg in pkgs:
+                for pkg in slot_pkgs:
                     if pkg.live and (old_eapi := int(str(pkg.eapi))) < max_non_live_eapi:
                         yield StaleLiveEAPI(old_eapi=old_eapi, new_eapi=max_non_live_eapi, pkg=pkg)

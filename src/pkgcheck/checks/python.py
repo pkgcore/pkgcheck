@@ -1,4 +1,5 @@
 import re
+import typing
 from collections import defaultdict
 from itertools import takewhile
 from operator import attrgetter
@@ -333,19 +334,19 @@ class PythonCheck(Check):
         }
     )
 
-    has_version_known_flags = {
+    has_version_known_flags: typing.ClassVar[dict[str, str]] = {
         "-b": "BDEPEND",
         "-r": "RDEPEND",
         "-d": "DEPEND",
         "--host-root": "BDEPEND",
     }
 
-    has_version_default = {
+    has_version_default: typing.ClassVar[dict[str, str]] = {
         "has_version": "DEPEND",
         "python_has_version": "BDEPEND",
     }
 
-    eclass_any_dep_func = {
+    eclass_any_dep_func: typing.ClassVar[dict[str, str]] = {
         "python-single-r1": "python_gen_cond_dep",
         "python-any-r1": "python_gen_any_dep",
         "python-r1": "python_gen_any_dep",
@@ -440,16 +441,19 @@ class PythonCheck(Check):
         if pep517_value is None:
             if "dev-python/gpep517" not in bdepends:
                 yield DistutilsNonPEP517Build(pkg=pkg)
-        elif has_distutils_optional and not has_distutils_deps and pep517_value != "no":
-            # We always need BDEPEND for these if != no.
-            # We are looking for USE-conditional on appropriate target
-            # flag, with dep on dev-python/gpep517.
-            if "dev-python/gpep517" not in bdepends:
-                yield PythonMissingDeps("BDEPEND", pkg=pkg, dep_value="DISTUTILS_DEPS")
+        # We always need BDEPEND for these if != no.
+        # We are looking for USE-conditional on appropriate target
+        # flag, with dep on dev-python/gpep517.
+        elif (
+            has_distutils_optional
+            and not has_distutils_deps
+            and pep517_value != "no"
+            and "dev-python/gpep517" not in bdepends
+        ):
+            yield PythonMissingDeps("BDEPEND", pkg=pkg, dep_value="DISTUTILS_DEPS")
 
-        if uses_setuptools_scm:
-            if not self.setuptools_scm.intersection(bdepends):
-                yield PythonMissingSCMDependency(pkg=pkg)
+        if uses_setuptools_scm and not self.setuptools_scm.intersection(bdepends):
+            yield PythonMissingSCMDependency(pkg=pkg)
 
     def _get_all_global_assignments(self, pkg):
         """Iterate over global plain and expansion assignments"""
@@ -833,7 +837,7 @@ class PythonCompatCheck(Check):
                 # determine if deps support missing python targets
                 for dep in self.python_deps(deps, prefix):
                     # TODO: use query caching for repo matching?
-                    latest = sorted(self.options.search_repo.match(dep))[-1]
+                    latest = max(self.options.search_repo.match(dep))
                     targets.intersection_update(
                         (
                             f"pypy{x.rsplit('pypy', 1)[-1]}"
@@ -845,7 +849,7 @@ class PythonCompatCheck(Check):
                     )
                     if not targets:
                         return
-            except IndexError:
+            except ValueError:
                 return
 
             yield PythonCompatUpdate(sorted(targets, key=self.sorter), pkg=pkg)

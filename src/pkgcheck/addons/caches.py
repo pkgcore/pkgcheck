@@ -6,6 +6,7 @@ import pathlib
 import pickle
 import shutil
 import subprocess
+import typing
 from collections import UserDict
 from dataclasses import dataclass
 from hashlib import blake2b
@@ -57,7 +58,7 @@ class CachedAddon(Addon):
     # attributes for cache registry
     cache = None
     # registered cache types
-    caches = {}
+    caches: typing.ClassVar[dict[type, CacheData]] = {}
 
     def __init_subclass__(cls, **kwargs):
         """Register available caches."""

@@ -73,15 +73,15 @@ class RubyCompatCheck(Check):
 
         try:
             # determine the latest supported ruby version
-            latest_target = sorted(
+            latest_target = max(
                 (
                     f"ruby{x.slot.replace('.', '')}"
                     for x in deps
                     if x.key == "dev-lang/ruby" and x.slot is not None
                 ),
                 key=self.sorter,
-            )[-1]
-        except IndexError:
+            )
+        except ValueError:
             return
 
         # determine ruby impls to target
@@ -94,7 +94,7 @@ class RubyCompatCheck(Check):
                 # determine if deps support missing ruby targets
                 for dep in self.ruby_deps(deps, IUSE_PREFIX):
                     # TODO: use query caching for repo matching?
-                    latest = sorted(self.options.search_repo.match(dep))[-1]
+                    latest = max(self.options.search_repo.match(dep))
                     targets.intersection_update(
                         f"ruby{x.rsplit('ruby', 1)[-1]}"
                         for x in latest.iuse_stripped
@@ -102,7 +102,7 @@ class RubyCompatCheck(Check):
                     )
                     if not targets:
                         return
-            except IndexError:
+            except ValueError:
                 return
 
             yield RubyCompatUpdate(sorted(targets, key=self.sorter), pkg=pkg)

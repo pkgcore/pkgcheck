@@ -5,8 +5,9 @@ import os
 import re
 import subprocess
 import tarfile
+import typing
 from collections import defaultdict, deque
-from datetime import datetime
+from datetime import UTC, datetime
 from itertools import chain
 from operator import attrgetter
 from os.path import join as pjoin
@@ -355,7 +356,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
 
     def __init__(self, *args, git_addon: git.GitAddon, eclass_addon: sources.EclassAddon):
         super().__init__(*args)
-        self.today = datetime.today()
+        self.today = datetime.now(UTC)
         self.repo = self.options.target_repo
         self.valid_arches: frozenset[str] = self.options.target_repo.known_arches
         self._git_addon = git_addon
@@ -499,15 +500,16 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
 
         with contextlib.suppress(Exception):
             for env_line in new_pkg.environment.data.splitlines():
-                if mo := self.python_compat_declare_regex.match(env_line):
-                    if old_compat := {
+                if (mo := self.python_compat_declare_regex.match(env_line)) and (
+                    old_compat := {
                         m.group("val")
                         for m in re.finditer(self.env_array_elem_regex, mo.group("value"))
-                    }.difference(self.valid_python_targets):
-                        yield OldPythonCompat(sorted(old_compat), pkg=new_pkg)
+                    }.difference(self.valid_python_targets)
+                ):
+                    yield OldPythonCompat(sorted(old_compat), pkg=new_pkg)
 
     def _fetchable_str(self, fetch: fetchable) -> tuple[str, str]:
-        uri = tuple(fetch.uri._uri_source)[0]
+        uri = next(iter(fetch.uri._uri_source))
         if isinstance(uri, tuple):
             mirror = uri[0].mirror_name
             expands = self.repo.mirrors.get(mirror)
@@ -547,7 +549,7 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
                 )
                 if fetch.chksums
             }
-        except (IndexError, FileNotFoundError, tarfile.ReadError):
+        except (IndexError, StopIteration, FileNotFoundError, tarfile.ReadError):
             # ignore broken ebuild
             return
 
@@ -617,9 +619,12 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
             # checks for newly added ebuilds
             if git_pkg.status == "A":
                 # check for directly added stable ebuilds
-                if pkg.category not in self.allowed_direct_stable and not pkg.straight_to_stable:
-                    if stable_keywords := sorted(x for x in pkg.keywords if x[0] not in "~-"):
-                        yield DirectStableKeywords(stable_keywords, pkg=pkg)
+                if (
+                    pkg.category not in self.allowed_direct_stable
+                    and not pkg.straight_to_stable
+                    and (stable_keywords := sorted(x for x in pkg.keywords if x[0] not in "~-"))
+                ):
+                    yield DirectStableKeywords(stable_keywords, pkg=pkg)
 
                 # pkg was just added to the tree
                 newly_added = not self.added_repo.match(git_pkg.unversioned_atom)
@@ -737,7 +742,7 @@ class GitCommitMessageCheck(GentooRepoCheck, GitCommitsCheck):
     )
 
     # mapping between known commit tags and verification methods
-    known_tags = {}
+    known_tags: typing.ClassVar[dict] = {}
     _commit_footer_regex = re.compile(r"^(?P<tag>[a-zA-Z0-9_-]+): (?P<value>.*)$")
     _git_cat_file_regex = re.compile(r"^(?P<object>.+?) (?P<status>.+)$")
     _commit_ref_regex = re.compile(r"^(?P<object>[0-9a-fA-F]+?)( \(.+?\))?\.?$")
@@ -912,7 +917,7 @@ class GitCommitMessageCheck(GentooRepoCheck, GitCommitsCheck):
                 # register known tags for verification
                 tag = mo.group("tag")
                 try:
-                    func, required = self.known_tags[tag]
+                    func, _required = self.known_tags[tag]
                     tags.setdefault((tag, func), []).append(mo.group("value"))
                 except KeyError:
                     continue
@@ -942,7 +947,7 @@ class GitEclassCommitsCheck(GentooRepoCheck, GitCommitsCheck):
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.today = datetime.today()
+        self.today = datetime.now(UTC)
 
     def feed(self, eclass):
         # check copyright on new/modified eclasses

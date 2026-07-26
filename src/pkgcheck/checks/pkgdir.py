@@ -1,7 +1,7 @@
 import os
 import stat
 from collections import defaultdict
-from datetime import datetime
+from datetime import UTC, datetime
 from os import listdir
 from os.path import join as pjoin
 
@@ -300,7 +300,7 @@ class PkgDirCheck(Check):
             yield TotalSizeViolation(total_size, pkg=pkg)
 
         files_by_digest = defaultdict(list)
-        for size, files in files_by_size.items():
+        for files in files_by_size.values():
             if len(files) > 1:
                 for f in files:
                     digest = get_chksums(pjoin(pkg_path, f), self.digest_algo)[0]
@@ -355,18 +355,18 @@ class LiveOnlyCheck(GentooRepoCheck):
 
     def __init__(self, *args, git_addon):
         super().__init__(*args)
-        self.today = datetime.today()
+        self.today = datetime.now(UTC)
         self.added_repo = git_addon.cached_repo(addons.git.GitAddedRepo)
 
     def feed(self, pkgset):
         if all(pkg.live for pkg in pkgset):
             # assume highest package version is most recently committed
-            pkg = pkgset[0] if len(pkgset) == 1 else sorted(pkgset)[-1]
+            pkg = pkgset[0] if len(pkgset) == 1 else max(pkgset)
             try:
                 match = next(self.added_repo.itermatch(pkg.versioned_atom))
             except StopIteration:
                 # probably an uncommitted package
                 return
-            added = datetime.fromtimestamp(match.time)
+            added = datetime.fromtimestamp(match.time, tz=UTC)
             days_old = (self.today - added).days
             yield LiveOnlyPackage(days_old, pkg=pkg)

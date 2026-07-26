@@ -110,7 +110,7 @@ def display_keywords(out, options):
         for keyword in objects.KEYWORDS.values():
             scopes[keyword.scope].add(keyword)
 
-        for scope in reversed(sorted(scopes)):
+        for scope in sorted(scopes, reverse=True):
             out.write(out.bold, f"{scope.desc.capitalize()} scope:")
             out.write()
             keywords = sorted(scopes[scope], key=attrgetter("__name__"))

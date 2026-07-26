@@ -111,12 +111,13 @@ class PerlCheck(OptionalCheck):
             raise SkipCheck(self, str(exc))
 
     def feed(self, pkg):
-        if "perl-module" in pkg.inherited:
-            if mo := self.dist_version_re.search("".join(pkg.lines)):
-                dist_version = mo.group("dist_version")
-                normalized = self.perl.normalize(dist_version)
-                if normalized != pkg.version:
-                    yield MismatchedPerlVersion(dist_version, normalized, pkg=pkg)
+        if "perl-module" in pkg.inherited and (
+            mo := self.dist_version_re.search("".join(pkg.lines))
+        ):
+            dist_version = mo.group("dist_version")
+            normalized = self.perl.normalize(dist_version)
+            if normalized != pkg.version:
+                yield MismatchedPerlVersion(dist_version, normalized, pkg=pkg)
 
         missing_virtual_perl = set()
         for attr in (x.lower() for x in pkg.eapi.dep_keys):

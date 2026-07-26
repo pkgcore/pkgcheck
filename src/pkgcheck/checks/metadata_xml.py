@@ -1,5 +1,6 @@
 import os
 import re
+import typing
 from difflib import SequenceMatcher
 from itertools import chain
 from os.path import join as pjoin
@@ -454,7 +455,7 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
     _two_components_validator_re = re.compile(r"^[^/]+/[^/]+$")
     _gitlab_validator_re = re.compile(r"^([^/]+/)*[^/]+/[^/]+$")
 
-    remote_id_validators = {
+    remote_id_validators: typing.ClassVar[dict] = {
         # {name}-style remotes
         "cpan": (_one_component_validator_re, "{project}"),
         "cpan-module": (_one_component_validator_re, "{module}"),

@@ -3,6 +3,7 @@
 import inspect
 import os
 import pkgutil
+import typing
 from collections.abc import Mapping
 from functools import partial
 from importlib import import_module
@@ -29,7 +30,7 @@ def _find_modules(module):  # pragma: no cover
             try:
                 yield import_module(name)
             except ImportError as e:
-                raise Exception(f"failed importing {name!r}: {e}")
+                raise ImportError(f"failed importing {name!r}: {e}") from e
     else:
         yield module
 
@@ -62,7 +63,7 @@ def _find_obj_classes(module_name, target_cls):  # pragma: no cover
     for m in _find_modules(module):
         for cls in _find_classes(m, matching_cls, skip=base_classes):
             if cls.__name__ in classes and classes[cls.__name__] != cls:
-                raise Exception(f"object name overlap: {cls} and {classes[cls.__name__]}")
+                raise ValueError(f"object name overlap: {cls} and {classes[cls.__name__]}")
             classes[cls.__name__] = cls
 
     return classes
@@ -80,7 +81,7 @@ class _LazyDict(Mapping):
         # Forcibly collapse mapping when running from the git repo, used to
         # force cache registration to occur as related modules are imported.
         if _defaults is klass.sentinel:  # pragma: no cover
-            self._dict
+            _ = self._dict
 
     @klass.jit_attr
     def _dict(self):
@@ -135,7 +136,7 @@ def _keyword_alias(alias=None):
 class _KeywordsLazyDict(_LazyDict):
     """Lazy dictionary of keyword mappings with added filtered attributes."""
 
-    _alias_keywords = set()
+    _alias_keywords: typing.ClassVar[set[str]] = set()
 
     @klass.jit_attr
     def aliases(self):

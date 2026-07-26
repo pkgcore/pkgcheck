@@ -1,6 +1,7 @@
 """Various line-based checks."""
 
 import re
+import typing
 from collections import defaultdict
 
 from pkgcore.ebuild.eapi import EAPI, common_mandatory_metadata_keys
@@ -252,10 +253,14 @@ class PathVariablesCheck(Check):
 
     def __init__(self, *args):
         super().__init__(*args)
-        self.missing_regex = re.compile(r'(\${(%s)})"?\w+/' % r"|".join(PATH_VARIABLES))
-        self.unnecessary_regex = re.compile(r"(\${(%s)%%/})" % r"|".join(PATH_VARIABLES))
+        self.missing_regex = re.compile(
+            r'(\${(%s)})"?\w+/' % r"|".join(PATH_VARIABLES)  # noqa: UP031
+        )
+        self.unnecessary_regex = re.compile(
+            r"(\${(%s)%%/})" % r"|".join(PATH_VARIABLES)  # noqa: UP031
+        )
         self.double_prefix_regex = re.compile(
-            r"(\${(%s)(%%/)?}/?\$(\((%s)\)|{(%s)}))"
+            r"(\${(%s)(%%/)?}/?\$(\((%s)\)|{(%s)}))"  # noqa: UP031
             % (
                 r"|".join(PREFIX_VARIABLES),
                 r"|".join(self.prefixed_getters),
@@ -263,7 +268,7 @@ class PathVariablesCheck(Check):
             )
         )
         self.double_prefix_func_regex = re.compile(
-            r"\b(%s)\s[^&|;]*\$(\((%s)\)|{(%s)})"
+            r"\b(%s)\s[^&|;]*\$(\((%s)\)|{(%s)})"  # noqa: UP031
             % (
                 r"|".join(self.prefixed_dir_functions),
                 r"|".join(self.prefixed_getters),
@@ -272,7 +277,7 @@ class PathVariablesCheck(Check):
         )
         # do not catch ${foo#${EPREFIX}} and similar
         self.double_prefix_func_false_positive_regex = re.compile(
-            r'.*?[#]["]?\$(\((%s)\)|{(%s)})'
+            r'.*?[#]["]?\$(\((%s)\)|{(%s)})'  # noqa: UP031
             % (r"|".join(self.prefixed_getters), r"|".join(self.prefixed_rhs_variables))
         )
 
@@ -290,9 +295,10 @@ class PathVariablesCheck(Check):
             if line[0] != "#":
                 if mo := self.double_prefix_regex.search(line):
                     double_prefix[mo.group(1)].append(lineno)
-                if mo := self.double_prefix_func_regex.search(line):
-                    if not self.double_prefix_func_false_positive_regex.match(mo.group(0)):
-                        double_prefix[mo.group(0)].append(lineno)
+                if (mo := self.double_prefix_func_regex.search(line)) and not (
+                    self.double_prefix_func_false_positive_regex.match(mo.group(0))
+                ):
+                    double_prefix[mo.group(0)].append(lineno)
 
             # skip EAPIs that don't require trailing slashes
             if pkg.eapi.options.trailing_slash:
@@ -440,14 +446,18 @@ class ObsoleteUriCheck(Check):
 
     REGEXPS = (
         (
-            r".*\b(?P<uri>(?P<prefix>https?://github\.com/.*?/.*?/)"
-            r"(?:tar|zip)ball(?P<ref>\S*))",
+            (
+                r".*\b(?P<uri>(?P<prefix>https?://github\.com/.*?/.*?/)"
+                r"(?:tar|zip)ball(?P<ref>\S*))"
+            ),
             r"\g<prefix>archive\g<ref>.tar.gz",
         ),
         (
-            r".*\b(?P<uri>(?P<prefix>https?://gitlab\.com/.*?/(?P<pkg>.*?)/)"
-            r"repository/archive\.(?P<format>tar|tar\.gz|tar\.bz2|zip)"
-            r"\?ref=(?P<ref>\S*))",
+            (
+                r".*\b(?P<uri>(?P<prefix>https?://gitlab\.com/.*?/(?P<pkg>.*?)/)"
+                r"repository/archive\.(?P<format>tar|tar\.gz|tar\.bz2|zip)"
+                r"\?ref=(?P<ref>\S*))"
+            ),
             r"\g<prefix>-/archive/\g<ref>/\g<pkg>-\g<ref>.\g<format>",
         ),
     )
@@ -693,7 +703,7 @@ class MetadataVarCheck(Check):
     )
 
     # mapping between registered variables and verification methods
-    known_variables = {}
+    known_variables: typing.ClassVar[dict] = {}
 
     empty_vars_whitelist = frozenset({"KEYWORDS"})
 
@@ -761,7 +771,7 @@ class MetadataVarCheck(Check):
             relevant = {key: value for key, value in match.groupdict().items() if value is not None}
             static_str = relevant.pop("static_str")
             assert len(relevant) == 1
-            key = int(tuple(relevant.keys())[0][1:])
+            key = int(next(iter(relevant.keys()))[1:])
             static_urls[static_str] = replacements[key]
 
         for static_str, replacement in static_urls.items():
@@ -1010,7 +1020,7 @@ class InheritsCheck(Check):
         }
 
         # register variables assigned in ebuilds
-        assigned_vars = dict()
+        assigned_vars = {}
         for node in bash.var_assign_query.captures(pkg.tree.root_node).get("assign", ()):
             name = pkg.node_str(node.child_by_field_name("name"))
             if eclass := self.get_eclass(name, pkg):
@@ -1238,7 +1248,7 @@ class VariableScopeCheck(Check):
     )
 
     # mapping of bad variables for each EAPI phase function
-    scoped_vars = {}
+    scoped_vars: typing.ClassVar[dict] = {}
     for eapi in EAPI.known_eapis.values():
         for variable, allowed_scopes in variable_map.items():
             for phase in eapi.phases_rev:
@@ -1291,7 +1301,7 @@ class RedundantDodirCheck(Check):
 
     def __init__(self, *args):
         super().__init__(*args)
-        cmds = r"|".join(("insinto", "exeinto", "docinto"))
+        cmds = "insinto|exeinto|docinto"
         self.cmds_regex = re.compile(rf"^\s*(?P<cmd>({cmds}))\s+(?P<path>\S+)")
         self.dodir_regex = re.compile(r"^\s*(?P<call>dodir\s+(?P<path>\S+))")
 
@@ -1303,11 +1313,12 @@ class RedundantDodirCheck(Check):
                 continue
             if dodir := self.dodir_regex.match(line):
                 lineno, line = next(lines)
-                if cmd := self.cmds_regex.match(line):
-                    if dodir.group("path") == cmd.group("path"):
-                        yield RedundantDodir(
-                            cmd.group("cmd"), line=dodir.group("call"), lineno=lineno - 1, pkg=pkg
-                        )
+                if (cmd := self.cmds_regex.match(line)) and dodir.group("path") == cmd.group(
+                    "path"
+                ):
+                    yield RedundantDodir(
+                        cmd.group("cmd"), line=dodir.group("call"), lineno=lineno - 1, pkg=pkg
+                    )
 
 
 class UnquotedVariable(results.BaseLinesResult, results.AliasResult, results.Warning):
@@ -1412,10 +1423,9 @@ class _UnquotedVariablesCheck(Check):
         hits = defaultdict(set)
         for var_node in bash.var_query.captures(item.tree.root_node).get("var", ()):
             var_name = item.node_str(var_node)
-            if var_name in self.var_names:
-                if self._var_needs_quotes(item, var_node):
-                    lineno, _ = var_node.start_point
-                    hits[var_name].add(lineno + 1)
+            if var_name in self.var_names and self._var_needs_quotes(item, var_node):
+                lineno, _ = var_node.start_point
+                hits[var_name].add(lineno + 1)
         for var_name, lines in hits.items():
             yield var_name, sorted(lines)
 
@@ -1685,12 +1695,11 @@ class DeclarationShadowedCheck(Check):
                 used_name = pkg.node_str(node.child_by_field_name("name"))
                 if pkg.node_str(node).startswith(used_name + "+="):
                     continue
-                if value_node := node.child_by_field_name("value"):
-                    if any(
-                        pkg.node_str(node) == used_name
-                        for node in bash.var_query.captures(value_node).get("var", ())
-                    ):
-                        continue
+                if (value_node := node.child_by_field_name("value")) and any(
+                    pkg.node_str(node) == used_name
+                    for node in bash.var_query.captures(value_node).get("var", ())
+                ):
+                    continue
                 var_assigns[used_name].append(node)
             elif node.type == "function_definition":
                 used_name = pkg.node_str(node.child_by_field_name("name"))

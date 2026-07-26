@@ -1,6 +1,7 @@
 """Base classes for check results."""
 
 import abc
+import typing
 from functools import total_ordering
 
 from pkgcore.ebuild import cpv
@@ -301,7 +302,7 @@ class MetadataError(Error):
     # specific metadata attributes handled by the result class
     attr = None
     # mapping from data attributes to result classes
-    results = {}
+    results: typing.ClassVar[dict] = {}
 
     def __init_subclass__(cls, **kwargs):
         """Register metadata attribute error results."""

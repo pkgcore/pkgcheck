@@ -66,7 +66,7 @@ class GlsaCheck(GentooRepoCheck):
                     if isinstance(v.restriction, values.ContainmentMatch):
                         arches.update(x.lstrip("~") for x in v.restriction.vals)
                     else:
-                        raise Exception(
+                        raise TypeError(
                             f"unexpected restriction sequence- {v.restriction} in {vuln}"
                         )
                 keys = {x.lstrip("~") for x in pkg.keywords if not x.startswith("-")}

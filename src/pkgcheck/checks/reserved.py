@@ -1,5 +1,6 @@
 import re
 import string
+import typing
 
 from pkgcore.ebuild.eapi import EAPI
 
@@ -21,7 +22,7 @@ class _ReservedNameCheck(Check):
     )
 
     """Approved good exceptions to using of variables."""
-    variables_usage_whitelist = {"EBUILD_PHASE", "EBUILD_PHASE_FUNC"}
+    variables_usage_whitelist: typing.ClassVar[set[str]] = {"EBUILD_PHASE", "EBUILD_PHASE_FUNC"}
 
     def _check(self, used_type: str, used_names: dict[str, tuple[int, int]]):
         for used_name, (lineno, _) in used_names.items():

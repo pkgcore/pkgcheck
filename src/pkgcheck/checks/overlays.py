@@ -123,9 +123,10 @@ class UnusedInMastersCheck(MirrorsCheck, OverlayRepoCheck, RepoCheck, OptionalCh
                 yield UnusedInMastersMirrors(sorted(mirrors), pkg=pkg)
 
         # report eclasses used in the pkg but not in any pkg from the master repo(s)
-        if self.unused_master_eclasses:
-            if eclasses := self.unused_master_eclasses.intersection(pkg.inherited):
-                yield UnusedInMastersEclasses(sorted(eclasses), pkg=pkg)
+        if self.unused_master_eclasses and (
+            eclasses := self.unused_master_eclasses.intersection(pkg.inherited)
+        ):
+            yield UnusedInMastersEclasses(sorted(eclasses), pkg=pkg)
 
         # report global USE flags used in the pkg but not in any pkg from the master repo(s)
         if self.unused_master_flags:

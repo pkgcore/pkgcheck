@@ -88,9 +88,11 @@ if getattr(atom, "_TRANSITIVE_USE_ATOM_BUG_IS_FIXED", False):
 else:
 
     def _eapi2_flatten(val):
-        if isinstance(val, transitive_use_atom):
-            if len([x for x in val.use if x.endswith("?")]) > 16:
-                raise _BlockMemoryExhaustion(val)
+        if (
+            isinstance(val, transitive_use_atom)
+            and len([x for x in val.use if x.endswith("?")]) > 16
+        ):
+            raise _BlockMemoryExhaustion(val)
         return isinstance(val, atom) and not isinstance(val, transitive_use_atom)
 
 

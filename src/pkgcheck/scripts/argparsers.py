@@ -48,9 +48,7 @@ reporter_options.add_argument(
 @reporter_argparser.bind_final_check
 def _setup_reporter(parser, namespace):
     if namespace.reporter is None:
-        namespace.reporter = sorted(
-            objects.REPORTERS.values(), key=attrgetter("priority"), reverse=True
-        )[0]
+        namespace.reporter = max(objects.REPORTERS.values(), key=attrgetter("priority"))
     else:
         try:
             namespace.reporter = objects.REPORTERS[namespace.reporter]

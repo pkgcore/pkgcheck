@@ -193,9 +193,8 @@ check_options.add_argument(
         run. For example, running pkgcheck with only the repo scope
         enabled will cause only repo-level checks to run.
 
-        Available scopes: %s
-    """
-    % (", ".join(base.scopes)),
+        Available scopes: {}
+    """.format(", ".join(base.scopes)),
 )
 check_options.add_argument(
     "-c",
