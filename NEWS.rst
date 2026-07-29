@@ -25,6 +25,9 @@ pkgcheck 0.10.42 (unreleased)
 - RequiredUseUnsatisfiableCheck: cache REQUIRED_USE satisfiability for the whole
   run rather than per version, cutting solver calls by ~2.8x (Arthur Zamarin)
 
+- RequiredUseUnsatisfiableCheck: use ``pkgcore``'s ``required_use.iter_flags``
+  instead of a local copy of the same restriction walk (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.41 (2026-07-24)
 -----------------------------

@@ -15,7 +15,7 @@ from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.fetch import fetchable, unknown_mirror
 from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions import boolean, packages, values
-from pkgcore.restrictions.required_use import find_constraint_satisfaction
+from pkgcore.restrictions.required_use import find_constraint_satisfaction, iter_flags
 from snakeoil.mappings import ImmutableDict
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
@@ -452,19 +452,6 @@ class RequiredUseCheck(Check):
                 yield RequiredUseDefaults(node, profile=profile, num_profiles=num_profiles, pkg=pkg)
 
 
-def _required_use_flags(restrict):
-    """Collect all USE flag names referenced anywhere in a REQUIRED_USE restriction tree."""
-    if isinstance(restrict, values.ContainmentMatch):
-        yield from restrict.vals
-    elif isinstance(restrict, packages.Conditional):
-        yield from restrict.restriction.vals
-        for child in restrict.payload:
-            yield from _required_use_flags(child)
-    else:
-        for child in restrict.restrictions:
-            yield from _required_use_flags(child)
-
-
 class RequiredUseUnsatisfiable(results.VersionResult, results.AliasResult, results.Error):
     """REQUIRED_USE can't be satisfied due to masked/forced USE flags.
 
@@ -544,7 +531,7 @@ class RequiredUseUnsatisfiableCheck(Check):
         if not required_use.restrictions:
             return
 
-        used_flags = frozenset(_required_use_flags(required_use))
+        used_flags = frozenset(iter_flags(required_use))
         pkg_iuse = frozenset(pkg.iuse_stripped)
 
         profile_failures = defaultdict(set)
