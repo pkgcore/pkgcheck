@@ -536,6 +536,8 @@ class RequiredUseUnsatisfiableCheck(Check):
             "dev": RequiredUseUnsatisfiableInDev,
             "exp": RequiredUseUnsatisfiableInExp,
         }
+        # keyed on REQUIRED_USE too, so it's shared across versions and packages
+        self.satisfiable_cache = {}
 
     def feed(self, pkg):
         required_use = pkg.required_use
@@ -546,20 +548,19 @@ class RequiredUseUnsatisfiableCheck(Check):
         pkg_iuse = frozenset(pkg.iuse_stripped)
 
         profile_failures = defaultdict(set)
-        satisfiable_cache = {}
         for group in self.profiles.identify_profiles(pkg):
             profile = group[0]
             known_flags = used_flags & (pkg_iuse | profile.iuse_effective)
             immutable, enabled = profile.identify_use(pkg, known_flags)
             force_false = immutable - enabled
 
-            cache_key = (known_flags, enabled, force_false)
-            if (satisfiable := satisfiable_cache.get(cache_key)) is None:
+            cache_key = (required_use, known_flags, enabled, force_false)
+            if (satisfiable := self.satisfiable_cache.get(cache_key)) is None:
                 solver = find_constraint_satisfaction(
                     required_use, known_flags, force_true=enabled, force_false=force_false
                 )
                 satisfiable = next(solver, None) is not None
-                satisfiable_cache[cache_key] = satisfiable
+                self.satisfiable_cache[cache_key] = satisfiable
 
             if not satisfiable:
                 profile_failures[profile.status].update(group)

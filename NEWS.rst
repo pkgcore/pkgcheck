@@ -22,6 +22,9 @@ pkgcheck 0.10.42 (unreleased)
   ``--commits``/``--staged`` ref resolution error detection under a
   translated git locale (Arthur Zamarin)
 
+- RequiredUseUnsatisfiableCheck: cache REQUIRED_USE satisfiability for the whole
+  run rather than per version, cutting solver calls by ~2.8x (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.41 (2026-07-24)
 -----------------------------
