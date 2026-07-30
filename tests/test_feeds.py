@@ -145,5 +145,5 @@ class TestEvaluateDepSet:
         l1 = [x[1] for x in l if str(x[0]).strip() == "dev-util/ppc"][0]
         l2 = [x[1] for x in l if str(x[0]).strip() == "dev-util/x86"][0]
 
-        assert sorted(set(x.name for x in l1)) == ["3"]
-        assert sorted(set(x.name for x in l2)) == ["1", "2"]
+        assert sorted({x.name for x in l1}) == ["3"]
+        assert sorted({x.name for x in l2}) == ["1", "2"]

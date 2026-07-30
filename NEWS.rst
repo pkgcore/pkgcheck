@@ -28,6 +28,9 @@ pkgcheck 0.10.42 (unreleased)
 - RequiredUseUnsatisfiableCheck: use ``pkgcore``'s ``required_use.iter_flags``
   instead of a local copy of the same restriction walk (Arthur Zamarin)
 
+- RepoProfilesCheck: don't flag a directory-form ``package.use`` and similar as
+  an unused profile directory (Arthur Zamarin, #560)
+
 -----------------------------
 pkgcheck 0.10.41 (2026-07-24)
 -----------------------------

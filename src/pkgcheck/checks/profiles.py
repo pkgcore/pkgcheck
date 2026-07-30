@@ -681,9 +681,12 @@ class RepoProfilesCheck(RepoCheck):
         if arches_without_profiles := set(self.arches) - set(self.repo.profiles.arches()):
             yield ArchesWithoutProfiles(sorted(arches_without_profiles))
 
+        content_dir_names = frozenset(ProfilesCheck.known_files)
+
         root_profile_dirs = {"embedded"}
         available_profile_dirs = set()
-        for root, _dirs, _files in os.walk(self.profiles_dir):
+        for root, dirs, _files in os.walk(self.profiles_dir):
+            dirs[:] = [d for d in dirs if d not in content_dir_names]
             if d := root[len(self.profiles_dir) :].lstrip("/"):
                 available_profile_dirs.add(d)
         available_profile_dirs -= self.non_profile_dirs | root_profile_dirs
