@@ -486,51 +486,60 @@ class VisibilityCheck(feeds.EvaluateDepSet, feeds.QueryCache, Check):
             if not self.query_cache[search]:
                 yield OptfeatureNonexistentAtom(str(search), line=line, lineno=lineno + 1, pkg=pkg)
 
+    def _solvable(self, profile, node):
+        # is it visible?  ie, is it masked?
+        # if so, skip it.
+        # long term, probably should do testing in the same respect we do
+        # for other visibility tiers
+        if node in profile.cache or profile.provides_has_match(node):
+            return True
+        if node in profile.insoluble:
+            return False
+
+        # get is required since there is an intermix between old style
+        # virtuals and new style- thus the cache priming doesn't get
+        # all of it.
+        src = self.query_cache.get(node.no_usedeps, ())
+        if node.use:
+            src = (FakeConfigurable(pkg, profile) for pkg in src)
+            src = (pkg for pkg in src if node.force_True(pkg))
+        if any(map(profile.visible, src)):
+            profile.cache.add(node)
+            return True
+        profile.insoluble.add(node)
+        return False
+
+    def _solve_depset(self, profile, node, failures):
+        if isinstance(node, atom):
+            # blockers are handled by other checks
+            if node.blocks or self._solvable(profile, node):
+                return True
+            failures.add(node)
+            return False
+
+        if isinstance(node, boolean.OrRestriction):
+            if not node.restrictions:
+                return True
+            # an any-of block is solvable if any of its children is, so the
+            # failures of its children only matter if all of them fail
+            nested = set()
+            for child in node.restrictions:
+                if self._solve_depset(profile, child, nested):
+                    return True
+            failures.update(nested)
+            return False
+
+        # everything else is an all-of block, the depset itself included
+        solvable = True
+        for child in node.restrictions:
+            # every child is walked, so that all failures get collected
+            if not self._solve_depset(profile, child, failures):
+                solvable = False
+        return solvable
+
     def process_depset(self, pkg, attr, depset, edepset, profiles):
-        get_cached_query = self.query_cache.get
-
-        csolutions = []
-        for required in edepset.iter_cnf_solutions():
-            for node in required:
-                if node.blocks:
-                    break
-            else:
-                csolutions.append(required)
-
         for profile in profiles:
             failures = set()
-            # is it visible?  ie, is it masked?
-            # if so, skip it.
-            # long term, probably should do testing in the same respect we do
-            # for other visibility tiers
-            cache = profile.cache
-            provided = profile.provides_has_match
-            insoluble = profile.insoluble
-            visible = profile.visible
-            for required in csolutions:
-                # scan all of the quickies, the caches...
-                for node in required:
-                    if node in cache or provided(node):
-                        break
-                else:
-                    for node in required:
-                        if node in insoluble:
-                            pass
-
-                        # get is required since there is an intermix between old style
-                        # virtuals and new style- thus the cache priming doesn't get
-                        # all of it.
-                        src = get_cached_query(node.no_usedeps, ())
-                        if node.use:
-                            src = (FakeConfigurable(pkg, profile) for pkg in src)
-                            src = (pkg for pkg in src if node.force_True(pkg))
-                        if any(visible(pkg) for pkg in src):
-                            cache.add(node)
-                            break
-                        else:
-                            insoluble.add(node)
-                    else:
-                        # no matches. not great, should collect them all
-                        failures.update(required)
+            self._solve_depset(profile, edepset, failures)
             if failures:
                 yield profile, failures

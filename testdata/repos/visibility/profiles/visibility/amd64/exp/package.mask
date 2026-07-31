@@ -1,3 +1,4 @@
 NonsolvableDepsInDev/masked
+NonsolvableDepsInStable/any-of
 NonsolvableDepsInStable/masked
 NonsolvableDepsInStable/unstable

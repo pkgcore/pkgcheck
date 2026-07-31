@@ -31,6 +31,13 @@ pkgcheck 0.10.42 (unreleased)
 - RepoProfilesCheck: don't flag a directory-form ``package.use`` and similar as
   an unused profile directory (Arthur Zamarin, #560)
 
+- VisibilityCheck: walk the dep tree instead of enumerating its CNF form, which
+  was exponential in the number of all-of blocks nested inside an any-of block.
+  Scanning a package using ``python_gen_any_dep`` with a handful of
+  implementations, e.g. ``dev-python/click`` with ``distutils_enable_sphinx``,
+  drops from 21s to 4s, and each further implementation no longer multiplies the
+  runtime by the size of the any-of block (Arthur Zamarin, #782)
+
 -----------------------------
 pkgcheck 0.10.41 (2026-07-24)
 -----------------------------
