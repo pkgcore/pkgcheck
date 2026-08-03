@@ -1,0 +1,2 @@
+{"__class__": "GlobalDeclareWithoutG", "category": "GlobalDeclareCheck", "package": "GlobalDeclareWithoutG", "version": "0", "line": "declare -A ASSOC_ARRAY=(", "lineno": 11}
+{"__class__": "GlobalDeclareWithoutG", "category": "GlobalDeclareCheck", "package": "GlobalDeclareWithoutG", "version": "0", "line": "declare -rA READONLY_ASSOC=(", "lineno": 16}

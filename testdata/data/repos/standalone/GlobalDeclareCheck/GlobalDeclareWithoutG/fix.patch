@@ -1,0 +1,17 @@
+diff -Naur standalone/GlobalDeclareCheck/GlobalDeclareWithoutG/GlobalDeclareWithoutG-0.ebuild fixed/GlobalDeclareCheck/GlobalDeclareWithoutG/GlobalDeclareWithoutG-0.ebuild
+--- standalone/GlobalDeclareCheck/GlobalDeclareWithoutG/GlobalDeclareWithoutG-0.ebuild
++++ fixed/GlobalDeclareCheck/GlobalDeclareWithoutG/GlobalDeclareWithoutG-0.ebuild
+@@ -5,11 +5,11 @@
+ LICENSE="BSD"
+ SLOT="0"
+ 
+-declare -A ASSOC_ARRAY=(
++declare -gA ASSOC_ARRAY=(
+ 	[a]=b
+ 	[c]=d
+ )
+ 
+-declare -rA READONLY_ASSOC=(
++declare -grA READONLY_ASSOC=(
+ 	[e]=f
+ )
