@@ -3,6 +3,18 @@ Release Notes
 =============
 
 -----------------------------
+pkgcheck 0.10.43 (unreleased)
+-----------------------------
+
+**Fixes:**
+
+- GitPkgCommitsCheck: fix a ``FileNotFoundError`` crash when a package's
+  removals span several commits, e.g. a revbump done as a rename followed by the
+  removal of another version. The historical repo was archived from a single
+  commit's parent, which doesn't necessarily hold every removed version, while
+  all of them were registered with it (Arthur Zamarin, #675, #756)
+
+-----------------------------
 pkgcheck 0.10.42 (2026-07-31)
 -----------------------------
 

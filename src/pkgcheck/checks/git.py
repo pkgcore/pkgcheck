@@ -288,7 +288,7 @@ class _RemovalRepo(UnconfiguredTree):
     def cleanup(self):
         self.__tmpdir.cleanup()
 
-    def __call__(self, pkgs):
+    def __call__(self, pkgs: list[git.GitPkgChange]):
         """Update the repo with a given sequence of packages."""
         self._populate(pkgs)
         if self.__created:
@@ -298,28 +298,57 @@ class _RemovalRepo(UnconfiguredTree):
         self.__created = True
         return self
 
-    def _populate(self, pkgs):
+    def _populate(self, pkgs: list[git.GitPkgChange]):
         """Populate the repo with a given sequence of historical packages."""
         pkg = min(pkgs, key=attrgetter("time"))
         paths = [pjoin(pkg.category, pkg.package)]
         for subdir in ("eclass", "profiles"):
             if os.path.exists(pjoin(self.__parent_repo.location, subdir)):
                 paths.append(subdir)
+        self._extract(pkg.commit, paths)
+        self._populate_missing(pkgs, pkg)
+
+    def _extract(self, commit: str, paths: list[str], required: bool = True):
+        """Extract paths from a commit's parent commit into the repo."""
         old_files = subprocess.Popen(
-            ["git", "archive", f"{pkg.commit}~1"] + paths,
+            ["git", "archive", f"{commit}~1"] + paths,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             cwd=self.__parent_repo.location,
         )
-        if old_files.poll():
+        if required and old_files.poll():
             error = old_files.stderr.read().decode().strip()
             raise PkgcheckUserException(f"failed populating archive repo: {error}")
         # https://docs.python.org/3.12/library/tarfile.html#tarfile-extraction-filter
         if hasattr(tarfile, "data_filter"):
             # https://docs.python.org/3.12/library/tarfile.html#tarfile.TarFile.extraction_filter
             tarfile.TarFile.extraction_filter = staticmethod(tarfile.data_filter)
-        with tarfile.open(mode="r|", fileobj=old_files.stdout) as tar:
-            tar.extractall(path=self.location)
+        try:
+            with tarfile.open(mode="r|", fileobj=old_files.stdout) as tar:
+                tar.extractall(path=self.location)
+        except tarfile.ReadError:
+            # git wrote no archive, the paths are absent from the tree
+            if required:
+                raise
+        finally:
+            old_files.stdout.close()
+            old_files.stderr.close()
+            old_files.wait()
+
+    def _populate_missing(self, pkgs: list[git.GitPkgChange], archived: git.GitPkgChange):
+        """Extract removed ebuilds absent from the already archived commit."""
+        missing: dict[str, list[str]] = defaultdict(list)
+        for pkg in pkgs:
+            if pkg.commit == archived.commit:
+                continue
+            if pkg.status != "D" and not (pkg.status == "R" and pkg.old is None):
+                continue
+            path = pjoin(pkg.category, pkg.package, f"{pkg.package}-{pkg.fullver}.ebuild")
+            if not os.path.exists(pjoin(self.location, path)):
+                missing[pkg.commit].append(path)
+
+        for commit, paths in missing.items():
+            self._extract(commit, paths, required=False)
 
 
 class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
