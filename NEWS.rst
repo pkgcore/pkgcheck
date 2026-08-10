@@ -6,6 +6,13 @@ Release Notes
 pkgcheck 0.10.43 (unreleased)
 -----------------------------
 
+**New Checks:**
+
+- AcctCheck: new InvalidAccountIdentifier result, flagging ``ACCT_USER_ID`` or
+  ``ACCT_GROUP_ID`` set to a negative value (usually ``-1``), which requests a
+  dynamically allocated id. That is meant for overlays only and is prohibited
+  by policy in the gentoo repository (Arthur Zamarin, #789)
+
 **Fixes:**
 
 - GitPkgCommitsCheck: fix a ``FileNotFoundError`` crash when a package's

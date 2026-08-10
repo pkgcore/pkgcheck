@@ -58,6 +58,29 @@ class OutsideRangeAccountIdentifier(results.VersionResult, results.Error):
         return f"{self.kind} id {self.identifier} outside permitted static allocation range"
 
 
+class InvalidAccountIdentifier(results.VersionResult, results.Error):
+    """UID/GID is dynamically allocated instead of statically assigned.
+
+    A negative UID/GID (usually ``-1``) instructs the ``acct-user`` and
+    ``acct-group`` eclasses to dynamically allocate an identifier at install
+    time. This is meant for overlays only, using it is prohibited by policy in
+    the gentoo repository. Please request a statically assigned identifier via
+    api.git instead.
+    """
+
+    def __init__(self, kind, identifier, **kwargs):
+        super().__init__(**kwargs)
+        self.kind = kind
+        self.identifier = identifier
+
+    @property
+    def desc(self):
+        return (
+            f"{self.kind} id {self.identifier} is dynamically allocated, "
+            "please assign a static id via api.git"
+        )
+
+
 class AcctCheck(GentooRepoCheck, RepoCheck):
     """Various checks for acct-* packages.
 
@@ -80,17 +103,18 @@ class AcctCheck(GentooRepoCheck, RepoCheck):
     )
     _source = (sources.RepositoryRepoSource, (), (("source", _restricted_source),))
     known_results = frozenset(
-        [
+        {
             MissingAccountIdentifier,
             ConflictingAccountIdentifiers,
             OutsideRangeAccountIdentifier,
-        ]
+            InvalidAccountIdentifier,
+        }
     )
 
     def __init__(self, *args):
         super().__init__(*args)
         self.id_re = re.compile(
-            r'ACCT_(?P<var>USER|GROUP)_ID=(?P<quot>[\'"]?)(?P<id>[0-9]+)(?P=quot)'
+            r'ACCT_(?P<var>USER|GROUP)_ID=(?P<quot>[\'"]?)(?P<id>-?[0-9]+)(?P=quot)'
         )
         self.seen_uids = defaultdict(partial(defaultdict, list))
         self.seen_gids = defaultdict(partial(defaultdict, list))
@@ -137,6 +161,10 @@ class AcctCheck(GentooRepoCheck, RepoCheck):
                 break
         else:
             yield MissingAccountIdentifier(f"ACCT_{expected_var}_ID", pkg=pkg)
+            return
+
+        if found_id < 0:
+            yield InvalidAccountIdentifier(expected_var.lower(), found_id, pkg=pkg)
             return
 
         if not any(found_id in id_range for id_range in allowed_ids):

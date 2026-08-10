@@ -120,6 +120,37 @@ class TestAcctUser(misc.ReportTestCase):
         check = self.mk_check((pkg,))
         self.assertNoReport(check, pkg)
 
+    @pytest.mark.parametrize("identifier", (-1, -100))
+    def test_dynamic_id(self, identifier):
+        """Test that dynamically allocated ids are rejected."""
+        pkg = self.mk_pkg("foo", identifier)
+        check = self.mk_check((pkg,))
+        r = self.assertReport(check, pkg)
+        assert isinstance(r, acct.InvalidAccountIdentifier)
+        assert r.kind == self.kind
+        assert r.identifier == identifier
+        assert f"{self.kind} id {identifier} is dynamically allocated" in str(r)
+
+    def test_unquoted_dynamic_id(self):
+        ebuild = textwrap.dedent(
+            f"""\
+                inherit acct-{self.kind}
+                ACCT_{self.kind.upper()}_ID=-1
+            """
+        )
+        pkg = self.mk_pkg("foo", None, ebuild=ebuild)
+        check = self.mk_check((pkg,))
+        r = self.assertReport(check, pkg)
+        assert isinstance(r, acct.InvalidAccountIdentifier)
+        assert r.identifier == -1
+
+    def test_dynamic_id_not_conflicting(self):
+        """Dynamic ids shouldn't be reported as conflicting with each other."""
+        pkgs = (self.mk_pkg("foo", -1), self.mk_pkg("bar", -1))
+        check = self.mk_check(pkgs)
+        for r in self.assertReports(check, pkgs):
+            assert isinstance(r, acct.InvalidAccountIdentifier)
+
 
 class TestAcctGroup(TestAcctUser):
     kind = "group"
