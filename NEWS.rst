@@ -15,6 +15,14 @@ pkgcheck 0.10.43 (unreleased)
 
 **Fixes:**
 
+- config: fix the user config file, cache dir and data dir being placed under a
+  relative path when an XDG base dir variable is set to an empty (or relative)
+  value, as is common in containers and root shells. The user config was then
+  silently ignored, and the git cache landed in the current directory. Per the
+  XDG basedir spec such values are now discarded in favor of the default
+  location, which also applies to the ``$XDG_CONFIG_HOME/git/ignore`` lookup
+  (Arthur Zamarin)
+
 - GitPkgCommitsCheck: fix a ``FileNotFoundError`` crash when a package's
   removals span several commits, e.g. a revbump done as a rename followed by the
   removal of another version. The historical repo was archived from a single

@@ -29,11 +29,9 @@ for xdg_var, var_name, fallback_dir in (
     ("XDG_CACHE_HOME", "USER_CACHE_PATH", "~/.cache"),
     ("XDG_DATA_HOME", "USER_DATA_PATH", "~/.local/share"),
 ):
-    setattr(
-        _module,
-        var_name,
-        os.path.join(os.environ.get(xdg_var, os.path.expanduser(fallback_dir)), "pkgcheck"),
-    )
+    if not os.path.isabs(base_dir := os.environ.get(xdg_var, "")):
+        base_dir = os.path.expanduser(fallback_dir)
+    setattr(_module, var_name, os.path.join(base_dir, "pkgcheck"))
 
 REPO_PATH = _GET_CONST("REPO_PATH", _reporoot)
 DATA_PATH = _GET_CONST("DATA_PATH", "%(REPO_PATH)s/data/share/pkgcheck")
