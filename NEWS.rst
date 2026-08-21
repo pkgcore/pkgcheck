@@ -13,6 +13,11 @@ pkgcheck 0.10.43 (unreleased)
   dynamically allocated id. That is meant for overlays only and is prohibited
   by policy in the gentoo repository (Arthur Zamarin, #789)
 
+- CommandSubstitutionCheck (optional): suggest using bash 5.3 function
+  substitution, ``${ command; }``, for command substitution in an ebuild's
+  global scope. Only for EAPI 9 ebuilds, the first EAPI whose bash version
+  provides it (Arthur Zamarin)
+
 **Fixes:**
 
 - config: fix the user config file, cache dir and data dir being placed under a

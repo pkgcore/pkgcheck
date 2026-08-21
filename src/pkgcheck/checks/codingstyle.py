@@ -10,7 +10,7 @@ from snakeoil.sequences import unique_stable
 from snakeoil.strings import pluralism
 
 from .. import addons, bash, results, sources
-from . import Check
+from . import Check, OptionalCheck
 
 PREFIX_VARIABLES = ("EROOT", "ED", "EPREFIX")
 PATH_VARIABLES = ("BROOT", "ROOT", "D") + PREFIX_VARIABLES
@@ -1796,3 +1796,73 @@ class VariableOrderCheck(Check):
                 if new_index < index:
                     yield VariableOrderWrong(first_var, self.variable_order[index], pkg=pkg)
                 index = new_index
+
+
+class ForkingCommandSubstitution(results.LineResult, results.Info):
+    """Command substitution in global scope forks a subshell needlessly.
+
+    ``$(...)`` and its backtick form run their command in a forked subshell.
+    Global scope is evaluated every time the ebuild is sourced, notably for
+    every metadata regeneration, so that fork is paid over and over.
+
+    Starting with EAPI 9, ebuilds may rely on bash 5.3, which supports function
+    substitution: ``${ command; }`` captures output exactly like ``$(command)``
+    does, but runs the command in the current shell instead of forking.
+
+    The two are not interchangeable, precisely because no subshell is involved:
+    variable assignments, ``cd``, ``shopt``, ``set`` and traps performed by the
+    command leak into the ebuild's environment, and ``exit`` terminates it
+    outright. Only convert calls for which none of that matters.
+    """
+
+    @property
+    def desc(self):
+        return (
+            f"line {self.lineno}: {self.line!r}: command substitution in global scope "
+            "forks a subshell, consider ${ command; } instead"
+        )
+
+
+class CommandSubstitutionCheck(OptionalCheck):
+    """Scan ebuilds for global scope command substitution that could avoid forking."""
+
+    _source = sources.EbuildParseRepoSource
+    known_results = frozenset({ForkingCommandSubstitution})
+
+    # width the reported substitution is clipped to
+    max_length = 60
+
+    def __init__(self, *args):
+        super().__init__(*args)
+
+        self.cmd_subst_query = bash.query("(command_substitution) @subst")
+
+        # function substitutions were added in bash 5.3
+        self.funsub_eapis = frozenset(
+            eapi
+            for eapi in EAPI.known_eapis.values()
+            if tuple(map(int, (getattr(eapi.options, "bash_compat", None) or "3.2").split(".")))
+            >= (5, 3)
+        )
+
+    def feed(self, pkg: bash.ParseTree):
+        if pkg.eapi not in self.funsub_eapis:
+            return
+
+        for node in pkg.global_query(self.cmd_subst_query):
+            # report only the outermost substitution of a nested set, its text
+            # already quotes the inner ones
+            parent = node.parent
+            while parent is not None and parent.type != "command_substitution":
+                parent = parent.parent
+            if parent is not None:
+                continue
+
+            # tree-sitter pulls a whitespace-only string chunk preceding the
+            # substitution into its node, and dependency generators commonly
+            # span a dozen lines, so squash both down to a single snippet
+            line = " ".join(pkg.node_str(node).split())
+            if len(line) > self.max_length:
+                line = line[: self.max_length - 3] + "..."
+            lineno, _colno = node.start_point
+            yield ForkingCommandSubstitution(line=line, lineno=lineno + 1, pkg=pkg)

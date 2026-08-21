@@ -1,0 +1,7 @@
+{"__class__": "ForkingCommandSubstitution", "category": "CommandSubstitutionCheck", "package": "ForkingCommandSubstitution", "version": "0", "line": "$(ver_cut 1-2)", "lineno": 12}
+{"__class__": "ForkingCommandSubstitution", "category": "CommandSubstitutionCheck", "package": "ForkingCommandSubstitution", "version": "0", "line": "$(ver_cut 1)", "lineno": 13}
+{"__class__": "ForkingCommandSubstitution", "category": "CommandSubstitutionCheck", "package": "ForkingCommandSubstitution", "version": "0", "line": "$(ver_cut 2)", "lineno": 13}
+{"__class__": "ForkingCommandSubstitution", "category": "CommandSubstitutionCheck", "package": "ForkingCommandSubstitution", "version": "0", "line": "`ver_cut 1`", "lineno": 14}
+{"__class__": "ForkingCommandSubstitution", "category": "CommandSubstitutionCheck", "package": "ForkingCommandSubstitution", "version": "0", "line": "$(ver_rs 1-2 '' $(ver_cut 1-3))", "lineno": 15}
+{"__class__": "ForkingCommandSubstitution", "category": "CommandSubstitutionCheck", "package": "ForkingCommandSubstitution", "version": "0", "line": "$(vala_depend)", "lineno": 17}
+{"__class__": "ForkingCommandSubstitution", "category": "CommandSubstitutionCheck", "package": "ForkingCommandSubstitution", "version": "0", "line": "$(python_gen_cond_dep ' dev-lang/ruby ')", "lineno": 18}
