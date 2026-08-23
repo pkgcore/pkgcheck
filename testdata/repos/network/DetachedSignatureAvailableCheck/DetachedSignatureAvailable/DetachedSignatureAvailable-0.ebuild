@@ -1,0 +1,5 @@
+DESCRIPTION="Ebuild with an available detached signature"
+HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+SRC_URI="https://github.com/pkgcore/pkgcheck/foo.tar.gz"
+LICENSE="BSD"
+SLOT="0"
