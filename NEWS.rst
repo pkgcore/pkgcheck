@@ -34,6 +34,9 @@ pkgcheck 0.10.43 (unreleased)
   commit's parent, which doesn't necessarily hold every removed version, while
   all of them were registered with it (Arthur Zamarin, #675, #756)
 
+- BinaryFile: fix valid UTF-8 files being reported as binary when a multibyte
+  character straddles the end of the block read to classify them (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.42 (2026-07-31)
 -----------------------------

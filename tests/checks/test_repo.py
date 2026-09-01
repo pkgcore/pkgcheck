@@ -61,6 +61,12 @@ class TestRepoDirCheck(misc.Tmpdir, misc.ReportTestCase):
                 f.write(b"\xd3\x06\xf8\xef")
             self.assertNoReport(check, [])
 
+    def test_utf8_char_split_by_the_read_block(self):
+        check = self.mk_check()
+        with open(pjoin(self.repo.location, "foo"), "wb") as f:
+            f.write(("PLYはLexとYaccの有名なコンパイラの実装です。" * 40).encode())
+        self.assertNoReport(check, [])
+
     def test_null_bytes(self):
         check = self.mk_check()
         with open(pjoin(self.repo.location, "foo"), "wb") as f:

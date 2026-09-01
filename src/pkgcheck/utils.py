@@ -30,6 +30,8 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import codecs
+
 _control_chars = b"\n\r\t\f\b"
 _printable_ascii = _control_chars + bytes(range(32, 127))
 _printable_high_ascii = bytes(range(127, 256))
@@ -53,7 +55,7 @@ def is_binary(path, blocksize=1024):
         return False
 
     try:
-        byte_str.decode()
+        codecs.getincrementaldecoder("utf-8")().decode(byte_str)
         return False
     except UnicodeDecodeError:
         # Delay import to hide during wheel/sdist builds that iterate over and
