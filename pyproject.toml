@@ -99,6 +99,11 @@ ignore = [
 minversion = "6.0"
 addopts = "-vv -ra -l"
 testpaths = ["tests"]
+filterwarnings = [
+	# Scanning forks, and under pytest-xdist it forks from a worker holding an
+	# execnet receiver thread, which the threading module cannot see (#254)
+	"ignore:This process .* is multi-threaded:DeprecationWarning",
+]
 
 [tool.vulture]
 paths = ["src/pkgcheck/"]
