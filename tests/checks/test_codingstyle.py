@@ -140,7 +140,7 @@ class TestPathVariablesCheck(misc.ReportTestCase):
                 "}\n",
                 "\n",
             ]
-            for eapi_str, eapi in EAPI.known_eapis.items():
+            for eapi_str in EAPI.known_eapis:
                 fake_pkg = misc.FakePkg(
                     "dev-util/diffball-0.5", data={"EAPI": eapi_str}, lines=fake_src
                 )
@@ -379,7 +379,6 @@ class TestStaticSrcUri(misc.ReportTestCase):
             ("0.1", "0.1", "$(ver_cut 1-2)"),
             ("diffball-0.1.2", "0.1.2", "$(ver_cut 1-3)"),
             ("v0123", "0123", "${PV//.}"),
-            ("012.3", "012.3", "$(ver_rs 1-2 '')"),
             ("012.3", "012.3", "$(ver_rs 1-2 '')"),
             ("0_1_2_3", "0_1_2_3", "${PV//./_}"),
             ("0_1_2.3", "0_1_2.3", "$(ver_rs 1-2 '_')"),

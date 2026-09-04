@@ -19,7 +19,7 @@ class TestRepoProfilesCheck(misc.ReportTestCase):
 
     def init_check(self):
         options, _ = self.tool.parse_args(self.args)
-        check, required_addons, source = misc.init_check(self.check_kls, options)
+        check, _required_addons, source = misc.init_check(self.check_kls, options)
         return check, source
 
     def test_no_unused_dirs(self):

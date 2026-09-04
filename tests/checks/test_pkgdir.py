@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from os.path import join as pjoin
 
 import pytest
@@ -441,7 +441,7 @@ class TestLiveOnlyCheck(misc.ReportTestCase):
         for k, v in required_addons.items():
             setattr(self, k, v)
         if future:
-            self.check.today = datetime.now(timezone.utc) + timedelta(days=+future)
+            self.check.today = datetime.now(UTC) + timedelta(days=+future)
 
     def _options(self, **kwargs):
         args = [

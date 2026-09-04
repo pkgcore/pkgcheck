@@ -1,7 +1,7 @@
 import os
 import tempfile
 import textwrap
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from functools import partial
 from itertools import combinations
 from operator import attrgetter
@@ -364,7 +364,7 @@ class TestEapiCheck(misc.ReportTestCase, misc.Tmpdir):
 
     def test_repo_with_no_settings(self):
         check = self.mk_check()
-        for eapi_str in eapi.EAPI.known_eapis.keys():
+        for eapi_str in eapi.EAPI.known_eapis:
             self.assertNoReport(check, self.mk_pkg(eapi=eapi_str))
 
     def test_latest_eapi(self):
@@ -423,7 +423,7 @@ class TestSourcingCheck(misc.ReportTestCase, misc.Tmpdir):
 
     def test_repo_with_no_settings(self):
         check = self.mk_check()
-        for eapi_str in eapi.EAPI.known_eapis.keys():
+        for eapi_str in eapi.EAPI.known_eapis:
             self.assertNoReport(check, self.mk_pkg(eapi=eapi_str))
 
     def test_unknown_eapis(self):
@@ -1186,7 +1186,7 @@ class TestOutdatedBlockersCheck(misc.ReportTestCase):
         for k, v in required_addons.items():
             setattr(self, k, v)
         if future:
-            self.check.today = datetime.now(timezone.utc) + timedelta(days=+future)
+            self.check.today = datetime.now(UTC) + timedelta(days=+future)
 
     def _options(self, **kwargs):
         args = [
@@ -1461,7 +1461,7 @@ class TestMissingUnpackerDepCheck(use_based(), misc.ReportTestCase):
         assert 'missing DEPEND="app-arch/unzip"' in str(r)
 
     def test_without_dep(self):
-        for ext, unpackers in self.check_kls.non_system_unpackers.items():
+        for ext in self.check_kls.non_system_unpackers:
             pkg = self.mk_pkg(ext)
             r = self.assertReport(self.mk_check(), pkg)
             assert isinstance(r, metadata.MissingUnpackerDep)
@@ -1484,8 +1484,8 @@ class TestMissingUnpackerDepCheck(use_based(), misc.ReportTestCase):
 
     def test_without_multiple_unpackers(self):
         for combination in combinations(self.check_kls.non_system_unpackers.items(), 2):
-            exts = list(x[0] for x in combination)
-            unpackers = list(x[1] for x in combination)
+            exts = [x[0] for x in combination]
+            unpackers = [x[1] for x in combination]
             pkg = self.mk_pkg(exts)
             reports = self.assertReports(self.mk_check(), pkg)
             if len(reports) == 1:
