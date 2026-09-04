@@ -15,6 +15,11 @@
 # @DESCRIPTION:
 # var
 
+# @VARIABLE: EGO_VENDOR
+# @DEPRECATED: use tarball
+# @DESCRIPTION:
+# var
+
 # @FUNCTION: ego
 # @USAGE: [<args>...]
 # @DESCRIPTION:

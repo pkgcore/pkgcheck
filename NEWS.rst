@@ -41,6 +41,10 @@ pkgcheck 0.10.43 (unreleased)
   those documented in a ``@VARIABLE:`` block, which were never reported
   (Arthur Zamarin)
 
+- EclassUsageCheck: also flag use of ``@DEPRECATED:`` function variables, those
+  documented in a ``@VARIABLE:`` block, which were never reported (Arthur
+  Zamarin)
+
 -----------------------------
 pkgcheck 0.10.42 (2026-07-31)
 -----------------------------

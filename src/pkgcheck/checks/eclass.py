@@ -202,7 +202,10 @@ class EclassUsageCheck(Check):
             var.name: var.deprecated
             for eclasses, _ in inherits
             for eclass in eclasses
-            for var in self.eclass_cache[eclass].variables
+            for var in chain(
+                self.eclass_cache[eclass].variables,
+                self.eclass_cache[eclass].function_variables,
+            )
             if var.deprecated
         }
 
