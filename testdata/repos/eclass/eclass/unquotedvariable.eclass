@@ -18,6 +18,12 @@
 # Some text
 : ${EBZR_STORE_DIR:=${PORTAGE_ACTUAL_DISTDIR:-${DISTDIR}}/bzr-src}
 
+# @VARIABLE: EBZR_FUNC_STORE_DIR
+# @USER_VARIABLE
+# @DEFAULT_UNSET
+# @DESCRIPTION:
+# Some text
+
 # @FUNCTION: webapp_configfile
 # @USAGE: <file> [more files ...]
 # @DESCRIPTION:

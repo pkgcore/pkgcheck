@@ -2,6 +2,7 @@ import shlex
 import subprocess
 from collections import defaultdict
 from functools import partial
+from itertools import chain
 
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.ebuild.eapi import EAPI
@@ -178,7 +179,9 @@ class EclassUsageCheck(Check):
             var.name: eclass
             for eclasses, _ in inherits
             for eclass in eclasses
-            for var in self.eclass_cache[eclass].variables
+            for var in chain(
+                self.eclass_cache[eclass].variables, self.eclass_cache[eclass].function_variables
+            )
             if var.user_variable
         }
 

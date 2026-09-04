@@ -37,6 +37,10 @@ pkgcheck 0.10.43 (unreleased)
 - BinaryFile: fix valid UTF-8 files being reported as binary when a multibyte
   character straddles the end of the block read to classify them (Arthur Zamarin)
 
+- EclassUsageCheck: also flag use of ``@USER_VARIABLE`` function variables,
+  those documented in a ``@VARIABLE:`` block, which were never reported
+  (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.42 (2026-07-31)
 -----------------------------

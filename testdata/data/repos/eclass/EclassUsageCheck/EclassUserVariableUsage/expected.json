@@ -1,1 +1,2 @@
 {"__class__": "EclassUserVariableUsage", "category": "EclassUsageCheck", "package": "EclassUserVariableUsage", "version": "0", "line": "EBZR_STORE_DIR", "lineno": 8, "eclass": "unquotedvariable"}
+{"__class__": "EclassUserVariableUsage", "category": "EclassUsageCheck", "package": "EclassUserVariableUsage", "version": "0", "line": "EBZR_FUNC_STORE_DIR", "lineno": 9, "eclass": "unquotedvariable"}

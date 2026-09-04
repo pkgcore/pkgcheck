@@ -6,6 +6,7 @@ LICENSE="BSD"
 SLOT="0"
 
 EBZR_STORE_DIR="/var/tmp/portage" # FAIL
+EBZR_FUNC_STORE_DIR="/var/tmp/portage" # FAIL
 
 src_prepare() {
     echo "${EBZR_STORE_DIR}" # ok
