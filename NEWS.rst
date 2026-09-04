@@ -18,6 +18,8 @@ pkgcheck 0.10.43 (unreleased)
   global scope. Only for EAPI 9 ebuilds, the first EAPI whose bash version
   provides it (Arthur Zamarin)
 
+- DeadEclass: report ebuild that inherits a ``@DEAD`` eclass (Arthur Zamarin)
+
 **Fixes:**
 
 - config: fix the user config file, cache dir and data dir being placed under a

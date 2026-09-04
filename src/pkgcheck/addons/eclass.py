@@ -77,6 +77,19 @@ class EclassAddon(caches.CachedAddon):
                 continue
         return ImmutableDict(d)
 
+    @jit_attr_none
+    def dead(self):
+        """Set of eclasses that are slated for removal from the tree."""
+        s = set()
+        for r in self.options.target_repo.trees:
+            try:
+                for name, eclass in self._eclass_repos[r.location].items():
+                    if eclass.dead:
+                        s.add(name)
+            except KeyError:
+                continue
+        return frozenset(s)
+
     def update_cache(self, force=False):
         """Update related cache and push updates to disk."""
         for repo in self.options.target_repo.trees:
@@ -126,6 +139,7 @@ class EclassAddon(caches.CachedAddon):
                 # reset jit attrs
                 self._eclasses = None
                 self._deprecated = None
+                self._dead = None
                 # push cache updates to disk
                 data = caches.DictCache(eclasses, self.cache)
                 self.save_cache(data, cache_file)

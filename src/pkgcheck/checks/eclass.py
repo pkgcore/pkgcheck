@@ -33,6 +33,24 @@ class DeprecatedEclass(results.VersionResult, results.Warning):
         return f"uses deprecated eclass: {self.eclass} ({replacement})"
 
 
+class DeadEclass(results.VersionResult, results.Error):
+    """Package uses an eclass that is slated for removal from the tree.
+
+    A ``@DEAD`` eclass has been lastrited and is removed 30 days later [#]_,
+    at which point the package breaks.  Nothing should still inherit it.
+
+    .. [#] https://devmanual.gentoo.org/eclass-writing/#removing-eclasses
+    """
+
+    def __init__(self, eclass, **kwargs):
+        super().__init__(**kwargs)
+        self.eclass = eclass
+
+    @property
+    def desc(self):
+        return f"uses dead eclass: {self.eclass}"
+
+
 class DeprecatedEclassVariable(results.LineResult, results.Warning):
     """Package uses a deprecated variable from an eclass."""
 
@@ -138,6 +156,7 @@ class EclassUsageCheck(Check):
         {
             DeprecatedEclass,
             DeprecatedEclassVariable,
+            DeadEclass,
             DeprecatedEclassFunction,
             DuplicateEclassInherit,
             EclassUserVariableUsage,
@@ -150,6 +169,7 @@ class EclassUsageCheck(Check):
     def __init__(self, *args, eclass_addon):
         super().__init__(*args)
         self.deprecated_eclasses = eclass_addon.deprecated
+        self.dead_eclasses = eclass_addon.dead
         self.eclass_cache = eclass_addon.eclasses
 
     def check_pre_inherits(self, pkg, inherits: list[tuple[list[str], int]]):
@@ -289,6 +309,9 @@ class EclassUsageCheck(Check):
             # verify @DEPRECATED variables or functions
             yield from self.check_deprecated_variables(pkg, inherits)
             yield from self.check_deprecated_functions(pkg, inherits)
+
+            for eclass in pkg.inherit.intersection(self.dead_eclasses):
+                yield DeadEclass(eclass, pkg=pkg)
 
             for eclass in pkg.inherit.intersection(self.deprecated_eclasses):
                 replacement = self.deprecated_eclasses[eclass]
