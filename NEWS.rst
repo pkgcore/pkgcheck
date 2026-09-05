@@ -6,10 +6,6 @@ Release Notes
 pkgcheck 0.10.43 (unreleased)
 -----------------------------
 
-**Packaging:**
-
-- ``py-landlock`` is now required (Arthur Zamarin)
-
 **New Features:**
 
 - ``pkgcheck scan`` and ``pkgcheck ci`` now confine themselves with Landlock,

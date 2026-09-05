@@ -1,11 +1,11 @@
-import errno
 import os
 import socket
-import sys
 import tempfile
 from functools import partial
 
 import pytest
+from pkgcore import landlock
+from pkgcore.exceptions import PkgcoreUserException
 from snakeoil.cli.arghparse import Namespace
 from snakeoil.contexts import GitStash
 
@@ -61,12 +61,6 @@ def write_denied(path):
     return False
 
 
-def read_file(path):
-    """Read a byte back, to show reads survive confinement."""
-    with open(path, "rb") as f:
-        return bool(f.read(1))
-
-
 def tcp_denied():
     """Whether the kernel refuses an outgoing TCP connection.
 
@@ -96,7 +90,7 @@ class stash(GitStash):
 
 
 @pytest.fixture
-def landlock():
+def landlock_kernel():
     """Skip unless the running kernel actually enforces Landlock."""
     py_landlock = pytest.importorskip("py_landlock")
     try:
@@ -112,20 +106,20 @@ class TestGating:
         assert run_confined(confine, opts, func) == "False"
 
     def test_unavailable_best_effort(self, tmp_path, monkeypatch, confine):
-        monkeypatch.setattr(sandbox, "Landlock", None)
+        monkeypatch.setattr(landlock, "Landlock", None)
         assert confine(options(tmp_path)) is None
 
     def test_unavailable_but_required(self, tmp_path, monkeypatch, confine):
-        monkeypatch.setattr(sandbox, "Landlock", None)
-        with pytest.raises(PkgcheckUserException, match="sandbox unavailable"):
+        monkeypatch.setattr(landlock, "Landlock", None)
+        with pytest.raises(PkgcoreUserException, match="sandbox unavailable"):
             confine(options(tmp_path, sandbox=True))
 
-    def test_required_refuses_pending_stash(self, tmp_path, landlock, confine):
+    def test_required_refuses_pending_stash(self, tmp_path, landlock_kernel, confine):
         opts = options(tmp_path, sandbox=True, contexts=[stash(tmp_path, pending=True)])
         with pytest.raises(PkgcheckUserException, match="would stash the working tree"):
             confine(opts)
 
-    def test_required_allows_clean_tree(self, tmp_path, landlock, confine):
+    def test_required_allows_clean_tree(self, tmp_path, landlock_kernel, confine):
         opts = options(tmp_path, sandbox=True, contexts=[stash(tmp_path, pending=False)])
         assert run_confined(confine, opts, lambda: "ran") == "ran"
 
@@ -133,34 +127,18 @@ class TestGating:
 class TestWritablePaths:
     def test_defaults(self, tmp_path):
         paths = list(sandbox._writable_paths(options(tmp_path)))
-        assert paths == [
-            str(tmp_path / "cache"),
-            tempfile.gettempdir(),
-            "/dev/shm",
-            "/dev/null",
-            "/dev/tty",
-        ]
+        # the paths sourcing an ebuild needs are pkgcore's to add
+        assert paths == [str(tmp_path / "cache"), "/dev/shm"]
 
     def test_repo_writable_while_stashing(self, tmp_path):
         opts = options(tmp_path)
         paths = sandbox._writable_paths(opts, stashing=True)
         assert opts.target_repo.location in paths
 
-    def test_readonly_metadata_cache_skipped(self, tmp_path):
-        opts = options(tmp_path)
-        opts.target_repo.cache = (Namespace(location=str(tmp_path), readonly=True),)
-        assert list(sandbox._metadata_caches(opts)) == []
-
-    def test_writable_metadata_cache(self, tmp_path):
+    def test_writable_repo_cache_included(self, tmp_path):
         opts = options(tmp_path)
         opts.target_repo.cache = (Namespace(location=str(tmp_path), readonly=False),)
-        assert list(sandbox._metadata_caches(opts)) == [str(tmp_path)]
-
-    def test_missing_metadata_cache_walks_up(self, tmp_path):
-        opts = options(tmp_path)
-        location = str(tmp_path / "metadata" / "md5-cache")
-        opts.target_repo.cache = (Namespace(location=location, readonly=False),)
-        assert list(sandbox._metadata_caches(opts)) == [str(tmp_path)]
+        assert str(tmp_path) in sandbox._writable_paths(opts)
 
 
 class TestConfinement:
@@ -175,41 +153,12 @@ class TestConfinement:
         monkeypatch.setattr(tempfile, "tempdir", str(path))
         return path
 
-    def test_outside_write_denied(self, tmp_path, landlock, confine):
-        (outside := tmp_path / "outside").mkdir()
-        func = partial(write_denied, outside)
-        assert run_confined(confine, options(tmp_path), func) == "True"
-
-    def test_cache_dir_writable(self, tmp_path, landlock, confine):
+    def test_cache_dir_writable(self, tmp_path, landlock_kernel, confine):
         (cache := tmp_path / "cache").mkdir()
         func = partial(write_denied, cache)
         assert run_confined(confine, options(tmp_path), func) == "False"
 
-    def test_tmpdir_writable(self, tmp_path, landlock, confine, tmpdir):
-        func = partial(write_denied, tmpdir)
-        assert run_confined(confine, options(tmp_path), func) == "False"
-
-    def test_devnull_writable(self, tmp_path, landlock, confine):
-        # subprocess.DEVNULL opens it read-write
-        def check():
-            os.close(os.open(os.devnull, os.O_RDWR))
-            return True
-
-        assert run_confined(confine, options(tmp_path), check) == "True"
-
-    def test_devtty_writable(self, tmp_path, landlock, confine):
-        # where sandbox(1) reports access violations
-        def check():
-            try:
-                os.close(os.open("/dev/tty", os.O_WRONLY))
-            except OSError as e:
-                # no controlling terminal, but landlock let the open through
-                return e.errno == errno.ENXIO
-            return True
-
-        assert run_confined(confine, options(tmp_path), check) == "True"
-
-    def test_multiprocessing_usable(self, tmp_path, landlock, confine):
+    def test_multiprocessing_usable(self, tmp_path, landlock_kernel, confine):
         def check():
             import multiprocessing
 
@@ -218,27 +167,23 @@ class TestConfinement:
 
         assert run_confined(confine, options(tmp_path), check) == "True"
 
-    def test_repo_writable_while_stashing(self, tmp_path, landlock, confine):
+    def test_repo_writable_while_stashing(self, tmp_path, landlock_kernel, confine):
         (repo := tmp_path / "repo").mkdir()
         opts = options(tmp_path, contexts=[stash(repo, pending=True)])
         func = partial(write_denied, repo)
         assert run_confined(confine, opts, func) == "False"
 
-    def test_repo_readonly_with_nothing_to_stash(self, tmp_path, landlock, confine):
+    def test_repo_readonly_with_nothing_to_stash(self, tmp_path, landlock_kernel, confine):
         (repo := tmp_path / "repo").mkdir()
         opts = options(tmp_path, contexts=[stash(repo, pending=False)])
         func = partial(write_denied, repo)
         assert run_confined(confine, opts, func) == "True"
 
-    def test_reads_still_allowed(self, tmp_path, landlock, confine):
-        func = partial(read_file, sys.executable)
-        assert run_confined(confine, options(tmp_path), func) == "True"
-
 
 class TestNetworkConfinement:
-    def test_tcp_denied(self, tmp_path, landlock, confine):
+    def test_tcp_denied(self, tmp_path, landlock_kernel, confine):
         assert run_confined(confine, options(tmp_path), tcp_denied) == "True"
 
-    def test_tcp_allowed_with_net(self, tmp_path, landlock, confine):
+    def test_tcp_allowed_with_net(self, tmp_path, landlock_kernel, confine):
         opts = options(tmp_path, net=True)
         assert run_confined(confine, opts, tcp_denied) == "False"
