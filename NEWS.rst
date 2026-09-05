@@ -6,6 +6,18 @@ Release Notes
 pkgcheck 0.10.43 (unreleased)
 -----------------------------
 
+**Packaging:**
+
+- ``py-landlock`` is now required (Arthur Zamarin)
+
+**New Features:**
+
+- ``pkgcheck scan`` and ``pkgcheck ci`` now confine themselves with Landlock,
+  where the kernel supports it: writes are limited to the cache dir, the temp
+  dir and writable repo metadata caches, and outgoing TCP is denied unless
+  ``--net`` is passed. Disable it with ``--sandbox=n``, or require it with
+  ``--sandbox=y`` (Arthur Zamarin)
+
 **New Checks:**
 
 - AcctCheck: new InvalidAccountIdentifier result, flagging ``ACCT_USER_ID`` or

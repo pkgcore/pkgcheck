@@ -5,9 +5,11 @@ requires = [
 	"charset-normalizer",
 	"lxml",
 	"pathspec >=1.0.0",
+	"py-landlock",
 	"tree-sitter~=0.25.0",
 	"tree-sitter-bash~=0.23.1",
 	"pkgcore@git+https://github.com/pkgcore/pkgcore.git#master",
+	"snakeoil@git+https://github.com/pkgcore/snakeoil.git#master",
 ]
 build-backend = "py_build"
 backend-path = ["."]
@@ -42,9 +44,11 @@ dependencies = [
 	"charset-normalizer",
 	"lxml",
 	"pathspec >=1.0.0",
+	"py-landlock",
 	"tree-sitter~=0.25.0",
 	"tree-sitter-bash~=0.23.1",
 	"pkgcore@git+https://github.com/pkgcore/pkgcore.git#master",
+	"snakeoil@git+https://github.com/pkgcore/snakeoil.git#master",
 ]
 
 [project.optional-dependencies]

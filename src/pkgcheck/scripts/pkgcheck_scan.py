@@ -14,7 +14,7 @@ from pkgcore.restrictions.util import collect_package_restrictions
 from pkgcore.util import parserestrict
 from snakeoil.cli import arghparse
 
-from .. import base, const, objects
+from .. import base, const, objects, sandbox
 from ..base import PkgcheckUserException
 from ..cli import ConfigFileParser
 from ..pipeline import Pipeline
@@ -126,6 +126,18 @@ main_options.add_argument(
     type=arghparse.create_dir,
     default=const.USER_CACHE_DIR,
     help="directory to use for storing cache files",
+)
+main_options.add_argument(
+    "--sandbox",
+    action=arghparse.StoreBool,
+    help="confine filesystem writes and network access while scanning",
+    docs="""
+        Confine the scan with Landlock where the kernel supports it: writes are
+        limited to the cache dir, temporary files and writable repo metadata
+        caches, and outgoing TCP is denied unless ``--net`` is given. Enabled by
+        default; 'y' turns an unsupported kernel into an error instead of
+        continuing unconfined, and 'n' disables it.
+    """,
 )
 main_options.add_argument(
     "--exit",
@@ -517,6 +529,9 @@ def _determine_restrictions(namespace, attr):
 
 @scan.bind_main_func
 def _scan(options, out: snakeoil.formatters.PlainTextFormatter, _err):
+    # confine before anything is initialized, but after arg parsing so that
+    # reporter output files and the cache dir already exist
+    sandbox.confine(options)
     with ExitStack() as stack:
         report = stack.enter_context(options.reporter(out))
         for c in options.pop("contexts"):

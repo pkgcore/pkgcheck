@@ -149,6 +149,7 @@ _pkgcheck() {
                 -t --tasks
                 --cache
                 --cache-dir
+                --sandbox
                 --exit
 
                 --stable-only
@@ -180,6 +181,9 @@ _pkgcheck() {
                     ;;
                 --cache-dir | --glsa-dir)
 			        _filedir -d
+                    ;;
+                --sandbox)
+                    COMPREPLY=($(compgen -W "${boolean_options[*]}" -- "${cur}"))
                     ;;
                 -r | --repo)
                     COMPREPLY=($(compgen -W "$(_parsereposconf -l)" -- "${cur}"))

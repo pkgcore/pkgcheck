@@ -12,6 +12,7 @@ from snakeoil.cli.arghparse import ArgumentParser
 from snakeoil.contexts import os_environ
 from snakeoil.formatters import PlainTextFormatter
 
+from pkgcheck import sandbox as sandbox_mod
 from pkgcheck.addons.git import GitConfig
 from pkgcheck.cli import Tool
 from pkgcheck.reporters import StrReporter
@@ -20,6 +21,10 @@ from pkgcheck.scripts import pkgcheck
 
 pytest_plugins = ["pkgcore"]
 REPO_ROOT = Path(__file__).parent.parent
+
+# bound before the session fixture below disables it, so that the sandbox tests
+# still have something to exercise
+_real_confine = sandbox_mod.confine
 
 
 def pytest_configure():
@@ -45,6 +50,7 @@ def default_session_fixture(request):
     stack = ExitStack()
     # don't load the default system or user config files
     stack.enter_context(patch("pkgcheck.cli.ConfigFileParser.default_configs", ()))
+    stack.enter_context(patch("pkgcheck.sandbox.confine", lambda options: None))
     stack.enter_context(os_environ(**(git_config := GitConfig()).config_env))
 
     def unpatch():
@@ -52,6 +58,12 @@ def default_session_fixture(request):
         git_config.close()
 
     request.addfinalizer(unpatch)
+
+
+@pytest.fixture
+def confine():
+    """The real sandbox confinement, which is disabled for the session."""
+    return _real_confine
 
 
 @pytest.fixture(scope="session")

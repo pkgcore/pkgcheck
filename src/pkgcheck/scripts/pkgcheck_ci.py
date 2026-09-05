@@ -29,7 +29,7 @@ ci.add_argument(
 
 @ci.bind_main_func
 def _ci(options, out: PlainTextFormatter, _err):
-    pipe = scan(options.args)
+    pipe = scan(options.args, sandbox=True)
 
     with reporters.FancyReporter(out) as reporter:
         for result in pipe:

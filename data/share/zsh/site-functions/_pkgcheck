@@ -169,6 +169,7 @@ case $state in
           {'(--tasks)-t','(-t)--tasks'}'[number of asynchronous tasks to run concurrently]:tasks'
           '--cache[forcibly enable/disable caches]:caches:{_values -s , caches $(_caches -p)}'
           '--cache-dir[directory to use for storing cache files]:cache dir:_files -/'
+          "--sandbox[confine filesystem writes and network access while scanning]:yes/no:((y\:'yes' n\:'no'))"
           '--exit[comma separated list of keywords that trigger an error exit status]:keywords:{_values -s , keywords $(_keywords -p)}'
           '--glsa-dir[custom glsa directory]:glsa dir:_files -/'
           '--timeout[timeout used for network checks (in seconds)]:timeout'
