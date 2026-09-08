@@ -117,13 +117,17 @@ class GitLog:
     def __init__(self, cmd, path):
         self._running = False
         self.git_config = GitConfig()
-        self.proc = subprocess.Popen(
-            cmd,
-            cwd=path,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            env=self.git_config.config_env,
-        )
+        try:
+            self.proc = subprocess.Popen(
+                cmd,
+                cwd=path,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                env=self.git_config.config_env,
+            )
+        except Exception:
+            self.git_config.close()
+            raise
 
     def __iter__(self):
         return self
@@ -134,16 +138,20 @@ class GitLog:
 
         # verify git log is running as expected after pulling the first line
         if not self._running:
-            if self.proc.poll() or not line:
-                error = self.proc.stderr.read().decode().strip()
-                if "Invalid revision range" in error:
-                    raise GitError(
-                        f"failed running git log: {error}\nTry clearing the cache: pkgcheck cache -R"
-                    )
-                else:
-                    raise GitError(f"failed running git log: {error}")
-            self._running = True
-            self.git_config.close()
+            try:
+                if self.proc.poll() or not line:
+                    error = self.proc.stderr.read().decode().strip()
+                    if "Invalid revision range" in error:
+                        raise GitError(
+                            f"failed running git log: {error}\nTry clearing the cache: pkgcheck cache -R"
+                        )
+                    else:
+                        raise GitError(f"failed running git log: {error}")
+                self._running = True
+            finally:
+                # git has read the config by now, on both the success and the
+                # failure path, so the temporary file is no longer needed
+                self.git_config.close()
 
         # EOF has been reached when readline() returns an empty string
         if not line:

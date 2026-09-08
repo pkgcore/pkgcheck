@@ -54,6 +54,9 @@ pkgcheck 0.10.44 (unreleased)
   packages whose slots interleave by version, e.g. ``net-libs/webkit-gtk``
   (Arthur Zamarin)
 
+- GitAddon: don't leave the temporary git config file behind when ``git log``
+  fails to start or run (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.43 (2026-09-05)
 -----------------------------

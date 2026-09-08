@@ -233,6 +233,44 @@ class TestGitStash:
                 touch(path)
 
 
+class TestGitLog:
+    @pytest.fixture
+    def configs(self):
+        """Collect every GitConfig created while a test runs."""
+        created = []
+
+        class RecordingGitConfig(git.GitConfig):
+            def __init__(self):
+                super().__init__()
+                created.append(self)
+
+        with patch("pkgcheck.addons.git.GitConfig", RecordingGitConfig):
+            yield created
+
+    @staticmethod
+    def _left_behind(configs):
+        assert configs, "no GitConfig was created"
+        return [c.path for c in configs if os.path.exists(c.path)]
+
+    def test_success_cleans_up(self, configs, make_git_repo):
+        git_repo = make_git_repo(commit=True)
+        assert list(git.GitLog(["git", "log", "--format=%h"], git_repo.path))
+        assert self._left_behind(configs) == []
+
+    def test_git_error_cleans_up(self, configs, tmp_path):
+        with pytest.raises(git.GitError, match="failed running git log"):
+            next(git.GitLog(["git", "log", "--format=%h"], str(tmp_path)))
+        assert self._left_behind(configs) == []
+
+    def test_failed_exec_cleans_up(self, configs, tmp_path):
+        with (
+            patch("pkgcheck.addons.git.subprocess.Popen", side_effect=OSError("boom")),
+            pytest.raises(OSError, match="boom"),
+        ):
+            git.GitLog(["git", "log"], str(tmp_path))
+        assert self._left_behind(configs) == []
+
+
 class TestGitRepoCommits:
     def test_non_git(self, tmp_path):
         with pytest.raises(git.GitError, match="failed running git log"):
