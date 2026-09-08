@@ -942,3 +942,10 @@ class TestGitEclassCommitsCheck(ReportTestCase):
         self.child_git_repo.add_all("eclass: update foo")
         self.init_check()
         self.assertNoReport(self.check, self.source)
+
+    def test_eclass_empty(self):
+        """An empty eclass has no copyright line to check."""
+        touch(pjoin(self.child_git_repo.path, "eclass", "empty.eclass"))
+        self.child_git_repo.add_all("eclass: add empty eclass")
+        self.init_check()
+        self.assertNoReport(self.check, self.source)

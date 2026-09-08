@@ -19,6 +19,9 @@ pkgcheck 0.10.44 (unreleased)
 - RedundantDodirCheck: fix a crash when a ``dodir`` call is the last line of an
   ebuild (Arthur Zamarin)
 
+- GitEclassCommitsCheck: fix a crash when scanning commits that add or modify
+  an empty eclass (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.43 (2026-09-05)
 -----------------------------
