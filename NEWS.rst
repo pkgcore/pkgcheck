@@ -30,6 +30,10 @@ pkgcheck 0.10.44 (unreleased)
   leaking between sibling branches of a nested depset, which could hide a
   missing ``RESTRICT`` (Arthur Zamarin)
 
+- EclassCheck: fix every eclass being reported as ``EclassBashSyntaxError``,
+  with a mangled line number, when the repo path needs shell quoting, e.g. it
+  contains a space (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.43 (2026-09-05)
 -----------------------------

@@ -1,4 +1,3 @@
-import shlex
 import subprocess
 from collections import defaultdict
 from functools import partial
@@ -508,7 +507,7 @@ class EclassCheck(Check):
     def feed(self, eclass):
         # check for eclass bash syntax errors
         p = subprocess.run(
-            ["bash", "-n", shlex.quote(eclass.path)],
+            ["bash", "-n", eclass.path],
             stderr=subprocess.PIPE,
             stdout=subprocess.DEVNULL,
             env={"LC_ALL": "C"},
