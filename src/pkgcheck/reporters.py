@@ -386,6 +386,7 @@ class CallbackReporter(Reporter):
     callbacks: list[T_report_func]
 
     def __init__(self, *callbacks: T_report_func) -> None:
+        super().__init__()
         self.callbacks = list(callbacks)
 
     def _consume_reports_generator(self) -> T_process_report:
@@ -402,6 +403,7 @@ class MultiplexingReporter(Reporter):
     reporters: list[Reporter]
 
     def __init__(self, *args: Reporter) -> None:
+        super().__init__()
         self.reporters = list(args)
 
     def _consume_reports_generator(self) -> T_process_report:

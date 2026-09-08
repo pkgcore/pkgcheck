@@ -40,6 +40,9 @@ pkgcheck 0.10.44 (unreleased)
 - ``pkgcheck scan --filter``: report an argument error, rather than raising, for
   a filter holding more than one colon (Arthur Zamarin)
 
+- ``CallbackReporter``, ``MultiplexingReporter``: initialize base reporter state
+  (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.43 (2026-09-05)
 -----------------------------
