@@ -3,6 +3,16 @@ Release Notes
 =============
 
 -----------------------------
+pkgcheck 0.10.44 (unreleased)
+-----------------------------
+
+**Fixes:**
+
+- EclassParseCheck: fix a crash when an eclass lists an EAPI unknown to pkgcore
+  in ``@SUPPORTED_EAPIS``, e.g. an EAPI newer than the installed pkgcore knows
+  about. Such EAPIs are now ignored (Arthur Zamarin)
+
+-----------------------------
 pkgcheck 0.10.43 (2026-09-05)
 -----------------------------
 

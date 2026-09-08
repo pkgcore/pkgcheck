@@ -362,6 +362,7 @@ class EclassParseCheck(Check):
     def eclass_phase_vars(self, eclass, phase):
         """Return set of bad variables for a given eclass and potential phase function."""
         eapis = map(EAPI.known_eapis.get, self.eclass_cache[eclass.name].supported_eapis)
+        eapis = tuple(filter(None, eapis))
         if not eapis:
             eapis = EAPI.known_eapis.values()
         variables = set()
