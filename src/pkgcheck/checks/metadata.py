@@ -141,17 +141,16 @@ class LicenseCheck(Check):
 
     def feed(self, pkg):
         # check for restrictive licenses with missing RESTRICT
-        if self.eula is not None:
-            for license, restrictions in self._required_licenses(self.eula, pkg.license):
-                restricts = set().union(*(x.vals for x in restrictions if not x.negate))
-                license_restrictions = pkg.restrict.evaluate_depset(restricts)
-                missing_restricts = []
-                if "bindist" not in license_restrictions:
-                    missing_restricts.append("bindist")
-                if not self.mirror_restricts.intersection(license_restrictions) and pkg.fetchables:
-                    missing_restricts.append("mirror")
-                if missing_restricts:
-                    yield MissingLicenseRestricts("EULA", license, missing_restricts, pkg=pkg)
+        for license, restrictions in self._required_licenses(self.eula, pkg.license):
+            restricts = set().union(*(x.vals for x in restrictions if not x.negate))
+            license_restrictions = pkg.restrict.evaluate_depset(restricts)
+            missing_restricts = []
+            if "bindist" not in license_restrictions:
+                missing_restricts.append("bindist")
+            if not self.mirror_restricts.intersection(license_restrictions) and pkg.fetchables:
+                missing_restricts.append("mirror")
+            if missing_restricts:
+                yield MissingLicenseRestricts("EULA", license, missing_restricts, pkg=pkg)
 
         # flatten license depset
         licenses, unstated = self.iuse_filter((str,), pkg, pkg.license)
