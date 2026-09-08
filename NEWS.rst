@@ -43,6 +43,10 @@ pkgcheck 0.10.44 (unreleased)
 - ``CallbackReporter``, ``MultiplexingReporter``: initialize base reporter state
   (Arthur Zamarin)
 
+- GitCommitMessageCheck: fix a nonexistent ``Fixes``/``Reverts`` commit going
+  unreported once an earlier commit in the same scan carried a value that isn't
+  a commit reference at all, such as a bug URL (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.43 (2026-09-05)
 -----------------------------

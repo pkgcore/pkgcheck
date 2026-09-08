@@ -133,6 +133,19 @@ class TestGitCommitMessageCheck(ReportTestCase):
                 commit = self.SO_commit(tags=[f"{tag}: {ref}"])
                 self.assertNoReport(self.check, commit)
 
+    def test_commit_tags_none_parseable(self):
+        """Nothing is asked of `git cat-file` when no value parses as a ref."""
+        for tag in ("Fixes", "Reverts"):
+            self.check._git_cat_file = None
+            with patch("pkgcheck.checks.git.subprocess.Popen") as git_cat:
+                git_cat.return_value.poll.return_value = None
+                commit = self.SO_commit(tags=[f"{tag}: https://bugs.gentoo.org/1"])
+                r = self.assertReport(self.check, commit)
+                assert isinstance(r, git_mod.InvalidCommitTag)
+                assert "invalid format" in r.error
+                # a bare newline draws a reply that nothing reads back
+                git_cat.return_value.stdin.write.assert_not_called()
+
     def test_summary_length(self):
         self.assertNoReport(self.check, self.SO_commit("single summary headline"))
         self.assertNoReport(self.check, self.SO_commit("a" * 69))

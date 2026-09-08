@@ -839,6 +839,8 @@ class GitCommitMessageCheck(GentooRepoCheck, GitCommitsCheck):
                 commits[mo.group("object")] = value
             else:
                 yield InvalidCommitTag(tag, value, "invalid format", commit=commit)
+        if not commits:
+            return
         self.git_cat_file.stdin.write("\n".join(commits.keys()) + "\n")
         if self.git_cat_file.poll() is None:
             for _ in range(len(commits)):
