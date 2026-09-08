@@ -1406,7 +1406,7 @@ class _UnquotedVariablesCheck(Check):
             elif pnode.type == "command":
                 cmd = pkg.node_str(pnode.child_by_field_name("name"))
                 return cmd not in self.message_commands
-            elif pnode.type in "array":
+            elif pnode.type == "array":
                 # Variable is sitting unquoted in an array
                 return True
             pnode = pnode.parent

@@ -34,6 +34,9 @@ pkgcheck 0.10.44 (unreleased)
   with a mangled line number, when the repo path needs shell quoting, e.g. it
   contains a space (Arthur Zamarin)
 
+- EbuildUnquotedVariable: compare the tree-sitter node type against ``array``
+  exactly, rather than testing it as a substring (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.43 (2026-09-05)
 -----------------------------
