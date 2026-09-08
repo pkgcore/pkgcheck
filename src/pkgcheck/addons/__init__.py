@@ -217,26 +217,23 @@ class UseAddon(base.Addon):
     def fake_use_validate(klasses, pkg, seq, attr=None):
         return {k: () for k in iflatten_instance(seq, klasses)}, ()
 
-    def _flatten_restricts(self, nodes, skip_filter, stated, unstated, attr, restricts=None):
+    def _flatten_restricts(self, nodes, skip_filter, stated, unstated, attr, restricts=()):
         for node in nodes:
-            k = node
-            v = restricts if restricts is not None else []
             if isinstance(node, packages.Conditional):
                 # invert it; get only whats not in pkg.iuse
                 unstated.update(filterfalse(stated.__contains__, node.restriction.vals))
-                v.append(node.restriction)
                 yield from self._flatten_restricts(
                     iflatten_instance(node.payload, skip_filter),
                     skip_filter,
                     stated,
                     unstated,
                     attr,
-                    v,
+                    restricts + (node.restriction,),
                 )
                 continue
             elif attr == "required_use":
                 unstated.update(filterfalse(stated.__contains__, node.vals))
-            yield k, tuple(v)
+            yield node, restricts
 
     def _unstated_iuse(self, pkg, attr, unstated_iuse):
         """Determine if packages use unstated IUSE for a given attribute."""

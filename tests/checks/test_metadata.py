@@ -8,7 +8,7 @@ from operator import attrgetter
 from os.path import join as pjoin
 
 import pytest
-from pkgcore.ebuild import eapi, repo_objs, repository
+from pkgcore.ebuild import conditionals, eapi, repo_objs, repository
 from pkgcore.ebuild.cpv import VersionedCPV as CPV
 from pkgcore.test.misc import FakePkg, FakeRepo
 from snakeoil.cli import arghparse
@@ -825,6 +825,17 @@ class TestLicenseCheck(use_based(), misc.ReportTestCase):
         assert isinstance(r, metadata.UnknownLicense)
         assert r.licenses == ("foo3", "foo4")
 
+    def test_nested_conditional_licenses(self):
+        """USE conditionals of one branch must not leak into its siblings."""
+        licenses = conditionals.DepSet.parse("x? ( a? ( FOO ) b? ( BAR ) c? ( BAZ ) )", str)
+        gated = {
+            license: sorted(flag for r in restricts for flag in r.vals)
+            for license, restricts in self.mk_check()._required_licenses(
+                frozenset({"FOO", "BAR", "BAZ"}), licenses
+            )
+        }
+        assert gated == {"FOO": ["a", "x"], "BAR": ["b", "x"], "BAZ": ["c", "x"]}
+
     def test_unlicensed_categories(self):
         check = self.mk_check(["foo"])
         for category in self.check_kls.unlicensed_categories:
@@ -986,6 +997,22 @@ class TestCrossSlotRangeDepCheck(use_based(), misc.ReportTestCase):
             FakePkg(
                 "dev-util/diffball-2.7.1",
                 data={"RDEPEND": rdepend, "IUSE": "foo"},
+                repo=self.repo,
+            ),
+        )
+
+    def test_nested_use_conditionals(self):
+        # only the lower bound is guarded by foo?, so the two must not pair up
+        pkgs = (
+            FakePkg("dev-cpp/catch-1.12.2", slot="1"),
+            FakePkg("dev-cpp/catch-2.13.10", slot="0"),
+        )
+        rdepend = "x? ( foo? ( >=dev-cpp/catch-2.13.9 ) <dev-cpp/catch-3 )"
+        self.assertNoReport(
+            self.mk_check(pkgs=pkgs),
+            FakePkg(
+                "dev-util/diffball-2.7.1",
+                data={"RDEPEND": rdepend, "IUSE": "foo x"},
                 repo=self.repo,
             ),
         )

@@ -26,6 +26,10 @@ pkgcheck 0.10.44 (unreleased)
   when a later commit in the same scan carried a matching sign-off (Arthur
   Zamarin)
 
+- LicenseCheck, SrcUriCheck, CrossSlotRangeDepCheck: fix USE conditionals
+  leaking between sibling branches of a nested depset, which could hide a
+  missing ``RESTRICT`` (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.43 (2026-09-05)
 -----------------------------

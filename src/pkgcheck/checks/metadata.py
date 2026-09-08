@@ -118,26 +118,26 @@ class LicenseCheck(Check):
         self.eula = repo.licenses.groups.get("EULA", frozenset())
         self.mirror_restricts = frozenset(["fetch", "mirror"])
 
-    def _required_licenses(self, license_group, nodes, restricts=None):
+    def _required_licenses(self, license_group, nodes, restricts=()):
         """Determine required licenses from a given license group."""
         for node in nodes:
-            v = restricts if restricts is not None else []
             if isinstance(node, str) and node not in license_group:
                 continue
             elif isinstance(node, boolean.AndRestriction):
-                yield from self._required_licenses(license_group, node, v)
+                yield from self._required_licenses(license_group, node, restricts)
                 continue
             elif isinstance(node, boolean.OrRestriction):
-                licenses = list(self._required_licenses(license_group, node, v))
+                licenses = list(self._required_licenses(license_group, node, restricts))
                 # skip conditionals that have another option
                 if len(node) == len(licenses):
                     yield from licenses
                 continue
             elif isinstance(node, packages.Conditional):
-                v.append(node.restriction)
-                yield from self._required_licenses(license_group, node.payload, v)
+                yield from self._required_licenses(
+                    license_group, node.payload, restricts + (node.restriction,)
+                )
                 continue
-            yield node, tuple(v)
+            yield node, restricts
 
     def feed(self, pkg):
         # check for restrictive licenses with missing RESTRICT
