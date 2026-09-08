@@ -12,6 +12,10 @@ pkgcheck 0.10.44 (unreleased)
   in ``@SUPPORTED_EAPIS``, e.g. an EAPI newer than the installed pkgcore knows
   about. Such EAPIs are now ignored (Arthur Zamarin)
 
+- LineLengthCheck: fix a crash on an over-long line holding nothing but
+  whitespace. Such a line is now reported as ExcessiveLineLength like any other
+  (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.43 (2026-09-05)
 -----------------------------

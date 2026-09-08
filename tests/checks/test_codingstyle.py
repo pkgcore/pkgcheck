@@ -531,6 +531,14 @@ class TestExcessiveLineLength(misc.ReportTestCase):
             self._prepare_pkg(f"{' ' * (codingstyle.ExcessiveLineLength.line_length - 1)}x\n"),
         )
 
+    def test_whitespace_only_line(self):
+        # a line holding no words at all still has a length to complain about
+        r = self.assertReport(
+            self.check,
+            self._prepare_pkg(f"{' ' * (codingstyle.ExcessiveLineLength.line_length + 1)}\n"),
+        )
+        assert r.lines == (1,)
+
     def test_multiple_lines(self):
         r = self.assertReport(
             self.check,

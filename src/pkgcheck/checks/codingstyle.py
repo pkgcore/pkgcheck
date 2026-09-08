@@ -1485,7 +1485,7 @@ class LineLengthCheck(Check):
                 continue
             if self.exception.match(line):
                 continue  # exception variables which are fine to be long
-            if max(map(len, line.split())) > ExcessiveLineLength.word_length:
+            if max(map(len, line.split()), default=0) > ExcessiveLineLength.word_length:
                 continue  # if one part of the line is very long word
             if self.long_string.search(line):
                 continue  # skip lines with long quoted string
