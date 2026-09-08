@@ -68,11 +68,9 @@ class LatestVersionRepoSource(RepoSource):
     """Repo source that returns only the latest non-VCS and VCS slots"""
 
     def itermatch(self, *args, **kwargs):
-        for _, pkgs in groupby(
-            super().itermatch(*args, **kwargs), key=lambda pkg: pkg.slotted_atom
-        ):
-            best_by_live = {pkg.live: pkg for pkg in pkgs}
-            yield from sorted(best_by_live.values())
+        for _, pkgs in groupby(super().itermatch(*args, **kwargs), key=attrgetter("key")):
+            best_by_slot = {(pkg.slot, pkg.live): pkg for pkg in pkgs}
+            yield from sorted(best_by_slot.values())
 
 
 class LatestVersionsFilter:

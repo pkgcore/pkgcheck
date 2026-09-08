@@ -50,6 +50,10 @@ pkgcheck 0.10.44 (unreleased)
 - WhitespaceFound: also flag trailing whitespace on an ebuild's last line when
   that line has no final newline (Arthur Zamarin)
 
+- Network checks: only scan the newest version of each slot, as intended, for
+  packages whose slots interleave by version, e.g. ``net-libs/webkit-gtk``
+  (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.43 (2026-09-05)
 -----------------------------
