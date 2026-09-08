@@ -588,3 +588,28 @@ class TestExcessiveLineLength(misc.ReportTestCase):
             ),
         )
         assert r.lines == (3,)
+
+
+class TestRedundantDodir(misc.ReportTestCase):
+    check_kls = codingstyle.RedundantDodirCheck
+    check = check_kls(None)
+
+    @staticmethod
+    def _prepare_pkg(*lines: str):
+        return misc.FakePkg("dev-util/diffball-0", lines=lines)
+
+    def test_redundant_dodir(self):
+        r = self.assertReport(
+            self.check, self._prepare_pkg("\tdodir /foo/bar\n", "\tinsinto /foo/bar\n")
+        )
+        assert r.lineno == 1
+        assert "dodir called before insinto" in str(r)
+
+    def test_differing_paths(self):
+        self.assertNoReport(
+            self.check, self._prepare_pkg("\tdodir /foo/bar\n", "\tinsinto /foo/baz\n")
+        )
+
+    def test_trailing_dodir(self):
+        # a dodir call ending the ebuild has no following line to pair with
+        self.assertNoReport(self.check, self._prepare_pkg("\tdodir /foo/bar\n"))

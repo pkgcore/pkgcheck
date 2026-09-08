@@ -1312,7 +1312,7 @@ class RedundantDodirCheck(Check):
             if not line or line[0] == "#":
                 continue
             if dodir := self.dodir_regex.match(line):
-                lineno, line = next(lines)
+                lineno, line = next(lines, (lineno + 1, ""))
                 if (cmd := self.cmds_regex.match(line)) and dodir.group("path") == cmd.group(
                     "path"
                 ):

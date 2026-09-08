@@ -16,6 +16,9 @@ pkgcheck 0.10.44 (unreleased)
   whitespace. Such a line is now reported as ExcessiveLineLength like any other
   (Arthur Zamarin)
 
+- RedundantDodirCheck: fix a crash when a ``dodir`` call is the last line of an
+  ebuild (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.43 (2026-09-05)
 -----------------------------
