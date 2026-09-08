@@ -18,7 +18,6 @@ from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.ebuild.repository import UnconfiguredTree
 from pkgcore.fetch import fetchable
 from snakeoil import klass
-from snakeoil.mappings import ImmutableDict
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
@@ -787,9 +786,9 @@ class GitCommitMessageCheck(GentooRepoCheck, GitCommitsCheck):
 
     def __init__(self, *args):
         super().__init__(*args)
-        # mapping of required tags to forcibly run verifications methods
-        self._required_tags = ImmutableDict(
-            ((tag, verify), []) for tag, (verify, required) in self.known_tags.items() if required
+        # required tags whose verification methods are forcibly run
+        self._required_tags = tuple(
+            (tag, verify) for tag, (verify, required) in self.known_tags.items() if required
         )
 
     @verify_tags("Signed-off-by", required=True)
@@ -931,7 +930,7 @@ class GitCommitMessageCheck(GentooRepoCheck, GitCommitsCheck):
                 break
 
         # mapping of defined tags to any existing verification methods
-        tags = dict(self._required_tags)
+        tags = {key: [] for key in self._required_tags}
 
         # verify footer
         while (item := pull()) is not None:

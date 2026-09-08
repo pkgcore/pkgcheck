@@ -22,6 +22,10 @@ pkgcheck 0.10.44 (unreleased)
 - GitEclassCommitsCheck: fix a crash when scanning commits that add or modify
   an empty eclass (Arthur Zamarin)
 
+- GitCommitMessageCheck: fix ``MissingSignOff`` going unreported for a commit
+  when a later commit in the same scan carried a matching sign-off (Arthur
+  Zamarin)
+
 -----------------------------
 pkgcheck 0.10.43 (2026-09-05)
 -----------------------------
