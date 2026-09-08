@@ -47,6 +47,9 @@ pkgcheck 0.10.44 (unreleased)
   unreported once an earlier commit in the same scan carried a value that isn't
   a commit reference at all, such as a bug URL (Arthur Zamarin)
 
+- WhitespaceFound: also flag trailing whitespace on an ebuild's last line when
+  that line has no final newline (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.43 (2026-09-05)
 -----------------------------

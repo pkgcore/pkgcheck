@@ -159,7 +159,7 @@ class WhitespaceCheck(Check):
 
             if line != "\n":
                 lastlineempty = False
-                if line[-2:-1] == " " or line[-2:-1] == "\t":
+                if line.rstrip("\n")[-1:] in (" ", "\t"):
                     trailing.append(lineno)
                 elif line[0] == " ":
                     leading.append(lineno)

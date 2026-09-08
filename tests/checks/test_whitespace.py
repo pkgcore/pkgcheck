@@ -41,6 +41,19 @@ class TestWhitespaceFound(WhitespaceCheckTest):
         assert r.lines == (2,)
         assert "trailing whitespace" in str(r)
 
+    def test_trailing_on_unterminated_last_line(self):
+        # the last line lacks a newline, so the trailing space is the last char
+        fake_pkg = misc.FakePkg(
+            "dev-util/diffball-0.5",
+            lines=("# This is our first fake ebuild\n", "# trailing whitespace, no newline "),
+        )
+
+        reports = self.assertReports(self.check, fake_pkg)
+        trailing = [r for r in reports if isinstance(r, whitespace.WhitespaceFound)]
+        assert len(trailing) == 1
+        assert trailing[0].lines == (2,)
+        assert "trailing whitespace" in str(trailing[0])
+
 
 class TestWrongIndentFound(WhitespaceCheckTest):
     def test_it(self):
