@@ -37,6 +37,9 @@ pkgcheck 0.10.44 (unreleased)
 - EbuildUnquotedVariable: compare the tree-sitter node type against ``array``
   exactly, rather than testing it as a substring (Arthur Zamarin)
 
+- ``pkgcheck scan --filter``: report an argument error, rather than raising, for
+  a filter holding more than one colon (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.43 (2026-09-05)
 -----------------------------

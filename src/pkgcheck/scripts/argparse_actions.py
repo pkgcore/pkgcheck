@@ -45,7 +45,7 @@ class FilterArgs(arghparse.CommaSeparatedValues):
 
         for val in values:
             if ":" in val:
-                filter_type, target = val.split(":")
+                filter_type, _, target = val.partition(":")
                 try:
                     keywords = object_to_keywords(namespace, target)
                     filter_map.update({x: filter_type for x in keywords})
