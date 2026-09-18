@@ -11,6 +11,10 @@ pkgcheck 0.10.45 (unreleased)
 - ``pkgcheck scan``: fail the scan when a worker process dies from a signal
   (Arthur Zamarin, https://bugs.gentoo.org/982440)
 
+- ``pkgcheck scan --commits``: compare against the merge base instead of the
+  remote tip, so packages changed on the remote after branching are no longer
+  scanned along with your own commits (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.44 (2026-09-12)
 -----------------------------

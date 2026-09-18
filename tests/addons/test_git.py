@@ -102,6 +102,35 @@ class TestPkgcheckScanCommitsParseArgs:
             (base.package_scope, packages.OrRestriction(*atom_restricts))
         ]
 
+    def test_commits_outdated_branch(self, make_repo, make_git_repo, tmp_path):
+        # create parent repo
+        parent = make_repo()
+        origin = make_git_repo(parent.location, commit=True)
+        parent.create_ebuild("cat/pkg-0")
+        origin.add_all("cat/pkg-0")
+
+        # create child repo and pull from parent
+        local = make_git_repo(str(tmp_path), commit=False)
+        local.run(["git", "remote", "add", "origin", origin.path])
+        local.run(["git", "pull", "origin", "main"])
+        local.run(["git", "remote", "set-head", "origin", "main"])
+        child = make_repo(local.path)
+
+        # create local commit on child repo
+        child.create_ebuild("cat/pkg-1")
+        local.add_all("cat/pkg-1")
+
+        # commit to the parent repo and fetch it, leaving the branch outdated
+        parent.create_ebuild("cat/other-1")
+        origin.add_all("cat/other-1")
+        local.run(["git", "fetch", "origin"])
+
+        options, _func = self.tool.parse_args(self.args + ["-r", local.path, "--commits"])
+        atom_restricts = [atom_cls("cat/pkg")]
+        assert list(options.restrictions) == [
+            (base.package_scope, packages.OrRestriction(*atom_restricts))
+        ]
+
     def test_commits_eclasses(self, make_repo, make_git_repo, tmp_path):
         # create parent repo
         parent = make_repo()

@@ -400,11 +400,37 @@ class _ScanGit(argparse.Action):
                     f"failed running git: {error}\nSuggested to configure the remote by running 'git remote set-head {namespace.git_remote} -a'"
                 )
 
-    def generate_restrictions(self, parser, namespace, ref):
-        """Generate restrictions for a given diff command."""
+    def merge_base(self, namespace, ref: str):
+        """Resolve a commit range into a diff against its merge base.
+
+        ``git diff-tree`` compares the endpoints of the given range, so commits
+        pushed to the remote after branching would be scanned as well.
+        """
+        base, sep, head = ref.partition("...")
+        if not sep:
+            base, sep, head = ref.partition("..")
+        if not sep:
+            return [ref]
         try:
             p = subprocess.run(
-                self.diff_cmd + [ref],
+                ["git", "merge-base", base or "HEAD", head or "HEAD"],
+                capture_output=True,
+                cwd=namespace.target_repo.location,
+                check=True,
+                encoding="utf8",
+                env=_english_git_env(),
+            )
+        except (FileNotFoundError, subprocess.CalledProcessError):
+            # let the diff command report the failure
+            return [ref]
+        return [p.stdout.strip(), head or "HEAD"]
+
+    def generate_restrictions(self, parser, namespace, ref: str):
+        """Generate restrictions for a given diff command."""
+        refs = [ref] if self.staged else self.merge_base(namespace, ref)
+        try:
+            p = subprocess.run(
+                self.diff_cmd + refs,
                 capture_output=True,
                 cwd=namespace.target_repo.location,
                 check=True,
@@ -513,8 +539,10 @@ class GitAddon(caches.CachedAddon):
             priority=10,
             help="determine scan targets from unpushed commits",
             docs="""
-                Targets are determined from the committed changes compared to a
-                given reference that defaults to the repo's origin.
+                Targets are determined from the committed changes compared to
+                the merge base with a given reference that defaults to the
+                repo's origin, so unrelated changes pushed to the remote after
+                branching are ignored.
 
                 For example, to scan all the packages that have been changed in
                 the current branch compared to the branch named 'old' use
