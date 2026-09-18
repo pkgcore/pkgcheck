@@ -3,6 +3,15 @@ Release Notes
 =============
 
 -----------------------------
+pkgcheck 0.10.45 (unreleased)
+-----------------------------
+
+**Fixes:**
+
+- ``pkgcheck scan``: fail the scan when a worker process dies from a signal
+  (Arthur Zamarin, https://bugs.gentoo.org/982440)
+
+-----------------------------
 pkgcheck 0.10.44 (2026-09-12)
 -----------------------------
 

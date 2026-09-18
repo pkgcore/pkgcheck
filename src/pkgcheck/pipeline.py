@@ -211,6 +211,15 @@ class Pipeline:
             tb = traceback.format_exc()
             self._results_q.put(tb)
 
+    def _check_exitcode(self, proc):
+        """Report a child process that terminated abnormally."""
+        if exitcode := proc.exitcode:
+            if exitcode < 0:
+                reason = f"killed by {signal.Signals(-exitcode).name}"
+            else:
+                reason = f"exited with status {exitcode}"
+            self._results_q.put(f"{proc.name} {reason}, results are incomplete")
+
     def _run(self):
         """Run the scanning pipeline in parallel by check and scanning scope."""
         try:
@@ -220,16 +229,28 @@ class Pipeline:
             # schedule asynchronous checks in a separate process
             async_proc = None
             if async_pipes := self._pipes["async"]:
-                async_proc = self._mp_ctx.Process(target=self._schedule_async, args=(async_pipes,))
+                async_proc = self._mp_ctx.Process(
+                    target=self._schedule_async, args=(async_pipes,), name="async check scheduler"
+                )
                 async_proc.start()
 
-            # run synchronous checks using a process pool
+            # run synchronous checks using a set of worker processes
             if sync_pipes := self._pipes["sync"]:
                 work_q = self._mp_ctx.SimpleQueue()
-                pool = self._mp_ctx.Pool(self.options.jobs, self._run_checks, (sync_pipes, work_q))
-                pool.close()
+                workers = []
+                for i in range(self.options.jobs):
+                    worker = self._mp_ctx.Process(
+                        target=self._run_checks,
+                        args=(sync_pipes, work_q),
+                        name=f"check runner {i}",
+                        daemon=True,
+                    )
+                    worker.start()
+                    workers.append(worker)
                 self._queue_work(sync_pipes, work_q)
-                pool.join()
+                for worker in workers:
+                    worker.join()
+                    self._check_exitcode(worker)
 
             if sequential_pipes := self._pipes["sequential"]:
                 for _scope, restriction, pipes in sequential_pipes:
@@ -239,6 +260,7 @@ class Pipeline:
 
             if async_proc is not None:
                 async_proc.join()
+                self._check_exitcode(async_proc)
             # notify iterator that no more results exist
             self._results_q.put(None)
         except Exception:  # pragma: no cover

@@ -1,10 +1,14 @@
+import ctypes
+import faulthandler
 import multiprocessing
 import os
 import signal
+from unittest.mock import patch
 
 import pytest
 
 from pkgcheck import PkgcheckException, scan
+from pkgcheck.checks.codingstyle import BadCommandsCheck
 
 
 class TestScanApi:
@@ -60,3 +64,21 @@ class TestScanApi:
             os.kill(p.pid, signal.SIGINT)
             p.join()
             assert p.exitcode == 0
+
+    def test_worker_crash_handling(self):
+        standalone = str(pytest.REPO_ROOT / "testdata/repos/standalone")
+        target = "BadCommandsCheck/BannedEapiCommand"
+        args = self.scan_args + ["-r", standalone, target]
+
+        assert list(scan(args)), "expected results from an uncrashed scan"
+
+        def crash(self, pkg):
+            """Segfault the worker the way a broken C extension would."""
+            faulthandler.disable()  # pytest enables faulthandler, which the worker inherits over fork
+            ctypes.string_at(0)
+
+        with (
+            patch.object(BadCommandsCheck, "feed", crash),
+            pytest.raises(PkgcheckException, match="killed by SIGSEGV"),
+        ):
+            list(scan(args))
