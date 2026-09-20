@@ -231,6 +231,17 @@ class TestPkgcheckScanParseArgs:
         options, _ = tool.parse_args(["scan", str(eclass_path)])
         assert list(options.restrictions) == [(base.eclass_scope, "foo")]
 
+    def test_licenses_target(self, fakerepo, tool):
+        (licenses_dir := fakerepo / "licenses").mkdir()
+        options, _ = tool.parse_args(["scan", str(licenses_dir)])
+        assert list(options.restrictions) == [(base.licenses_scope, packages.AlwaysTrue)]
+
+    def test_licenses_path_target_file(self, fakerepo, tool):
+        (licenses_dir := fakerepo / "licenses").mkdir()
+        (license_path := licenses_dir / "foo").touch()
+        options, _ = tool.parse_args(["scan", str(license_path)])
+        assert list(options.restrictions) == [(base.licenses_scope, packages.AlwaysTrue)]
+
     def test_profiles_target(self, fakerepo, tool):
         profiles_path = str(fakerepo / "profiles")
         options, _ = tool.parse_args(["scan", profiles_path])

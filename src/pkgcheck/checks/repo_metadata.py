@@ -276,7 +276,7 @@ class UnusedEclassesCheck(RepoCheck):
             yield UnusedEclasses(sorted(self.unused_eclasses))
 
 
-class UnknownLicenses(results.Warning):
+class UnknownLicenses(results.LicensesResult, results.Warning):
     """License(s) listed in license group(s) that don't exist."""
 
     def __init__(self, group, licenses):
@@ -294,7 +294,7 @@ class UnknownLicenses(results.Warning):
 class LicenseGroupsCheck(RepoCheck):
     """Scan license groups for unknown licenses."""
 
-    _source = (sources.EmptySource, (base.repo_scope,))
+    _source = (sources.EmptySource, (base.licenses_scope,))
     known_results = frozenset({UnknownLicenses})
 
     def __init__(self, *args):

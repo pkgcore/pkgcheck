@@ -154,6 +154,12 @@ class ProfilesResult(Result):
     scope = base.profiles_scope
 
 
+class LicensesResult(Result):
+    """Result related to licenses."""
+
+    scope = base.licenses_scope
+
+
 class EclassResult(Result):
     """Result related to a specific eclass."""
 

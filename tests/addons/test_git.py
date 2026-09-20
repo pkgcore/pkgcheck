@@ -196,6 +196,29 @@ class TestPkgcheckScanCommitsParseArgs:
         ]
         assert restrictions == options.restrictions
 
+    def test_commits_licenses(self, make_repo, make_git_repo, tmp_path):
+        # create parent repo
+        parent = make_repo()
+        origin = make_git_repo(parent.location, commit=True)
+        parent.create_ebuild("cat/pkg-0")
+        origin.add_all("cat/pkg-0")
+
+        # create child repo and pull from parent
+        local = make_git_repo(str(tmp_path), commit=False)
+        local.run(["git", "remote", "add", "origin", origin.path])
+        local.run(["git", "pull", "origin", "main"])
+        local.run(["git", "remote", "set-head", "origin", "main"])
+        make_repo(local.path)
+
+        # create local commits on child repo
+        os.makedirs(pjoin(local.path, "licenses"), exist_ok=True)
+        with open(pjoin(local.path, "licenses", "foo"), "w") as f:
+            f.write("data\n")
+        local.add_all("licenses: add foo")
+
+        options, _func = self.tool.parse_args(self.args + ["-r", local.path, "--commits"])
+        assert options.restrictions == [(base.licenses_scope, packages.AlwaysTrue)]
+
     def test_commits_ignored_changes(self, make_repo, make_git_repo, tmp_path):
         # create parent repo
         parent = make_repo()

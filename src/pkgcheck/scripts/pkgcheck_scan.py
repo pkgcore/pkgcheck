@@ -433,6 +433,7 @@ def _setup_scan(parser, namespace, args):
 def generate_restricts(repo, targets):
     """Generate scanning restrictions from given targets."""
     profiles_base = os.path.realpath(repo.config.profiles_base)
+    licenses_base = os.path.realpath(pjoin(repo.location, "licenses"))
 
     for target in targets:
         path = os.path.realpath(target)
@@ -441,6 +442,9 @@ def generate_restricts(repo, targets):
             if path.endswith(".eclass"):
                 # direct eclass file targets
                 yield base.eclass_scope, os.path.basename(path)[:-7]
+            elif path == licenses_base or path.startswith(licenses_base + os.sep):
+                # licenses dir and license file targets
+                yield base.licenses_scope, packages.AlwaysTrue
             elif path.startswith(profiles_base) and path[len(profiles_base) :]:
                 if os.path.isdir(path):
                     # descend into profiles dir targets

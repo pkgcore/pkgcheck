@@ -103,6 +103,7 @@ commit_scope = ConditionalScope("commit")
 profile_node_scope = LocationScope("profile_node")
 profiles_scope = LocationScope("profiles", 0, (profile_node_scope,))
 eclass_scope = LocationScope("eclass")
+licenses_scope = LocationScope("licenses")
 
 # mapping for -S/--scopes option, ordered for sorted output in the case of unknown scopes
 scopes = ImmutableDict(
@@ -110,6 +111,7 @@ scopes = ImmutableDict(
         "git": commit_scope,
         "profiles": profiles_scope,
         "eclass": eclass_scope,
+        "licenses": licenses_scope,
         "repo": repo_scope,
         "cat": category_scope,
         "pkg": package_scope,

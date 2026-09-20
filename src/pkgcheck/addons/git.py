@@ -451,6 +451,7 @@ class _ScanGit(argparse.Action):
 
         eclass_re = re.compile(r"^eclass/(?P<eclass>\S+)\.eclass$")
         eclasses, profiles, pkgs = OrderedSet(), OrderedSet(), OrderedSet()
+        licenses = False
 
         for path in p.stdout.strip("\x00").split("\x00"):
             path_components = path.split(os.sep)
@@ -458,6 +459,8 @@ class _ScanGit(argparse.Action):
                 eclasses.add(mo.group("eclass"))
             elif path_components[0] == "profiles":
                 profiles.add(path)
+            elif path_components[0] == "licenses":
+                licenses = True
             elif path_components[0] in namespace.target_repo.categories:
                 try:
                     pkgs.add(atom_cls(os.sep.join(path_components[:2])))
@@ -472,6 +475,8 @@ class _ScanGit(argparse.Action):
             restrictions.append((base.eclass_scope, eclasses))
         if profiles:
             restrictions.append((base.profile_node_scope, profiles))
+        if licenses:
+            restrictions.append((base.licenses_scope, packages.AlwaysTrue))
 
         # no relevant targets, exit early
         if not restrictions:
