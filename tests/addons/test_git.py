@@ -139,9 +139,7 @@ class TestPkgcheckScanCommitsParseArgs:
         # git writes this file if it parses the value as --output
         target = tmp_path / "written-by-git"
         with pytest.raises(SystemExit) as excinfo:
-            self.tool.parse_args(
-                self.args + ["-r", local.path, f"{opt}=--output={target}"]
-            )
+            self.tool.parse_args(self.args + ["-r", local.path, f"{opt}=--output={target}"])
         assert excinfo.value.code == 2
         assert not target.exists()
 
