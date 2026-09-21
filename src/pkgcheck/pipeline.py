@@ -3,6 +3,7 @@
 import multiprocessing
 import os
 import signal
+import threading
 import traceback
 from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
@@ -11,7 +12,13 @@ from operator import attrgetter
 
 from . import base
 from .checks import init_checks
+from .jobserver import JobServer
 from .sources import UnversionedSource, VersionedSource
+
+# Tasks that have to be queued before another check runner earns a job token.
+# Forking one and holding a token for the rest of the scan only pays off if
+# there is a backlog to work through, so small scans stay small.
+_WORK_PER_RUNNER = 32
 
 
 class Pipeline:
@@ -165,6 +172,15 @@ class Pipeline:
         """Producer that queues scanning tasks against granular scope restrictions."""
         versioned_source = VersionedSource(self.options)
         unversioned_source = UnversionedSource(self.options)
+        queued = 0
+
+        def queue(work):
+            """Queue a task, crediting a runner once enough of them pile up."""
+            nonlocal queued
+            work_q.put(work)
+            queued += 1
+            if not queued % _WORK_PER_RUNNER:
+                self._work_credits.release()
 
         for i, (scan_scope, restriction, pipes) in enumerate(sync_pipes):
             for scope, runners in pipes.items():
@@ -172,17 +188,16 @@ class Pipeline:
                 if base.version_scope in (scope, scan_scope):
                     for restrict in versioned_source.itermatch(restriction):
                         for j in range(num_runners):
-                            work_q.put((scope, restrict, i, [j]))
+                            queue((scope, restrict, i, [j]))
                 elif scope == base.package_scope:
                     for restrict in unversioned_source.itermatch(restriction):
-                        work_q.put((scope, restrict, i, range(num_runners)))
+                        queue((scope, restrict, i, range(num_runners)))
                 else:
                     for j in range(num_runners):
-                        work_q.put((scope, restriction, i, [j]))
+                        queue((scope, restriction, i, [j]))
 
-        # notify consumers that no more work exists
-        for i in range(self.options.jobs):
-            work_q.put(None)
+        # notify a consumer that no more work exists
+        work_q.put(None)
 
     def _run_checks(self, pipes, work_q):
         """Consumer that runs scanning tasks, queuing results for output."""
@@ -196,6 +211,10 @@ class Pipeline:
             # traceback can't be pickled so serialize it
             tb = traceback.format_exc()
             self._results_q.put(tb)
+        finally:
+            # pass the notice on, so that the number of consumers, which grows
+            # while work is being queued, doesn't have to be known in advance
+            work_q.put(None)
 
     def _schedule_async(self, async_pipes):
         """Schedule asynchronous checks."""
@@ -210,6 +229,30 @@ class Pipeline:
             # traceback can't be pickled so serialize it
             tb = traceback.format_exc()
             self._results_q.put(tb)
+
+    def _start_worker(self, sync_pipes, work_q, num):
+        """Start a worker process consuming scanning tasks."""
+        worker = self._mp_ctx.Process(
+            target=self._run_checks,
+            args=(sync_pipes, work_q),
+            name=f"check runner {num}",
+            daemon=True,
+        )
+        worker.start()
+        return worker
+
+    def _grow_workers(self, sync_pipes, work_q, workers, jobserver):
+        """Start further workers as work piles up and the jobserver allows.
+
+        Waiting for the work before the token keeps a scan from sitting on
+        tokens it has nothing to do with, which matters when the pool is busy:
+        a token held here is one every other job on the machine has to wait for.
+        """
+        while len(workers) < self.options.jobs:
+            self._work_credits.acquire()
+            if not self._growing or not jobserver.acquire():
+                break
+            workers.append(self._start_worker(sync_pipes, work_q, len(workers)))
 
     def _check_exitcode(self, proc):
         """Report a child process that terminated abnormally."""
@@ -237,20 +280,45 @@ class Pipeline:
             # run synchronous checks using a set of worker processes
             if sync_pipes := self._pipes["sync"]:
                 work_q = self._mp_ctx.SimpleQueue()
-                workers = []
-                for i in range(self.options.jobs):
-                    worker = self._mp_ctx.Process(
-                        target=self._run_checks,
-                        args=(sync_pipes, work_q),
-                        name=f"check runner {i}",
-                        daemon=True,
-                    )
-                    worker.start()
-                    workers.append(worker)
-                self._queue_work(sync_pipes, work_q)
-                for worker in workers:
-                    worker.join()
-                    self._check_exitcode(worker)
+                self._work_credits = threading.Semaphore(0)
+                self._growing = True
+                with JobServer.connect() as jobserver:
+                    grower = None
+                    if jobserver:
+                        # The first runner is free, running on the job this process
+                        # was itself started for. The rest have to be paid for, so
+                        # they're started as tokens turn up instead of up front.
+                        workers = [self._start_worker(sync_pipes, work_q, 0)]
+                        grower = threading.Thread(
+                            target=self._grow_workers,
+                            args=(sync_pipes, work_q, workers, jobserver),
+                            name="check runner spawner",
+                            daemon=True,
+                        )
+                        grower.start()
+                    else:
+                        workers = [
+                            self._start_worker(sync_pipes, work_q, i)
+                            for i in range(self.options.jobs)
+                        ]
+
+                    try:
+                        self._queue_work(sync_pipes, work_q)
+                        if grower is not None:
+                            # a worker exiting means the queue drained, leaving
+                            # nothing for a newly started one to do
+                            workers[0].join()
+                    finally:
+                        # unblock the spawner whichever of the two it waits on
+                        self._growing = False
+                        self._work_credits.release()
+                        jobserver.stop()
+                        if grower is not None:
+                            grower.join()
+
+                    for worker in workers:
+                        worker.join()
+                        self._check_exitcode(worker)
 
             if sequential_pipes := self._pipes["sequential"]:
                 for _scope, restriction, pipes in sequential_pipes:

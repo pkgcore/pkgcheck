@@ -13,6 +13,7 @@ ever runs from a command's main function -- never from
 from pkgcore import landlock
 from snakeoil.contexts import GitStash
 
+from . import jobserver
 from .base import PkgcheckUserException
 from .log import logger
 
@@ -22,6 +23,10 @@ def _writable_paths(options, *, stashing=False):
     yield options.cache_dir
     # multiprocessing's queues and pools need POSIX semaphores
     yield "/dev/shm"
+    # taking a job token means reading one from the jobserver's fifo, and
+    # giving it back means writing it there again
+    if path := jobserver.path_from_env():
+        yield path
     # sourcing an ebuild is expensive, so a repo keeps the cache access it
     # already had; dropping it would silently re-source every ebuild on every
     # run, as pkgcheck mutes the warning pkgcore logs when a cache write fails

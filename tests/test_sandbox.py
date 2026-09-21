@@ -11,6 +11,7 @@ from snakeoil.contexts import GitStash
 
 from pkgcheck import sandbox
 from pkgcheck.base import PkgcheckUserException
+from pkgcheck.jobserver import _MAKEFLAGS_VARS
 
 
 def options(tmp_path, **kwargs):
@@ -125,10 +126,22 @@ class TestGating:
 
 
 class TestWritablePaths:
+    @pytest.fixture(autouse=True)
+    def _no_jobserver(self, monkeypatch):
+        """Ignore any jobserver running the tests themselves."""
+        for var in _MAKEFLAGS_VARS:
+            monkeypatch.delenv(var, raising=False)
+
     def test_defaults(self, tmp_path):
         paths = list(sandbox._writable_paths(options(tmp_path)))
         # the paths sourcing an ebuild needs are pkgcore's to add
         assert paths == [str(tmp_path / "cache"), "/dev/shm"]
+
+    def test_jobserver_included(self, tmp_path, monkeypatch):
+        """Taking a job token needs write access to the jobserver's fifo."""
+        monkeypatch.setenv("MAKEFLAGS", f"--jobserver-auth=fifo:{tmp_path / 'jobserver'}")
+        paths = sandbox._writable_paths(options(tmp_path))
+        assert str(tmp_path / "jobserver") in paths
 
     def test_repo_writable_while_stashing(self, tmp_path):
         opts = options(tmp_path)

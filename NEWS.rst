@@ -16,6 +16,11 @@ pkgcheck 0.10.45 (unreleased)
 - ``pkgcheck scan licenses``: the ``licenses`` directory is now a proper scan
   target with its own ``licenses`` scope (Arthur Zamarin, #712)
 
+- ``pkgcheck scan``: take job tokens from the jobserver in ``MAKEFLAGS``, so a
+  scan run by a build shares its pool of jobs rather than assuming the machine
+  is idle; one check always runs untokened, and the rest start as tokens turn
+  up, capped by ``--jobs`` and by how much work is waiting (Arthur Zamarin)
+
 **Fixes:**
 
 - ``pkgcheck scan``: fail the scan when a worker process dies from a signal
