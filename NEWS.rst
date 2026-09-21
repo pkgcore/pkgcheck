@@ -21,6 +21,10 @@ pkgcheck 0.10.45 (unreleased)
   is idle; one check always runs untokened, and the rest start as tokens turn
   up, capped by ``--jobs`` and by how much work is waiting (Arthur Zamarin)
 
+- ``pkgcheck scan --commits``: the git checks now run in parallel with all the
+  others, instead of alone on the main process once the rest had finished
+  (Arthur Zamarin)
+
 **Fixes:**
 
 - ``pkgcheck scan``: fail the scan when a worker process dies from a signal

@@ -53,7 +53,14 @@ class GitCommitsSource(sources.Source):
     required_addons = (git.GitAddon,)
 
     def __init__(self, *args, git_addon: git.GitAddon):
-        super().__init__(*args, source=git_addon.commits())
+        super().__init__(*args, source=())
+        self._git_addon = git_addon
+
+    def __iter__(self):
+        return self._git_addon.commits()
+
+    def itermatch(self, restrict, **kwargs):
+        return self._git_addon.commits()
 
 
 class IncorrectCopyright(results.AliasResult, results.Warning):

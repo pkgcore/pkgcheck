@@ -100,8 +100,6 @@ class OptionalCheck(Check):
 class GitCommitsCheck(OptionalCheck):
     """Check that is only run when explicitly enabled via the --commits git option."""
 
-    runner_cls = runners.SequentialCheckRunner
-
     def __init__(self, *args):
         super().__init__(*args)
         if not self.options.commits:
