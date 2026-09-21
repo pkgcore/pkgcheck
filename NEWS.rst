@@ -30,6 +30,11 @@ pkgcheck 0.10.45 (unreleased)
 - ``pkgcheck scan``: fail the scan when a worker process dies from a signal
   (Arthur Zamarin, https://bugs.gentoo.org/982440)
 
+- ``pkgcheck scan --commits <ref>``: the ref is now honoured throughout. A bare
+  ref is read as ``<ref>..HEAD`` rather than as that single commit, and the git
+  checks parse the range that was scanned instead of always using the remote
+  (Arthur Zamarin)
+
 - ``pkgcheck scan --commits``: compare against the merge base instead of the
   remote tip, so packages changed on the remote after branching are no longer
   scanned along with your own commits (Arthur Zamarin)

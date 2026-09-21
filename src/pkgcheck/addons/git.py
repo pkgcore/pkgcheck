@@ -410,7 +410,7 @@ class _ScanGit(argparse.Action):
         if not sep:
             base, sep, head = ref.partition("..")
         if not sep:
-            return [ref]
+            base, head = ref, "HEAD"
         try:
             p = subprocess.run(
                 ["git", "merge-base", "--end-of-options", base or "HEAD", head or "HEAD"],
@@ -428,6 +428,8 @@ class _ScanGit(argparse.Action):
     def generate_restrictions(self, parser, namespace, ref: str):
         """Generate restrictions for a given diff command."""
         refs = [ref] if self.staged else self.merge_base(namespace, ref)
+        if len(refs) == 2:
+            namespace.commits_range = "..".join(refs)
         try:
             p = subprocess.run(
                 self.diff_cmd + refs,
@@ -755,16 +757,26 @@ class GitAddon(caches.CachedAddon):
             return multiplex.tree(*git_repos)
         return git_repos[0]
 
+    @property
+    def commits_range(self):
+        """Commit range scanned by --commits, empty when it holds no commits."""
+        remote = self.options.git_remote
+        commit_range = getattr(self.options, "commits_range", None)
+        if commit_range is None:
+            commit_range = f"{remote}/HEAD..HEAD"
+        base, _, head = commit_range.partition("..")
+        location = self.options.target_repo.location
+        if self._get_commit_hash(location, base) == self._get_commit_hash(location, head):
+            return None
+        return commit_range
+
     def commits_repo(self, repo_cls):
         target_repo = self.options.target_repo
-        remote = self.options.git_remote
         data = {}
 
         try:
-            origin = self._get_commit_hash(target_repo.location, f"{remote}/HEAD")
-            head = self._get_commit_hash(target_repo.location, "HEAD")
-            if origin != head:
-                data = self.pkg_history(target_repo, f"{remote}/HEAD..HEAD", local=True)
+            if commit_range := self.commits_range:
+                data = self.pkg_history(target_repo, commit_range, local=True)
         except GitError as exc:
             raise PkgcheckUserException(str(exc))
 
@@ -773,14 +785,11 @@ class GitAddon(caches.CachedAddon):
 
     def commits(self):
         target_repo = self.options.target_repo
-        remote = self.options.git_remote
         commits = ()
 
         try:
-            origin = self._get_commit_hash(target_repo.location, f"{remote}/HEAD")
-            head = self._get_commit_hash(target_repo.location, "HEAD")
-            if origin != head:
-                commits = GitRepoCommits(target_repo.location, f"{remote}/HEAD..HEAD")
+            if commit_range := self.commits_range:
+                commits = GitRepoCommits(target_repo.location, commit_range)
         except GitError as exc:
             raise PkgcheckUserException(str(exc))
 

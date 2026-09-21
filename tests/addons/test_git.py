@@ -87,6 +87,29 @@ class TestPkgcheckScanCommitsParseArgs:
         _out, err = capsys.readouterr()
         assert "git remote set-head origin -a" in err
 
+    def test_commits_bare_ref(self, make_repo, make_git_repo, tmp_path):
+        """A bare ref is the base of a range ending at HEAD, not a single commit."""
+        parent = make_repo()
+        origin = make_git_repo(parent.location, commit=True)
+        local = make_git_repo(str(tmp_path), commit=False)
+        local.run(["git", "remote", "add", "origin", origin.path])
+        local.run(["git", "pull", "origin", "main"])
+        local.run(["git", "remote", "set-head", "origin", "main"])
+        child = make_repo(local.path)
+
+        # the ref itself holds cat/old, the commit after it holds cat/new
+        child.create_ebuild("cat/old-0")
+        local.add_all("cat/old-0")
+        local.run(["git", "branch", "ref"])
+        child.create_ebuild("cat/new-0")
+        local.add_all("cat/new-0")
+
+        options, _func = self.tool.parse_args(self.args + ["-r", local.path, "--commits", "ref"])
+        assert options.commits_range.endswith("..HEAD")
+        restrictions = [str(x) for _scope, x in options.restrictions]
+        assert any("cat/new" in x for x in restrictions)
+        assert not any("cat/old" in x for x in restrictions)
+
     @pytest.mark.parametrize("opt", ("--commits", "--staged"))
     def test_option_injection(self, opt, make_repo, make_git_repo, tmp_path):
         """A dash-prefixed ref must reach git as a ref, never as an option."""
