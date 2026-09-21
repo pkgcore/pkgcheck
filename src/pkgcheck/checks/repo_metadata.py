@@ -1,14 +1,20 @@
 import re
 from collections import defaultdict
+from configparser import Error as ConfigParserError
 from difflib import SequenceMatcher
 from itertools import chain
+from os.path import join as pjoin
 
 from pkgcore import fetch
+from pkgcore.ebuild import conditionals
 from pkgcore.ebuild.digest import Manifest
+from pkgcore.ebuild.errors import DepsetParseError
+from pkgcore.restrictions import boolean
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
 from .. import addons, base, results, sources
+from ..cli import ConfigParser
 from . import Check, MirrorsCheck, RepoCheck
 
 DEPRECATED_HASHES = frozenset({"md5", "rmd160", "sha1", "whirlpool"})
@@ -291,20 +297,67 @@ class UnknownLicenses(results.LicensesResult, results.Warning):
         return f"license group {self.group!r} has unknown license{s}: [ {licenses} ]"
 
 
+class UnknownLicenseMapping(results.LicensesResult, results.Warning):
+    """SPDX license mapped to license(s) that don't exist."""
+
+    def __init__(self, spdx: str, licenses: list[str]):
+        super().__init__()
+        self.spdx = spdx
+        self.licenses = tuple(licenses)
+
+    @property
+    def desc(self):
+        s = pluralism(self.licenses)
+        licenses = ", ".join(self.licenses)
+        return f"SPDX license {self.spdx!r} maps to unknown license{s}: [ {licenses} ]"
+
+
+class LicenseMappingSourcingError(results.LicensesResult, results.LogError):
+    """Misformed license mapping file."""
+
+
 class LicenseGroupsCheck(RepoCheck):
-    """Scan license groups for unknown licenses."""
+    """Scan license groups and the SPDX license mapping for unknown licenses."""
 
     _source = (sources.EmptySource, (base.licenses_scope,))
-    known_results = frozenset({UnknownLicenses})
+    known_results = frozenset({UnknownLicenses, UnknownLicenseMapping, LicenseMappingSourcingError})
+
+    license_mapping = "metadata/license-mapping.conf"
 
     def __init__(self, *args):
         super().__init__(*args)
         self.repo = self.options.target_repo
 
+    def _mapped_licenses(self):
+        """Scan the license mapping, which repos aren't required to ship."""
+        config = ConfigParser(
+            comment_prefixes=("#",),
+            delimiters=("=",),
+            empty_lines_in_values=False,
+            interpolation=None,
+        )
+        try:
+            if not config.read(pjoin(self.repo.location, self.license_mapping)):
+                return
+            mapping = config.items("spdx-to-ebuild")
+        except ConfigParserError as exc:
+            yield LicenseMappingSourcingError(f"{self.license_mapping}: {exc}")
+            return
+
+        LICENSE_OPERATORS = {"||": boolean.OrRestriction, "": boolean.AndRestriction}
+        for spdx, value in mapping:
+            try:
+                licenses = conditionals.DepSet.parse(value, str, operators=LICENSE_OPERATORS)
+                if unknown := set(iflatten_instance(licenses)).difference(self.repo.licenses):
+                    yield UnknownLicenseMapping(spdx, sorted(unknown))
+            except DepsetParseError as exc:
+                yield LicenseMappingSourcingError(f"{self.license_mapping}: {spdx}: {exc}")
+
     def finish(self):
         for group, licenses in self.repo.licenses.groups.items():
             if unknown_licenses := set(licenses).difference(self.repo.licenses):
                 yield UnknownLicenses(group, sorted(unknown_licenses))
+        yield from self._mapped_licenses()
 
 
 class PotentialLocalUse(results.Info):

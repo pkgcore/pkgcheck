@@ -459,7 +459,7 @@ class _ScanGit(argparse.Action):
                 eclasses.add(mo.group("eclass"))
             elif path_components[0] == "profiles":
                 profiles.add(path)
-            elif path_components[0] == "licenses":
+            elif path_components[0] == "licenses" or path == "metadata/license-mapping.conf":
                 licenses = True
             elif path_components[0] in namespace.target_repo.categories:
                 try:

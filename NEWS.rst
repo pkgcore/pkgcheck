@@ -6,6 +6,11 @@ Release Notes
 pkgcheck 0.10.45 (unreleased)
 -----------------------------
 
+**New Checks:**
+
+- LicenseGroupsCheck: validate the licenses ``metadata/license-mapping.conf``
+  (Arthur Zamarin)
+
 **New Features:**
 
 - ``pkgcheck scan licenses``: the ``licenses`` directory is now a proper scan
