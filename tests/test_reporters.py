@@ -219,6 +219,37 @@ class TestFlycheckReporter(BaseReporter):
     )
 
 
+class TestGithubReporter(BaseReporter):
+    reporter_cls = reporters.GithubReporter
+    add_report_output = dedent(
+        """\
+            ::warning file=profiles,title=ProfileWarning::profile warning
+            ::error file=profiles,title=ProfileError::profile error
+            ::notice title=InvalidCommitMessage::commit 8d86269bb4c7: no commit message
+            ::error file=dev-libs/metadata.xml,title=CatMissingMetadataXml::category is missing metadata.xml
+            ::error file=dev-libs/foo,title=InvalidPN::invalid package names: [ bar, baz ]
+            ::warning file=dev-libs/foo/foo-0.ebuild,title=BadFilename::bad filenames: [ 0.tar.gz, foo.tar.gz ]
+            ::warning file=dev-libs/foo/foo-0.ebuild,line=7,title=ReadonlyVariable::read-only variable 'P' assigned, line 7: P=6
+            ::warning file=dev-libs/foo/foo-0.ebuild,line=5,title=UnquotedVariable::unquoted variable D
+            ::warning file=dev-libs/foo/foo-0.ebuild,line=7,title=UnquotedVariable::unquoted variable D
+            """
+    )
+
+    def test_escapes(self, capsys):
+        result = metadata_xml.PkgInvalidXml(
+            "metadata.xml", "line 1: 100% bad\nline 2:", pkg=self.pkg
+        )
+        with self.mk_reporter() as report:
+            report(result)
+        out, err = capsys.readouterr()
+        assert not err
+        # colons are only escaped in property values, newlines and percents everywhere
+        assert out == (
+            "::error file=dev-libs/foo/metadata.xml,title=PkgInvalidXml::"
+            "package metadata.xml violates metadata.xsd:%0Aline 1: 100%25 bad%0Aline 2:\n"
+        )
+
+
 class TestCallbackReporter:
     results = BaseReporter.results
 

@@ -11,6 +11,7 @@ from xml.sax.saxutils import escape as xml_escape
 
 from snakeoil.formatters import Formatter as snakeoil_Formatter
 from snakeoil.klass import immutable
+from snakeoil.mappings import ImmutableDict
 
 from . import base
 from .results import BaseLinesResult, InvalidResult, Result
@@ -377,6 +378,77 @@ class FlycheckReporter(StreamReporter):
             else:
                 lineno = getattr(result, "lineno", 0)
                 self.out.write(f"{file}:{lineno}:{result.level}:{message}")
+
+
+class GithubReporter(StreamReporter):
+    """Reporter formatting results as GitHub Actions workflow commands [#]_.
+
+    Results are emitted as error, warning, or notice annotations anchored to
+    the relevant file and line, so they show up on the workflow run summary
+    and inline in pull request diffs.
+
+    .. [#] https://docs.github.com/en/actions/reference/workflow-commands-for-github-actions
+    """
+
+    __slots__ = ()
+    priority = -1001
+
+    # result level to annotation level mapping, anything else is a notice
+    level_map = ImmutableDict({"error": "error", "warning": "warning"})
+    # scope to repo relative path mapping
+    path_map = ImmutableDict(
+        {
+            base.version_scope: "{category}/{package}/{package}-{version}.ebuild",
+            # results naming a file relative to the pkg/category dir point at it, the
+            # rest fall back to the dir itself once the trailing slash is stripped
+            base.package_scope: "{category}/{package}/{filename}",
+            base.category_scope: "{category}/{filename}",
+            base.eclass_scope: "eclass/{eclass}.eclass",
+            base.profiles_scope: "profiles/{path}",
+            base.profile_node_scope: "profiles/{path}",
+        }
+    )
+
+    @staticmethod
+    def _escape(s: str) -> str:
+        return s.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+
+    @classmethod
+    def _escape_property(cls, s: str) -> str:
+        return cls._escape(s).replace(":", "%3A").replace(",", "%2C")
+
+    def _consume_reports_generator(self) -> T_process_report:
+        while True:
+            result = yield
+            level = self.level_map.get(result.level, "notice")
+
+            file_prop = ()
+            if template := self.path_map.get(result.scope):
+                # missing attrs collapse to empty strings, leaving the enclosing dir
+                path = template.format_map(defaultdict(str, vars(result))).rstrip("/")
+                if path:
+                    file_prop = (f"file={self._escape_property(path)}",)
+            title_prop = f"title={self._escape_property(result.name)}"
+
+            desc = result.desc
+            if isinstance(result, BaseLinesResult):
+                # the line numbers are carried by the annotations themselves
+                desc = desc.replace(result.lines_str, "").strip()
+                linenos = result.lines
+            elif lineno := getattr(result, "lineno", 0):
+                linenos = (lineno,)
+            else:
+                linenos = ()
+
+            msg = self._escape(desc)
+            if linenos:
+                for lineno in linenos:
+                    props = ",".join(file_prop + (f"line={lineno}", title_prop))
+                    self.out.write(f"::{level} {props}::{msg}")
+            else:
+                props = ",".join(file_prop + (title_prop,))
+                self.out.write(f"::{level} {props}::{msg}")
+            self.out.stream.flush()
 
 
 class CallbackReporter(Reporter):

@@ -25,6 +25,10 @@ pkgcheck 0.10.45 (unreleased)
   others, instead of alone on the main process once the rest had finished
   (Arthur Zamarin)
 
+- New ``GithubReporter``, emitting results as GitHub Actions workflow commands
+  so they render as error/warning/notice annotations on the run summary and
+  inline in pull request diffs (Arthur Zamarin)
+
 **Fixes:**
 
 - ``pkgcheck scan``: fail the scan when a worker process dies from a signal
