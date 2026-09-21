@@ -110,6 +110,22 @@ class TestPkgcheckScanCommitsParseArgs:
         assert any("cat/new" in x for x in restrictions)
         assert not any("cat/old" in x for x in restrictions)
 
+    def test_commits_stash_skips_generated_cache(self, make_repo, make_git_repo, tmp_path):
+        """The metadata cache the scan writes must stay out of the stash."""
+        parent = make_repo()
+        origin = make_git_repo(parent.location, commit=True)
+        local = make_git_repo(str(tmp_path), commit=False)
+        local.run(["git", "remote", "add", "origin", origin.path])
+        local.run(["git", "pull", "origin", "main"])
+        local.run(["git", "remote", "set-head", "origin", "main"])
+        child = make_repo(local.path)
+        child.create_ebuild("cat/pkg-0")
+        local.add_all("cat/pkg-0")
+
+        options, _func = self.tool.parse_args(self.args + ["-r", local.path, "--commits"])
+        stash = options.contexts[-1]
+        assert ":(exclude)metadata/md5-cache" in stash.pathspecs
+
     @pytest.mark.parametrize("opt", ("--commits", "--staged"))
     def test_option_injection(self, opt, make_repo, make_git_repo, tmp_path):
         """A dash-prefixed ref must reach git as a ref, never as an option."""

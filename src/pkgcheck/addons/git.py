@@ -506,7 +506,13 @@ class _ScanGit(argparse.Action):
         # generate scanning restrictions
         namespace.restrictions = self.generate_restrictions(parser, namespace, ref)
         # ignore irrelevant changes during scan
-        namespace.contexts.append(GitStash(namespace.target_repo.location, staged=self.staged))
+        namespace.contexts.append(
+            GitStash(
+                namespace.target_repo.location,
+                pathspecs=(".", ":(exclude)metadata/md5-cache"),
+                staged=self.staged,
+            )
+        )
 
 
 class GitAddon(caches.CachedAddon):

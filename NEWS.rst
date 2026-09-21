@@ -43,6 +43,10 @@ pkgcheck 0.10.45 (unreleased)
   no longer parsed as one, e.g. ``--commits=--output=file`` made git truncate
   that file (Arthur Zamarin)
 
+- ``pkgcheck scan --commits``: ``metadata/md5-cache`` is no longer stashed. The
+  scan rewrites it, which made ``git stash pop`` fail and leave the stashed work
+  behind (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.44 (2026-09-12)
 -----------------------------
