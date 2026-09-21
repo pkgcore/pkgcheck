@@ -84,7 +84,7 @@ class Pipeline:
 
     def _create_runners(self):
         """Initialize and categorize checkrunners for results pipeline."""
-        pipes = {"async": [], "sync": [], "sequential": []}
+        pipes = {"async": [], "sync": []}
 
         # use addon/source caches to avoid re-initializing objects
         addons_map = {}
@@ -104,11 +104,7 @@ class Pipeline:
             # Initialize checkrunners per source type using separate runner for
             # async checks and categorize them for parallelization based on the
             # scan and source scope.
-            runners = {
-                "async": defaultdict(list),
-                "sync": defaultdict(list),
-                "sequential": defaultdict(list),
-            }
+            runners = {"async": defaultdict(list), "sync": defaultdict(list)}
             for (source, runner_cls), check_objs in checks.items():
                 runner = runner_cls(self.options, source, check_objs)
                 if not self.options.pkg_scan and source.scope >= base.package_scope:
@@ -319,12 +315,6 @@ class Pipeline:
                     for worker in workers:
                         worker.join()
                         self._check_exitcode(worker)
-
-            if sequential_pipes := self._pipes["sequential"]:
-                for _scope, restriction, pipes in sequential_pipes:
-                    for runner in chain.from_iterable(pipes.values()):
-                        if results := tuple(runner.run(restriction)):
-                            self._results_q.put(results)
 
             if async_proc is not None:
                 async_proc.join()
