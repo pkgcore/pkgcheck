@@ -310,7 +310,7 @@ class _RemovalRepo(UnconfiguredTree):
     def _extract(self, commit: str, paths: list[str], required: bool = True):
         """Extract paths from a commit's parent commit into the repo."""
         old_files = subprocess.Popen(
-            ["git", "archive", f"{commit}~1"] + paths,
+            ["git", "archive", "--end-of-options", f"{commit}~1"] + paths,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             cwd=self.__parent_repo.location,

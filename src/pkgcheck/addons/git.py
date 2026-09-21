@@ -180,8 +180,8 @@ class _ParseGitRepo(abc.ABC, typing.Generic[T]):
         self.path = os.path.realpath(path)
         cmd = shlex.split(self._git_cmd)
         cmd.append(f"--pretty=tformat:%n{'%n'.join(self._format)}")
-        cmd.append(commit_range)
         cmd.extend(("--no-find-copies-harder", "--find-renames"))
+        cmd.extend(("--end-of-options", commit_range))
 
         self.git_log = GitLog(cmd, self.path)
         # discard the initial newline
@@ -370,9 +370,9 @@ class _ScanGit(argparse.Action):
     def __init__(self, *args, staged=False, **kwargs):
         super().__init__(*args, **kwargs)
         if staged:
-            diff_cmd = ["git", "diff-index", "--name-only", "--cached", "-z"]
+            diff_cmd = ["git", "diff-index", "--name-only", "--cached", "-z", "--end-of-options"]
         else:
-            diff_cmd = ["git", "diff-tree", "-r", "--name-only", "-z"]
+            diff_cmd = ["git", "diff-tree", "-r", "--name-only", "-z", "--end-of-options"]
 
         self.staged = staged
         self.diff_cmd = diff_cmd
@@ -384,7 +384,7 @@ class _ScanGit(argparse.Action):
         """Try to catch case of missing git remote HEAD ref."""
         try:
             subprocess.run(
-                ["git", "rev-parse", namespace.git_remote],
+                ["git", "rev-parse", "--end-of-options", namespace.git_remote],
                 capture_output=True,
                 cwd=namespace.target_repo.location,
                 check=True,
@@ -413,7 +413,7 @@ class _ScanGit(argparse.Action):
             return [ref]
         try:
             p = subprocess.run(
-                ["git", "merge-base", base or "HEAD", head or "HEAD"],
+                ["git", "merge-base", "--end-of-options", base or "HEAD", head or "HEAD"],
                 capture_output=True,
                 cwd=namespace.target_repo.location,
                 check=True,
@@ -627,7 +627,7 @@ class GitAddon(caches.CachedAddon):
         """Retrieve a git repo's commit hash for a specific commit object."""
         try:
             p = subprocess.run(
-                ["git", "rev-parse", commit],
+                ["git", "rev-parse", "--verify", "--end-of-options", commit],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.DEVNULL,
                 cwd=path,
@@ -643,7 +643,7 @@ class GitAddon(caches.CachedAddon):
         """Retrieve a git repo's current branch for a specific commit object."""
         try:
             p = subprocess.run(
-                ["git", "rev-parse", "--abbrev-ref", commit],
+                ["git", "rev-parse", "--verify", "--abbrev-ref", "--end-of-options", commit],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.DEVNULL,
                 cwd=path,

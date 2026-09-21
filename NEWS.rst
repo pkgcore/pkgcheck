@@ -25,6 +25,10 @@ pkgcheck 0.10.45 (unreleased)
   remote tip, so packages changed on the remote after branching are no longer
   scanned along with your own commits (Arthur Zamarin)
 
+- ``pkgcheck scan --commits``/``--staged``: a ref shaped like a git option is
+  no longer parsed as one, e.g. ``--commits=--output=file`` made git truncate
+  that file (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.44 (2026-09-12)
 -----------------------------

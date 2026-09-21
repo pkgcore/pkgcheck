@@ -73,6 +73,39 @@ class TestPkgcheckScanCommitsParseArgs:
             options, _func = self.tool.parse_args(self.args + ["-r", local.path, "--commits"])
         assert excinfo.value.code == 0
 
+    def test_commits_missing_remote_head(self, capsys, make_repo, make_git_repo, tmp_path):
+        """A missing remote HEAD ref is reported with a way to create it."""
+        parent = make_repo()
+        origin = make_git_repo(parent.location, commit=True)
+        local = make_git_repo(str(tmp_path), commit=False)
+        local.run(["git", "remote", "add", "origin", origin.path])
+        local.run(["git", "pull", "origin", "main"])
+
+        with pytest.raises(SystemExit) as excinfo:
+            self.tool.parse_args(self.args + ["-r", local.path, "--commits"])
+        assert excinfo.value.code == 2
+        _out, err = capsys.readouterr()
+        assert "git remote set-head origin -a" in err
+
+    @pytest.mark.parametrize("opt", ("--commits", "--staged"))
+    def test_option_injection(self, opt, make_repo, make_git_repo, tmp_path):
+        """A dash-prefixed ref must reach git as a ref, never as an option."""
+        parent = make_repo()
+        origin = make_git_repo(parent.location, commit=True)
+        local = make_git_repo(str(tmp_path), commit=False)
+        local.run(["git", "remote", "add", "origin", origin.path])
+        local.run(["git", "pull", "origin", "main"])
+        local.run(["git", "remote", "set-head", "origin", "main"])
+
+        # git writes this file if it parses the value as --output
+        target = tmp_path / "written-by-git"
+        with pytest.raises(SystemExit) as excinfo:
+            self.tool.parse_args(
+                self.args + ["-r", local.path, f"{opt}=--output={target}"]
+            )
+        assert excinfo.value.code == 2
+        assert not target.exists()
+
     @pytest.mark.parametrize("remote", ("origin", "pkgcheck"))
     def test_commits_existing(self, remote, make_repo, make_git_repo, tmp_path):
         # create parent repo
