@@ -42,3 +42,12 @@ diff -Naur standalone/DescriptionCheck/BadDescription/BadDescription-4.ebuild fi
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
  LICENSE="BSD"
  SLOT="0"
+diff -Naur standalone/DescriptionCheck/BadDescription/BadDescription-5.ebuild fixed/DescriptionCheck/BadDescription/BadDescription-5.ebuild
+--- standalone/DescriptionCheck/BadDescription/BadDescription-5.ebuild	2019-11-28 00:33:38.457040594 -0700
++++ fixed/DescriptionCheck/BadDescription/BadDescription-5.ebuild	2019-11-28 00:34:59.065514420 -0700
+@@ -1,4 +1,4 @@
+-DESCRIPTION="badDESCRIPTION is a test ebuild"
++DESCRIPTION="Test ebuild"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ LICENSE="BSD"
+ SLOT="0"
