@@ -3,6 +3,15 @@ Release Notes
 =============
 
 -----------------------------
+pkgcheck 0.10.46 (unreleased)
+-----------------------------
+
+**Fixes:**
+
+- Docker image: build tree-sitter from git master, as 0.26.0 segfaults (Arthur
+  Zamarin)
+
+-----------------------------
 pkgcheck 0.10.45 (2026-09-26)
 -----------------------------
 
