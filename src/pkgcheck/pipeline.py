@@ -1,5 +1,6 @@
 """Pipeline that parallelizes check running."""
 
+import contextlib
 import multiprocessing
 import os
 import signal
@@ -8,6 +9,7 @@ import traceback
 from collections import defaultdict, deque
 from concurrent.futures import ThreadPoolExecutor
 from itertools import chain
+from multiprocessing import connection
 from operator import attrgetter
 
 from . import base
@@ -43,9 +45,9 @@ class Pipeline:
         self._pipes = self._create_runners()
 
         # initialize settings used by iterator support
-        self._runner = self._mp_ctx.Process(target=self._run)
+        self._runner = self._mp_ctx.Process(target=self._run, name="scan pipeline")
         signal.signal(signal.SIGINT, self._kill_pipe)
-        self._results_iter = iter(self._results_q.get, None)
+        self._results_iter = self._iter_results()
         self._results = deque()
 
         if self.options.pkg_scan:
@@ -126,6 +128,22 @@ class Pipeline:
             # propagate exception raised during parallel scan
             raise base.PkgcheckUserException(error)
         raise KeyboardInterrupt
+
+    def _iter_results(self):
+        """Yield queued results until their end, failing if the scan dies first."""
+        reader = self._results_q._reader
+        while True:
+            while not reader.poll(1):
+                if not self._runner.is_alive() and not reader.poll():
+                    with contextlib.suppress(ProcessLookupError):
+                        os.killpg(self._runner.pid, signal.SIGKILL)
+                    reason = self._exit_reason(self._runner) or "exited"
+                    raise base.PkgcheckUserException(
+                        f"{self._runner.name} {reason}, results are incomplete"
+                    )
+            if (results := self._results_q.get()) is None:
+                return
+            yield results
 
     def __iter__(self):
         # start running the check pipeline
@@ -250,14 +268,44 @@ class Pipeline:
                 break
             workers.append(self._start_worker(sync_pipes, work_q, len(workers)))
 
-    def _check_exitcode(self, proc):
-        """Report a child process that terminated abnormally."""
+    def _stop_growing(self, grower, jobserver):
+        """Stop the spawner, unblocking it whichever of the two it waits on."""
+        self._growing = False
+        self._work_credits.release()
+        jobserver.stop()
+        if grower is not None:
+            grower.join()
+
+    def _reap_workers(self, workers, grower, jobserver):
+        """Join workers as they exit, reporting the first to die abnormally."""
+        reaped = set()
+        while len(reaped) < len(workers):
+            timeout = 1 if grower is not None and grower.is_alive() else None
+            pending = {worker.sentinel: worker for worker in workers if worker not in reaped}
+            for sentinel in connection.wait(pending, timeout=timeout):
+                worker = pending[sentinel]
+                worker.join()
+                reaped.add(worker)
+                if self._check_exitcode(worker):
+                    return
+                if len(reaped) == 1:
+                    self._stop_growing(grower, jobserver)
+
+    @staticmethod
+    def _exit_reason(proc):
+        """Describe how a child process terminated abnormally, if it did."""
         if exitcode := proc.exitcode:
             if exitcode < 0:
-                reason = f"killed by {signal.Signals(-exitcode).name}"
-            else:
-                reason = f"exited with status {exitcode}"
+                return f"killed by {signal.Signals(-exitcode).name}"
+            return f"exited with status {exitcode}"
+        return None
+
+    def _check_exitcode(self, proc):
+        """Report a child process that terminated abnormally, returning whether it did."""
+        if reason := self._exit_reason(proc):
             self._results_q.put(f"{proc.name} {reason}, results are incomplete")
+            return True
+        return False
 
     def _run(self):
         """Run the scanning pipeline in parallel by check and scanning scope."""
@@ -298,23 +346,18 @@ class Pipeline:
                             for i in range(self.options.jobs)
                         ]
 
+                    reaper = threading.Thread(
+                        target=self._reap_workers,
+                        args=(workers, grower, jobserver),
+                        name="check runner reaper",
+                        daemon=True,
+                    )
+                    reaper.start()
                     try:
                         self._queue_work(sync_pipes, work_q)
-                        if grower is not None:
-                            # a worker exiting means the queue drained, leaving
-                            # nothing for a newly started one to do
-                            workers[0].join()
+                        reaper.join()
                     finally:
-                        # unblock the spawner whichever of the two it waits on
-                        self._growing = False
-                        self._work_credits.release()
-                        jobserver.stop()
-                        if grower is not None:
-                            grower.join()
-
-                    for worker in workers:
-                        worker.join()
-                        self._check_exitcode(worker)
+                        self._stop_growing(grower, jobserver)
 
             if async_proc is not None:
                 async_proc.join()

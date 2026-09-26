@@ -11,6 +11,9 @@ pkgcheck 0.10.46 (unreleased)
 - Docker image: build tree-sitter from git master, as 0.26.0 segfaults (Arthur
   Zamarin)
 
+- ``pkgcheck scan``: fail instead of hanging when every check runner crashes,
+  or when the scan process itself is killed (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.45 (2026-09-26)
 -----------------------------

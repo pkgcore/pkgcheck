@@ -1,7 +1,9 @@
+import contextlib
 import ctypes
 import faulthandler
 import multiprocessing
 import os
+import re
 import signal
 from unittest.mock import patch
 
@@ -9,6 +11,15 @@ import pytest
 
 from pkgcheck import PkgcheckException, scan
 from pkgcheck.checks.codingstyle import BadCommandsCheck
+from pkgcheck.pipeline import Pipeline
+from pkgcheck.sources import UnversionedSource
+
+
+def _segfault(self, pkg):
+    """Segfault the worker the way a broken C extension would."""
+    faulthandler.disable()  # pytest enables faulthandler, which the worker inherits over fork
+    ctypes.CDLL(None).prctl(4, 0, 0, 0, 0)  # PR_SET_DUMPABLE, so no core gets collected
+    ctypes.string_at(0)
 
 
 class TestScanApi:
@@ -72,13 +83,59 @@ class TestScanApi:
 
         assert list(scan(args)), "expected results from an uncrashed scan"
 
-        def crash(self, pkg):
-            """Segfault the worker the way a broken C extension would."""
-            faulthandler.disable()  # pytest enables faulthandler, which the worker inherits over fork
-            ctypes.string_at(0)
-
         with (
-            patch.object(BadCommandsCheck, "feed", crash),
+            patch.object(BadCommandsCheck, "feed", _segfault),
             pytest.raises(PkgcheckException, match="killed by SIGSEGV"),
         ):
             list(scan(args))
+
+    @staticmethod
+    def _assert_scan_fails(args, match, *patches):
+        """Scan in a child process, so that a hang fails the test rather than the suite."""
+
+        def run():
+            with contextlib.ExitStack() as stack:
+                for p in patches:
+                    stack.enter_context(p)
+                try:
+                    list(scan(args))
+                except PkgcheckException as e:
+                    os._exit(0 if re.search(match, str(e)) else 2)
+            os._exit(1)
+
+        proc = multiprocessing.get_context("fork").Process(target=run)
+        proc.start()
+        proc.join(60)
+        if proc.is_alive():
+            proc.kill()
+            proc.join()
+            pytest.fail("scan hung")
+        assert proc.exitcode == 0
+
+    @pytest.mark.parametrize("jobs", (1, 4))
+    def test_all_workers_crash(self, jobs):
+        standalone = str(pytest.REPO_ROOT / "testdata/repos/standalone")
+        args = self.scan_args + ["-r", standalone, "-c", "BadCommandsCheck", "-j", str(jobs)]
+        itermatch = UnversionedSource.itermatch
+
+        def flood(self, *args, **kwargs):
+            for pkg in itermatch(self, *args, **kwargs):
+                yield from [pkg] * 500
+
+        self._assert_scan_fails(
+            args,
+            "killed by SIGSEGV",
+            patch.object(BadCommandsCheck, "feed", _segfault),
+            patch.object(UnversionedSource, "itermatch", flood),
+        )
+
+    def test_pipeline_crash(self):
+        standalone = str(pytest.REPO_ROOT / "testdata/repos/standalone")
+        args = self.scan_args + ["-r", standalone, "-c", "BadCommandsCheck"]
+
+        def die(self, *args):
+            os.kill(os.getpid(), signal.SIGKILL)
+
+        self._assert_scan_fails(
+            args, "scan pipeline killed by SIGKILL", patch.object(Pipeline, "_queue_work", die)
+        )
