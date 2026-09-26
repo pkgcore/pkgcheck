@@ -5,6 +5,7 @@ import multiprocessing
 import os
 import re
 import signal
+import sys
 from unittest.mock import patch
 
 import pytest
@@ -18,7 +19,8 @@ from pkgcheck.sources import UnversionedSource
 def _segfault(self, pkg):
     """Segfault the worker the way a broken C extension would."""
     faulthandler.disable()  # pytest enables faulthandler, which the worker inherits over fork
-    ctypes.CDLL(None).prctl(4, 0, 0, 0, 0)  # PR_SET_DUMPABLE, so no core gets collected
+    if sys.platform == "linux":
+        ctypes.CDLL(None).prctl(4, 0, 0, 0, 0)  # PR_SET_DUMPABLE, so no core gets collected
     ctypes.string_at(0)
 
 
