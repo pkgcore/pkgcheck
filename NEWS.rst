@@ -18,6 +18,9 @@ pkgcheck 0.10.47 (unreleased)
 - StableRequestCheck: count from the latest change to a version, not
   sometimes from when it was added (Arthur Zamarin)
 
+- UnquotedVariable: also report variables unquoted inside ``[ ]`` tests (Arthur
+  Zamarin)
+
 -----------------------------
 pkgcheck 0.10.46 (2026-09-26)
 -----------------------------

@@ -49,4 +49,9 @@ src_prepare() {
 	export TMPDIR # ok
 
 	unset TMPDIR # ok
+
+	if [ -z ${S} ]; then # FAIL
+		:
+	fi
+	[ -d "${S}" ] && [[ -d ${S} ]] # ok
 }

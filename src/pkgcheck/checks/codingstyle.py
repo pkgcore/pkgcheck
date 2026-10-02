@@ -1391,8 +1391,6 @@ class _UnquotedVariablesCheck(Check):
             # Variable is part of declaring variables, and does not need to be
             # quoted. for example local TMPDIR is ok.
             "declaration_command",
-            # Variable sits inside a [[ ]] test command and it's OK not to be quoted
-            "test_command",
             # Variable is being used in a heredoc body, no need to specify quotes.
             "heredoc_body",
         }
@@ -1403,6 +1401,9 @@ class _UnquotedVariablesCheck(Check):
         while pnode is not None:
             if pnode.type in self.node_types_ok:
                 return False
+            elif pnode.type == "test_command":
+                # Variable sits inside a [[ ]] test command and it's OK not to be quoted
+                return pnode.children[0].type != "[["
             elif pnode.type == "command":
                 cmd = pkg.node_str(pnode.child_by_field_name("name"))
                 return cmd not in self.message_commands
