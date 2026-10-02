@@ -172,6 +172,25 @@ class TestStableRequestCheck(ReportTestCase):
         expected = StableRequest("0", ["~amd64"], 30, pkg=VersionedCPV("cat/pkg-2"))
         assert r == expected
 
+    def test_modified_before_newer_addition(self, monkeypatch):
+        def commit(msg, days_ago):
+            date = (datetime.now(UTC) - timedelta(days=days_ago)).isoformat()
+            monkeypatch.setenv("GIT_COMMITTER_DATE", date)
+            self.parent_git_repo.add_all(msg)
+
+        self.parent_repo.create_ebuild("cat/pkg-1", keywords=["amd64"])
+        commit("cat/pkg-1", 60)
+        self.parent_repo.create_ebuild("cat/pkg-2", keywords=["~amd64"])
+        commit("cat/pkg-2", 60)
+        with open(pjoin(self.parent_git_repo.path, "cat/pkg/pkg-2.ebuild"), "a") as f:
+            f.write("# comment\n")
+        commit("cat/pkg-2: add comment", 10)
+        self.parent_repo.create_ebuild("cat/pkg-3")
+        commit("cat/pkg-3", 0)
+        self.child_git_repo.run(["git", "pull", "origin", "main"])
+        self.init_check()
+        self.assertNoReport(self.check, self.source)
+
     def test_modified_ebuild(self):
         self.parent_repo.create_ebuild("cat/pkg-1", keywords=["amd64"])
         self.parent_git_repo.add_all("cat/pkg-1")

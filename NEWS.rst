@@ -15,6 +15,9 @@ pkgcheck 0.10.47 (unreleased)
   fresh one, instead of old commit dates for StableRequest and LiveOnlyPackage
   (Arthur Zamarin)
 
+- StableRequestCheck: count from the latest change to a version, not
+  sometimes from when it was added (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.46 (2026-09-26)
 -----------------------------

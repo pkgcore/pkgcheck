@@ -331,12 +331,13 @@ class GitChangedRepo(SimpleTree):
         super().__init__(*args, **kwargs)
 
     def _get_versions(self, cp):
+        """Changes to a package, newest first."""
         versions = []
         for status, data in self.cpv_dict[cp[0]][cp[1]].items():
             if status in self._status_filter:
                 for commit in data:
                     versions.append((status, commit))
-        return versions
+        return sorted(versions, key=lambda x: x[1][1], reverse=True)
 
     def _internal_gen_candidates(self, candidates, sorter, raw_pkg_cls, **kwargs):
         for cp in sorter(candidates):
