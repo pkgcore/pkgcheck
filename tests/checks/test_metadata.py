@@ -736,7 +736,9 @@ class TestRestrictTestCheck(misc.ReportTestCase):
     check = metadata.RestrictTestCheck(None)
 
     def mk_pkg(self, iuse="", restrict=""):
-        return misc.FakePkg("dev-util/diffball-2.7.1", data={"IUSE": iuse, "RESTRICT": restrict})
+        return misc.FakePkg(
+            "dev-util/diffball-2.7.1", data={"EAPI": "8", "IUSE": iuse, "RESTRICT": restrict}
+        )
 
     def test_empty_restrict(self):
         self.assertNoReport(self.check, self.mk_pkg())
@@ -762,6 +764,8 @@ class TestRestrictTestCheck(misc.ReportTestCase):
                 "!foo? ( !test? ( test ) )",
             ),  # correct restriction inside another condition
             ("test", "test? ( test )"),  # USE condition gotten the other way around
+            ("+test", ""),  # default enabled
+            ("-test", ""),  # default disabled
         )
         for iuse, restrict in data:
             r = self.assertReport(self.check, self.mk_pkg(iuse=iuse, restrict=restrict))

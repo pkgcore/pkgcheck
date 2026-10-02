@@ -21,6 +21,8 @@ pkgcheck 0.10.47 (unreleased)
 - UnquotedVariable: also report variables unquoted inside ``[ ]`` tests (Arthur
   Zamarin)
 
+- MissingTestRestrict: also report with ``IUSE="+test"`` (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.46 (2026-09-26)
 -----------------------------

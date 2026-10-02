@@ -1909,7 +1909,7 @@ class RestrictTestCheck(Check):
         )
 
     def feed(self, pkg):
-        if "test" not in pkg.iuse:
+        if "test" not in pkg.iuse_stripped:
             return
 
         # conditional is unnecessary if it already exists or is in unconditional form
