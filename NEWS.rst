@@ -11,6 +11,10 @@ pkgcheck 0.10.47 (unreleased)
 - ``pkgcheck scan``: no longer hangs when run by ``make`` from a recipe not
   prefixed with ``+`` (Arthur Zamarin)
 
+- ``pkgcheck scan``: an updated git cache now gives the same results as a
+  fresh one, instead of old commit dates for StableRequest and LiveOnlyPackage
+  (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.46 (2026-09-26)
 -----------------------------

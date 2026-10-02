@@ -536,7 +536,7 @@ class GitAddon(caches.CachedAddon):
     """
 
     # cache registry
-    cache = caches.CacheData(type="git", file="git.pickle", version=5)
+    cache = caches.CacheData(type="git", file="git.pickle", version=6)
 
     @classmethod
     def mangle_argparser(cls, parser):
@@ -680,9 +680,12 @@ class GitAddon(caches.CachedAddon):
 
     @staticmethod
     def pkg_history(repo, commit_range, data=None, local=False, verbosity=-1):
-        """Create or update historical package data for a given commit range."""
-        if data is None:
-            data = {}
+        """Create or update historical package data for a given commit range.
+
+        Changes in the range supersede those in ``data`` for the same version
+        and status, so the result matches a scan of the whole history.
+        """
+        history = {}
         seen = set()
         with base.ProgressManager(verbosity=verbosity) as progress:
             for pkg in GitRepoPkgs(repo.location, commit_range, local=local):
@@ -696,10 +699,18 @@ class GitAddon(caches.CachedAddon):
                         date = datetime.fromtimestamp(pkg.commit_time, tz=UTC).strftime("%Y-%m-%d")
                         progress(f"{repo} -- updating git cache: commit date: {date}")
                         commit = (atom.fullver, pkg.commit_time, pkg.commit)
-                    data.setdefault(atom.category, {}).setdefault(atom.package, {}).setdefault(
+                    history.setdefault(atom.category, {}).setdefault(atom.package, {}).setdefault(
                         pkg.status, []
                     ).append(commit)
-        return data
+
+        for category, pkgs in (data or {}).items():
+            for package, statuses in pkgs.items():
+                merged = history.setdefault(category, {}).setdefault(package, {})
+                for status, commits in statuses.items():
+                    entries = merged.setdefault(status, [])
+                    versions = {x[0] for x in entries}
+                    entries.extend(x for x in commits if x[0] not in versions)
+        return history
 
     def update_cache(self, force=False):
         """Update related cache and push updates to disk."""
@@ -738,7 +749,7 @@ class GitAddon(caches.CachedAddon):
                     commit_range = f"{git_cache.commit}..{remote}/HEAD"
 
                 try:
-                    self.pkg_history(
+                    data = self.pkg_history(
                         repo, commit_range, data=data, verbosity=self.options.verbosity
                     )
                 except GitError as exc:

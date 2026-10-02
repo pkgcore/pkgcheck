@@ -1,3 +1,4 @@
+import json
 import os
 import subprocess
 from functools import partial
@@ -637,6 +638,24 @@ class TestGitChangedRepo:
         assert len(added_repo) == 3
         removed_repo = git.GitRemovedRepo(data)
         assert len(removed_repo) == 2
+
+    def test_pkg_history_update(self, repo, make_git_repo):
+        git_repo = make_git_repo(repo.location, commit=True)
+        pkg_history = partial(git.GitAddon.pkg_history, repo)
+        repo.create_ebuild("cat/pkg-0")
+        git_repo.add_all("cat/pkg-0")
+        commit = git_repo.HEAD
+        data = pkg_history("HEAD")
+
+        repo.create_ebuild("cat/pkg-0", data="# modified")
+        git_repo.add_all("cat/pkg-0: modify")
+        git_repo.remove("cat/pkg/pkg-0.ebuild")
+        repo.create_ebuild("cat/pkg-0")
+        git_repo.add_all("cat/pkg-0: re-add")
+        data = pkg_history(f"{commit}..HEAD", data=data)
+
+        # ordering matters as consumers take the first match
+        assert json.dumps(data) == json.dumps(pkg_history("HEAD"))
 
 
 class TestGitAddon:
