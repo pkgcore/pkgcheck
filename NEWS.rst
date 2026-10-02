@@ -3,6 +3,15 @@ Release Notes
 =============
 
 -----------------------------
+pkgcheck 0.10.47 (unreleased)
+-----------------------------
+
+**Fixes:**
+
+- ``pkgcheck scan``: no longer hangs when run by ``make`` from a recipe not
+  prefixed with ``+`` (Arthur Zamarin)
+
+-----------------------------
 pkgcheck 0.10.46 (2026-09-26)
 -----------------------------
 

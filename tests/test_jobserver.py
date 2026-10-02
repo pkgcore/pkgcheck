@@ -99,6 +99,23 @@ class TestJobServer:
         with JobServer.connect() as jobserver:
             assert not jobserver
 
+    def test_last_auth_wins(self, monkeypatch, pool):
+        monkeypatch.setenv(
+            "MAKEFLAGS", f"-j --jobserver-auth=4242,4243 --jobserver-auth=fifo:{pool.path}"
+        )
+        with JobServer.connect() as jobserver:
+            assert jobserver
+
+    def test_withheld_jobserver(self, monkeypatch, pool):
+        """Make 4.4 marks its descriptors as withheld from recipes not prefixed with '+'."""
+        fd = os.open(pool.path, os.O_RDWR)
+        monkeypatch.setenv("MAKEFLAGS", f"-j --jobserver-auth={fd},{fd} --jobserver-auth=-2,-2")
+        try:
+            with JobServer.connect() as jobserver:
+                assert not jobserver
+        finally:
+            os.close(fd)
+
     def test_acquire_and_release(self, makeflags):
         with JobServer.connect() as jobserver:
             assert jobserver

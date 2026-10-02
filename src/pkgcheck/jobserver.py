@@ -13,17 +13,23 @@ from .log import logger
 
 # jobserver make exports to its children, either a path or a pair of file descriptors
 _JOBSERVER_AUTH = regexp(
-    r"--jobserver-(?:auth|fds)=(?:fifo:(?P<path>.+)|(?P<read>\d+),(?P<write>\d+))"
+    r"--jobserver-(?:auth|fds)=(?:fifo:(?P<path>.+)|(?P<read>-?\d+),(?P<write>-?\d+))"
 )
 _MAKEFLAGS_VARS = ("MAKEFLAGS", "MFLAGS", "CARGO_MAKEFLAGS")
 
 
 def _auth_from_env():
-    """Find the jobserver exported in the environment, if any."""
+    """Find the jobserver exported in the environment, if any.
+
+    Only the last jobserver flag counts, and negative descriptors mean make
+    withheld its jobserver from this command.
+    """
     for var in _MAKEFLAGS_VARS:
-        for flag in shlex.split(os.environ.get(var, "")):
-            if mo := _JOBSERVER_AUTH.fullmatch(flag):
+        flags = shlex.split(os.environ.get(var, ""))
+        if mo := next(filter(None, map(_JOBSERVER_AUTH.fullmatch, reversed(flags))), None):
+            if mo.group("path") or min(int(mo.group("read")), int(mo.group("write"))) >= 0:
                 return mo
+            return None
     return None
 
 
