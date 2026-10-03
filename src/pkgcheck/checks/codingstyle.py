@@ -1049,7 +1049,7 @@ class InheritsCheck(Check):
                 if eclass := self.get_eclass(name, pkg):
                     used[eclass].append((lineno + 1, name, call.split("\n", 1)[0]))
 
-            for arg in node.children[1:]:
+            for arg in node.children_by_field_name("argument"):
                 arg_name = pkg.node_str(arg).strip("'\"")
                 if eclass := self.get_eclass(arg_name, pkg):
                     weak_used_eclasses.add(eclass)
@@ -1542,7 +1542,7 @@ class DoCompressedFilesCheck(Check):
             call_name = pkg.node_str(node.child_by_field_name("name"))
             if call_name not in self.functions:
                 continue
-            for arg in node.children[1:]:
+            for arg in node.children_by_field_name("argument"):
                 arg_name = pkg.node_str(arg).strip("'\"")
                 lineno, _ = arg.start_point
                 if arg_name.endswith(self.compresion_extentions):
@@ -1597,7 +1597,7 @@ class NonPosixCheck(Check):
 
     def check_head_tail(self, pkg, call_node, call_name):
         prev_arg = ""
-        for arg in map(pkg.node_str, call_node.children[1:]):
+        for arg in map(pkg.node_str, call_node.children_by_field_name("argument")):
             if self.re_head_tail.match(arg) and not (
                 prev_arg.startswith("-") and prev_arg.endswith(("n", "c"))
             ):
@@ -1609,7 +1609,7 @@ class NonPosixCheck(Check):
             prev_arg = arg
 
     def check_tar(self, pkg, call_node):
-        for idx, arg in enumerate(map(pkg.node_str, call_node.children[1:])):
+        for idx, arg in enumerate(map(pkg.node_str, call_node.children_by_field_name("argument"))):
             if idx == 0 or (arg[:1] == "-" and arg[1:2] != "-"):
                 if "f" in arg:
                     return

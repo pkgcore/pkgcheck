@@ -13,4 +13,5 @@ src_prepare() {
 	tar -c -f - -C "${S}" . | something
 	tar -c --file - -C "${S}" . | something
 	tar -c --file=- -C "${S}" . | something
+	LC_ALL=C tar xf "${DISTDIR}/${A}"
 }

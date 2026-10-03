@@ -59,6 +59,9 @@ pkgcheck 0.10.47 (unreleased)
 - InvalidUTF8: fix valid UTF-8 ebuilds being reported when a multibyte
   character straddles the end of the block read to check them (Arthur Zamarin)
 
+- NonConsistentTarUsage: fix false positive when ``tar`` is prefixed with an
+  environment assignment, e.g. ``LC_ALL=C tar xf ...`` (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.46 (2026-09-26)
 -----------------------------
