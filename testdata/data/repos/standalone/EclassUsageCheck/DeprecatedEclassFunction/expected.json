@@ -1,2 +1,3 @@
 {"__class__": "DeprecatedEclassFunction", "category": "EclassUsageCheck", "package": "DeprecatedEclassFunction", "version": "0", "line": "go-module_set_globals", "lineno": 10, "function": "go-module_set_globals", "replacement": "use tarball"}
 {"__class__": "DeprecatedEclassFunction", "category": "EclassUsageCheck", "package": "DeprecatedEclassFunction", "version": "0", "line": "go-module_setup_proxy", "lineno": 11, "function": "go-module_setup_proxy", "replacement": null}
+{"__class__": "DeprecatedEclassFunction", "category": "EclassUsageCheck", "package": "DeprecatedEclassFunction", "version": "1", "line": "go-module_set_globals", "lineno": 11, "function": "go-module_set_globals", "replacement": "use tarball"}

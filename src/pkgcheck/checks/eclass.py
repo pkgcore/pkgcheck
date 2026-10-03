@@ -176,7 +176,7 @@ class EclassUsageCheck(Check):
         # determine if any inherited eclasses have @PRE_INHERIT variables
         pre_inherits = {
             var.name: lineno
-            for eclasses, lineno in inherits
+            for eclasses, lineno in reversed(inherits)
             for eclass in eclasses
             for var in self.eclass_cache[eclass].variables
             if var.pre_inherit
@@ -290,8 +290,7 @@ class EclassUsageCheck(Check):
                     # filter out line continuations and conditional inherits
                     if eclasses := [x for x in call.split()[1:] if x in pkg.inherit]:
                         lineno, _colno = node.start_point
-                        if not inherited and eclasses[0] == pkg.inherit[0]:
-                            inherits.append((eclasses, lineno))
+                        inherits.append((eclasses, lineno))
 
                         for eclass in eclasses:
                             if eclass not in inherited:

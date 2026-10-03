@@ -45,6 +45,9 @@ pkgcheck 0.10.47 (unreleased)
 - ``pkgcheck scan``: editing a file inside a directory such as a profile's
   ``package.mask/`` now refreshes the profiles cache (Arthur Zamarin)
 
+- EclassUsageCheck: check eclasses inherited on any ``inherit`` line, not only
+  the first (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.46 (2026-09-26)
 -----------------------------
