@@ -35,6 +35,9 @@ pkgcheck 0.10.47 (unreleased)
 - UseFlagWithoutDeps: count USE conditionals nested in other conditionals
   (Arthur Zamarin)
 
+- MakeDefaultsUnquoted: accept quoted values spanning several lines or
+  containing ``#`` (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.46 (2026-09-26)
 -----------------------------

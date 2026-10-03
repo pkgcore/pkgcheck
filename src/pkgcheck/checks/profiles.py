@@ -12,7 +12,6 @@ from pkgcore.ebuild import misc
 from pkgcore.ebuild import profiles as profiles_mod
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.ebuild.repo_objs import Profiles
-from snakeoil.bash import read_bash
 from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
@@ -206,6 +205,31 @@ class ProfileError(results.ProfilesResult, results.LogError):
 
 
 _make_defaults_assign_re = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]*=(?P<value>.*)$")
+
+
+def _unquoted_make_defaults(path: str):
+    """Yield line number and line of make.defaults assignments not fully double quoted."""
+    with open(path, encoding="utf8") as f:
+        lines = f.read().splitlines()
+    lines_iter = enumerate(lines, 1)
+    for lineno, line in lines_iter:
+        line = line.strip()
+        if (match := _make_defaults_assign_re.match(line)) is None:
+            continue
+        value = match.group("value")
+        if value[:1] != '"':
+            yield lineno, line
+            continue
+        # a quoted value may continue over the following lines
+        rest = value[1:]
+        while '"' not in rest and (nxt := next(lines_iter, None)) is not None:
+            rest = nxt[1]
+        if '"' not in rest:
+            yield lineno, line
+            continue
+        trailing = rest.split('"', 1)[1]
+        if trailing.strip() and not (trailing[0].isspace() and trailing.lstrip()[0] == "#"):
+            yield lineno, line
 
 
 def _incremental_values(value: str) -> set[str]:
@@ -402,13 +426,8 @@ class ProfilesCheck(Check):
 
     @verify_files(("make.defaults", "make_defaults"))
     def _make_defaults(self, filename: str, node: sources.ProfileNode, vals: dict[str, str]):
-        path = pjoin(node.path, filename)
-        for lineno, line in read_bash(path, allow_line_cont=True, enum_line=True):
-            if (match := _make_defaults_assign_re.match(line)) is None:
-                continue
-            value = match.group("value")
-            if len(value) < 2 or value[0] != '"' or value[-1] != '"':
-                yield MakeDefaultsUnquoted(pjoin(node.name, filename), lineno, line)
+        for lineno, line in _unquoted_make_defaults(pjoin(node.path, filename)):
+            yield MakeDefaultsUnquoted(pjoin(node.name, filename), lineno, line)
         if (
             use_flags := _incremental_values(vals.get("USE", ""))
             | _incremental_values(vals.get("IUSE_IMPLICIT", ""))

@@ -1,3 +1,7 @@
 # comment line, ignored
 ARCH="amd64"
 FOO=bar
+FEATURES="foo
+	bar"
+CFLAGS="-O2 # not a comment"
+LDFLAGS="-Wl,-O1" # trailing comment
