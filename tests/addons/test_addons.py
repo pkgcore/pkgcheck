@@ -1,3 +1,4 @@
+import gc
 import os
 from os.path import join as pjoin
 from unittest.mock import patch
@@ -243,6 +244,8 @@ class TestProfileAddon:
             f.write("")
         mtime = os.stat(mask_file).st_mtime + 100
         os.utime(mask_file, (mtime, mtime))
+        # drop the first scan's instance cached profile nodes, else their stale masks are reused
+        gc.collect()
         assert visible()
 
     def test_cache_profile_files_skip_child_profiles(self):
