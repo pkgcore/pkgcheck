@@ -1788,7 +1788,8 @@ class VariableOrderCheck(Check):
         var_assigns = []
 
         for node in pkg.tree.root_node.children:
-            if node.type == "variable_assignment":
+            # appends, e.g. SRC_URI+=, are expected after the other variables
+            if node.type == "variable_assignment" and node.children[1].type != "+=":
                 used_name = pkg.node_str(node.child_by_field_name("name"))
                 if used_name in self.variable_order:
                     var_assigns.append(used_name)

@@ -54,6 +54,8 @@ pkgcheck 0.10.47 (unreleased)
 - InsintoCheck: no longer crashes the scan on paths like ``/etc/conf_d``
   (Arthur Zamarin)
 
+- VariableOrderWrong: ignore appends such as ``SRC_URI+=`` (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.46 (2026-09-26)
 -----------------------------
