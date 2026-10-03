@@ -32,6 +32,9 @@ pkgcheck 0.10.47 (unreleased)
 - UnknownProfileUse, UnknownProfileUseExpand, UnknownProfileUseExpandValue:
   accept ``-*`` and negated values in ``make.defaults`` (Arthur Zamarin)
 
+- UseFlagWithoutDeps: count USE conditionals nested in other conditionals
+  (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.46 (2026-09-26)
 -----------------------------

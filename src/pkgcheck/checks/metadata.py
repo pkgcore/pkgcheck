@@ -17,7 +17,7 @@ from pkgcore.package.errors import MetadataException
 from pkgcore.restrictions import boolean, packages, values
 from pkgcore.restrictions.required_use import find_constraint_satisfaction, iter_flags
 from snakeoil.mappings import ImmutableDict
-from snakeoil.sequences import iflatten_instance
+from snakeoil.sequences import iflatten_func, iflatten_instance
 from snakeoil.strings import pluralism
 
 from .. import addons, results, sources
@@ -781,24 +781,27 @@ class UseFlagsWithoutEffectsCheck(GentooRepoCheck):
         }
     )
 
+    @staticmethod
+    def _use_values(deps):
+        """USE flags used by dependencies, in conditionals at any depth or USE deps."""
+        use_values = set()
+
+        def descend(node):
+            if isinstance(node, packages.Conditional):
+                if node.attr == "use":
+                    use_values.update(node.restriction.vals)
+                return False
+            return isinstance(node, atom_cls)
+
+        for node in iflatten_func(deps, descend):
+            if isinstance(node, atom_cls) and node.use:
+                use_values.update(node.use)
+        return use_values
+
     def feed(self, pkg):
         used_flags = set(pkg.local_use)
         for attr in pkg.eapi.dep_keys:
-            deps = getattr(pkg, attr.lower())
-
-            use_values = set()
-            use_values.update(
-                itertools.chain.from_iterable(
-                    atom.use or () for atom in iflatten_instance(deps, atom_cls)
-                )
-            )
-            use_values.update(
-                itertools.chain.from_iterable(
-                    atom.restriction.vals
-                    for atom in iflatten_instance(deps, packages.Conditional)
-                    if isinstance(atom, packages.Conditional) and atom.attr == "use"
-                )
-            )
+            use_values = self._use_values(getattr(pkg, attr.lower()))
             for check_use in self.warn_use_small_files:
                 if any(check_use in use for use in use_values):
                     used_flags.add(check_use)
