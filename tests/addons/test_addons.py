@@ -3,6 +3,7 @@ from os.path import join as pjoin
 from unittest.mock import patch
 
 import pytest
+from pkgcore.ebuild.atom import atom
 from pkgcore.restrictions import packages
 
 from pkgcheck import addons
@@ -206,6 +207,18 @@ class TestProfileAddon:
         options, _ = self.tool.parse_args(self.args)
         addon = addons.init_addon(self.addon_kls, options)
         self.assertProfiles(addon, "x86", "default-linux", "default-linux/x86")
+
+    def test_overlay_profiles(self, tmp_path):
+        options, _ = self.tool.parse_args(
+            ["scan", "--cache-dir", str(tmp_path), "--repo", "overlay", "--arches", "amd64"]
+        )
+        addon = addons.init_addon(self.addon_kls, options)
+        (masked,) = options.search_repo.match(atom("stub/masked"))
+        for key in ("amd64", "~amd64"):
+            profiles = addon.profile_filters[key]
+            assert [p.name for p in profiles] == ["default"]
+            # masters' profiles/package.mask applies
+            assert not any(p.visible(masked) for p in profiles)
 
     def test_nonexistent(self, capsys):
         profile = Profile("x86", "x86")

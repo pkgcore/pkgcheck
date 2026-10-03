@@ -38,6 +38,10 @@ pkgcheck 0.10.47 (unreleased)
 - MakeDefaultsUnquoted: accept quoted values spanning several lines or
   containing ``#`` (Arthur Zamarin)
 
+- ``pkgcheck scan``: an overlay's profiles are no longer processed once per
+  master repo, and all honor the masters' ``profiles/package.mask`` (#284,
+  Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.46 (2026-09-26)
 -----------------------------
