@@ -197,6 +197,13 @@ class TestInvalidUTF8(PkgDirCheckBase):
             f.write('EAPI=6\nDESCRIPTION="fóóbár"\n')
         self.assertNoReport(self.mk_check(), [pkg])
 
+    def test_utf8_char_split_by_the_read_block(self):
+        pkg = self.mk_pkg()
+        ebuild_path = pjoin(os.path.dirname(pkg.path), f"{pkg.package}-0.ebuild")
+        with open(ebuild_path, "wb") as f:
+            f.write(b"EAPI=8\n# " + b"a" * (8191 - 9) + "é\n".encode())
+        self.assertNoReport(self.mk_check(), [pkg])
+
     def test_latin1_ebuild(self):
         pkg = self.mk_pkg()
         ebuild_path = pjoin(os.path.dirname(pkg.path), f"{pkg.package}-0.ebuild")

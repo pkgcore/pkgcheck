@@ -56,6 +56,9 @@ pkgcheck 0.10.47 (unreleased)
 
 - VariableOrderWrong: ignore appends such as ``SRC_URI+=`` (Arthur Zamarin)
 
+- InvalidUTF8: fix valid UTF-8 ebuilds being reported when a multibyte
+  character straddles the end of the block read to check them (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.46 (2026-09-26)
 -----------------------------

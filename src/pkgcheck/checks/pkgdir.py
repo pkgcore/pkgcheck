@@ -1,3 +1,4 @@
+import codecs
 import os
 import stat
 from collections import defaultdict
@@ -245,7 +246,7 @@ class PkgDirCheck(Check):
             if filename.endswith(ebuild_ext):
                 try:
                     with open(path, mode="rb") as f:
-                        f.read(8192).decode()
+                        codecs.getincrementaldecoder("utf-8")().decode(f.read(8192))
                 except UnicodeDecodeError as e:
                     yield InvalidUTF8(filename, str(e), pkg=pkg)
 
