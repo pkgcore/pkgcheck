@@ -249,6 +249,22 @@ class TestGithubReporter(BaseReporter):
             "package metadata.xml violates metadata.xsd:%0Aline 1: 100%25 bad%0Aline 2:\n"
         )
 
+    def test_distfile_results(self, capsys):
+        """Results naming a distfile point at the package's Manifest."""
+        results = (
+            git.SrcUriChecksumChange("foo-0.tar.gz", pkg=self.pkg),
+            git.SuspiciousSrcUriChange("https://a/x", "https://b/x", "foo-0.tar.gz", pkg=self.pkg),
+        )
+        with self.mk_reporter() as report:
+            for result in results:
+                report(result)
+        out, err = capsys.readouterr()
+        assert not err
+        assert [line.split(",", 1)[0] for line in out.splitlines()] == [
+            "::error file=dev-libs/foo/Manifest",
+            "::warning file=dev-libs/foo/Manifest",
+        ]
+
 
 class TestCallbackReporter:
     results = BaseReporter.results

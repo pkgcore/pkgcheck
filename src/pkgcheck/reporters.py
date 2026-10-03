@@ -408,6 +408,8 @@ class GithubReporter(StreamReporter):
             base.profile_node_scope: "profiles/{path}",
         }
     )
+    # results whose filename is a distfile, pointed at the Manifest holding its checksums
+    distfile_results = frozenset({"SrcUriChecksumChange", "SuspiciousSrcUriChange"})
 
     @staticmethod
     def _escape(s: str) -> str:
@@ -423,7 +425,11 @@ class GithubReporter(StreamReporter):
             level = self.level_map.get(result.level, "notice")
 
             file_prop = ()
-            if template := self.path_map.get(result.scope):
+            if result.name in self.distfile_results:
+                template = "{category}/{package}/Manifest"
+            else:
+                template = self.path_map.get(result.scope)
+            if template:
                 # missing attrs collapse to empty strings, leaving the enclosing dir
                 path = template.format_map(defaultdict(str, vars(result))).rstrip("/")
                 if path:

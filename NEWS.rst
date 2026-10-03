@@ -65,6 +65,10 @@ pkgcheck 0.10.47 (unreleased)
 - InvalidMetadataRestrict: also check ``restrict`` on ``<longdescription>``
   (Arthur Zamarin)
 
+- ``GithubReporter``: annotate SrcUriChecksumChange and SuspiciousSrcUriChange
+  at the package's ``Manifest`` rather than a non-existent distfile path (Arthur
+  Zamarin)
+
 -----------------------------
 pkgcheck 0.10.46 (2026-09-26)
 -----------------------------
