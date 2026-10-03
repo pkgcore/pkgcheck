@@ -23,6 +23,9 @@ pkgcheck 0.10.47 (unreleased)
 
 - MissingTestRestrict: also report with ``IUSE="+test"`` (Arthur Zamarin)
 
+- ``pkgcheck scan``: a bare ``-j`` or ``-j0`` in ``MAKEOPTS`` no longer fails
+  the scan (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.46 (2026-09-26)
 -----------------------------

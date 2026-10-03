@@ -476,9 +476,14 @@ def generate_restricts(repo, targets):
 def _default_jobs(namespace, attr):
     """Extract jobs count from MAKEOPTS."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("-j", "--jobs", type=arghparse.positive_int, default=os.cpu_count())
+    parser.add_argument("-j", "--jobs", nargs="?")
     makeopts, _ = parser.parse_known_args(shlex.split(os.getenv("MAKEOPTS", "")))
-    setattr(namespace, attr, makeopts.jobs)
+    try:
+        jobs = arghparse.positive_int(makeopts.jobs)
+    except (TypeError, argparse.ArgumentTypeError):
+        # unset, unlimited as a bare -j is to make, or a count make rejects
+        jobs = os.cpu_count()
+    setattr(namespace, attr, jobs)
 
 
 @scan.bind_delayed_default(1001, "tasks")

@@ -277,6 +277,11 @@ class TestPkgcheckScanParseArgs:
             ("-j1", 1),
             ("--jobs=6 -l 1", 6),
             ("--load 1", 4),
+            ("-j", 4),
+            ("-j -l1", 4),
+            ("--jobs", 4),
+            ("-j0", 4),
+            ("-jfoo", 4),
         ),
     )
     def test_makeopts_parsing(self, parser, makeopts, expected_jobs):
