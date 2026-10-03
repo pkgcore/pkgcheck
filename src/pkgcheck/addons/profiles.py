@@ -204,12 +204,18 @@ class ProfileAddon(caches.CachedAddon):
             for node in profile.stack:
                 mtime, files = cache.get(node.path, (0, []))
                 if not mtime:
-                    for f in os.listdir(node.path):
-                        p = pjoin(node.path, f)
+                    paths = [pjoin(node.path, f) for f in os.listdir(node.path)]
+                    while paths:
+                        p = paths.pop()
                         st_obj = os.lstat(p)
                         if stat.S_ISREG(st_obj.st_mode):
                             files.append(p)
                             mtime = max(mtime, st_obj.st_mtime)
+                        elif stat.S_ISDIR(st_obj.st_mode) and (
+                            os.path.dirname(p) != node.path
+                            or os.path.basename(p).startswith(("package.", "use."))
+                        ):
+                            paths.extend(pjoin(p, f) for f in os.listdir(p))
                     cache[node.path] = (mtime, files)
                 profile_mtime = max(profile_mtime, mtime)
                 profile_files.extend(files)

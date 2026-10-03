@@ -42,6 +42,9 @@ pkgcheck 0.10.47 (unreleased)
   master repo, and all honor the masters' ``profiles/package.mask`` (#284,
   Arthur Zamarin)
 
+- ``pkgcheck scan``: editing a file inside a directory such as a profile's
+  ``package.mask/`` now refreshes the profiles cache (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.46 (2026-09-26)
 -----------------------------

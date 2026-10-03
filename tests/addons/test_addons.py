@@ -220,6 +220,42 @@ class TestProfileAddon:
             # masters' profiles/package.mask applies
             assert not any(p.visible(masked) for p in profiles)
 
+    def test_cache_profile_subdir_change(self):
+        with open(pjoin(self.repo.location, "metadata", "layout.conf"), "a") as f:
+            f.write("profile-formats = portage-2\n")
+        self.repo.create_profiles([Profile("default", "x86")])
+        self.repo.arches.add("x86")
+        self.repo.create_ebuild("cat/pkg-1", keywords=["x86"])
+        mask_dir = pjoin(self.repo.location, "profiles", "default", "package.mask")
+        os.makedirs(mask_dir)
+        mask_file = pjoin(mask_dir, "pkgs")
+        with open(mask_file, "w") as f:
+            f.write("cat/pkg\n")
+
+        def visible():
+            options, _ = self.tool.parse_args(self.args)
+            addon = addons.init_addon(self.addon_kls, options)
+            (pkg,) = options.target_repo.match(atom("cat/pkg"))
+            return all(p.visible(pkg) for p in addon.profile_filters["x86"])
+
+        assert not visible()
+        with open(mask_file, "w") as f:
+            f.write("")
+        mtime = os.stat(mask_file).st_mtime + 100
+        os.utime(mask_file, (mtime, mtime))
+        assert visible()
+
+    def test_cache_profile_files_skip_child_profiles(self):
+        self.repo.create_profiles([Profile("default", "x86"), Profile("default/sub", "x86")])
+        self.repo.arches.add("x86")
+        options, _ = self.tool.parse_args(self.args)
+        addon = addons.init_addon(self.addon_kls, options)
+        profile = next(p for p in addon.profile_data if p.path == "default")
+        _mtime, files = addon.profile_data[profile]
+        default_dir = pjoin(self.repo.location, "profiles", "default")
+        assert pjoin(default_dir, "make.defaults") in files
+        assert not any(f.startswith(pjoin(default_dir, "sub", "")) for f in files)
+
     def test_nonexistent(self, capsys):
         profile = Profile("x86", "x86")
         self.repo.create_profiles([profile])
