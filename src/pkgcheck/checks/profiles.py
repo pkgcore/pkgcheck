@@ -208,6 +208,11 @@ class ProfileError(results.ProfilesResult, results.LogError):
 _make_defaults_assign_re = re.compile(r"^[a-zA-Z][a-zA-Z0-9_]*=(?P<value>.*)$")
 
 
+def _incremental_values(value: str) -> set[str]:
+    """Values named by an incremental variable, without negations or resets."""
+    return {x.removeprefix("-") for x in value.split() if x != "-*"}
+
+
 # mapping of profile log levels to result classes
 _logmap = (
     base.LogMap("pkgcore.log.logger.warning", ProfileWarning),
@@ -405,11 +410,8 @@ class ProfilesCheck(Check):
             if len(value) < 2 or value[0] != '"' or value[-1] != '"':
                 yield MakeDefaultsUnquoted(pjoin(node.name, filename), lineno, line)
         if (
-            use_flags := {
-                use.removeprefix("-")
-                for use_group in ("USE", "IUSE_IMPLICIT")
-                for use in vals.get(use_group, "").split()
-            }
+            use_flags := _incremental_values(vals.get("USE", ""))
+            | _incremental_values(vals.get("IUSE_IMPLICIT", ""))
         ) and (unknown := use_flags - self.available_iuse):
             yield UnknownProfileUse(pjoin(node.name, filename), unknown)
         implicit_use_expands = set(vals.get("USE_EXPAND_IMPLICIT", "").split())
@@ -418,7 +420,7 @@ class ProfilesCheck(Check):
             "USE_EXPAND_HIDDEN",
             "USE_EXPAND_UNPREFIXED",
         ):
-            values = {use.removeprefix("-") for use in vals.get(use_group, "").split()}
+            values = _incremental_values(vals.get(use_group, ""))
             if unknown := values - self.use_expand_groups.keys() - implicit_use_expands:
                 yield UnknownProfileUseExpand(pjoin(node.name, filename), use_group, unknown)
         for key, val in vals.items():
@@ -432,7 +434,7 @@ class ProfilesCheck(Check):
                 else:
                     yield UnknownProfileUseExpand(pjoin(node.name, filename), key, [use_group])
         for key in vals.keys() & self.use_expand_groups.keys():
-            if unknown := set(vals.get(key, "").split()) - self.use_expand_groups[key]:
+            if unknown := _incremental_values(vals[key]) - self.use_expand_groups[key]:
                 yield UnknownProfileUseExpandValue(pjoin(node.name, filename), key, unknown)
         if missing_values := {
             use_group

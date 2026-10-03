@@ -29,6 +29,9 @@ pkgcheck 0.10.47 (unreleased)
 - InvalidCommitTag: report ``Fixes`` and ``Reverts`` naming a blob or tree
   instead of crashing (Arthur Zamarin)
 
+- UnknownProfileUse, UnknownProfileUseExpand, UnknownProfileUseExpandValue:
+  accept ``-*`` and negated values in ``make.defaults`` (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.46 (2026-09-26)
 -----------------------------

@@ -1,0 +1,4 @@
+USE="-* used -used"
+IUSE_IMPLICIT="-* used"
+USE_EXPAND="-* PYTHON_TARGETS"
+PYTHON_TARGETS="-* -python3_10 python3_11"
