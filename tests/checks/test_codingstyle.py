@@ -25,6 +25,8 @@ class TestInsintoCheck(misc.ReportTestCase):
             "\tinsinto /usr/share/applications\n",
             "\tinsinto /usr/share/applications/\n",
             "\tinsinto //usr/share//applications//\n",
+            "\tinsinto /etc/conf_d\n",
+            "\tinsinto /etc/init-d\n",
             "# That's it for now\n",
         ]
         fake_pkg = misc.FakePkg("dev-util/diffball-0.5", lines=fake_src)
@@ -41,6 +43,7 @@ class TestInsintoCheck(misc.ReportTestCase):
         check = self.check_kls(None)
 
         reports = self.assertReports(check, fake_pkg)
+        assert len(reports) == len(bad)
         for r, path in zip(reports, bad):
             assert path in str(r)
 

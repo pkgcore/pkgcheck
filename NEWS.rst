@@ -51,6 +51,9 @@ pkgcheck 0.10.47 (unreleased)
 - StaticSrcUri: no longer matches the version as the start of a longer number,
   such as ``1.2.1`` in ``1.2.10`` (Arthur Zamarin)
 
+- InsintoCheck: no longer crashes the scan on paths like ``/etc/conf_d``
+  (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.46 (2026-09-26)
 -----------------------------

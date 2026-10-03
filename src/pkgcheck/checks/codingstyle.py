@@ -386,7 +386,7 @@ class InsintoCheck(Check):
 
     def __init__(self, *args):
         super().__init__(*args)
-        paths = "|".join(s.replace("/", "/+") + "/?" for s in self.path_mapping)
+        paths = "|".join(re.escape(s).replace("/", "/+") + "/?" for s in self.path_mapping)
         self._insinto_re = re.compile(
             rf"(?P<insinto>insinto[ \t]+(?P<path>{paths})(?!/\w+))(?:$|[/ \t])"
         )
