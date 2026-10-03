@@ -48,6 +48,9 @@ pkgcheck 0.10.47 (unreleased)
 - EclassUsageCheck: check eclasses inherited on any ``inherit`` line, not only
   the first (Arthur Zamarin)
 
+- StaticSrcUri: no longer matches the version as the start of a longer number,
+  such as ``1.2.1`` in ``1.2.10`` (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.46 (2026-09-26)
 -----------------------------

@@ -360,10 +360,16 @@ class TestStaticSrcUri(misc.ReportTestCase):
             "random-0.1.2.3",  # not a valid prefix
             "1.2.3",  # currently we support only ver_cut with start=1
             "0",  # for ver_cut only if more then 1 part
+            "0.1.2.30",  # longer number starting with the version
+            "0.1.2.3.4",
+            "0.10",
         ),
     )
     def test_no_report(self, value):
         self.assertNoReport(self.check, self._prepare_pkg(value))
+
+    def test_no_report_longer_number(self):
+        self.assertNoReport(self.check, self._prepare_pkg("releases/2024/foo", pkgver="diffball-2"))
 
     @pytest.mark.parametrize(
         ("value", "static_str", "replacement"),

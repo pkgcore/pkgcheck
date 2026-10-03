@@ -765,7 +765,10 @@ class MetadataVarCheck(Check):
             yield HomepageInSrcUri(pkg=pkg)
 
         replacements, regex = self.build_src_uri_variants_regex(pkg)
-        static_src_uri_re = rf"(?:/|{re.escape(pkg.PN)}[-._]?|->\s*)[v]?(?P<static_str>({regex}))"
+        # the version mustn't merely be the start of a longer number
+        static_src_uri_re = (
+            rf"(?:/|{re.escape(pkg.PN)}[-._]?|->\s*)[v]?(?P<static_str>({regex}))(?!\.?[0-9])"
+        )
         static_urls = {}
         for match in re.finditer(static_src_uri_re, value):
             relevant = {key: value for key, value in match.groupdict().items() if value is not None}
