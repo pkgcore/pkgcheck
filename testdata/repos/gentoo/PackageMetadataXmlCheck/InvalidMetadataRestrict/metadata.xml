@@ -9,4 +9,5 @@
 	</use>
 	<stabilize-allarches restrict="&lt;=OtherCategory/OtherPackage-1"/>
 	<straight-to-stable restrict="&lt;=OtherCategory/OtherPackage-2"/>
+	<longdescription restrict="&lt;=OtherCategory/OtherPackage-3">A long description restricted to versions of some other package, which the schema allows but is wrong here.</longdescription>
 </pkgmetadata>

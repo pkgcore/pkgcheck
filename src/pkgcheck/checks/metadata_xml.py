@@ -560,7 +560,13 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
     def _check_restricts(self, pkg, loc, doc):
         restricts = (
             c.get("restrict")
-            for path in ("maintainer", "use/flag", "stabilize-allarches", "straight-to-stable")
+            for path in (
+                "maintainer",
+                "longdescription",
+                "use/flag",
+                "stabilize-allarches",
+                "straight-to-stable",
+            )
             for c in doc.xpath(f"/pkgmetadata/{path}[string(@restrict)]")
         )
         for restrict_str in restricts:

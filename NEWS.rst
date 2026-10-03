@@ -62,6 +62,9 @@ pkgcheck 0.10.47 (unreleased)
 - NonConsistentTarUsage: fix false positive when ``tar`` is prefixed with an
   environment assignment, e.g. ``LC_ALL=C tar xf ...`` (Arthur Zamarin)
 
+- InvalidMetadataRestrict: also check ``restrict`` on ``<longdescription>``
+  (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.46 (2026-09-26)
 -----------------------------
