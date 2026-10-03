@@ -850,15 +850,15 @@ class GitCommitMessageCheck(GentooRepoCheck, GitCommitsCheck):
             return
         self.git_cat_file.stdin.write("\n".join(commits.keys()) + "\n")
         if self.git_cat_file.poll() is None:
-            for _ in range(len(commits)):
+            # replies come in request order, naming found objects by their full hash
+            for value in commits.values():
                 line = self.git_cat_file.stdout.readline().strip()
                 if mo := self._git_cat_file_regex.match(line):
-                    value = mo.group("object")
-                    status = mo.group("status")
-                    if not status.startswith("commit "):
-                        yield InvalidCommitTag(
-                            tag, commits[value], f"{status} commit", commit=commit
-                        )
+                    status = mo.group("status").split()[0]
+                    if status in ("missing", "ambiguous"):
+                        yield InvalidCommitTag(tag, value, f"{status} commit", commit=commit)
+                    elif status != "commit":
+                        yield InvalidCommitTag(tag, value, f"{status}, not a commit", commit=commit)
 
     def feed(self, commit: git.GitCommit):
         if len(commit.message) == 0:

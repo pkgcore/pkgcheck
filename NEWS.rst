@@ -26,6 +26,9 @@ pkgcheck 0.10.47 (unreleased)
 - ``pkgcheck scan``: a bare ``-j`` or ``-j0`` in ``MAKEOPTS`` no longer fails
   the scan (Arthur Zamarin)
 
+- InvalidCommitTag: report ``Fixes`` and ``Reverts`` naming a blob or tree
+  instead of crashing (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.46 (2026-09-26)
 -----------------------------

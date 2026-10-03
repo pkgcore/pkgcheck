@@ -125,6 +125,16 @@ class TestGitCommitMessageCheck(ReportTestCase):
                     assert isinstance(r, git_mod.InvalidCommitTag)
                     assert f"{status} commit" in r.error
 
+            # existing non-commit object, which git names by its full hash
+            self.check._git_cat_file = None
+            with patch("pkgcheck.checks.git.subprocess.Popen") as git_cat:
+                git_cat.return_value.poll.return_value = None
+                git_cat.return_value.stdout.readline.return_value = f"{ref}0123456789abc blob 3"
+                commit = self.SO_commit(tags=[f"{tag}: {ref}"])
+                r = self.assertReport(self.check, commit)
+                assert isinstance(r, git_mod.InvalidCommitTag)
+                assert "blob, not a commit" in r.error
+
             # valid tag reference
             with patch("pkgcheck.checks.git.subprocess.Popen") as git_cat:
                 self.check._git_cat_file = None
