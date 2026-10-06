@@ -23,7 +23,6 @@ from pkgcore.repository import multiplex
 from pkgcore.repository.util import SimpleTree
 from pkgcore.restrictions import packages
 from snakeoil.cli import arghparse
-from snakeoil.contexts import GitStash
 from snakeoil.klass import jit_attr
 from snakeoil.mappings import ImmutableDict, OrderedSet
 from snakeoil.process import CommandNotFound, find_binary
@@ -506,14 +505,6 @@ class _ScanGit(argparse.Action):
 
         # generate scanning restrictions
         namespace.restrictions = self.generate_restrictions(parser, namespace, ref)
-        # ignore irrelevant changes during scan
-        namespace.contexts.append(
-            GitStash(
-                namespace.target_repo.location,
-                pathspecs=(".", ":(exclude)metadata/md5-cache"),
-                staged=self.staged,
-            )
-        )
 
 
 class GitAddon(caches.CachedAddon):
@@ -575,8 +566,7 @@ class GitAddon(caches.CachedAddon):
             help="determine scan targets from staged changes",
             docs="""
                 Targets are determined using all staged changes for the git
-                repo. Unstaged changes and untracked files are ignored by
-                temporarily stashing them during the scanning process.
+                repo.
             """,
         )
         group.add_argument(

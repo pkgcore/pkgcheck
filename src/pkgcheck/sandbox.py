@@ -11,14 +11,12 @@ ever runs from a command's main function -- never from
 """
 
 from pkgcore import landlock
-from snakeoil.contexts import GitStash
 
 from . import jobserver
-from .base import PkgcheckUserException
 from .log import logger
 
 
-def _writable_paths(options, *, stashing=False):
+def _writable_paths(options):
     """All paths a scan of the given targets needs write access to."""
     yield options.cache_dir
     # multiprocessing's queues and pools need POSIX semaphores
@@ -31,11 +29,6 @@ def _writable_paths(options, *, stashing=False):
     # already had; dropping it would silently re-source every ebuild on every
     # run, as pkgcheck mutes the warning pkgcore logs when a cache write fails
     yield from landlock.writable_cache_paths(*options.target_repo.trees)
-    if stashing:
-        # --commits and --staged stash the working tree around the scan, and
-        # unstash it once the pipeline is done, so the repo has to stay
-        # writable for the lifetime of the confinement
-        yield options.target_repo.location
 
 
 def confine(options) -> None:
@@ -47,21 +40,10 @@ def confine(options) -> None:
     """
     if options.sandbox is False:
         return
-    required = options.sandbox is True
-
-    # keeping the repo writable is a fallback, not something to do behind the
-    # back of someone who asked for confinement outright
-    stashing = any(c.pending for c in options.contexts if isinstance(c, GitStash))
-    if stashing and required:
-        raise PkgcheckUserException(
-            "sandbox requested, but --commits/--staged would stash the working tree, which needs write "
-            "access to the repo being scanned; commit or stash the changes first, or pass --sandbox=n"
-        )
-
     if landlock.confine(
-        *_writable_paths(options, stashing=stashing),
+        *_writable_paths(options),
         allow_net=bool(options.net),
-        required=required,
+        required=options.sandbox is True,
     ):
         # pkgcore's own logging is muted here, so say it ourselves
         logger.debug("landlock sandbox applied")

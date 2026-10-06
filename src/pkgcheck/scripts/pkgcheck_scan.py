@@ -1,7 +1,6 @@
 import argparse
 import os
 import shlex
-from contextlib import ExitStack
 from os.path import join as pjoin
 from unittest.mock import patch
 
@@ -352,7 +351,6 @@ def _restrict_to_scope(restrict):
 def _setup_scan_defaults(parser, namespace):
     """Re-initialize default namespace settings per arg parsing run."""
     namespace.config_checksets = {}
-    namespace.contexts = []
     namespace.pkg_scan = False
 
 
@@ -541,10 +539,7 @@ def _scan(options, out: snakeoil.formatters.PlainTextFormatter, _err):
     # confine before anything is initialized, but after arg parsing so that
     # reporter output files and the cache dir already exist
     sandbox.confine(options)
-    with ExitStack() as stack:
-        report = stack.enter_context(options.reporter(out))
-        for c in options.pop("contexts"):
-            stack.enter_context(c)
+    with options.reporter(out) as report:
         pipe = Pipeline(options)
         for result in pipe:
             report(result)

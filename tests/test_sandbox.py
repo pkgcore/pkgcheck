@@ -7,10 +7,8 @@ import pytest
 from pkgcore import landlock
 from pkgcore.exceptions import PkgcoreUserException
 from snakeoil.cli.arghparse import Namespace
-from snakeoil.contexts import GitStash
 
 from pkgcheck import sandbox
-from pkgcheck.base import PkgcheckUserException
 from pkgcheck.jobserver import _MAKEFLAGS_VARS
 
 
@@ -22,7 +20,6 @@ def options(tmp_path, **kwargs):
         "sandbox": None,
         "net": None,
         "cache_dir": str(tmp_path / "cache"),
-        "contexts": [],
         "target_repo": repo,
     }
     return Namespace(**(defaults | kwargs))
@@ -78,18 +75,6 @@ def tcp_denied():
     return False
 
 
-class stash(GitStash):
-    """A GitStash with a canned verdict, so no real git repo is needed."""
-
-    def __init__(self, path, *, pending):
-        super().__init__(str(path))
-        self._pending = pending
-
-    @property
-    def pending(self):
-        return self._pending
-
-
 @pytest.fixture
 def landlock_kernel():
     """Skip unless the running kernel actually enforces Landlock."""
@@ -115,13 +100,8 @@ class TestGating:
         with pytest.raises(PkgcoreUserException, match="sandbox unavailable"):
             confine(options(tmp_path, sandbox=True))
 
-    def test_required_refuses_pending_stash(self, tmp_path, landlock_kernel, confine):
-        opts = options(tmp_path, sandbox=True, contexts=[stash(tmp_path, pending=True)])
-        with pytest.raises(PkgcheckUserException, match="would stash the working tree"):
-            confine(opts)
-
-    def test_required_allows_clean_tree(self, tmp_path, landlock_kernel, confine):
-        opts = options(tmp_path, sandbox=True, contexts=[stash(tmp_path, pending=False)])
+    def test_required(self, tmp_path, landlock_kernel, confine):
+        opts = options(tmp_path, sandbox=True)
         assert run_confined(confine, opts, lambda: "ran") == "ran"
 
 
@@ -142,11 +122,6 @@ class TestWritablePaths:
         monkeypatch.setenv("MAKEFLAGS", f"--jobserver-auth=fifo:{tmp_path / 'jobserver'}")
         paths = sandbox._writable_paths(options(tmp_path))
         assert str(tmp_path / "jobserver") in paths
-
-    def test_repo_writable_while_stashing(self, tmp_path):
-        opts = options(tmp_path)
-        paths = sandbox._writable_paths(opts, stashing=True)
-        assert opts.target_repo.location in paths
 
     def test_writable_repo_cache_included(self, tmp_path):
         opts = options(tmp_path)
@@ -180,17 +155,10 @@ class TestConfinement:
 
         assert run_confined(confine, options(tmp_path), check) == "True"
 
-    def test_repo_writable_while_stashing(self, tmp_path, landlock_kernel, confine):
+    def test_repo_readonly(self, tmp_path, landlock_kernel, confine):
         (repo := tmp_path / "repo").mkdir()
-        opts = options(tmp_path, contexts=[stash(repo, pending=True)])
         func = partial(write_denied, repo)
-        assert run_confined(confine, opts, func) == "False"
-
-    def test_repo_readonly_with_nothing_to_stash(self, tmp_path, landlock_kernel, confine):
-        (repo := tmp_path / "repo").mkdir()
-        opts = options(tmp_path, contexts=[stash(repo, pending=False)])
-        func = partial(write_denied, repo)
-        assert run_confined(confine, opts, func) == "True"
+        assert run_confined(confine, options(tmp_path), func) == "True"
 
 
 class TestNetworkConfinement:

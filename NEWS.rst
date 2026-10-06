@@ -3,6 +3,16 @@ Release Notes
 =============
 
 -----------------------------
+pkgcheck 0.10.48 (unreleased)
+-----------------------------
+
+**Fixes:**
+
+- ``pkgcheck scan --commits``/``--staged``: no longer stash uncommitted changes
+  and untracked files, so the scan sees the working tree as it is (Arthur
+  Zamarin)
+
+-----------------------------
 pkgcheck 0.10.47 (2026-10-03)
 -----------------------------
 

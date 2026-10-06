@@ -3,15 +3,13 @@ import os
 import subprocess
 from functools import partial
 from os.path import join as pjoin
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 from pkgcore.ebuild.atom import MalformedAtom
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.restrictions import packages
-from snakeoil.cli.exceptions import UserException
 from snakeoil.contexts import os_environ
-from snakeoil.fileutils import touch
 from snakeoil.process import CommandNotFound, find_binary
 
 from pkgcheck import base
@@ -110,22 +108,6 @@ class TestPkgcheckScanCommitsParseArgs:
         restrictions = [str(x) for _scope, x in options.restrictions]
         assert any("cat/new" in x for x in restrictions)
         assert not any("cat/old" in x for x in restrictions)
-
-    def test_commits_stash_skips_generated_cache(self, make_repo, make_git_repo, tmp_path):
-        """The metadata cache the scan writes must stay out of the stash."""
-        parent = make_repo()
-        origin = make_git_repo(parent.location, commit=True)
-        local = make_git_repo(str(tmp_path), commit=False)
-        local.run(["git", "remote", "add", "origin", origin.path])
-        local.run(["git", "pull", "origin", "main"])
-        local.run(["git", "remote", "set-head", "origin", "main"])
-        child = make_repo(local.path)
-        child.create_ebuild("cat/pkg-0")
-        local.add_all("cat/pkg-0")
-
-        options, _func = self.tool.parse_args(self.args + ["-r", local.path, "--commits"])
-        stash = options.contexts[-1]
-        assert ":(exclude)metadata/md5-cache" in stash.pathspecs
 
     @pytest.mark.parametrize("opt", ("--commits", "--staged"))
     def test_option_injection(self, opt, make_repo, make_git_repo, tmp_path):
@@ -338,45 +320,6 @@ class TestPkgcheckScanCommitsParseArgs:
         with pytest.raises(SystemExit) as excinfo:
             self.tool.parse_args(self.args + ["-r", local.path, "--commits"])
         assert excinfo.value.code == 0
-
-
-class TestGitStash:
-    def test_non_git_repo(self, tmp_path):
-        with pytest.raises(ValueError, match="not a git repo"), git.GitStash(str(tmp_path)):
-            pass
-
-    def test_empty_git_repo(self, git_repo):
-        with git.GitStash(git_repo.path):
-            pass
-
-    def test_untracked_file(self, git_repo):
-        path = pjoin(git_repo.path, "foo")
-        touch(path)
-        assert os.path.exists(path)
-        with git.GitStash(git_repo.path):
-            assert not os.path.exists(path)
-        assert os.path.exists(path)
-
-    def test_failed_stashing(self, git_repo):
-        path = pjoin(git_repo.path, "foo")
-        touch(path)
-        assert os.path.exists(path)
-        with patch("subprocess.run") as run:
-            err = subprocess.CalledProcessError(1, "git stash")
-            err.stderr = "git stash failed"
-            run.side_effect = [Mock(stdout="foo"), err]
-            with pytest.raises(UserException, match="git failed stashing files"):
-                with git.GitStash(git_repo.path):
-                    pass
-
-    def test_failed_unstashing(self, git_repo):
-        path = pjoin(git_repo.path, "foo")
-        touch(path)
-        assert os.path.exists(path)
-        with pytest.raises(UserException, match="git failed applying stash"):
-            with git.GitStash(git_repo.path):
-                assert not os.path.exists(path)
-                touch(path)
 
 
 class TestGitLog:
