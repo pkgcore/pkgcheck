@@ -15,7 +15,6 @@ from pkgcore.ebuild.profiles import ProfileError
 from pkgcore.ebuild.repository import UnconfiguredTree, tree
 from pkgcore.restrictions import packages
 from snakeoil import klass
-from snakeoil.osutils import listdir_files
 
 from . import addons, base
 from .addons.eclass import Eclass, EclassAddon
@@ -243,7 +242,11 @@ class _RawRepo(UnconfiguredTree):
         extension = self.extension
         ext_len = -len(extension)
         try:
-            return tuple(x[lp:ext_len] for x in listdir_files(cppath) if x[ext_len:] == extension)
+            return tuple(
+                e.name[lp:ext_len]
+                for e in os.scandir(cppath)
+                if e.name[ext_len:] == extension and e.is_file()
+            )
         except OSError as e:
             path = pjoin(self.base, os.sep.join(catpkg))
             raise KeyError(f"failed fetching versions for package {path}: {e}") from e
