@@ -1,3 +1,6 @@
+import sys
+from contextlib import nullcontext
+
 import snakeoil.formatters
 from snakeoil.cli import arghparse
 
@@ -20,23 +23,32 @@ replay = arghparse.ArgumentParser(
 replay.add_argument(
     dest="results",
     metavar="FILE",
-    type=arghparse.FileType("rb"),
-    help="path to serialized results file",
+    help="path to serialized results file, or - for stdin",
 )
+
+
+def _open_results(path):
+    """Open the results file at *path*, or stdin for ``-``."""
+    if path == "-":
+        return nullcontext(sys.stdin.buffer)
+    try:
+        return open(path, "rb")
+    except OSError as e:
+        raise PkgcheckUserException(f"can't open {path!r}: {e.strerror}")
 
 
 @replay.bind_main_func
 def _replay(options, out: snakeoil.formatters.PlainTextFormatter, _err):
     processed = 0
 
-    with options.reporter(out) as reporter:
+    with _open_results(options.results) as f, options.reporter(out) as reporter:
         try:
-            for result in reporters.JsonStream.from_iter(options.results):
+            for result in reporters.JsonStream.from_iter(f):
                 reporter.report(result)
                 processed += 1
         except reporters.DeserializationError as e:
             if not processed:
                 raise PkgcheckUserException("invalid or unsupported replay file")
-            raise PkgcheckUserException(f"corrupted results file {options.results.name!r}: {e}")
+            raise PkgcheckUserException(f"corrupted results file {options.results!r}: {e}")
 
     return 0

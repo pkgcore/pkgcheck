@@ -69,6 +69,20 @@ class TestPkgcheckReplay:
                 assert err.strip() == "pkgcheck replay: error: invalid or unsupported replay file"
                 assert excinfo.value.code == 2
 
+    def test_unreadable_file(self, capsys, tmp_path):
+        path = tmp_path / "missing"
+        with (
+            patch("sys.argv", self.args + ["-R", "StrReporter", str(path)]),
+            pytest.raises(SystemExit) as excinfo,
+        ):
+            self.script()
+        _out, err = capsys.readouterr()
+        assert (
+            err.strip()
+            == f"pkgcheck replay: error: can't open {str(path)!r}: No such file or directory"
+        )
+        assert excinfo.value.code == 2
+
     def test_replay_pipe_stdin(self, capsys):
         with tempfile.NamedTemporaryFile() as file:
             out = PlainTextFormatter(file)
