@@ -1,5 +1,6 @@
 import json
 import os
+import shutil
 import subprocess
 from functools import partial
 from os.path import join as pjoin
@@ -10,7 +11,6 @@ from pkgcore.ebuild.atom import MalformedAtom
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.restrictions import packages
 from snakeoil.contexts import os_environ
-from snakeoil.process import CommandNotFound, find_binary
 
 from pkgcheck import base
 from pkgcheck.addons import git, init_addon
@@ -18,9 +18,7 @@ from pkgcheck.addons.caches import CacheDisabled
 from pkgcheck.base import PkgcheckUserException
 
 # skip testing module if git isn't installed
-try:
-    find_binary("git")
-except CommandNotFound:
+if shutil.which("git") is None:
     pytestmark = pytest.mark.skipif(True, reason="git not installed")
 
 
@@ -618,10 +616,11 @@ class TestGitAddon:
     def test_git_unavailable(self, tool):
         args = ["scan", "--cache-dir", self.cache_dir, "--repo", self.repo.location]
         options, _ = tool.parse_args(args)
-        with patch("pkgcheck.addons.git.find_binary") as find_binary:
-            find_binary.side_effect = CommandNotFound("git not found")
-            with pytest.raises(CacheDisabled, match="git cache support required"):
-                git.GitAddon(options)
+        with (
+            patch("shutil.which", return_value=None),
+            pytest.raises(CacheDisabled, match="git cache support required"),
+        ):
+            git.GitAddon(options)
 
     def test_no_gitignore(self):
         assert self.addon._gitignore is None

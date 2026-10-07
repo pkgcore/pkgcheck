@@ -5,6 +5,7 @@ import argparse
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import tempfile
 import typing
@@ -25,7 +26,6 @@ from pkgcore.restrictions import packages
 from snakeoil.cli import arghparse
 from snakeoil.klass import jit_attr
 from snakeoil.mappings import ImmutableDict, OrderedSet
-from snakeoil.process import CommandNotFound, find_binary
 from snakeoil.strings import pluralism
 
 from .. import base
@@ -583,9 +583,7 @@ class GitAddon(caches.CachedAddon):
 
     def __init__(self, *args):
         super().__init__(*args)
-        try:
-            find_binary("git")
-        except CommandNotFound:
+        if shutil.which("git") is None:
             raise caches.CacheDisabled(self.cache)
 
         # mapping of repo locations to their corresponding git repo caches
