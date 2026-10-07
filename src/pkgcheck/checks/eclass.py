@@ -274,7 +274,8 @@ class EclassUsageCheck(Check):
             provided: (eclass, lineno + 1)
             for eclasses, lineno in inherits
             for eclass in eclasses
-            for provided in pkg.inherit.intersection(self.eclass_cache[eclass].provides)
+            for provided in pkg.inherit
+            if provided in self.eclass_cache[eclass].provides
         }
         for provided, (eclass, lineno) in provided_eclasses.items():
             yield ProvidedEclassInherit(eclass, pkg=pkg, line=provided, lineno=lineno)
@@ -308,10 +309,13 @@ class EclassUsageCheck(Check):
             yield from self.check_deprecated_variables(pkg, inherits)
             yield from self.check_deprecated_functions(pkg, inherits)
 
-            for eclass in pkg.inherit.intersection(self.dead_eclasses):
-                yield DeadEclass(eclass, pkg=pkg)
+            for eclass in pkg.inherit:
+                if eclass in self.dead_eclasses:
+                    yield DeadEclass(eclass, pkg=pkg)
 
-            for eclass in pkg.inherit.intersection(self.deprecated_eclasses):
+            for eclass in pkg.inherit:
+                if eclass not in self.deprecated_eclasses:
+                    continue
                 replacement = self.deprecated_eclasses[eclass]
                 if not isinstance(replacement, str):
                     replacement = None

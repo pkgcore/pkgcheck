@@ -1006,9 +1006,7 @@ class InheritsCheck(Check):
 
         # last exporting eclass takes precedence for multiple inheritance
         if len(eclass) > 1:
-            if inherited := pkg.inherited.intersection(eclass):
-                eclass = (x for x in reversed(pkg.inherited) if x in inherited)
-            else:
+            if not (eclass := [x for x in reversed(pkg.inherited) if x in eclass]):
                 return
 
         return next(iter(eclass))
@@ -1039,7 +1037,7 @@ class InheritsCheck(Check):
             if name == "inherit":
                 # register conditional eclasses
                 eclasses = call.split()[1:]
-                if not pkg.inherited.intersection(eclasses):
+                if not any(x in pkg.inherited for x in eclasses):
                     conditional.update(eclasses)
                 continue
             # Also ignore vars since any used in arithmetic expansions, i.e.
@@ -1104,7 +1102,7 @@ class InheritsCheck(Check):
                     # SRC_URI, S, ...) and no functions
                     unused.discard(eclass)
 
-        for eclass in pkg.inherited.intersection(used):
+        for eclass in (x for x in pkg.inherited if x in used):
             for lineno, name, usage in used[eclass]:
                 if name in self.internals[eclass]:
                     yield InternalEclassUsage(eclass, lineno, usage, pkg=pkg)
