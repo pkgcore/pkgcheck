@@ -139,6 +139,7 @@ class TestConfinement:
         """
         (path := tmp_path / "tmp").mkdir()
         monkeypatch.setattr(tempfile, "tempdir", str(path))
+        monkeypatch.setattr(landlock, "_BASH_TMPDIRS", (str(path),))
         return path
 
     def test_cache_dir_writable(self, tmp_path, landlock_kernel, confine):
