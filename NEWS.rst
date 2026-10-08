@@ -3,10 +3,8 @@ Release Notes
 =============
 
 -----------------------------
-pkgcheck 0.10.48 (unreleased)
+pkgcheck 0.10.48 (2026-10-08)
 -----------------------------
-
-**Fixes:**
 
 - ``pkgcheck scan --commits``/``--staged``: no longer stash uncommitted changes
   and untracked files, so the scan sees the working tree as it is (Arthur

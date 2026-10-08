@@ -4,6 +4,6 @@ from .results import Result
 
 __all__ = ("PkgcheckException", "Result", "scan")
 __title__ = "pkgcheck"
-__version__ = "0.10.47"
-__version_info__ = (0, 10, 47)
+__version__ = "0.10.48"
+__version_info__ = (0, 10, 48)
 __python_mininum_version__ = (3, 12, 0)
