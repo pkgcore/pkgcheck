@@ -10,7 +10,6 @@ import pytest
 from pkgcore.ebuild.atom import MalformedAtom
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.restrictions import packages
-from snakeoil.contexts import os_environ
 
 from pkgcheck import base
 from pkgcheck.addons import git, init_addon
@@ -601,7 +600,7 @@ class TestGitChangedRepo:
 
 class TestGitAddon:
     @pytest.fixture(autouse=True)
-    def _setup(self, tool, tmp_path, repo):
+    def _setup(self, tool, tmp_path, repo, monkeypatch):
         self.repo = repo
         self.cache_dir = str(tmp_path)
 
@@ -610,8 +609,8 @@ class TestGitAddon:
         self.addon = git.GitAddon(options)
         self.cache_file = self.addon.cache_file(self.repo)
 
-        with os_environ(XDG_CONFIG_HOME=self.cache_dir):
-            yield
+        monkeypatch.setenv("XDG_CONFIG_HOME", self.cache_dir)
+        yield
 
     def test_git_unavailable(self, tool):
         args = ["scan", "--cache-dir", self.cache_dir, "--repo", self.repo.location]

@@ -9,7 +9,6 @@ from unittest.mock import patch
 import pytest
 from pkgcore import const as pkgcore_const
 from snakeoil.cli.arghparse import ArgumentParser
-from snakeoil.contexts import os_environ
 from snakeoil.formatters import PlainTextFormatter
 
 from pkgcheck import sandbox as sandbox_mod
@@ -51,7 +50,9 @@ def default_session_fixture(request):
     # don't load the default system or user config files
     stack.enter_context(patch("pkgcheck.cli.ConfigFileParser.default_configs", ()))
     stack.enter_context(patch("pkgcheck.sandbox.confine", lambda options: None))
-    stack.enter_context(os_environ(**(git_config := GitConfig()).config_env))
+    mp = stack.enter_context(pytest.MonkeyPatch.context())
+    for key, value in (git_config := GitConfig()).config_env.items():
+        mp.setenv(key, value)
 
     def unpatch():
         stack.close()

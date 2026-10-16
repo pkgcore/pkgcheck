@@ -22,7 +22,6 @@ import pytest
 from pkgcore import const as pkgcore_const
 from pkgcore.ebuild import atom, restricts
 from pkgcore.restrictions import packages
-from snakeoil.contexts import os_environ
 from snakeoil.fileutils import touch
 from snakeoil.formatters import PlainTextFormatter
 
@@ -284,13 +283,14 @@ class TestPkgcheckScanParseArgs:
             ("-jfoo", 4),
         ),
     )
-    def test_makeopts_parsing(self, parser, makeopts, expected_jobs):
-        with patch("os.cpu_count", return_value=4), os_environ(MAKEOPTS=makeopts):
+    def test_makeopts_parsing(self, parser, makeopts, expected_jobs, monkeypatch):
+        monkeypatch.setenv("MAKEOPTS", makeopts)
+        with patch("os.cpu_count", return_value=4):
             options = parser.parse_args(["scan"])
             assert options.jobs == expected_jobs
             assert options.tasks == 5 * expected_jobs
 
-    def test_no_color(self, parser, tmp_path):
+    def test_no_color(self, parser, tmp_path, monkeypatch):
         (config_file := tmp_path / "config").write_text(
             textwrap.dedent(
                 """\
@@ -301,14 +301,14 @@ class TestPkgcheckScanParseArgs:
         )
 
         args = ("scan", "--config", str(config_file))
-        with os_environ("NO_COLOR"):
-            assert parser.parse_args(args).color is True
-        with os_environ(NO_COLOR="1"):
-            # NO_COLOR overrides config file
-            assert parser.parse_args(args).color is False
-            # cmd line option overrides NO_COLOR
-            assert parser.parse_args([*args, "--color", "n"]).color is False
-            assert parser.parse_args([*args, "--color", "y"]).color is True
+        monkeypatch.delenv("NO_COLOR", raising=False)
+        assert parser.parse_args(args).color is True
+        monkeypatch.setenv("NO_COLOR", "1")
+        # NO_COLOR overrides config file
+        assert parser.parse_args(args).color is False
+        # cmd line option overrides NO_COLOR
+        assert parser.parse_args([*args, "--color", "n"]).color is False
+        assert parser.parse_args([*args, "--color", "y"]).color is True
 
 
 class TestPkgcheckScanParseConfigArgs:

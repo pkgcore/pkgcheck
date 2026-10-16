@@ -10,7 +10,6 @@ from pkgcore.ebuild.cpv import UnversionedCPV as CP
 from pkgcore.ebuild.cpv import VersionedCPV as CPV
 from pkgcore.test.misc import FakeRepo
 from snakeoil.cli import arghparse
-from snakeoil.contexts import os_environ
 from snakeoil.fileutils import touch
 
 from pkgcheck.addons.git import GitCommit
@@ -606,7 +605,7 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         expected = git_mod.DroppedUnstableKeywords(["~amd64"], commit, pkg=CPV("cat/pkg-1"))
         assert r == expected
 
-    def test_removal_after_rename_in_earlier_dated_commit(self):
+    def test_removal_after_rename_in_earlier_dated_commit(self, monkeypatch):
         # keep a version of each pkg around so no keywords get dropped
         for cpv in ("cat/aaa-1", "cat/aaa-2", "cat/pkg-1", "cat/pkg-2"):
             self.parent_repo.create_ebuild(cpv, keywords=["~amd64"])
@@ -620,9 +619,10 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         # revbump cat/pkg-2 through a rename, then remove cat/pkg-1 in a later
         # commit carrying an earlier commit time, as a rebase produces; that
         # removal's parent tree no longer holds pkg-2.ebuild
-        with os_environ(GIT_COMMITTER_DATE="2021-02-16T00:20:00"):
+        with monkeypatch.context() as m:
+            m.setenv("GIT_COMMITTER_DATE", "2021-02-16T00:20:00")
             self.child_git_repo.move("cat/pkg/pkg-2.ebuild", "cat/pkg/pkg-2-r1.ebuild")
-        with os_environ(GIT_COMMITTER_DATE="2021-02-16T00:10:00"):
+            m.setenv("GIT_COMMITTER_DATE", "2021-02-16T00:10:00")
             self.child_git_repo.remove("cat/pkg/pkg-1.ebuild", msg="cat/pkg: remove 1")
 
         self.init_check()
