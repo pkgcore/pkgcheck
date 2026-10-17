@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from functools import total_ordering
 
 from pkgcore.ebuild import atom, cpv
+from pkgcore.ebuild.errors import MalformedAtom
 from snakeoil import klass
 
 
@@ -38,11 +39,18 @@ class RawCPV:
     def unversioned_atom(self):
         return atom.atom(self.key)
 
+    def _sort_key(self):
+        """Sort by version, with malformed names after the valid ones."""
+        try:
+            return (0, self.versioned_atom, "")
+        except MalformedAtom:
+            return (1, None, str(self))
+
     def __lt__(self, other):
-        return self.versioned_atom < other.versioned_atom
+        return self._sort_key() < other._sort_key()
 
     def __eq__(self, other):
-        return self.versioned_atom == other.versioned_atom
+        return self._sort_key() == other._sort_key()
 
     def __str__(self):
         if self.fullver:
@@ -51,7 +59,7 @@ class RawCPV:
 
     def __repr__(self):
         address = f"@{id(self):#8x}"
-        return f"<{self.__class__.__name__} cpv={self.versioned_atom.cpvstr!r} {address}>"
+        return f"<{self.__class__.__name__} cpv={str(self)!r} {address}>"
 
 
 @total_ordering

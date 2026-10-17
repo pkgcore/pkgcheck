@@ -3,6 +3,16 @@ Release Notes
 =============
 
 -----------------------------
+pkgcheck 0.10.49 (unreleased)
+-----------------------------
+
+**Fixes:**
+
+- ``pkgcheck scan``: no longer crashes on a package directory with a misnamed
+  ebuild or invalid version next to other ebuilds, and reports MismatchedPN or
+  InvalidPN instead (Arthur Zamarin)
+
+-----------------------------
 pkgcheck 0.10.48 (2026-10-08)
 -----------------------------
 
