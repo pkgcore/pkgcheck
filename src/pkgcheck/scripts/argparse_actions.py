@@ -250,6 +250,7 @@ class ScopeArgs(arghparse.CommaSeparatedNegations):
                 c for c in objects.CHECKS.values() if c.scope in disabled
             )
 
+        namespace.disabled_scopes = frozenset(disabled)
         setattr(namespace, self.dest, frozenset(enabled))
 
 
@@ -316,10 +317,15 @@ class KeywordArgs(arghparse.CommaSeparatedNegations):
             }
         # restrict enabled checks if none have been selected
         if not namespace.selected_checks:
-            namespace.enabled_checks = set()
-            for check in objects.CHECKS.values():
-                if namespace.filtered_keywords.intersection(check.known_results):
-                    namespace.enabled_checks.add(check)
+            enabled_scopes = namespace.selected_scopes
+            disabled_scopes = getattr(namespace, "disabled_scopes", frozenset())
+            namespace.enabled_checks = {
+                check
+                for check in objects.CHECKS.values()
+                if namespace.filtered_keywords.intersection(check.known_results)
+                and (not enabled_scopes or check.scope in enabled_scopes)
+                and check.scope not in disabled_scopes
+            }
 
         # check if experimental profiles are required for explicitly selected keywords
         for r in namespace.filtered_keywords:

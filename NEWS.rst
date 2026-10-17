@@ -15,6 +15,9 @@ pkgcheck 0.10.49 (unreleased)
 - ``pkgcheck scan --net``: an unexpected error in a network check now shows
   its traceback instead of ``NoneType: None`` (Arthur Zamarin)
 
+- ``pkgcheck scan -k``: no longer drops the ``-s``/``--scopes`` selection, so
+  ``-s repo -k error`` runs only repo checks (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.48 (2026-10-08)
 -----------------------------

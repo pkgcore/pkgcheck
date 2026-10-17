@@ -52,6 +52,14 @@ class TestPkgcheckScanParseArgs:
         assert options.enabled_checks
         assert checks_mod.pkgdir.PkgDirCheck not in options.enabled_checks
 
+    def test_keywords_keep_scopes(self, tool):
+        options, _ = tool.parse_args(["scan", "-s", "repo", "-k", "error"])
+        assert options.enabled_checks
+        assert {c.scope for c in options.enabled_checks} == {base.repo_scope}
+        options, _ = tool.parse_args(["scan", "-s=-repo", "-k", "error"])
+        assert options.enabled_checks
+        assert base.repo_scope not in {c.scope for c in options.enabled_checks}
+
     def test_targets(self, tool):
         options, _ = tool.parse_args(["scan", "dev-util/foo"])
         assert list(options.restrictions) == [(base.package_scope, atom.atom("dev-util/foo"))]
