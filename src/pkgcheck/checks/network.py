@@ -181,7 +181,7 @@ class _UrlCheck(abc.ABC, NetworkCheck):
         exc = future.exception()
         if exc is not None:
             # traceback can't be pickled so serialize it
-            tb = traceback.format_exc()
+            tb = "".join(traceback.format_exception(exc))
             # return exceptions that occurred in threads
             self.results_q.put(tb)
             return
@@ -400,7 +400,7 @@ class PyPIAttestationAvailableCheck(NetworkCheck):
         exc = future.exception()
         if exc is not None:
             # traceback can't be pickled so serialize it
-            tb = traceback.format_exc()
+            tb = "".join(traceback.format_exception(exc))
             # return exceptions that occurred in threads
             self.results_q.put(tb)
             return

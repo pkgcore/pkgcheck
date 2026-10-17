@@ -12,6 +12,9 @@ pkgcheck 0.10.49 (unreleased)
   ebuild or invalid version next to other ebuilds, and reports MismatchedPN or
   InvalidPN instead (Arthur Zamarin)
 
+- ``pkgcheck scan --net``: an unexpected error in a network check now shows
+  its traceback instead of ``NoneType: None`` (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.48 (2026-10-08)
 -----------------------------

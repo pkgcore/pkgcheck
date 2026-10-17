@@ -10,6 +10,7 @@ import pytest
 from snakeoil.formatters import PlainTextFormatter
 
 from pkgcheck import objects, reporters, scan
+from pkgcheck.base import PkgcheckUserException
 from pkgcheck.checks import NetworkCheck
 from pkgcheck.checks.network import DeadUrl, FetchablesUrlCheck, HomepageUrlCheck
 from pkgcheck.packages import RawCPV
@@ -95,6 +96,13 @@ class TestNetworkChecks:
                     error.append(f"expected:\n{expected}")
                     error.append(f"got:\n{rendered_results}")
                     pytest.fail("\n".join(error))
+
+    def test_check_error_keeps_traceback(self):
+        args = ["-c", "HomepageUrlCheck", "-k", "DeadUrl", "HomepageUrlCheck/ftp-DeadUrl"]
+        with patch("pkgcheck.checks.network.urllib.request.urlopen") as urlopen:
+            urlopen.side_effect = ValueError("ftp exploded")
+            with pytest.raises(PkgcheckUserException, match="ValueError: ftp exploded"):
+                list(self.scan(self.scan_args + args))
 
     @pytest.mark.parametrize(
         "check, result",
