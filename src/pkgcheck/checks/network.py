@@ -207,13 +207,16 @@ class _UrlCheck(abc.ABC, NetworkCheck):
 
         Note that this tries to avoid hitting the network for the same URL
         twice using a mapping from requested URLs to future objects, adding
-        result-checking callbacks to the futures of existing URLs.
+        result-checking callbacks to the futures of existing URLs.  Futures are
+        keyed by verification method too, so an https:// probe for an http://
+        URL isn't mistaken for a check of the https:// URL itself.
         """
-        future = futures.get(url)
+        key = (func.__name__, url)
+        future = futures.get(key)
         if future is None:
             future = executor.submit(func, attr, url, **kwargs)
             future.add_done_callback(partial(self.task_done, None, None))
-            futures[url] = future
+            futures[key] = future
         else:
             future.add_done_callback(partial(self.task_done, kwargs["pkg"], attr))
 
@@ -234,7 +237,7 @@ class _UrlCheck(abc.ABC, NetworkCheck):
             if url.startswith("http://")
         )
         for attr, orig_url, url in http_to_https_urls:
-            future = futures[orig_url]
+            future = futures[(self._http_check.__name__, orig_url)]
             self._schedule_check(
                 self._https_available_check,
                 attr,
@@ -421,11 +424,12 @@ class PyPIAttestationAvailableCheck(NetworkCheck):
         twice using a mapping from requested URLs to future objects, adding
         result-checking callbacks to the futures of existing URLs.
         """
-        future = futures.get(url)
+        key = (self._provenance_check.__name__, url)
+        future = futures.get(key)
         if future is None:
             future = executor.submit(self._provenance_check, filename, url, **kwargs)
             future.add_done_callback(partial(self.task_done, None, None))
-            futures[url] = future
+            futures[key] = future
         else:
             future.add_done_callback(partial(self.task_done, kwargs["pkg"], filename))
 

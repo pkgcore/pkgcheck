@@ -21,6 +21,10 @@ pkgcheck 0.10.49 (unreleased)
 - SuspiciousSrcUriChange: no longer reported when a SRC_URI only switches from
   ``http://`` to ``https://`` (Arthur Zamarin)
 
+- HttpsUrlAvailable, DeadUrl: a package using an ``https://`` URL that another
+  package uses as ``http://`` is no longer told https is available, and is
+  reported as DeadUrl when that URL is dead (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.48 (2026-10-08)
 -----------------------------

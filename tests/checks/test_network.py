@@ -1,17 +1,22 @@
 import importlib.util
 import os
+import queue
 import tempfile
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from functools import partial
 from operator import attrgetter
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
+from pkgcore.test.misc import FakePkg
 from snakeoil.formatters import PlainTextFormatter
 
 from pkgcheck import objects, reporters, scan
 from pkgcheck.base import PkgcheckUserException
-from pkgcheck.checks import NetworkCheck
+from pkgcheck.checks import NetworkCheck, network
 from pkgcheck.checks.network import DeadUrl, FetchablesUrlCheck, HomepageUrlCheck
 from pkgcheck.packages import RawCPV
 
@@ -140,3 +145,37 @@ class TestNetworkChecks:
                 else:
                     assert results == [expected_result]
                     assert self._render_results(results), "failed rendering results"
+
+
+@pytest.mark.parametrize("https_alive", (True, False))
+def test_https_probe_not_shared_with_https_url(https_alive):
+    """An http:// URL's https probe and another package's https:// URL are separate checks."""
+
+    @contextmanager
+    def get(url, **kwargs):
+        if url.startswith("https://") and not https_alive:
+            raise network.RequestError(None, "dead https")
+        yield SimpleNamespace(history=[])
+
+    check = object.__new__(HomepageUrlCheck)
+    check.session = SimpleNamespace(get=get)
+    check.results_q = queue.SimpleQueue()
+    futures = {}
+    http_pkg = FakePkg("cat/http-1", data={"HOMEPAGE": "http://foo.org/"})
+    https_pkg = FakePkg("cat/https-1", data={"HOMEPAGE": "https://foo.org/"})
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        for pkg in (http_pkg, https_pkg):
+            check.schedule(pkg, executor, futures)
+
+    results = []
+    while not check.results_q.empty():
+        results.extend(check.results_q.get())
+    if https_alive:
+        expected = [
+            network.HttpsUrlAvailable(
+                "HOMEPAGE", "http://foo.org/", "https://foo.org/", pkg=http_pkg
+            )
+        ]
+    else:
+        expected = [network.DeadUrl("HOMEPAGE", "https://foo.org/", "dead https", pkg=https_pkg)]
+    assert results == expected
