@@ -593,7 +593,9 @@ class GitPkgCommitsCheck(GentooRepoCheck, GitCommitsCheck):
             new_checksum, (new_expand, new_uri) = new_checksums[filename]
             if old_checksum != new_checksum:
                 yield SrcUriChecksumChange(filename, pkg=pkg)
-            elif old_expand != new_expand:
+            elif old_expand != new_expand and not (
+                old_expand.startswith("http://") and new_expand == f"https://{old_expand[7:]}"
+            ):
                 yield SuspiciousSrcUriChange(old_uri, new_uri, filename, pkg=pkg)
 
     def feed(self, pkgset: list[git.GitPkgChange]):

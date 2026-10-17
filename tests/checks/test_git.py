@@ -825,16 +825,18 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         expected = git_mod.EAPIChangeWithoutRevbump(pkg=CPV("cat/pkg-0"))
         assert r == expected
 
+    _distfile = (
+        "DIST",
+        "pkgcheck-1.tar.gz",
+        "549746",
+        "BLAKE2B",
+        "72ed97d93674ffd311978d03ad3738494a752bf1b02bea5eaaaf1b066c48e8c9ec5f82b79baeeabf3e56e618c76614ee6179b7115d1d875364ac6e3fbc3c6028",
+        "SHA512",
+        "6a8c135ca44ccbfe15548bd396aba9448c29f60147920b18b8be5aa5fcd1200e0b75bc5de50fc7892ad5460ddad1e7d28a7e44025bdc581a518d136eda8b0df2",
+    )
+
     def test_src_uri_change(self):
-        distfile = [
-            "DIST",
-            "pkgcheck-1.tar.gz",
-            "549746",
-            "BLAKE2B",
-            "72ed97d93674ffd311978d03ad3738494a752bf1b02bea5eaaaf1b066c48e8c9ec5f82b79baeeabf3e56e618c76614ee6179b7115d1d875364ac6e3fbc3c6028",
-            "SHA512",
-            "6a8c135ca44ccbfe15548bd396aba9448c29f60147920b18b8be5aa5fcd1200e0b75bc5de50fc7892ad5460ddad1e7d28a7e44025bdc581a518d136eda8b0df2",
-        ]
+        distfile = self._distfile
         old_url = f"mirror://gentoo/{distfile[1]}"
         new_url = f"https://pkgcore.github.io/pkgcheck/{distfile[1]}"
         with open(pjoin(self.parent_repo.path, "profiles/thirdpartymirrors"), "a") as f:
@@ -856,6 +858,29 @@ class TestGitPkgCommitsCheck(ReportTestCase):
         self.child_git_repo.add_all("cat/pkg: update HOMEPAGE", signoff=True)
         self.init_check()
         self.assertNoReport(self.check, self.source)
+
+    @pytest.mark.parametrize(
+        ("old_scheme", "new_scheme", "reported"),
+        (("http", "https", False), ("https", "http", True)),
+    )
+    def test_src_uri_scheme_change(self, old_scheme, new_scheme, reported):
+        old_url = f"{old_scheme}://pkgcore.github.io/pkgcheck/{self._distfile[1]}"
+        new_url = f"{new_scheme}://pkgcore.github.io/pkgcheck/{self._distfile[1]}"
+        self.parent_repo.create_ebuild("cat/pkg-1", src_uri=old_url)
+        with open(pjoin(self.parent_repo.path, "cat/pkg/Manifest"), "w") as f:
+            f.write(" ".join(self._distfile) + "\n")
+        self.parent_git_repo.add_all("cat/pkg: add 1", signoff=True)
+        self.child_git_repo.run(["git", "pull", "origin", "main"])
+        self.child_repo.create_ebuild("cat/pkg-1", src_uri=new_url)
+        self.child_git_repo.add_all("cat/pkg: change SRC_URI", signoff=True)
+        self.init_check()
+        if reported:
+            r = self.assertReport(self.check, self.source)
+            assert r == git_mod.SuspiciousSrcUriChange(
+                old_url, new_url, self._distfile[1], pkg=CP("cat/pkg")
+            )
+        else:
+            self.assertNoReport(self.check, self.source)
 
     def test_modified_added_file(self):
         self.child_repo.create_ebuild("cat/pkg-0", homepage="https://gentoo.org")

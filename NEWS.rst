@@ -18,6 +18,9 @@ pkgcheck 0.10.49 (unreleased)
 - ``pkgcheck scan -k``: no longer drops the ``-s``/``--scopes`` selection, so
   ``-s repo -k error`` runs only repo checks (Arthur Zamarin)
 
+- SuspiciousSrcUriChange: no longer reported when a SRC_URI only switches from
+  ``http://`` to ``https://`` (Arthur Zamarin)
+
 -----------------------------
 pkgcheck 0.10.48 (2026-10-08)
 -----------------------------
