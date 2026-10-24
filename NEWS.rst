@@ -3,7 +3,7 @@ Release Notes
 =============
 
 -----------------------------
-pkgcheck 0.10.49 (unreleased)
+pkgcheck 0.10.49 (2026-10-24)
 -----------------------------
 
 - Requires pkgcore 0.12.48 or newer (Arthur Zamarin)
