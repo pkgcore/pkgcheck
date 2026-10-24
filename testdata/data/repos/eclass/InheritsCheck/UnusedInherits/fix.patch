@@ -9,3 +9,14 @@ diff -Naur eclass/InheritsCheck/UnusedInherits/UnusedInherits-0.ebuild fixed/Inh
  
  DESCRIPTION="Ebuild inheriting an unused eclass"
  HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+diff -Naur eclass/InheritsCheck/UnusedInherits/UnusedInherits-4.ebuild fixed/InheritsCheck/UnusedInherits/UnusedInherits-4.ebuild
+--- eclass/InheritsCheck/UnusedInherits/UnusedInherits-4.ebuild
++++ fixed/InheritsCheck/UnusedInherits/UnusedInherits-4.ebuild
+@@ -1,7 +1,5 @@
+ EAPI=8
+ 
+-inherit eapi-conditional
+-
+ DESCRIPTION="Ebuild calling a function its eclass defines only in EAPI 7"
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ LICENSE="BSD"

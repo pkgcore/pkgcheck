@@ -956,6 +956,8 @@ class InheritsCheck(Check):
         self.eclass_cache = eclass_addon.eclasses
         self.internals = {}
         self.exported = {}
+        self.eapi_missing_funcs = {}
+        self.eapi_limited_funcs = set()
 
         # register internal and exported funcs/vars for all eclasses
         for eclass, eclass_obj in self.eclass_cache.items():
@@ -964,6 +966,12 @@ class InheritsCheck(Check):
             )
             for name in eclass_obj.exported_function_names:
                 self.exported.setdefault(name, set()).add(eclass)
+            for eapi in eclass_obj.supported_eapis:
+                if missing := eclass_obj.exported_function_names - (
+                    eclass_obj.eapi_exported_function_names(eapi)
+                ):
+                    self.eapi_missing_funcs[(eclass, eapi)] = missing
+                    self.eapi_limited_funcs.update(missing)
             # Don't use all exported vars in order to avoid
             # erroneously exported temporary loop variables that
             # should be flagged via EclassDocMissingVar.
@@ -1003,6 +1011,13 @@ class InheritsCheck(Check):
         except KeyError:
             # function or variable not exported by any eclass
             return
+
+        # skip eclasses that only export it for other EAPIs
+        if export in self.eapi_limited_funcs:
+            eapi = str(pkg.eapi)
+            eclass = [x for x in eclass if export not in self.eapi_missing_funcs.get((x, eapi), ())]
+            if not eclass:
+                return
 
         # last exporting eclass takes precedence for multiple inheritance
         if len(eclass) > 1:

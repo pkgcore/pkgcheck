@@ -6,6 +6,8 @@ Release Notes
 pkgcheck 0.10.49 (unreleased)
 -----------------------------
 
+- Requires pkgcore 0.12.48 or newer (Arthur Zamarin)
+
 **Fixes:**
 
 - ``pkgcheck scan``: no longer crashes on a package directory with a misnamed
@@ -24,6 +26,9 @@ pkgcheck 0.10.49 (unreleased)
 - HttpsUrlAvailable, DeadUrl: a package using an ``https://`` URL that another
   package uses as ``http://`` is no longer told https is available, and is
   reported as DeadUrl when that URL is dead (Arthur Zamarin)
+
+- UnusedInherits, MissingInherits: calling a function an eclass defines only
+  for other EAPIs no longer counts as using that eclass (Arthur Zamarin)
 
 -----------------------------
 pkgcheck 0.10.48 (2026-10-08)

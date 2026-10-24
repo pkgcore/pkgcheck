@@ -1,1 +1,2 @@
 {"__class__": "UnusedInherits", "category": "InheritsCheck", "package": "UnusedInherits", "version": "0", "eclasses": ["unused"]}
+{"__class__": "UnusedInherits", "category": "InheritsCheck", "package": "UnusedInherits", "version": "4", "eclasses": ["eapi-conditional"]}
