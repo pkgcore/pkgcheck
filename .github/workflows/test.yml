@@ -81,7 +81,7 @@ jobs:
       run: sed -e '/^requires-python/!s/~=/==/' -i pyproject.toml
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
@@ -99,7 +99,7 @@ jobs:
 
     - name: Submit code coverage to codecov
       if: ${{ matrix.os == 'ubuntu-latest' }}
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v7
       with:
         files: ./coverage.xml
 
@@ -108,13 +108,13 @@ jobs:
     if: inputs.disable-format-check == ''
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: Install bash 5.3
       uses: pkgcore/gh-actions/bash-5.3@main
 
     - name: Set up Python 3
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: '3.x'
 
@@ -126,7 +126,7 @@ jobs:
     - name: Run linting tools
       run: pylint --exit-zero src/pkgcheck
 
-    - uses: astral-sh/ruff-action@v3
+    - uses: astral-sh/ruff-action@v4.1.0
       with:
         args: "check --diff"
 
@@ -135,7 +135,7 @@ jobs:
     if: inputs.disable-format-check == ''
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
-    - uses: astral-sh/ruff-action@v3
+      uses: actions/checkout@v7
+    - uses: astral-sh/ruff-action@v4.1.0
       with:
         args: "format --check --diff"
