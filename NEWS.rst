@@ -11,6 +11,10 @@ pkgcheck 0.10.50 (unreleased)
 - RestrictTestCheck: flag ``UnrestrictedTestProperties``, ``test_*``
   properties used without ``RESTRICT=test`` (Arthur Zamarin, #793)
 
+- RestrictTestCheck: flag ``UnguardedTestProperties``, ``test_*`` properties
+  not conditional on ``USE=test``, which run tests with ``USE=-test`` when
+  allowed by ``ALLOW_TEST`` (Arthur Zamarin, #792)
+
 -----------------------------
 pkgcheck 0.10.49 (2026-10-24)
 -----------------------------

@@ -1918,10 +1918,35 @@ class UnrestrictedTestProperties(results.VersionResult, results.Warning):
         return f'PROPERTIES="{" ".join(self.properties)}" used without RESTRICT=test'
 
 
+class UnguardedTestProperties(results.VersionResult, results.Warning):
+    """``test_*`` properties not conditional on the ``test`` USE flag.
+
+    The ``test_*`` properties override the test restriction, including
+    ``RESTRICT="!test? ( test )"``, so with ``ALLOW_TEST`` set the tests are
+    run even with ``USE=-test``. To keep the conditional restriction
+    effective, make the properties conditional on the ``test`` flag, e.g.
+    ``PROPERTIES="test? ( test_network )"``.
+    """
+
+    def __init__(self, properties, **kwargs):
+        super().__init__(**kwargs)
+        self.properties = tuple(properties)
+
+    @property
+    def desc(self):
+        properties = " ".join(self.properties)
+        return (
+            f'PROPERTIES="{properties}" masks test restriction with USE=-test, '
+            f'use PROPERTIES="test? ( {properties} )"'
+        )
+
+
 class RestrictTestCheck(Check):
     """Check test related RESTRICT and PROPERTIES settings."""
 
-    known_results = frozenset([MissingTestRestrict, UnrestrictedTestProperties])
+    known_results = frozenset(
+        [MissingTestRestrict, UnrestrictedTestProperties, UnguardedTestProperties]
+    )
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -1929,6 +1954,7 @@ class RestrictTestCheck(Check):
         self.test_restrict = packages.Conditional(
             "use", values.ContainmentMatch("test", negate=True), ("test",)
         )
+        self.test_cond = values.ContainmentMatch("test")
 
     def feed(self, pkg):
         # conditional is unnecessary if it already exists or is in unconditional form
@@ -1941,15 +1967,20 @@ class RestrictTestCheck(Check):
             conds for r, conds in DepSet.find_cond_nodes(pkg.restrict, True) if r == "test"
         ]
         unrestricted = set()
+        unguarded = set()
         for prop, conds in DepSet.find_cond_nodes(pkg.properties, True):
             if not prop.startswith("test_"):
                 continue
             # RESTRICT=test must be enabled whenever the property is
             if not any(all(c in conds for c in r) for r in restrict_conds):
                 unrestricted.add(prop)
+            if "test" in pkg.iuse_stripped and self.test_cond not in conds:
+                unguarded.add(prop)
 
         if unrestricted:
             yield UnrestrictedTestProperties(sorted(unrestricted), pkg=pkg)
+        if unguarded:
+            yield UnguardedTestProperties(sorted(unguarded), pkg=pkg)
 
 
 class MissingUnpackerDep(results.VersionResult, results.Warning):

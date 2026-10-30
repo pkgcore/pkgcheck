@@ -800,6 +800,32 @@ class TestRestrictTestCheck(misc.ReportTestCase):
             assert r.properties == tuple(expected.split())
             assert r.desc == f'PROPERTIES="{expected}" used without RESTRICT=test'
 
+    def test_unguarded_test_properties(self):
+        data = (
+            ("test", "test", "test_network", "test_network"),
+            ("+test", "!test? ( test ) test", "test_privileged", "test_privileged"),
+            ("foo test", "test", "foo? ( test_network )", "test_network"),
+            ("test", "test", "!test? ( test_network ) live", "test_network"),
+            ("test", "test", "test_network test? ( test_privileged )", "test_network"),
+        )
+        for iuse, restrict, properties, expected in data:
+            r = self.assertReport(self.check, self.mk_pkg(iuse, restrict, properties))
+            assert isinstance(r, metadata.UnguardedTestProperties)
+            assert r.properties == tuple(expected.split())
+            assert r.desc == (
+                f'PROPERTIES="{expected}" masks test restriction with USE=-test, '
+                f'use PROPERTIES="test? ( {expected} )"'
+            )
+
+    def test_unrestricted_and_unguarded_test_properties(self):
+        reports = self.assertReports(
+            self.check, self.mk_pkg("test", "!test? ( test )", "test_network")
+        )
+        assert sorted(type(r).__name__ for r in reports) == [
+            "UnguardedTestProperties",
+            "UnrestrictedTestProperties",
+        ]
+
 
 class TestLicenseCheck(use_based(), misc.ReportTestCase):
     check_kls = metadata.LicenseCheck

@@ -1,0 +1,7 @@
+DESCRIPTION="Ebuild with test_* PROPERTIES not conditional on USE=test"
+HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+LICENSE="BSD"
+SLOT="0"
+IUSE="test"
+RESTRICT="test"
+PROPERTIES="test_network"

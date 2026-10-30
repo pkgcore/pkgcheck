@@ -1,0 +1,9 @@
+diff -Naur standalone/RestrictTestCheck/UnguardedTestProperties/UnguardedTestProperties-0.ebuild fixed/RestrictTestCheck/UnguardedTestProperties/UnguardedTestProperties-0.ebuild
+--- standalone/RestrictTestCheck/UnguardedTestProperties/UnguardedTestProperties-0.ebuild	2026-10-30 12:43:01.023912428 +0200
++++ fixed/RestrictTestCheck/UnguardedTestProperties/UnguardedTestProperties-0.ebuild	2026-10-30 12:43:01.033147686 +0200
+@@ -4,4 +4,4 @@
+ SLOT="0"
+ IUSE="test"
+ RESTRICT="test"
+-PROPERTIES="test_network"
++PROPERTIES="test? ( test_network )"
