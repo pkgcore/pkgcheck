@@ -6,6 +6,7 @@ _ruby_implementation_depend() {
 		ruby30) rubypn="dev-lang/ruby" rubyslot=":3.0" ;;
 		ruby31) rubypn="dev-lang/ruby" rubyslot=":3.1" ;;
 		ruby32) rubypn="dev-lang/ruby" rubyslot=":3.2" ;;
+		ruby33) rubypn="dev-lang/ruby" rubyslot=":3.3" ;;
 		*) die "$1: unknown Ruby implementation"
 	esac
 

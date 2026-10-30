@@ -1,6 +1,6 @@
 EAPI=7
 
-USE_RUBY="ruby27 ruby30 ruby31 ruby32"
+USE_RUBY="ruby27 ruby30 ruby31 ruby32 ruby33"
 
 inherit ruby-ng
 

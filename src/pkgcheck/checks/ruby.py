@@ -5,7 +5,7 @@ from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
 from .. import results
-from . import Check
+from . import Check, base_masked_targets
 
 IUSE_PREFIX = "ruby_targets_"
 
@@ -46,6 +46,7 @@ class RubyCompatCheck(Check):
             if target[len(IUSE_PREFIX) :].startswith("ruby"):
                 targets.append(target[len(IUSE_PREFIX) :])
         self.multi_targets = tuple(sorted(targets, key=self.sorter))
+        self.masked_targets = base_masked_targets(repo, IUSE_PREFIX)
 
     def ruby_deps(self, deps, prefix):
         for dep in (x for x in deps if x.use):
@@ -88,6 +89,7 @@ class RubyCompatCheck(Check):
         targets = set(
             itertools.takewhile(lambda x: x != latest_target, reversed(self.multi_targets))
         )
+        targets.difference_update(self.masked_targets)
 
         if targets:
             try:

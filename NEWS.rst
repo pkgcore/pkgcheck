@@ -15,6 +15,11 @@ pkgcheck 0.10.50 (unreleased)
   not conditional on ``USE=test``, which run tests with ``USE=-test`` when
   allowed by ``ALLOW_TEST`` (Arthur Zamarin, #792)
 
+**Fixes:**
+
+- PythonCompatUpdate, RubyCompatUpdate: no longer suggest targets masked in
+  ``profiles/base/use.mask`` (Arthur Zamarin, #791)
+
 -----------------------------
 pkgcheck 0.10.49 (2026-10-24)
 -----------------------------

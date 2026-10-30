@@ -1,9 +1,11 @@
 """Core check classes."""
 
+import os
 from collections import defaultdict
 from functools import total_ordering
 
 from pkgcore import fetch
+from pkgcore.ebuild.profiles import ProfileError, ProfileNode
 from snakeoil import klass
 from snakeoil.strings import pluralism
 
@@ -149,6 +151,25 @@ class MirrorsCheck(Check):
             for m in f.uri.visit_mirrors(treat_default_as_mirror=False):
                 mirrors.append(m[0].mirror_name)
         return set(mirrors)
+
+
+def base_masked_targets(repo, *prefixes):
+    """USE_EXPAND targets masked in ``profiles/base/use.mask`` of a repo or its masters."""
+    targets = set()
+    for tree in repo.trees:
+        try:
+            use_mask = ProfileNode(os.path.join(tree.config.profiles_base, "base")).use_mask
+        except ProfileError:
+            continue
+        for entries in use_mask.render_to_dict().values():
+            for _, _disabled, enabled in entries:
+                targets.update(
+                    flag.removeprefix(prefix)
+                    for flag in enabled
+                    for prefix in prefixes
+                    if flag.startswith(prefix)
+                )
+    return frozenset(targets)
 
 
 class SkipCheck(base.PkgcheckUserException):

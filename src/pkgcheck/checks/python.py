@@ -14,7 +14,7 @@ from snakeoil.sequences import iflatten_instance
 from snakeoil.strings import pluralism
 
 from .. import addons, bash, results, sources
-from . import Check
+from . import Check, base_masked_targets
 
 # NB: distutils-r1 inherits one of the first two
 ECLASSES = frozenset(["python-r1", "python-single-r1", "python-any-r1"])
@@ -767,6 +767,8 @@ class PythonCompatCheck(Check):
         targets = (x for x in targets if not x.endswith("t"))
         single_targets = tuple(sorted(targets, key=self.sorter))
 
+        self.masked_targets = base_masked_targets(repo, IUSE_PREFIX, IUSE_PREFIX_S)
+
         self.params = {
             "python-r1": (multi_targets, IUSE_PREFIX, None),
             "python-single-r1": (single_targets, (IUSE_PREFIX, IUSE_PREFIX_S), None),
@@ -831,6 +833,8 @@ class PythonCompatCheck(Check):
             targets.update(takewhile(lambda x: x != latest_pypy, reversed(self.pypy_targets)))
         except ValueError:
             ...
+
+        targets.difference_update(self.masked_targets)
 
         if targets:
             try:
