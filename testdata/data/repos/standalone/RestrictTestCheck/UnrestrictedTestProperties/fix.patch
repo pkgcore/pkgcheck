@@ -1,0 +1,9 @@
+diff -Naur standalone/RestrictTestCheck/UnrestrictedTestProperties/UnrestrictedTestProperties-0.ebuild fixed/RestrictTestCheck/UnrestrictedTestProperties/UnrestrictedTestProperties-0.ebuild
+--- standalone/RestrictTestCheck/UnrestrictedTestProperties/UnrestrictedTestProperties-0.ebuild	2026-10-30 12:43:01.020861438 +0200
++++ fixed/RestrictTestCheck/UnrestrictedTestProperties/UnrestrictedTestProperties-0.ebuild	2026-10-30 12:43:01.029814405 +0200
+@@ -2,4 +2,5 @@
+ HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+ LICENSE="BSD"
+ SLOT="0"
++RESTRICT="test"
+ PROPERTIES="test_network"

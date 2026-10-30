@@ -735,9 +735,10 @@ class TestRestrictTestCheck(misc.ReportTestCase):
     check_kls = metadata.RestrictTestCheck
     check = metadata.RestrictTestCheck(None)
 
-    def mk_pkg(self, iuse="", restrict=""):
+    def mk_pkg(self, iuse="", restrict="", properties=""):
         return misc.FakePkg(
-            "dev-util/diffball-2.7.1", data={"EAPI": "8", "IUSE": iuse, "RESTRICT": restrict}
+            "dev-util/diffball-2.7.1",
+            data={"EAPI": "8", "IUSE": iuse, "RESTRICT": restrict, "PROPERTIES": properties},
         )
 
     def test_empty_restrict(self):
@@ -771,6 +772,33 @@ class TestRestrictTestCheck(misc.ReportTestCase):
             r = self.assertReport(self.check, self.mk_pkg(iuse=iuse, restrict=restrict))
             assert isinstance(r, metadata.MissingTestRestrict)
             assert 'RESTRICT="!test? ( test )"' in str(r)
+
+    def test_test_properties(self):
+        data = (
+            ("", "test", "test_network"),
+            ("", "test", "test_network test_privileged live"),
+            ("test", "test", "test? ( test_network )"),
+            ("test", "!test? ( test ) test", "test? ( test_network test_privileged )"),
+            ("root-tests", "root-tests? ( test )", "root-tests? ( test_privileged )"),
+            ("foo", "test", "foo? ( test_network )"),
+            ("foo bar", "test", "foo? ( test_network ) bar? ( test_privileged )"),
+            ("test", "test", "live"),
+        )
+        for iuse, restrict, properties in data:
+            self.assertNoReport(self.check, self.mk_pkg(iuse, restrict, properties))
+
+    def test_unrestricted_test_properties(self):
+        data = (
+            ("", "", "test_network", "test_network"),
+            ("", "fetch", "test_privileged test_network", "test_network test_privileged"),
+            ("foo", "foo? ( test )", "test_network", "test_network"),
+            ("foo bar", "foo? ( test )", "bar? ( test_privileged )", "test_privileged"),
+        )
+        for iuse, restrict, properties, expected in data:
+            r = self.assertReport(self.check, self.mk_pkg(iuse, restrict, properties))
+            assert isinstance(r, metadata.UnrestrictedTestProperties)
+            assert r.properties == tuple(expected.split())
+            assert r.desc == f'PROPERTIES="{expected}" used without RESTRICT=test'
 
 
 class TestLicenseCheck(use_based(), misc.ReportTestCase):

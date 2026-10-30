@@ -10,6 +10,7 @@ from operator import attrgetter
 from pkgcore.ebuild import restricts
 from pkgcore.ebuild.atom import atom as atom_cls
 from pkgcore.ebuild.atom import transitive_use_atom
+from pkgcore.ebuild.conditionals import DepSet
 from pkgcore.ebuild.eapi import get_eapi
 from pkgcore.ebuild.misc import sort_keywords
 from pkgcore.fetch import fetchable, unknown_mirror
@@ -1899,10 +1900,28 @@ class MissingTestRestrict(results.VersionResult, results.Warning):
         return 'missing RESTRICT="!test? ( test )" with IUSE=test'
 
 
-class RestrictTestCheck(Check):
-    """Check whether packages specify RESTRICT="!test? ( test )"."""
+class UnrestrictedTestProperties(results.VersionResult, results.Warning):
+    """``test_*`` properties used without ``RESTRICT=test``.
 
-    known_results = frozenset([MissingTestRestrict])
+    The ``test_*`` properties, such as ``test_network``, re-enable restricted
+    tests when the user allows them via ``ALLOW_TEST``. They require
+    ``RESTRICT=test`` to disable the tests when this isn't the case, otherwise
+    the tests are always run.
+    """
+
+    def __init__(self, properties, **kwargs):
+        super().__init__(**kwargs)
+        self.properties = tuple(properties)
+
+    @property
+    def desc(self):
+        return f'PROPERTIES="{" ".join(self.properties)}" used without RESTRICT=test'
+
+
+class RestrictTestCheck(Check):
+    """Check test related RESTRICT and PROPERTIES settings."""
+
+    known_results = frozenset([MissingTestRestrict, UnrestrictedTestProperties])
 
     def __init__(self, *args):
         super().__init__(*args)
@@ -1912,15 +1931,25 @@ class RestrictTestCheck(Check):
         )
 
     def feed(self, pkg):
-        if "test" not in pkg.iuse_stripped:
-            return
-
         # conditional is unnecessary if it already exists or is in unconditional form
-        for r in pkg.restrict:
-            if r in ("test", self.test_restrict):
-                return
+        if "test" in pkg.iuse_stripped and not any(
+            r in ("test", self.test_restrict) for r in pkg.restrict
+        ):
+            yield MissingTestRestrict(pkg=pkg)
 
-        yield MissingTestRestrict(pkg=pkg)
+        restrict_conds = [
+            conds for r, conds in DepSet.find_cond_nodes(pkg.restrict, True) if r == "test"
+        ]
+        unrestricted = set()
+        for prop, conds in DepSet.find_cond_nodes(pkg.properties, True):
+            if not prop.startswith("test_"):
+                continue
+            # RESTRICT=test must be enabled whenever the property is
+            if not any(all(c in conds for c in r) for r in restrict_conds):
+                unrestricted.add(prop)
+
+        if unrestricted:
+            yield UnrestrictedTestProperties(sorted(unrestricted), pkg=pkg)
 
 
 class MissingUnpackerDep(results.VersionResult, results.Warning):

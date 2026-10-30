@@ -3,6 +3,15 @@ Release Notes
 =============
 
 -----------------------------
+pkgcheck 0.10.50 (unreleased)
+-----------------------------
+
+**New Checks:**
+
+- RestrictTestCheck: flag ``UnrestrictedTestProperties``, ``test_*``
+  properties used without ``RESTRICT=test`` (Arthur Zamarin, #793)
+
+-----------------------------
 pkgcheck 0.10.49 (2026-10-24)
 -----------------------------
 

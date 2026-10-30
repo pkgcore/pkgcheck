@@ -1,0 +1,5 @@
+DESCRIPTION="Ebuild with test_* PROPERTIES without RESTRICT=test"
+HOMEPAGE="https://github.com/pkgcore/pkgcheck"
+LICENSE="BSD"
+SLOT="0"
+PROPERTIES="test_network"
