@@ -1,0 +1,36 @@
+diff -Naur gentoo/PackageMetadataXmlCheck/ProxyWithoutProxied/metadata.xml fixed/PackageMetadataXmlCheck/ProxyWithoutProxied/metadata.xml
+--- gentoo/PackageMetadataXmlCheck/ProxyWithoutProxied/metadata.xml	2026-11-04 23:40:14.881122652 -0500
++++ fixed/PackageMetadataXmlCheck/ProxyWithoutProxied/metadata.xml	2026-11-04 23:40:14.881839371 -0500
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+ <pkgmetadata>
+-	<maintainer type="person">
++	<maintainer type="person" proxied="proxy">
+ 		<email>proxy-maint@gentoo.org</email>
+ 	</maintainer>
+ </pkgmetadata>
+diff -Naur gentoo/PackageMetadataXmlCheck/UnmarkedProxyMaint/metadata.xml fixed/PackageMetadataXmlCheck/UnmarkedProxyMaint/metadata.xml
+--- gentoo/PackageMetadataXmlCheck/UnmarkedProxyMaint/metadata.xml	2026-11-04 23:40:14.881372429 -0500
++++ fixed/PackageMetadataXmlCheck/UnmarkedProxyMaint/metadata.xml	2026-11-04 23:40:14.881904541 -0500
+@@ -4,7 +4,7 @@
+ 	<maintainer type="person" proxied="yes">
+ 		<email>proxied@example.com</email>
+ 	</maintainer>
+-	<maintainer type="person">
++	<maintainer type="person" proxied="proxy">
+ 		<email>proxy-maint@gentoo.org</email>
+ 	</maintainer>
+ </pkgmetadata>
+diff -Naur gentoo/PackageMetadataXmlCheck/UnmarkedProxyMaint2/metadata.xml fixed/PackageMetadataXmlCheck/UnmarkedProxyMaint2/metadata.xml
+--- gentoo/PackageMetadataXmlCheck/UnmarkedProxyMaint2/metadata.xml	2026-11-04 23:40:14.881255522 -0500
++++ fixed/PackageMetadataXmlCheck/UnmarkedProxyMaint2/metadata.xml	2026-11-04 23:40:14.881966081 -0500
+@@ -4,7 +4,7 @@
+ 	<maintainer type="person" proxied="yes">
+ 		<email>proxied@example.com</email>
+ 	</maintainer>
+-	<maintainer type="person" proxied="no">
++	<maintainer type="person" proxied="proxy">
+ 		<email>proxy-maint@gentoo.org</email>
+ 	</maintainer>
+ 	<maintainer type="person" proxied="proxy">
