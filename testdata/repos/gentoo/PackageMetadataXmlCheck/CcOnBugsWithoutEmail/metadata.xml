@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<maintainer type="person">
+		<email>dev@gentoo.org</email>
+	</maintainer>
+	<upstream>
+		<maintainer cc-on-bugs="yes">
+			<name>Upstream Developer</name>
+			<email>upstream@example.com</email>
+		</maintainer>
+		<maintainer cc-on-bugs="yes">
+			<name>Other Upstream Developer</name>
+		</maintainer>
+	</upstream>
+</pkgmetadata>
