@@ -1,2 +1,3 @@
 {"__class__": "MaintainerWithoutProxy", "category": "PackageMetadataXmlCheck", "package": "MaintainerWithoutProxy", "filename": "metadata.xml", "maintainers": ["non-gentoo-dev@email.com"]}
 {"__class__": "MaintainerWithoutProxy", "category": "PackageMetadataXmlCheck", "package": "MaintainerWithoutProxy2", "filename": "metadata.xml", "maintainers": ["gentoo-dev@gentoo.org"]}
+{"__class__": "MaintainerWithoutProxy", "category": "PackageMetadataXmlCheck", "package": "MaintainerWithoutProxy3", "filename": "metadata.xml", "maintainers": ["proxied@example.com"]}

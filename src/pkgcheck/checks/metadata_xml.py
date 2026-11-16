@@ -105,10 +105,11 @@ class MaintainerNeeded(results.PackageResult, results.Warning):
 class MaintainerWithoutProxy(results.PackageResult, results.Warning):
     """Package has a proxied maintainer without a proxy.
 
-    All package maintainers have non-@gentoo.org e-mail addresses. Most likely,
-    this means that the package is maintained by a proxied maintainer but there
-    is no explicit proxy (developer or project) listed. This means no Gentoo
-    developer will be CC-ed on bug reports, and most likely no developer
+    A maintainer is proxied (``proxied="yes"``, or a non-@gentoo.org e-mail
+    address without the attribute) but none is a proxy (``proxied="proxy"``
+    or ``proxied="maintainer-and-proxy"``, or proxy-maint@gentoo.org without the
+    attribute), which GLEP 67 requires. If no developer is listed either, no
+    Gentoo developer will be CC-ed on bug reports, and most likely none
     oversees the proxied maintainer's activity.
     """
 
@@ -585,8 +586,8 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
                     proxy_map[self._maintainer_proxied_key(m)].append(m)
 
                 # check proxy maintainers
-                if not devs and not proxies:
-                    maintainers = sorted(map(str, pkg.maintainers))
+                if proxied and not proxies:
+                    maintainers = sorted(map(str, proxied))
                     yield MaintainerWithoutProxy(os.path.basename(loc), maintainers, pkg=pkg)
                 elif not proxied and proxies:
                     yield ProxyWithoutProxied(os.path.basename(loc), pkg=pkg)
