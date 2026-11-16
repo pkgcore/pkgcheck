@@ -148,6 +148,10 @@ class UnmarkedProxiedMaintainer(results.PackageResult, results.Warning):
     A maintainer without a @gentoo.org e-mail address cannot push changes
     directly, so should be listed with ``proxied="yes"``. Without the
     attribute, GLEP 67 assumes ``proxied="no"``, which says they can.
+
+    An upstream developer listed only to be CC-ed on bugs is not a Gentoo
+    maintainer. Move them to ``<upstream/>`` with ``cc-on-bugs="yes"``
+    instead, as described in GLEP 68.
     """
 
     def __init__(self, filename, maintainers, **kwargs):
@@ -197,6 +201,28 @@ class NonGentooProxy(results.PackageResult, results.Warning):
         ies = pluralism(self.maintainers, singular="y", plural="ies")
         maintainers = ", ".join(self.maintainers)
         return f"{self.filename}: non-@gentoo.org prox{ies}: {maintainers}"
+
+
+class CcOnBugsWithoutEmail(results.PackageResult, results.Warning):
+    """Package has an upstream maintainer with ``cc-on-bugs="yes"`` but no e-mail.
+
+    An upstream maintainer can only be CC-ed on bugs at an e-mail address,
+    so GLEP 68 requires an ``<email/>`` element when ``cc-on-bugs="yes"``.
+    """
+
+    def __init__(self, filename, maintainers, **kwargs):
+        super().__init__(**kwargs)
+        self.filename = filename
+        self.maintainers = tuple(maintainers)
+
+    @property
+    def desc(self):
+        s = pluralism(self.maintainers)
+        maintainers = ", ".join(self.maintainers)
+        return (
+            f'{self.filename}: upstream maintainer{s} with cc-on-bugs="yes" '
+            f"but no e-mail: {maintainers}"
+        )
 
 
 class NonexistentProjectMaintainer(results.PackageResult, results.Warning):
@@ -504,6 +530,7 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
             UnmarkedProxiedMaintainer,
             UnmarkedProxyMaint,
             NonGentooProxy,
+            CcOnBugsWithoutEmail,
             RedundantLongDescription,
             NonexistentProjectMaintainer,
             WrongMaintainerType,
@@ -633,6 +660,13 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
                     yield WrongMaintainerType(
                         os.path.basename(loc), sorted(wrong_maintainers), pkg=pkg
                     )
+
+    def _check_upstream_maintainers(self, pkg, loc, doc):
+        """Validate upstream maintainers in package metadata."""
+        xpath = "/pkgmetadata/upstream/maintainer[@cc-on-bugs='yes' and not(email)]"
+        if maintainers := doc.xpath(xpath):
+            names = sorted(m.findtext("name", "").strip() for m in maintainers)
+            yield CcOnBugsWithoutEmail(os.path.basename(loc), names, pkg=pkg)
 
     def _check_longdescription(self, pkg, loc, doc):
         if pkg.longdescription is not None:
