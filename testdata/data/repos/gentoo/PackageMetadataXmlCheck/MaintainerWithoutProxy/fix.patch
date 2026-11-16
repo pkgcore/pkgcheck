@@ -5,8 +5,8 @@ diff -Naur gentoo/PackageMetadataXmlCheck/MaintainerWithoutProxy/metadata.xml fi
 	<maintainer type="person">
 		<email>non-gentoo-dev@email.com</email>
 	</maintainer>
-+	<maintainer type="person">
-+		<email>random-dev@gentoo.org</email>
++	<maintainer type="project" proxied="proxy">
++		<email>proxy-maint@gentoo.org</email>
 +	</maintainer>
  </pkgmetadata>
 diff -Naur gentoo/PackageMetadataXmlCheck/MaintainerWithoutProxy2/metadata.xml fixed/PackageMetadataXmlCheck/MaintainerWithoutProxy2/metadata.xml
@@ -19,4 +19,16 @@ diff -Naur gentoo/PackageMetadataXmlCheck/MaintainerWithoutProxy2/metadata.xml f
 +	<maintainer type="person" proxied="proxy">
 +		<email>committing-dev@gentoo.org</email>
 +	</maintainer>
+ </pkgmetadata>
+diff -Naur gentoo/PackageMetadataXmlCheck/MaintainerWithoutProxy3/metadata.xml fixed/PackageMetadataXmlCheck/MaintainerWithoutProxy3/metadata.xml
+--- gentoo/PackageMetadataXmlCheck/MaintainerWithoutProxy3/metadata.xml	2026-11-04 23:37:25.468453444 -0500
++++ fixed/PackageMetadataXmlCheck/MaintainerWithoutProxy3/metadata.xml	2026-11-05 10:00:00.000000000 -0500
+@@ -4,7 +4,7 @@
+ 	<maintainer type="person" proxied="yes">
+ 		<email>proxied@example.com</email>
+ 	</maintainer>
+-	<maintainer type="person">
++	<maintainer type="person" proxied="maintainer-and-proxy">
+ 		<email>gentoo-dev@gentoo.org</email>
+ 	</maintainer>
  </pkgmetadata>
