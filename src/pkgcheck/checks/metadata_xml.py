@@ -161,6 +161,23 @@ class UnmarkedProxiedMaintainer(results.PackageResult, results.Warning):
         return f'{self.filename}: maintainer{s} without proxied="yes": {maintainers}'
 
 
+class UnmarkedProxyMaint(results.PackageResult, results.Warning):
+    """Package lists proxy-maint@gentoo.org without ``proxied="proxy"``.
+
+    The Proxy Maintainers project serves only as a proxy for proxied
+    maintainers, which GLEP 67 expresses as ``proxied="proxy"``. Without
+    the attribute, ``proxied="no"`` is assumed.
+    """
+
+    def __init__(self, filename, **kwargs):
+        super().__init__(**kwargs)
+        self.filename = filename
+
+    @property
+    def desc(self):
+        return f'{self.filename}: proxy-maint@gentoo.org without proxied="proxy"'
+
+
 class NonGentooProxy(results.PackageResult, results.Warning):
     """Package lists a proxy without a @gentoo.org e-mail address.
 
@@ -484,6 +501,7 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
             MaintainerWithoutProxy,
             ProxyWithoutProxied,
             UnmarkedProxiedMaintainer,
+            UnmarkedProxyMaint,
             NonGentooProxy,
             RedundantLongDescription,
             NonexistentProjectMaintainer,
@@ -575,8 +593,11 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
 
                 # check the proxied attributes against the e-mail addresses
                 unmarked, non_gentoo_proxies = [], []
+                unmarked_proxy_maint = False
                 for m in pkg.maintainers:
                     if m.email.endswith("@gentoo.org"):
+                        if m.email == "proxy-maint@gentoo.org" and m.proxied != "proxy":
+                            unmarked_proxy_maint = True
                         continue
                     if m.proxied in ("proxy", "maintainer-and-proxy"):
                         non_gentoo_proxies.append(str(m))
@@ -586,6 +607,8 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
                     yield UnmarkedProxiedMaintainer(
                         os.path.basename(loc), sorted(unmarked), pkg=pkg
                     )
+                if unmarked_proxy_maint:
+                    yield UnmarkedProxyMaint(os.path.basename(loc), pkg=pkg)
                 if non_gentoo_proxies:
                     yield NonGentooProxy(os.path.basename(loc), sorted(non_gentoo_proxies), pkg=pkg)
             elif not maintainer_needed:
