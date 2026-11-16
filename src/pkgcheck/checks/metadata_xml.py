@@ -141,6 +141,46 @@ class ProxyWithoutProxied(results.PackageResult, results.Warning):
         return f"{self.filename}: proxy with no proxied maintainer"
 
 
+class UnmarkedProxiedMaintainer(results.PackageResult, results.Warning):
+    """Package has a non-@gentoo.org maintainer not marked as proxied.
+
+    A maintainer without a @gentoo.org e-mail address cannot push changes
+    directly, so should be listed with ``proxied="yes"``. Without the
+    attribute, GLEP 67 assumes ``proxied="no"``, which says they can.
+    """
+
+    def __init__(self, filename, maintainers, **kwargs):
+        super().__init__(**kwargs)
+        self.filename = filename
+        self.maintainers = tuple(maintainers)
+
+    @property
+    def desc(self):
+        s = pluralism(self.maintainers)
+        maintainers = ", ".join(self.maintainers)
+        return f'{self.filename}: maintainer{s} without proxied="yes": {maintainers}'
+
+
+class NonGentooProxy(results.PackageResult, results.Warning):
+    """Package lists a proxy without a @gentoo.org e-mail address.
+
+    A proxy pushes changes for proxied maintainers, which needs commit
+    access. A maintainer without a @gentoo.org e-mail address is most
+    likely not a Gentoo developer or project, so cannot serve as one.
+    """
+
+    def __init__(self, filename, maintainers, **kwargs):
+        super().__init__(**kwargs)
+        self.filename = filename
+        self.maintainers = tuple(maintainers)
+
+    @property
+    def desc(self):
+        ies = pluralism(self.maintainers, singular="y", plural="ies")
+        maintainers = ", ".join(self.maintainers)
+        return f"{self.filename}: non-@gentoo.org prox{ies}: {maintainers}"
+
+
 class NonexistentProjectMaintainer(results.PackageResult, results.Warning):
     """Package specifying nonexistent project as a maintainer."""
 
@@ -443,6 +483,8 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
             MaintainerNeeded,
             MaintainerWithoutProxy,
             ProxyWithoutProxied,
+            UnmarkedProxiedMaintainer,
+            NonGentooProxy,
             RedundantLongDescription,
             NonexistentProjectMaintainer,
             WrongMaintainerType,
@@ -530,6 +572,22 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
                     yield MaintainerWithoutProxy(os.path.basename(loc), maintainers, pkg=pkg)
                 elif not proxied and proxies:
                     yield ProxyWithoutProxied(os.path.basename(loc), pkg=pkg)
+
+                # check the proxied attributes against the e-mail addresses
+                unmarked, non_gentoo_proxies = [], []
+                for m in pkg.maintainers:
+                    if m.email.endswith("@gentoo.org"):
+                        continue
+                    if m.proxied in ("proxy", "maintainer-and-proxy"):
+                        non_gentoo_proxies.append(str(m))
+                    elif m.proxied != "yes":
+                        unmarked.append(str(m))
+                if unmarked:
+                    yield UnmarkedProxiedMaintainer(
+                        os.path.basename(loc), sorted(unmarked), pkg=pkg
+                    )
+                if non_gentoo_proxies:
+                    yield NonGentooProxy(os.path.basename(loc), sorted(non_gentoo_proxies), pkg=pkg)
             elif not maintainer_needed:
                 # check for missing maintainer-needed comment
                 yield MaintainerNeeded(os.path.basename(loc), maintainer_needed, pkg=pkg)

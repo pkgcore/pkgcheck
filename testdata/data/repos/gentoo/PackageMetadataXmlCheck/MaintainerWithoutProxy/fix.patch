@@ -17,6 +17,6 @@ diff -Naur gentoo/PackageMetadataXmlCheck/MaintainerWithoutProxy2/metadata.xml f
  		<email>gentoo-dev@gentoo.org</email>
  	</maintainer>
 +	<maintainer type="person" proxied="proxy">
-+		<email>committing-dev@email.alt</email>
++		<email>committing-dev@gentoo.org</email>
 +	</maintainer>
  </pkgmetadata>

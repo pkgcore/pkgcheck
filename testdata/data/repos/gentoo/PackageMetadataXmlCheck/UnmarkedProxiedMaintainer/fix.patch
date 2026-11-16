@@ -1,0 +1,36 @@
+diff -Naur gentoo/PackageMetadataXmlCheck/MaintainerWithoutProxy/metadata.xml fixed/PackageMetadataXmlCheck/MaintainerWithoutProxy/metadata.xml
+--- gentoo/PackageMetadataXmlCheck/MaintainerWithoutProxy/metadata.xml	2026-11-04 23:40:14.878720665 -0500
++++ fixed/PackageMetadataXmlCheck/MaintainerWithoutProxy/metadata.xml	2026-11-04 23:40:14.878904179 -0500
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+ <pkgmetadata>
+-	<maintainer type="person">
++	<maintainer type="person" proxied="yes">
+ 		<email>non-gentoo-dev@email.com</email>
+ 	</maintainer>
+ </pkgmetadata>
+diff -Naur gentoo/PackageMetadataXmlCheck/UnmarkedProxiedMaintainer/metadata.xml fixed/PackageMetadataXmlCheck/UnmarkedProxiedMaintainer/metadata.xml
+--- gentoo/PackageMetadataXmlCheck/UnmarkedProxiedMaintainer/metadata.xml	2026-11-04 23:40:14.878670874 -0500
++++ fixed/PackageMetadataXmlCheck/UnmarkedProxiedMaintainer/metadata.xml	2026-11-04 23:40:14.878928393 -0500
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+ <pkgmetadata>
+-	<maintainer type="person">
++	<maintainer type="person" proxied="yes">
+ 		<email>proxied@example.com</email>
+ 	</maintainer>
+ 	<maintainer type="person" proxied="proxy">
+diff -Naur gentoo/PackageMetadataXmlCheck/UnmarkedProxiedMaintainer2/metadata.xml fixed/PackageMetadataXmlCheck/UnmarkedProxiedMaintainer2/metadata.xml
+--- gentoo/PackageMetadataXmlCheck/UnmarkedProxiedMaintainer2/metadata.xml	2026-11-04 23:40:14.878593833 -0500
++++ fixed/PackageMetadataXmlCheck/UnmarkedProxiedMaintainer2/metadata.xml	2026-11-04 23:40:14.878962847 -0500
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+ <pkgmetadata>
+-	<maintainer type="person" proxied="no">
++	<maintainer type="person" proxied="yes">
+ 		<email>proxied@example.com</email>
+ 	</maintainer>
+ 	<maintainer type="person">

@@ -1,0 +1,22 @@
+diff -Naur gentoo/PackageMetadataXmlCheck/NonGentooProxy/metadata.xml fixed/PackageMetadataXmlCheck/NonGentooProxy/metadata.xml
+--- gentoo/PackageMetadataXmlCheck/NonGentooProxy/metadata.xml	2026-11-04 23:40:14.883722217 -0500
++++ fixed/PackageMetadataXmlCheck/NonGentooProxy/metadata.xml	2026-11-04 23:40:14.883829032 -0500
+@@ -5,6 +5,6 @@
+ 		<email>proxied@example.com</email>
+ 	</maintainer>
+ 	<maintainer type="person" proxied="proxy">
+-		<email>proxy@example.org</email>
++		<email>proxy@gentoo.org</email>
+ 	</maintainer>
+ </pkgmetadata>
+diff -Naur gentoo/PackageMetadataXmlCheck/NonGentooProxy2/metadata.xml fixed/PackageMetadataXmlCheck/NonGentooProxy2/metadata.xml
+--- gentoo/PackageMetadataXmlCheck/NonGentooProxy2/metadata.xml	2026-11-04 23:40:14.883722217 -0500
++++ fixed/PackageMetadataXmlCheck/NonGentooProxy2/metadata.xml	2026-11-04 23:40:14.883829032 -0500
+@@ -5,6 +5,6 @@
+ 		<email>proxied@example.com</email>
+ 	</maintainer>
+ 	<maintainer type="person" proxied="maintainer-and-proxy">
+-		<email>proxy@example.org</email>
++		<email>proxy@gentoo.org</email>
+ 	</maintainer>
+ </pkgmetadata>
