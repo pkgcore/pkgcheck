@@ -1,0 +1,3 @@
+{"__class__": "UnmarkedProxiedMaintainer", "category": "PackageMetadataXmlCheck", "package": "MaintainerWithoutProxy", "filename": "metadata.xml", "maintainers": ["non-gentoo-dev@email.com"]}
+{"__class__": "UnmarkedProxiedMaintainer", "category": "PackageMetadataXmlCheck", "package": "UnmarkedProxiedMaintainer", "filename": "metadata.xml", "maintainers": ["proxied@example.com"]}
+{"__class__": "UnmarkedProxiedMaintainer", "category": "PackageMetadataXmlCheck", "package": "UnmarkedProxiedMaintainer2", "filename": "metadata.xml", "maintainers": ["proxied@example.com"]}

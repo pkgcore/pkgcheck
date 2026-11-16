@@ -1,0 +1,2 @@
+{"__class__": "NonGentooProxy", "category": "PackageMetadataXmlCheck", "package": "NonGentooProxy", "filename": "metadata.xml", "maintainers": ["proxy@example.org"]}
+{"__class__": "NonGentooProxy", "category": "PackageMetadataXmlCheck", "package": "NonGentooProxy2", "filename": "metadata.xml", "maintainers": ["proxy@example.org"]}
