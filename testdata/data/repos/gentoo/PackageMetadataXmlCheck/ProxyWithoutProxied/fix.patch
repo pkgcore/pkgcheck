@@ -34,3 +34,15 @@ diff -Naur gentoo/PackageMetadataXmlCheck/ProxyWithoutProxied3/metadata.xml fixe
 -		<email>frobnor@gentoo.org</email>
 -	</maintainer>
  </pkgmetadata>
+diff -Naur gentoo/PackageMetadataXmlCheck/ProxyWithoutProxied4/metadata.xml fixed/PackageMetadataXmlCheck/ProxyWithoutProxied4/metadata.xml
+--- gentoo/PackageMetadataXmlCheck/ProxyWithoutProxied4/metadata.xml	2026-11-07 12:00:00.000000000 -0500
++++ fixed/PackageMetadataXmlCheck/ProxyWithoutProxied4/metadata.xml	2026-11-07 12:00:00.000000000 -0500
+@@ -1,7 +1,7 @@
+ <?xml version="1.0" encoding="UTF-8"?>
+ <!DOCTYPE pkgmetadata SYSTEM "https://www.gentoo.org/dtd/metadata.dtd">
+ <pkgmetadata>
+-	<maintainer type="person" proxied="maintainer-and-proxy">
++	<maintainer type="person">
+ 		<email>barnor@gentoo.org</email>
+ 	</maintainer>
+ </pkgmetadata>

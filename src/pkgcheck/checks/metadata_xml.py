@@ -515,7 +515,12 @@ class PackageMetadataXmlCheck(_XmlBaseCheck):
 
                 # determine proxy maintainer status
                 proxied, devs, proxies = [], [], []
-                proxy_map = {"yes": proxied, "no": devs, "proxy": proxies}
+                proxy_map = {
+                    "yes": proxied,
+                    "no": devs,
+                    "proxy": proxies,
+                    "maintainer-and-proxy": proxies,
+                }
                 for m in pkg.maintainers:
                     proxy_map[self._maintainer_proxied_key(m)].append(m)
 
