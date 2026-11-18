@@ -8,7 +8,7 @@ requires = [
 	"tree-sitter ~=0.26.0",
 	"tree-sitter-bash >=0.25.1",
 	"snakeoil >=0.11.6",
-	"pkgcore >=0.12.48",
+	"pkgcore >=0.12.50",
 ]
 build-backend = "py_build"
 backend-path = ["."]
@@ -48,7 +48,7 @@ dependencies = [
 	"tree-sitter ~=0.26.0",
 	"tree-sitter-bash >=0.25.1",
 	"snakeoil >=0.11.6",
-	"pkgcore >=0.12.48",
+	"pkgcore >=0.12.50",
 ]
 
 [project.optional-dependencies]
