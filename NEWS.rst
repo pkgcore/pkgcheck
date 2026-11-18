@@ -18,10 +18,32 @@ pkgcheck 0.10.50 (unreleased)
 - DroppedPythonCompat: flag python implementations supported by older versions
   but missing in newer ones (Arthur Zamarin, #790)
 
+- PackageMetadataXmlCheck: flag ``UnmarkedProxiedMaintainer``, a maintainer
+  without a gentoo.org address not marked ``proxied="yes"`` (Matt Turner, #796)
+
+- PackageMetadataXmlCheck: flag ``NonGentooProxy``, a maintainer marked
+  ``proxied="proxy"`` or ``proxied="maintainer-and-proxy"`` without a
+  gentoo.org address (Matt Turner, #796)
+
+- PackageMetadataXmlCheck: flag ``UnmarkedProxyMaint``, proxy-maint@gentoo.org
+  listed without ``proxied="proxy"`` (Matt Turner, #796)
+
+- PackageMetadataXmlCheck: flag ``CcOnBugsWithoutEmail``, an upstream
+  ``<maintainer>`` with ``cc-on-bugs="yes"`` and no ``<email>`` (Matt Turner,
+  #796)
+
 **Fixes:**
 
 - PythonCompatUpdate, RubyCompatUpdate: no longer suggest targets masked in
   ``profiles/base/use.mask`` (Arthur Zamarin, #791)
+
+- PackageMetadataXmlCheck: no longer crashes on
+  ``proxied="maintainer-and-proxy"`` from GLEP 67 v1.2, and counts such a
+  maintainer as a proxy (Matt Turner, #796)
+
+- MaintainerWithoutProxy: now also reported when a proxied maintainer
+  co-maintains with a developer not marked as a proxy, listing only the
+  proxied maintainers (Matt Turner, #796)
 
 -----------------------------
 pkgcheck 0.10.49 (2026-10-24)
