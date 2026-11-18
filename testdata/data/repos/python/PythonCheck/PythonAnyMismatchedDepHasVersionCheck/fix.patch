@@ -13,6 +13,17 @@ index a70a4d3e..21db4ebf 100644
 -	python_has_version "dev-python/flit_core[${PYTHON_USEDEP}]"
 +	python_has_version -d "dev-python/flit_core[${PYTHON_USEDEP}]"
  }
+diff -dupr python/PythonCheck/PythonAnyMismatchedDepHasVersionCheck/PythonAnyMismatchedDepHasVersionCheck-3.ebuild fixed/PythonCheck/PythonAnyMismatchedDepHasVersionCheck/PythonAnyMismatchedDepHasVersionCheck-3.ebuild
+--- python/PythonCheck/PythonAnyMismatchedDepHasVersionCheck/PythonAnyMismatchedDepHasVersionCheck-3.ebuild
++++ fixed/PythonCheck/PythonAnyMismatchedDepHasVersionCheck/PythonAnyMismatchedDepHasVersionCheck-3.ebuild
+@@ -21,5 +21,6 @@
+ "
+ 
+ python_check_deps() {
+-	python_has_version "dev-python/lxml[${PYTHON_USEDEP}]"
++	python_has_version "dev-python/lxml[${PYTHON_USEDEP}]" &&
++	python_has_version "dev-python/gpep517[${PYTHON_SINGLE_USEDEP}]"
+ }
 diff -dupr python/PythonCheck/PythonHasVersionMissingPythonUseDep/PythonHasVersionMissingPythonUseDep-0.ebuild fixed/PythonCheck/PythonHasVersionMissingPythonUseDep/PythonHasVersionMissingPythonUseDep-0.ebuild
 index 24ebb878..48f4ae11 100644
 --- python/PythonCheck/PythonHasVersionMissingPythonUseDep/PythonHasVersionMissingPythonUseDep-0.ebuild

@@ -45,6 +45,9 @@ pkgcheck 0.10.50 (unreleased)
   co-maintains with a developer not marked as a proxy, listing only the
   proxied maintainers (Matt Turner, #796)
 
+- PythonAnyMismatchedDep{,Use}HasVersionCheck: no longer ignore dependencies
+  using ``${PYTHON_SINGLE_USEDEP}`` (Arthur Zamarin, #794)
+
 -----------------------------
 pkgcheck 0.10.49 (2026-10-24)
 -----------------------------

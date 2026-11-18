@@ -352,6 +352,11 @@ class PythonCheck(Check):
         "python-r1": "python_gen_any_dep",
     }
 
+    python_usedep_flags: typing.ClassVar[dict[str, str]] = {
+        "${PYTHON_USEDEP}": "pkgcheck_python_usedep",
+        "${PYTHON_SINGLE_USEDEP}": "pkgcheck_python_single_usedep",
+    }
+
     setuptools_scm = frozenset(
         {
             "dev-python/setuptools-scm",
@@ -536,14 +541,11 @@ class PythonCheck(Check):
             else:
                 yield EPyTestPluginsSuggestion(pkg=pkg)
 
-    @staticmethod
-    def _prepare_deps(deps: str):
+    def _prepare_deps(self, deps: str):
         try:
-            deps_str = (
-                deps.strip("\"'")
-                .replace("\\$", "$")
-                .replace("${PYTHON_USEDEP}", "pkgcheck_python_usedep")
-            )
+            deps_str = deps.strip("\"'").replace("\\$", "$")
+            for var, flag in self.python_usedep_flags.items():
+                deps_str = deps_str.replace(var, flag)
             return iflatten_instance(DepSet.parse(deps_str, atom), atom)
         except DepsetParseError:
             # if we are unable to parse that dep's string, skip it
@@ -565,6 +567,7 @@ class PythonCheck(Check):
     def report_mismatch_check_deps(
         self, pkg, python_check_deps, has_version_checked_deps, any_dep_func
     ):
+        usedep_vars = {flag: var for var, flag in self.python_usedep_flags.items()}
         for dep_type in frozenset(python_check_deps.keys()).union(has_version_checked_deps.keys()):
             extra = has_version_checked_deps[dep_type] - python_check_deps.get(dep_type, set())
             missing = python_check_deps.get(dep_type, set()) - has_version_checked_deps[dep_type]
@@ -581,12 +584,14 @@ class PythonCheck(Check):
                                     pkg=pkg,
                                     dep_category=dep_type,
                                     dep_atom=dep_atom,
-                                    use_flags=diff_flags,
+                                    use_flags={usedep_vars.get(x, x) for x in diff_flags},
                                     location=location,
                                 )
                             break
                     else:
-                        use_flags = {"${PYTHON_USEDEP}"} | set(dep.use) - {"pkgcheck_python_usedep"}
+                        use_flags = {usedep_vars.get(x, x) for x in dep.use}
+                        if use_flags.isdisjoint(self.python_usedep_flags):
+                            use_flags.add("${PYTHON_USEDEP}")
                         yield PythonAnyMismatchedDepHasVersionCheck(
                             pkg=pkg,
                             dep_category=dep_type,
