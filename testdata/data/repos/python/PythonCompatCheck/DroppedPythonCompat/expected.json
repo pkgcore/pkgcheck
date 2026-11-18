@@ -1,0 +1,1 @@
+{"__class__": "DroppedPythonCompat", "category": "PythonCompatCheck", "package": "DroppedPythonCompat", "version": "2", "impls": ["pypy3_11"]}

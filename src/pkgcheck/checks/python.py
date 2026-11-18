@@ -718,14 +718,29 @@ class PythonCompatUpdate(results.VersionResult, results.Info):
         return f"PYTHON_COMPAT update{s} available: {updates}"
 
 
+class DroppedPythonCompat(results.VersionResult, results.Info):
+    """Python implementations dropped during version bumping."""
+
+    def __init__(self, impls, **kwargs):
+        super().__init__(**kwargs)
+        self.impls = tuple(impls)
+
+    @property
+    def desc(self):
+        s = pluralism(self.impls)
+        impls = ", ".join(self.impls)
+        return f"dropped PYTHON_COMPAT impl{s}: {impls}"
+
+
 class PythonCompatCheck(Check):
-    """Check python ebuilds for possible ``PYTHON_COMPAT`` updates.
+    """Check python ebuilds for possible ``PYTHON_COMPAT`` updates and dropped impls.
 
     Supports ebuilds inheriting ``python-r1``, ``python-single-r1``, and
     ``python-any-r1``.
     """
 
-    known_results = frozenset({PythonCompatUpdate})
+    _source = sources.PackageRepoSource
+    known_results = frozenset({PythonCompatUpdate, DroppedPythonCompat})
 
     whitelist_backports = frozenset(
         {
@@ -775,6 +790,11 @@ class PythonCompatCheck(Check):
             "python-any-r1": (multi_targets, (IUSE_PREFIX, IUSE_PREFIX_S), ("depend", "bdepend")),
         }
 
+        self.known_impls = frozenset(
+            target.removeprefix(IUSE_PREFIX)
+            for target, _desc in repo.use_expand_desc.get(IUSE_PREFIX[:-1], ())
+        )
+
     def python_deps(self, deps, prefix):
         for dep in (x for x in deps if x.use):
             for x in dep.use:
@@ -794,23 +814,31 @@ class PythonCompatCheck(Check):
             if not p.blocks and p.key not in self.whitelist_backports
         }
 
-    def feed(self, pkg):
-        try:
-            eclass = get_python_eclass(pkg)
-            available_targets, prefix, attrs = self.params[eclass]
-        except (KeyError, ValueError):
-            return
+    def impls(self, deps):
+        """Set of python implementations supported by a package."""
+        impls = set()
+        for dep in deps:
+            if dep.slot is None:
+                continue
+            if dep.key == "dev-lang/python":
+                impls.add(f"python{dep.slot.replace('.', '_')}")
+            elif dep.key == "dev-lang/pypy":
+                impls.add("pypy3" if dep.slot == "3.10" else f"pypy{dep.slot.replace('.', '_')}")
+        return self.known_impls.intersection(impls)
 
-        deps = self.deps(pkg, attrs=attrs)
+    @staticmethod
+    def kind(impl):
+        if impl.startswith("pypy"):
+            return "pypy"
+        return "freethreading" if impl.endswith("t") else "python"
 
+    def compat_updates(self, pkg, impls, deps, available_targets, prefix):
         try:
             # determine the latest supported python version
-            all_targets = (
-                f"python{x.slot.replace('.', '_')}"
-                for x in deps
-                if x.key == "dev-lang/python" and x.slot is not None and not x.slot.endswith("t")
+            latest_target = max(
+                (x for x in impls if self.kind(x) == "python"),
+                key=self.sorter,
             )
-            latest_target = max(all_targets, key=self.sorter)
         except ValueError:
             # should be flagged by PythonMissingDeps
             return
@@ -824,12 +852,7 @@ class PythonCompatCheck(Check):
 
         try:
             # determine the latest supported pypy version
-            all_targets = (
-                "pypy3" if x.slot == "3.10" else f"pypy{x.slot.replace('.', '_')}"
-                for x in deps
-                if x.key == "dev-lang/pypy" and x.slot is not None
-            )
-            latest_pypy = max(all_targets, key=self.sorter)
+            latest_pypy = max((x for x in impls if self.kind(x) == "pypy"), key=self.sorter)
             targets.update(takewhile(lambda x: x != latest_pypy, reversed(self.pypy_targets)))
         except ValueError:
             ...
@@ -857,6 +880,46 @@ class PythonCompatCheck(Check):
                 return
 
             yield PythonCompatUpdate(sorted(targets, key=self.sorter), pkg=pkg)
+
+    def feed(self, pkgset):
+        seen_impls = set()
+        previous_impls = set()
+        changes = defaultdict(list)
+        for pkg in pkgset:
+            try:
+                eclass = get_python_eclass(pkg)
+                available_targets, prefix, attrs = self.params[eclass]
+            except (KeyError, ValueError):
+                continue
+
+            deps = self.deps(pkg, attrs=attrs)
+            if not (pkg_impls := self.impls(deps)):
+                continue
+
+            yield from self.compat_updates(pkg, pkg_impls, deps, available_targets, prefix)
+
+            for impl in seen_impls - pkg_impls:
+                same_kind = [self.sorter(x) for x in pkg_impls if self.kind(x) == self.kind(impl)]
+                if not same_kind or self.sorter(impl) > min(same_kind):
+                    changes[impl].append(pkg)
+            # ignore missing impls on previous versions that were re-enabled
+            for impl in pkg_impls - previous_impls:
+                changes.pop(impl, None)
+            seen_impls.update(pkg_impls)
+            previous_impls = pkg_impls
+
+        dropped = defaultdict(list)
+        for impl, pkgs in changes.items():
+            if self.options.verbosity > 0:
+                # output all pkgs with dropped impls in verbose mode
+                for pkg in pkgs:
+                    dropped[pkg].append(impl)
+            else:
+                # only report the most recent pkg with dropped impls
+                dropped[pkgs[-1]].append(impl)
+
+        for pkg, impls in dropped.items():
+            yield DroppedPythonCompat(sorted(impls, key=self.sorter), pkg=pkg)
 
 
 class PythonGHDistfileSuffix(results.VersionResult, results.Warning):

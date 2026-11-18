@@ -1,0 +1,10 @@
+diff -Naur python/PythonCompatCheck/DroppedPythonCompat/DroppedPythonCompat-2.ebuild fixed/PythonCompatCheck/DroppedPythonCompat/DroppedPythonCompat-2.ebuild
+--- python/PythonCompatCheck/DroppedPythonCompat/DroppedPythonCompat-2.ebuild
++++ fixed/PythonCompatCheck/DroppedPythonCompat/DroppedPythonCompat-2.ebuild
+@@ -1,5 +1,5 @@
+ EAPI=7
+-PYTHON_COMPAT=( python3_{9,10} )
++PYTHON_COMPAT=( python3_{9,10} pypy3_11 )
+ 
+ inherit python-r1
+ 

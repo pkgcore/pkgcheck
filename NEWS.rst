@@ -15,6 +15,9 @@ pkgcheck 0.10.50 (unreleased)
   not conditional on ``USE=test``, which run tests with ``USE=-test`` when
   allowed by ``ALLOW_TEST`` (Arthur Zamarin, #792)
 
+- DroppedPythonCompat: flag python implementations supported by older versions
+  but missing in newer ones (Arthur Zamarin, #790)
+
 **Fixes:**
 
 - PythonCompatUpdate, RubyCompatUpdate: no longer suggest targets masked in
